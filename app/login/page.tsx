@@ -1,4 +1,4 @@
-import { loginWithGoogle } from "@/lib/actions/auth";
+import { loginWithGoogle } from "@/actions/auth";
 
 export default function LoginPage() {
 	return (

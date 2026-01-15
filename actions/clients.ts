@@ -1,12 +1,13 @@
 "use server";
 
-import { db } from "@/lib/drizzle";
-import { clients } from "@/lib/drizzle/schema";
-import { createClient } from "@/lib/supabase/server";
+import { db } from "@/drizzle";
+import { clients } from "@/drizzle/schema";
+import { createClient } from "@/supabase/server";
 import { getGoogleClient } from "@/lib/google";
 import { redirect } from "next/navigation";
 import { clientSchema } from "@/lib/validators";
 import { HEALTH_TEMPLATE } from "@/config/health";
+import { getValidAccessToken } from "@/services/google-tokens";
 
 export async function createClientAction(prevState: unknown, formData: FormData) {
 	const supabase = await createClient();
@@ -20,11 +21,16 @@ export async function createClientAction(prevState: unknown, formData: FormData)
 		return { error: "Not authenticated" };
 	}
 
-	// Session is still needed for provider_token, but we verified the user first.
-	const {
-		data: { session },
-	} = await supabase.auth.getSession();
-	const accessToken = session?.provider_token;
+	// Try to get a valid access token (will refresh if needed)
+	let accessToken = await getValidAccessToken(user.id);
+
+	// Fallback to session provider_token if our stored token doesn't exist
+	if (!accessToken) {
+		const {
+			data: { session },
+		} = await supabase.auth.getSession();
+		accessToken = session?.provider_token || null;
+	}
 
 	if (!accessToken) {
 		return {

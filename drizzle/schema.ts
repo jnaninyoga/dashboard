@@ -101,3 +101,13 @@ export const attendanceLedgerRelations = relations(attendanceLedger, ({ one }) =
     references: [clientWallets.id],
   }),
 }));
+
+// Store Google OAuth tokens for persistent access
+export const userTokens = pgTable('user_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().unique(), // Supabase auth user ID
+  accessToken: text('access_token').notNull(),
+  refreshToken: text('refresh_token').notNull(),
+  expiresAt: timestamp('expires_at').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

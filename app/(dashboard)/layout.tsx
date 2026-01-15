@@ -5,7 +5,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/supabase/server";
 import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
