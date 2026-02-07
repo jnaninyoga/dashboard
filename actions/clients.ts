@@ -3,13 +3,16 @@
 import { db } from "@/drizzle";
 import { clients } from "@/drizzle/schema";
 import { createClient } from "@/supabase/server";
-import { getGoogleClient } from "@/lib/google";
+import { syncClientToGoogleContacts } from "@/services/google-contacts";
 import { redirect } from "next/navigation";
 import { clientSchema } from "@/lib/validators";
 import { HEALTH_TEMPLATE } from "@/config/health";
 import { getValidAccessToken } from "@/services/google-tokens";
 
-export async function createClientAction(prevState: unknown, formData: FormData) {
+export async function createClientAction(
+	_prevState: unknown,
+	formData: FormData,
+) {
 	const supabase = await createClient();
 	// Security: Use getUser() to verify authentication
 	const {
@@ -38,13 +41,12 @@ export async function createClientAction(prevState: unknown, formData: FormData)
 		};
 	}
 
-	// 1. Gather all dynamic intake fields from formData
 	const intakeDataRaw: Record<string, string> = {};
-	
+
 	// We need to flatten our template config to know which keys to look for
 	// But simply iterating formData entries is safer if we prefix them or just grab everything not standard.
 	// However, we should be explicit based on config to avoid garbage data.
-	
+
 	HEALTH_TEMPLATE.forEach((section) => {
 		section.fields.forEach((field) => {
 			const value = formData.get(field.key);
@@ -54,17 +56,25 @@ export async function createClientAction(prevState: unknown, formData: FormData)
 		});
 	});
 
+	// Helper to handle empty strings/nulls as null for Zod/DB
+	const getString = (key: string) => {
+		const val = formData.get(key);
+		return val && typeof val === "string" && val.trim().length > 0
+			? val.trim()
+			: null;
+	};
+
 	const rawData = {
-		fullName: formData.get("fullName"),
-		phone: formData.get("phone"),
-		email: formData.get("email"),
-		address: formData.get("address"),
-		profession: formData.get("profession"),
-		birthDate: formData.get("birthDate"),
-		category: formData.get("category"),
-		sex: formData.get("sex"),
-		referralSource: formData.get("referralSource"),
-		consultationReason: formData.get("consultationReason"),
+		fullName: getString("fullName"), // Schema requires string, let Zod catch if missing, but we trimmed it
+		phone: getString("phone"),
+		email: getString("email"),
+		address: getString("address"),
+		profession: getString("profession"),
+		birthDate: getString("birthDate"),
+		category: getString("category"),
+		gender: getString("gender"),
+		referralSource: getString("referralSource"),
+		consultationReason: getString("consultationReason"),
 		intakeData: intakeDataRaw,
 	};
 
@@ -74,84 +84,35 @@ export async function createClientAction(prevState: unknown, formData: FormData)
 		return { error: "Validation failed", issues: parsed.error.format() };
 	}
 
-	const { 
-		fullName, phone, email, address, profession, birthDate, category, 
-		sex, referralSource, consultationReason, intakeData 
+	const {
+		fullName,
+		phone,
+		email,
+		address,
+		profession,
+		birthDate,
+		category,
+		gender,
+		referralSource,
+		consultationReason,
+		intakeData,
 	} = parsed.data;
 
 	try {
-		const google = getGoogleClient(accessToken);
-		const CONTACTS_LABEL = "JnaninYoga Clients";
-		let labelResourceName = null;
-
-		// 1. Label Logic
-		try {
-			const groupsRes = await google.people.contactGroups.list();
-			const existingGroup = groupsRes.data.contactGroups?.find(
-				(g) => g.name === CONTACTS_LABEL || g.formattedName === CONTACTS_LABEL
-			);
-
-			if (existingGroup?.resourceName) {
-				labelResourceName = existingGroup.resourceName;
-			} else {
-				const newGroup = await google.people.contactGroups.create({
-					requestBody: { contactGroup: { name: CONTACTS_LABEL } },
-				});
-				labelResourceName = newGroup.data.resourceName;
-			}
-		} catch (e) {
-			console.error("Failed to manage contact groups:", e);
-		}
-
-		// 2. Birthday Logic
-		const dateObj = new Date(birthDate);
-		const birthdayValue = {
-			date: {
-				year: dateObj.getFullYear(),
-				month: dateObj.getMonth() + 1,
-				day: dateObj.getDate(),
-			},
-		};
-		
-		// 3. Construct Biography Note from HEALTH_TEMPLATE
-		let bioNote = "Health & Lifestyle Dossier:\n===========================\n";
-		
-		HEALTH_TEMPLATE.forEach(section => {
-			const sectionValues = section.fields
-				.map(f => {
-					const val = intakeData ? intakeData[f.key] : undefined;
-					return val ? `- ${f.label}: ${val}` : null;
-				})
-				.filter(Boolean);
-				
-			if (sectionValues.length > 0) {
-				bioNote += `\n[${section.label}]\n${sectionValues.join('\n')}\n`;
-			}
+		// Use the dedicated service for Google Contacts sync
+		const resourceName = await syncClientToGoogleContacts(accessToken, {
+			fullName,
+			phone,
+			email: email || null,
+			address: address || null,
+			profession: profession || null,
+			birthDate,
+			category: category as "adult" | "child" | "student",
+			gender: gender as "male" | "female" | undefined,
+			referralSource: referralSource || null,
+			consultationReason: consultationReason || null,
+			intakeData: intakeData || {},
 		});
-
-		if (consultationReason) {
-			bioNote += `\nConsultation Reason: ${consultationReason}\n`;
-		}
-
-		// 4. Create Contact
-		const contactRes = await google.people.people.createContact({
-			requestBody: {
-				names: [{ displayName: fullName, givenName: fullName }],
-				phoneNumbers: [{ value: phone }],
-				emailAddresses: email ? [{ value: email }] : undefined,
-				addresses: address ? [{ formattedValue: address }] : undefined,
-				occupations: profession ? [{ value: profession }] : undefined,
-				birthdays: [birthdayValue],
-				memberships: labelResourceName
-					? [{ contactGroupMembership: { contactGroupResourceName: labelResourceName } }]
-					: undefined,
-				biographies: [{ value: bioNote.trim(), contentType: "TEXT_PLAIN" }],
-				// Store Sex and Referral in UserDefined or extended fields if needed, 
-				// but typically Biography is best for unstructured viewing in Contacts app.
-			},
-		});
-
-		const resourceName = contactRes.data.resourceName;
 
 		// 5. Insert into DB
 		await db.insert(clients).values({
@@ -162,15 +123,16 @@ export async function createClientAction(prevState: unknown, formData: FormData)
 			profession: profession || null,
 			birthDate,
 			category: category as "adult" | "child" | "student",
-			sex: sex as "male" | "female" | undefined,
+			gender: gender as "male" | "female" | undefined,
 			referralSource: referralSource ?? null,
 			consultationReason: consultationReason || null,
 			intakeData: intakeData || {}, // Store as plain JSONB
-			googleContactResourceName: resourceName,
+			googleContactResourceName: resourceName || null,
 		});
 	} catch (err: unknown) {
 		console.error("Error creating client:", err);
-		const message = err instanceof Error ? err.message : "Failed to create client";
+		const message =
+			err instanceof Error ? err.message : "Failed to create client";
 		return { error: message };
 	}
 
