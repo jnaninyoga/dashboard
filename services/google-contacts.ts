@@ -115,5 +115,41 @@ export async function syncClientToGoogleContacts(
 		},
 	});
 
+	// ... existing code ...
 	return contactRes.data.resourceName;
+}
+
+export async function getContactPhoto(
+	accessToken: string,
+	resourceName: string,
+): Promise<string | null> {
+	try {
+		const google = getGoogleClient(accessToken);
+		const person = await google.people.people.get({
+			resourceName,
+			personFields: "photos",
+		});
+
+		const photoUrl = person.data.photos?.[0]?.url;
+		return photoUrl || null;
+	} catch (error) {
+		console.error("Error fetching contact photo:", error);
+		return null;
+	}
+}
+
+export async function deleteContact(
+	accessToken: string,
+	resourceName: string,
+): Promise<boolean> {
+	try {
+		const google = getGoogleClient(accessToken);
+		await google.people.people.deleteContact({
+			resourceName,
+		});
+		return true;
+	} catch (error) {
+		console.error("Error deleting contact:", error);
+		return false;
+	}
 }

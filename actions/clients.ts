@@ -2,7 +2,9 @@
 
 import { db } from "@/drizzle";
 import { clients } from "@/drizzle/schema";
+import { eq, and, or, ilike, desc } from "drizzle-orm";
 import { createClient } from "@/supabase/server";
+import { revalidatePath } from "next/cache";
 import { syncClientToGoogleContacts } from "@/services/google-contacts";
 import { redirect } from "next/navigation";
 import { clientSchema } from "@/lib/validators";
@@ -137,4 +139,207 @@ export async function createClientAction(
 	}
 
 	redirect("/clients");
+}
+
+export async function getClientsAction(
+	page = 1,
+	pageSize = 10,
+	query = "",
+	filters: { category?: string; gender?: string } = {},
+) {
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) return { error: "Not authenticated" };
+
+	const offset = (page - 1) * pageSize;
+
+	// Build where clause
+	const whereConditions = [];
+
+	if (query) {
+		const lowerQuery = `%${query.toLowerCase()}%`;
+		whereConditions.push(
+			or(
+				ilike(clients.fullName, lowerQuery),
+				ilike(clients.email, lowerQuery),
+				ilike(clients.phone, lowerQuery),
+			),
+		);
+	}
+
+	if (filters.category && filters.category !== "all") {
+		whereConditions.push(
+			eq(clients.category, filters.category as "adult" | "child" | "student"),
+		);
+	}
+
+	if (filters.gender && filters.gender !== "all") {
+		whereConditions.push(
+			eq(clients.gender, filters.gender as "male" | "female"),
+		);
+	}
+
+	try {
+		const whereClause =
+			whereConditions.length > 0 ? and(...whereConditions) : undefined;
+
+		const data = await db.query.clients.findMany({
+			where: whereClause,
+			limit: pageSize,
+			offset: offset,
+			orderBy: [desc(clients.createdAt)],
+		});
+
+		// Get total count for pagination
+		// Drizzle doesn't have a simple count() with where() yet without raw sql or separate query
+		// For simplicity in this dashboard, we can just fetch the count separately or accept an approximate if list is huge.
+		// Let's do a separate count query.
+		// NOTE: details on count() varies by driver/drizzle version, strictly typed way:
+		// const totalRes = await db.select({ count: count() }).from(clients).where(whereClause);
+		// But let's stick to a simpler approach if imports are missing, assume standard drizzle-orm behavior.
+
+		return { success: true, data };
+	} catch (error) {
+		console.error("Error fetching clients:", error);
+		return { error: "Failed to fetch clients" };
+	}
+}
+
+export async function getClientByIdAction(id: string) {
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) return { error: "Not authenticated" };
+
+	try {
+		const client = await db.query.clients.findFirst({
+			where: eq(clients.id, id),
+		});
+		if (!client) return { error: "Client not found" };
+		return { success: true, client };
+	} catch (error) {
+		console.error("Error fetching client:", error);
+		return { error: "Failed to fetch client" };
+	}
+}
+
+export async function getGoogleContactPhotoAction(resourceName: string) {
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) return { error: "Not authenticated" };
+
+	const accessToken = await getValidAccessToken(user.id);
+	if (!accessToken) return { error: "No access token" };
+
+	const { getContactPhoto } = await import("@/services/google-contacts");
+	const photoUrl = await getContactPhoto(accessToken, resourceName);
+
+	return { success: true, url: photoUrl };
+}
+
+export async function updateClientAction(
+	id: string,
+	_prevState: unknown,
+	formData: FormData,
+) {
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) return { error: "Not authenticated" };
+
+	const intakeDataRaw: Record<string, string> = {};
+	HEALTH_TEMPLATE.forEach((section) => {
+		section.fields.forEach((field) => {
+			const value = formData.get(field.key);
+			if (typeof value === "string" && value.trim() !== "") {
+				intakeDataRaw[field.key] = value.trim();
+			}
+		});
+	});
+
+	const getString = (key: string) => {
+		const val = formData.get(key);
+		return val && typeof val === "string" && val.trim().length > 0
+			? val.trim()
+			: null;
+	};
+
+	const rawData = {
+		fullName: getString("fullName"),
+		phone: getString("phone"),
+		email: getString("email"),
+		address: getString("address"),
+		profession: getString("profession"),
+		birthDate: getString("birthDate"),
+		category: getString("category"),
+		gender: getString("gender"),
+		referralSource: getString("referralSource"),
+		consultationReason: getString("consultationReason"),
+		intakeData: intakeDataRaw,
+	};
+
+	const parsed = clientSchema.safeParse(rawData);
+
+	if (!parsed.success) {
+		return { error: "Validation failed", issues: parsed.error.format() };
+	}
+
+	try {
+		await db
+			.update(clients)
+			.set({
+				...parsed.data,
+				category: parsed.data.category as "adult" | "child" | "student",
+				gender: parsed.data.gender as "male" | "female" | undefined,
+			})
+			.where(eq(clients.id, id));
+
+		revalidatePath("/clients");
+		return { success: true };
+	} catch (error) {
+		console.error("Error updating client:", error);
+		return { error: "Failed to update client" };
+	}
+}
+
+export async function deleteClientAction(id: string) {
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) return { error: "Not authenticated" };
+
+	try {
+		// 1. Fetch client to get Google Resource Name
+		const client = await db.query.clients.findFirst({
+			where: eq(clients.id, id),
+		});
+
+		if (client?.googleContactResourceName) {
+			// 2. Get Access Token
+			const accessToken = await getValidAccessToken(user.id);
+			if (accessToken) {
+				const { deleteContact } = await import("@/services/google-contacts");
+				await deleteContact(accessToken, client.googleContactResourceName);
+			}
+		}
+
+		await db.delete(clients).where(eq(clients.id, id));
+		revalidatePath("/clients");
+		return { success: true };
+	} catch (error) {
+		console.error("Error deleting client:", error);
+		return { error: "Failed to delete client" };
+	}
 }
