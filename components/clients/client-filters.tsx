@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
+import { ClientCategory, Gender } from "@/lib/types";
 
 export function ClientFilters() {
 	const router = useRouter();
@@ -31,7 +32,7 @@ export function ClientFilters() {
 
 	const handleFilterChange = (key: string, value: string) => {
 		const params = new URLSearchParams(searchParams);
-		if (value && value !== "all") {
+		if (value && value !== ClientCategory.ALL && value !== Gender.ALL) {
 			params.set(key, value);
 		} else {
 			params.delete(key);
@@ -53,29 +54,29 @@ export function ClientFilters() {
 			<div className="flex w-full gap-4 sm:w-auto">
 				<Select
 					onValueChange={(v) => handleFilterChange("category", v)}
-					defaultValue={searchParams.get("category") || "all"}
+					defaultValue={searchParams.get("category") || ClientCategory.ALL}
 				>
 					<SelectTrigger className="w-full sm:w-[180px]">
 						<SelectValue placeholder="Category" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="all">All Categories</SelectItem>
-						<SelectItem value="adult">Adult</SelectItem>
-						<SelectItem value="child">Child</SelectItem>
-						<SelectItem value="student">Student</SelectItem>
+						<SelectItem value={ClientCategory.ALL}>All Categories</SelectItem>
+						<SelectItem value={ClientCategory.ADULT}>Adult</SelectItem>
+						<SelectItem value={ClientCategory.CHILD}>Child</SelectItem>
+						<SelectItem value={ClientCategory.STUDENT}>Student</SelectItem>
 					</SelectContent>
 				</Select>
 				<Select
 					onValueChange={(v) => handleFilterChange("gender", v)}
-					defaultValue={searchParams.get("gender") || "all"}
+					defaultValue={searchParams.get("gender") || Gender.ALL}
 				>
 					<SelectTrigger className="w-full sm:w-[180px]">
 						<SelectValue placeholder="Gender" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="all">All Genders</SelectItem>
-						<SelectItem value="male">Male</SelectItem>
-						<SelectItem value="female">Female</SelectItem>
+						<SelectItem value={Gender.ALL}>All Genders</SelectItem>
+						<SelectItem value={Gender.MALE}>Male</SelectItem>
+						<SelectItem value={Gender.FEMALE}>Female</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>

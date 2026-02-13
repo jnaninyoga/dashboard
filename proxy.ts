@@ -1,8 +1,27 @@
-import { type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/supabase/middleware";
 
 export async function proxy(request: NextRequest) {
-  return await updateSession(request);
+  const { response, user } = await updateSession(request);
+
+  const path = request.nextUrl.pathname;
+
+  // Define public routes
+  const isPublicRoute =
+    path === "/login" ||
+    path.startsWith("/auth/") ||
+    path.startsWith("/api/auth/"); // if any
+
+  // If user is not signed in and the route is not public, redirect to /login
+  if (!user && !isPublicRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    // Optional: Add ?next=...
+    url.searchParams.set("next", path);
+    return NextResponse.redirect(url);
+  }
+
+  return response;
 }
 
 export const config = {

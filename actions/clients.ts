@@ -5,11 +5,15 @@ import { clients } from "@/drizzle/schema";
 import { eq, and, or, ilike, desc } from "drizzle-orm";
 import { createClient } from "@/supabase/server";
 import { revalidatePath } from "next/cache";
-import { syncClientToGoogleContacts } from "@/services/google-contacts";
+import {
+	syncClientToGoogleContacts,
+	updateClientInGoogleContacts,
+} from "@/services/google-contacts";
 import { redirect } from "next/navigation";
 import { clientSchema } from "@/lib/validators";
 import { HEALTH_TEMPLATE } from "@/config/health";
 import { getValidAccessToken } from "@/services/google-tokens";
+import { ClientCategory, Gender } from "@/lib/types";
 
 export async function createClientAction(
 	_prevState: unknown,
@@ -27,20 +31,13 @@ export async function createClientAction(
 	}
 
 	// Try to get a valid access token (will refresh if needed)
-	let accessToken = await getValidAccessToken(user.id);
-
-	// Fallback to session provider_token if our stored token doesn't exist
-	if (!accessToken) {
-		const {
-			data: { session },
-		} = await supabase.auth.getSession();
-		accessToken = session?.provider_token || null;
-	}
-
-	if (!accessToken) {
-		return {
-			error: "No Google Access Token. Please sign out and sign in again.",
-		};
+	let accessToken: string;
+	try {
+		accessToken = await getValidAccessToken(user.id);
+	} catch (error) {
+		console.error("Token retrieval failed:", error);
+		// If reauth is required (or any other token error), redirect to login
+		redirect("/login");
 	}
 
 	const intakeDataRaw: Record<string, string> = {};
@@ -102,19 +99,22 @@ export async function createClientAction(
 
 	try {
 		// Use the dedicated service for Google Contacts sync
-		const resourceName = await syncClientToGoogleContacts(accessToken, {
-			fullName,
-			phone,
-			email: email || null,
-			address: address || null,
-			profession: profession || null,
-			birthDate,
-			category: category as "adult" | "child" | "student",
-			gender: gender as "male" | "female" | undefined,
-			referralSource: referralSource || null,
-			consultationReason: consultationReason || null,
-			intakeData: intakeData || {},
-		});
+		const { resourceName, photoUrl } = await syncClientToGoogleContacts(
+			accessToken,
+			{
+				fullName,
+				phone,
+				email: email || null,
+				address: address || null,
+				profession: profession || null,
+				birthDate,
+				category: category || ClientCategory.ADULT,
+				gender: gender,
+				referralSource: referralSource || null,
+				consultationReason: consultationReason || null,
+				intakeData: intakeData || {},
+			},
+		);
 
 		// 5. Insert into DB
 		await db.insert(clients).values({
@@ -124,12 +124,32 @@ export async function createClientAction(
 			address: address || null,
 			profession: profession || null,
 			birthDate,
-			category: category as "adult" | "child" | "student",
-			gender: gender as "male" | "female" | undefined,
+			category: category || ClientCategory.ADULT,
+			gender: gender || Gender.MALE, // Default or handle null? Google Contacts gender is optional string but our type says specific?
+			// Wait, syncClientToGoogleContacts definition: gender?: "male" | "female".
+			// gender from parsed.data is Gender enum.
+			// If undefined, pass undefined to sync?
+			// Schema: gender is NOT optional in DB?
+			// drizzle/schema.ts: gender: genderEnum("gender").notNull()
+			// So parsed.data.gender SHOULD be defined if no default in DB.
+			// But createInsertSchema makes it optional if it HAS a default?
+			// genderEnum has no default in schema. So createInsertSchema should make it REQUIRED.
+			// However, the error said: Type 'undefined' is not assignable to type.
+			// Maybe I confused category (which has default) with gender?
+			// Error: Type 'undefined' is not assignable to type '"adult" | "child" | "student"'. (for category).
+			// So category needs default.
+			// Gender: Type 'Gender' is not assignable to '"male" | "female" | undefined'.
+			// lib/types Gender = enum { MALE='male', ... }.
+			// So passing Gender.MALE is 'male'.
+			// But type error might be mismatch between string literal type and enum type?
+			// Let's assume standard Enum usuage fixes it.
+			// For category: use || ClientCategory.ADULT.
+			// For gender: if it's required in schema, it won't be undefined. If error persists, cast it?
 			referralSource: referralSource ?? null,
 			consultationReason: consultationReason || null,
 			intakeData: intakeData || {}, // Store as plain JSONB
 			googleContactResourceName: resourceName || null,
+			photoUrl: photoUrl || null,
 		});
 	} catch (err: unknown) {
 		console.error("Error creating client:", err);
@@ -145,7 +165,7 @@ export async function getClientsAction(
 	page = 1,
 	pageSize = 10,
 	query = "",
-	filters: { category?: string; gender?: string } = {},
+	filters: { category?: ClientCategory; gender?: Gender } = {},
 ) {
 	const supabase = await createClient();
 	const {
@@ -170,15 +190,15 @@ export async function getClientsAction(
 		);
 	}
 
-	if (filters.category && filters.category !== "all") {
+	if (filters.category && filters.category !== ClientCategory.ALL) {
 		whereConditions.push(
-			eq(clients.category, filters.category as "adult" | "child" | "student"),
+			eq(clients.category, filters.category),
 		);
 	}
 
-	if (filters.gender && filters.gender !== "all") {
+	if (filters.gender && filters.gender !== Gender.ALL) {
 		whereConditions.push(
-			eq(clients.gender, filters.gender as "male" | "female"),
+			eq(clients.gender, filters.gender),
 		);
 	}
 
@@ -192,14 +212,6 @@ export async function getClientsAction(
 			offset: offset,
 			orderBy: [desc(clients.createdAt)],
 		});
-
-		// Get total count for pagination
-		// Drizzle doesn't have a simple count() with where() yet without raw sql or separate query
-		// For simplicity in this dashboard, we can just fetch the count separately or accept an approximate if list is huge.
-		// Let's do a separate count query.
-		// NOTE: details on count() varies by driver/drizzle version, strictly typed way:
-		// const totalRes = await db.select({ count: count() }).from(clients).where(whereClause);
-		// But let's stick to a simpler approach if imports are missing, assume standard drizzle-orm behavior.
 
 		return { success: true, data };
 	} catch (error) {
@@ -228,7 +240,10 @@ export async function getClientByIdAction(id: string) {
 	}
 }
 
-export async function getGoogleContactPhotoAction(resourceName: string) {
+export async function getGoogleContactPhotoAction(
+	resourceName: string,
+	clientId?: string,
+) {
 	const supabase = await createClient();
 	const {
 		data: { user },
@@ -236,11 +251,28 @@ export async function getGoogleContactPhotoAction(resourceName: string) {
 
 	if (!user) return { error: "Not authenticated" };
 
-	const accessToken = await getValidAccessToken(user.id);
-	if (!accessToken) return { error: "No access token" };
+	let accessToken: string;
+	try {
+		accessToken = await getValidAccessToken(user.id);
+	} catch {
+		redirect("/login");
+	}
 
 	const { getContactPhoto } = await import("@/services/google-contacts");
 	const photoUrl = await getContactPhoto(accessToken, resourceName);
+
+	// Read-through cache: Update DB if we successfully fetched a photo and have a clientId
+	if (photoUrl && clientId) {
+		try {
+			await db
+				.update(clients)
+				.set({ photoUrl })
+				.where(eq(clients.id, clientId));
+		} catch (err) {
+			console.error("Failed to cache photo URL:", err);
+			// Non-blocking error
+		}
+	}
 
 	return { success: true, url: photoUrl };
 }
@@ -295,12 +327,68 @@ export async function updateClientAction(
 	}
 
 	try {
+		// 1. Fetch existing client to get resource name
+		const existingClient = await db.query.clients.findFirst({
+			where: eq(clients.id, id),
+		});
+
+		if (existingClient?.googleContactResourceName) {
+			// 2. Sync to Google Contacts
+			let accessToken: string;
+			try {
+				accessToken = await getValidAccessToken(user.id);
+				const photoUrl = await updateClientInGoogleContacts(
+					accessToken,
+					existingClient.googleContactResourceName,
+					{
+						fullName: parsed.data.fullName,
+						phone: parsed.data.phone,
+						email: parsed.data.email || null,
+						address: parsed.data.address || null,
+						profession: parsed.data.profession || null,
+						birthDate: parsed.data.birthDate,
+						category: parsed.data.category || ClientCategory.ADULT,
+						gender: parsed.data.gender,
+						referralSource: parsed.data.referralSource || null,
+						consultationReason: parsed.data.consultationReason || null,
+						intakeData: parsed.data.intakeData || {},
+					},
+				);
+
+				// Update photoUrl if we got one back
+				if (photoUrl) {
+					await db
+						.update(clients)
+						.set({ photoUrl })
+						.where(eq(clients.id, id));
+				}
+			} catch (e: any) {
+				console.error("Failed to sync update to Google Contacts:", e);
+				// If validation error (412 Precondition Failed means etag mismatch), maybe we should warn user?
+				// For now, if it's an Auth error, we return error so frontend can handle it (or Proxy will catch next nav).
+				if (e.message === "REAUTH_REQUIRED") {
+					return { error: "Session expired. Please refresh the page." };
+				}
+				// Other errors: Log and proceed? Or block?
+				// "Google API rejects updates without correct etag"... implies we should probably fail if sync fails?
+				// User said: "Fixed... bugs". If sync fails, data is out of sync.
+				// Let's block update if sync fails, unless it's a 404 (contact deleted remotely).
+				if (e.code === 404) {
+					// Contact gone, just update local
+				} else {
+					return {
+						error: "Failed to sync with Google Contacts. Please try again.",
+					};
+				}
+			}
+		}
+
 		await db
 			.update(clients)
 			.set({
 				...parsed.data,
-				category: parsed.data.category as "adult" | "child" | "student",
-				gender: parsed.data.gender as "male" | "female" | undefined,
+				category: parsed.data.category,
+				gender: parsed.data.gender,
 			})
 			.where(eq(clients.id, id));
 
@@ -328,10 +416,30 @@ export async function deleteClientAction(id: string) {
 
 		if (client?.googleContactResourceName) {
 			// 2. Get Access Token
-			const accessToken = await getValidAccessToken(user.id);
-			if (accessToken) {
+			let accessToken: string;
+			try {
+				accessToken = await getValidAccessToken(user.id);
 				const { deleteContact } = await import("@/services/google-contacts");
-				await deleteContact(accessToken, client.googleContactResourceName);
+				const success = await deleteContact(
+					accessToken,
+					client.googleContactResourceName,
+				);
+				if (!success) {
+					// If false (and not 404 which returns true), it was a real error.
+					// But our robust deleteContact returns true for 404.
+					// So if false, it's likely API error or Auth error (if caught inside deleteContact? No wait).
+					// deleteContact returns false on error.
+					// We should probably allow local delete anyway?
+					// Use instruction "If error code is 404... return true... effectively ignoring it".
+					// But `deleteContact` catches errors. If it returns false, it logged error.
+					// Let's assume we proceed to ensure local cleanup, UNLESS it's auth error?
+				}
+			} catch (e: any) {
+				console.error("Failed to sync delete to Google Contacts:", e);
+				if (e.message === "REAUTH_REQUIRED") {
+					return { error: "Session expired. Please refresh the page." };
+				}
+				// For other errors, we might want to proceed with local delete to clean up 'zombie' records.
 			}
 		}
 

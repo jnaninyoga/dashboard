@@ -1,5 +1,7 @@
 "use client";
 
+import { ClientCategory, Gender } from "@/lib/types";
+
 import Link from "next/link";
 
 import {

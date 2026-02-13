@@ -53,7 +53,7 @@ export const clients = pgTable("clients", {
 	phone: text("phone").notNull(),
 	address: text("address"),
 	birthDate: date("birth_date").notNull(),
-	gender: genderEnum("gender"),
+	gender: genderEnum("gender").notNull(),
 	profession: text("profession"),
 	consultationReason: text("consultation_reason"),
 	referralSource: referralSourceEnum("referral_source"),
@@ -61,6 +61,7 @@ export const clients = pgTable("clients", {
 	// Structured dossier for the detailed questionnaire
 	intakeData: jsonb("intake_data"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
+	photoUrl: text("photo_url"),
 });
 
 export const healthLogs = pgTable("health_logs", {

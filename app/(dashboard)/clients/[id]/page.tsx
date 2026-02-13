@@ -34,13 +34,14 @@ export default async function ClientProfilePage(props: { params: Params }) {
 		return notFound();
 	}
 
-	// Fetch Google Photo if available
-	let photoUrl = null;
-	if (client.googleContactResourceName) {
+	// Fetch Google Photo (Read-Through Cache)
+	let photoUrl = client.photoUrl;
+	if (!photoUrl && client.googleContactResourceName) {
 		const photoRes = await getGoogleContactPhotoAction(
 			client.googleContactResourceName,
+			client.id, // Trigger cache update
 		);
-		if (photoRes.success) {
+		if (photoRes.success && photoRes.url) {
 			photoUrl = photoRes.url;
 		}
 	}
@@ -122,7 +123,7 @@ export default async function ClientProfilePage(props: { params: Params }) {
 							Edit Profile
 						</Button>
 					</Link>
-					<ClientActions client={client} />
+					<ClientActions client={client} showEdit={false} />
 				</div>
 			</div>
 
@@ -164,25 +165,23 @@ export default async function ClientProfilePage(props: { params: Params }) {
 								<Calendar className="h-4 w-4 text-muted-foreground" />
 								<span className="text-sm">Born: {client.birthDate}</span>
 							</div>
-						</CardContent>
-					</Card>
-
-					<Card>
-						<CardHeader>
-							<CardTitle className="text-lg">Metadata</CardTitle>
-						</CardHeader>
-						<CardContent className="space-y-2 text-sm">
-							<div className="flex justify-between">
-								<span className="text-muted-foreground">Referral Source</span>
-								<span className="font-medium capitalize">
-									{client.referralSource?.replace("_", " ") || "N/A"}
-								</span>
-							</div>
-							<div className="flex justify-between">
-								<span className="text-muted-foreground">Client Since</span>
-								<span className="font-medium">
-									{new Date(client.createdAt).toLocaleDateString()}
-								</span>
+							
+							<Separator className="my-2" />
+							
+							{/* Metadata Merged */}
+							<div className="grid grid-cols-2 gap-4 text-sm pt-2">
+								<div className="flex flex-col">
+									<span className="text-muted-foreground text-xs uppercase tracking-wider">Referral</span>
+									<span className="font-medium capitalize">
+										{client.referralSource?.replace("_", " ") || "N/A"}
+									</span>
+								</div>
+								<div className="flex flex-col">
+									<span className="text-muted-foreground text-xs uppercase tracking-wider">Client Since</span>
+									<span className="font-medium">
+										{new Date(client.createdAt).toLocaleDateString()}
+									</span>
+								</div>
 							</div>
 						</CardContent>
 					</Card>

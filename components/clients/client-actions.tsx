@@ -27,7 +27,13 @@ type Client = {
 	fullName: string;
 };
 
-export function ClientActions({ client }: { client: Client }) {
+export function ClientActions({
+	client,
+	showEdit = true,
+}: {
+	client: Client;
+	showEdit?: boolean;
+}) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -40,6 +46,7 @@ export function ClientActions({ client }: { client: Client }) {
 				console.error(res.error);
 			} else {
 				setShowDeleteDialog(false);
+				router.push("/clients");
 			}
 		});
 	};
@@ -54,12 +61,14 @@ export function ClientActions({ client }: { client: Client }) {
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					<DropdownMenuItem
-						onClick={() => router.push(`/clients/${client.id}/edit`)}
-					>
-						<Pencil className="mr-2 h-4 w-4" />
-						Edit
-					</DropdownMenuItem>
+					{showEdit && (
+						<DropdownMenuItem
+							onClick={() => router.push(`/clients/${client.id}/edit`)}
+						>
+							<Pencil className="mr-2 h-4 w-4" />
+							Edit
+						</DropdownMenuItem>
+					)}
 					<DropdownMenuItem
 						onClick={() => setShowDeleteDialog(true)}
 						className="text-red-600 focus:text-red-600"

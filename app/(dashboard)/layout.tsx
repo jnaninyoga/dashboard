@@ -8,6 +8,8 @@ import {
 import { createClient } from "@/supabase/server";
 import { redirect } from "next/navigation";
 
+import { getValidAccessToken } from "@/services/google-tokens";
+
 export default async function DashboardLayout({
 	children,
 }: Readonly<{
@@ -19,6 +21,16 @@ export default async function DashboardLayout({
 	} = await supabase.auth.getUser();
 
 	if (!user) {
+		redirect("/login");
+	}
+
+	// Global Guard: Ensure Google Token is valid and refreshable
+	// If this fails, the user must re-authenticate to sync Supabase session with Google
+	try {
+		await getValidAccessToken(user.id);
+	} catch (error) {
+		// Token is invalid/expired and could not be refreshed
+		console.error("Dashboard Guard: Google Token Invalid", error);
 		redirect("/login");
 	}
 

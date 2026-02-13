@@ -1,6 +1,6 @@
 "use client";
 
-import { UseFormReturn } from "react-hook-form";
+import { UseFormReturn, useWatch } from "react-hook-form";
 import {
 	Card,
 	CardContent,
@@ -23,6 +23,7 @@ interface StepConsultationProps {
 }
 
 export function StepConsultation({ form }: StepConsultationProps) {
+	const values = useWatch({ control: form.control });
 	return (
 		<div className="space-y-6">
 			<Card>
@@ -64,19 +65,19 @@ export function StepConsultation({ form }: StepConsultationProps) {
 				</CardHeader>
 				<CardContent className="text-sm space-y-2">
 					<p>
-						<strong>Name:</strong> {form.watch("fullName") || "—"}
+						<strong>Name:</strong> {values.fullName || "—"}
 					</p>
 					<p>
-						<strong>Birth Date:</strong> {form.watch("birthDate") || "—"}
+						<strong>Birth Date:</strong> {values.birthDate || "—"}
 					</p>
 					<p>
-						<strong>Phone:</strong> {form.watch("phone") || "—"}
+						<strong>Phone:</strong> {values.phone || "—"}
 					</p>
 					<p>
-						<strong>Email:</strong> {form.watch("email") || "—"}
+						<strong>Email:</strong> {values.email || "—"}
 					</p>
 					<p>
-						<strong>Category:</strong> {form.watch("category") || "—"}
+						<strong>Category:</strong> {values.category || "—"}
 					</p>
 				</CardContent>
 			</Card>

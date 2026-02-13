@@ -8,6 +8,13 @@
       "when": 1770483755996,
       "tag": "0000_fixed_ezekiel_stane",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770983232373,
+      "tag": "0001_curvy_sentinels",
+      "breakpoints": true
     }
   ]
 }

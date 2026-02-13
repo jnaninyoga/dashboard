@@ -1,6 +1,7 @@
 import { createInsertSchema } from "drizzle-zod";
 import { clients } from "@/drizzle/schema";
 import { z } from "zod";
+import { ClientCategory, Gender, ReferralSource } from "@/lib/types";
 
 export const clientSchema = createInsertSchema(clients, {
 	email: z
@@ -13,25 +14,40 @@ export const clientSchema = createInsertSchema(clients, {
 		schema.refine((date) => !isNaN(Date.parse(date)), {
 			message: "Invalid date string",
 		}),
-	// Enums
-	gender: z.enum(["male", "female"]).optional(),
+	fullName: z.string().min(2, { message: "Name is required (min 2 chars)" }),
+	phone: z
+		.string()
+		.min(10, { message: "Phone number must be at least 10 characters" })
+		.regex(/^\+?[\d\s-()]+$/, {
+			message: "Phone number can only contain digits, spaces, and dashes",
+		})
+		.refine((val) => val.replace(/\D/g, "").length >= 10, {
+			message: "Phone number must contain at least 10 digits",
+		}),
+	category: z.enum(
+		[ClientCategory.ADULT, ClientCategory.CHILD, ClientCategory.STUDENT],
+		{
+			message: "Please select a valid category",
+		},
+	),
+	gender: z.enum([Gender.MALE, Gender.FEMALE], {
+		message: "Please select a gender",
+	}),
 	referralSource: z
 		.enum([
-			"social_media",
-			"website",
-			"friend",
-			"professional_network",
-			"other",
+			ReferralSource.SOCIAL_MEDIA,
+			ReferralSource.WEBSITE,
+			ReferralSource.FRIEND,
+			ReferralSource.PROFESSIONAL_NETWORK,
+			ReferralSource.OTHER,
 		])
 		.optional(),
-
-	// Intake Data (Flexible JSONB)
-	// We allow any key-value string pairs for the questionnaire
 	intakeData: z.record(z.string(), z.string().optional()).optional(),
 }).omit({
 	id: true,
 	createdAt: true,
 	googleContactResourceName: true,
+	photoUrl: true,
 });
 
 export type ClientFormValues = z.infer<typeof clientSchema>;

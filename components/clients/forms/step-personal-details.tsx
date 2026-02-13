@@ -35,6 +35,7 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, isValid } from "date-fns";
 import type { ClientFormValues } from "@/lib/validators";
+import { ClientCategory, Gender, ReferralSource } from "@/lib/types";
 
 interface StepPersonalDetailsProps {
 	form: UseFormReturn<ClientFormValues>;
@@ -128,26 +129,33 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 					<FormField
 						control={form.control}
 						name="gender"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Gender</FormLabel>
-								<Select
-									onValueChange={field.onChange}
-									defaultValue={field.value ?? undefined}
-								>
-									<FormControl>
-										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select..." />
-										</SelectTrigger>
-									</FormControl>
-									<SelectContent>
-										<SelectItem value="male">Male</SelectItem>
-										<SelectItem value="female">Female</SelectItem>
-									</SelectContent>
-								</Select>
-								<FormMessage />
-							</FormItem>
-						)}
+						render={({ field, fieldState }) => (
+						<FormItem>
+							<FormLabel>
+								Gender <span className="text-destructive">*</span>
+							</FormLabel>
+							<Select
+								onValueChange={field.onChange}
+								defaultValue={field.value ?? undefined}
+							>
+								<FormControl>
+									<SelectTrigger
+										className={cn(
+											"w-full",
+											fieldState.error && "border-destructive",
+										)}
+									>
+										<SelectValue placeholder="Select..." />
+									</SelectTrigger>
+								</FormControl>
+								<SelectContent>
+									<SelectItem value={Gender.MALE}>Male</SelectItem>
+									<SelectItem value={Gender.FEMALE}>Female</SelectItem>
+								</SelectContent>
+							</Select>
+							<FormMessage />
+						</FormItem>
+					)}
 					/>
 					<FormField
 						control={form.control}
@@ -230,9 +238,9 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
-										<SelectItem value="adult">Adult</SelectItem>
-										<SelectItem value="child">Child</SelectItem>
-										<SelectItem value="student">Student</SelectItem>
+										<SelectItem value={ClientCategory.ADULT}>Adult</SelectItem>
+										<SelectItem value={ClientCategory.CHILD}>Child</SelectItem>
+										<SelectItem value={ClientCategory.STUDENT}>Student</SelectItem>
 									</SelectContent>
 								</Select>
 								<FormMessage />
@@ -272,13 +280,13 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
-										<SelectItem value="social_media">Social Media</SelectItem>
-										<SelectItem value="website">Website</SelectItem>
-										<SelectItem value="friend">Friend</SelectItem>
-										<SelectItem value="professional_network">
+										<SelectItem value={ReferralSource.SOCIAL_MEDIA}>Social Media</SelectItem>
+										<SelectItem value={ReferralSource.WEBSITE}>Website</SelectItem>
+										<SelectItem value={ReferralSource.FRIEND}>Friend</SelectItem>
+										<SelectItem value={ReferralSource.PROFESSIONAL_NETWORK}>
 											Professional Network
 										</SelectItem>
-										<SelectItem value="other">Other</SelectItem>
+										<SelectItem value={ReferralSource.OTHER}>Other</SelectItem>
 									</SelectContent>
 								</Select>
 								<FormMessage />

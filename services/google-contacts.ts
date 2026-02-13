@@ -85,6 +85,7 @@ export async function syncClientToGoogleContacts(
 
 	// 4. Create Contact with Enhanced Fields
 	const contactRes = await google.people.people.createContact({
+		personFields: "photos", // Request photos in response
 		requestBody: {
 			names: [
 				{
@@ -115,8 +116,93 @@ export async function syncClientToGoogleContacts(
 		},
 	});
 
-	// ... existing code ...
-	return contactRes.data.resourceName;
+	const resourceName = contactRes.data.resourceName;
+	const photoUrl = contactRes.data.photos?.[0]?.url || null;
+
+	if (!resourceName) {
+		throw new Error("Failed to create contact in Google Contacts");
+	}
+
+	return { resourceName, photoUrl };
+}
+
+export async function updateClientInGoogleContacts(
+	accessToken: string,
+	resourceName: string,
+	data: ContactData,
+) {
+	const google = getGoogleClient(accessToken);
+
+	// 1. Get current Etag
+	// We must fetch the person first to get the current etag for optimistic locking
+	const current = await google.people.people.get({
+		resourceName,
+		personFields: "names,metadata",
+	});
+	const etag = current.data.etag;
+
+	// 2. Birthday Logic (Reused)
+	const dateObj = new Date(data.birthDate);
+	const birthdayValue = {
+		date: {
+			year: dateObj.getFullYear(),
+			month: dateObj.getMonth() + 1,
+			day: dateObj.getDate(),
+		},
+	};
+
+	// 3. Construct Biography Note (Reused logic - could be extracted but keeping inline for now)
+	let bioNote = "🧘 JnaninYoga Client Profile\n===========================\n";
+	bioNote += `Category: ${data.category.charAt(0).toUpperCase() + data.category.slice(1)}\n`;
+	if (data.gender)
+		bioNote += `Gender: ${data.gender.charAt(0).toUpperCase() + data.gender.slice(1)}\n`;
+	if (data.referralSource)
+		bioNote += `Referral: ${data.referralSource.replace("_", " ")}\n`;
+	bioNote += "\n";
+	if (data.consultationReason) {
+		bioNote += `[Reason for Consultation]\n${data.consultationReason}\n\n`;
+	}
+	HEALTH_TEMPLATE.forEach((section) => {
+		const sectionValues = section.fields
+			.map((f) => {
+				const val = data.intakeData ? data.intakeData[f.key] : undefined;
+				return val ? `- ${f.label}: ${val}` : null;
+			})
+			.filter(Boolean);
+
+		if (sectionValues.length > 0) {
+			bioNote += `[${section.label}]\n${sectionValues.join("\n")}\n`;
+		}
+	});
+
+	// 2. Push Update
+	const updateRes = await google.people.people.updateContact({
+		resourceName,
+		updatePersonFields:
+			"names,phoneNumbers,emailAddresses,addresses,occupations,birthdays,biographies,userDefined",
+		personFields: "photos", // Request to return photos
+		requestBody: {
+			etag: etag,
+			names: [
+				{
+					givenName: data.fullName,
+					displayName: data.fullName,
+				},
+			],
+			phoneNumbers: [{ value: data.phone }],
+			emailAddresses: data.email ? [{ value: data.email }] : undefined,
+			addresses: data.address ? [{ formattedValue: data.address }] : undefined,
+			occupations: data.profession ? [{ value: data.profession }] : undefined,
+			birthdays: [birthdayValue],
+			biographies: [{ value: bioNote.trim(), contentType: "TEXT_PLAIN" }],
+			userDefined: [
+				{ key: "Client Category", value: data.category },
+				{ key: "Gender", value: data.gender || "Not specified" },
+			],
+		},
+	});
+
+	return updateRes.data.photos?.[0]?.url || null;
 }
 
 export async function getContactPhoto(
@@ -148,7 +234,14 @@ export async function deleteContact(
 			resourceName,
 		});
 		return true;
-	} catch (error) {
+	} catch (error: any) {
+		// Robust handling: If resource not found (404), consider it deleted/success
+		if (error.code === 404 || error.message?.includes("not found")) {
+			console.warn(
+				`Contact ${resourceName} not found in Google (404). Assuming already deleted.`,
+			);
+			return true;
+		}
 		console.error("Error deleting contact:", error);
 		return false;
 	}

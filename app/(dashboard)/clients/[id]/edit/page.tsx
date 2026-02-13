@@ -1,5 +1,6 @@
 import { getClientByIdAction } from "@/actions/clients";
 import { ClientForm } from "@/components/clients/client-form";
+import { ClientCategory, Gender, ReferralSource } from "@/lib/types";
 import { notFound } from "next/navigation";
 
 // Next.js 15+ params are promises
@@ -15,29 +16,24 @@ export default async function EditClientPage(props: { params: Params }) {
 		notFound();
 	}
 
-	// Cast DB client to FormValues
-	// We need to map DB fields to our Form schema
-	// Specifically ensuring intakeData is Record<string, string>
-	// Drizzle jsonb is typed as unknown or any usually, we assume it matches
-
-	// Also date handling: DB might return Date object or string depending on driver
-	// HTML form expects "YYYY-MM-DD" string.
-
-	const formattedDate = client.birthDate; // Drizzle 'date' type usually returns string "YYYY-MM-DD"
+	const formattedDate = client.birthDate;
 
 	const initialData = {
-		...client,
 		id: client.id,
-		birthDate: formattedDate,
-		intakeData: (client.intakeData as Record<string, string>) || {},
-		// Ensure nullable fields are undefined if null for Reack Hook Form defaults (sometimes it prefers undefined)
+		fullName: client.fullName,
 		email: client.email || undefined,
-		phone: client.phone, // not null
+		phone: client.phone,
 		address: client.address || undefined,
+		birthDate: formattedDate,
 		profession: client.profession || undefined,
 		consultationReason: client.consultationReason || "",
-		referralSource: client.referralSource || undefined,
-		gender: client.gender || undefined,
+// ...
+		// Use ClientFormValues['category'] or Exclude<ClientCategory, ClientCategory.ALL>
+		category: (client.category as Exclude<ClientCategory, ClientCategory.ALL>) || ClientCategory.ADULT,
+// Use Exclude to narrow the type to allowed values
+		gender: (client.gender as Exclude<Gender, Gender.ALL>) || Gender.MALE,
+		referralSource: (client.referralSource as ReferralSource) || undefined,
+		intakeData: (client.intakeData as Record<string, string>) || {},
 	};
 
 	return <ClientForm mode="edit" initialData={initialData} />;

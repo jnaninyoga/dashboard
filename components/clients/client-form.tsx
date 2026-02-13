@@ -17,6 +17,7 @@ import { clientSchema, type ClientFormValues } from "@/lib/validators";
 import { StepPersonalDetails } from "@/components/clients/forms/step-personal-details";
 import { StepHealthWellness } from "@/components/clients/forms/step-health-wellness";
 import { StepConsultation } from "@/components/clients/forms/step-consultation";
+import { ClientCategory } from "@/lib/types";
 
 const WIZARD_STEPS: WizardStep[] = [
 	{ id: "personal", title: "Personal Info", description: "Identity & Contact" },
@@ -53,11 +54,13 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 	const [isPending, startTransition] = useTransition();
 	const [serverError, setServerError] = useState<string | null>(null);
 	const [currentStep, setCurrentStep] = useState(0);
+	const [isStepPending, setIsStepPending] = useState(false);
 	const router = useRouter();
 	const STORAGE_KEY = `client-form-progress-${mode}-${initialData?.id || "new"}`;
 
 	const form = useForm<ClientFormValues>({
 		resolver: zodResolver(clientSchema),
+		shouldUnregister: false,
 		defaultValues: {
 			fullName: "",
 			email: "",
@@ -65,7 +68,7 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			address: "",
 			profession: "",
 			birthDate: "",
-			category: "adult",
+			category: ClientCategory.ADULT,
 			consultationReason: "",
 			intakeData: {},
 			...initialData,
@@ -117,26 +120,35 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 	const getStepFields = (step: number): (keyof ClientFormValues)[] => {
 		switch (step) {
 			case 0:
-				return ["fullName", "phone", "birthDate", "category"];
+				return ["fullName", "phone", "birthDate", "category", "gender"];
 			case 1:
-				return [];
+				return []; // flexible intake data
 			case 2:
-				return [];
+				return []; // flexible intake data
 			case 3:
-				return [];
+				return ["consultationReason"];
 			default:
 				return [];
 		}
 	};
 
 	const handleNext = async () => {
-		const fieldsToValidate = getStepFields(currentStep);
-		if (fieldsToValidate.length > 0) {
-			const isValid = await form.trigger(fieldsToValidate);
-			if (!isValid) return;
-		}
-		if (currentStep < WIZARD_STEPS.length - 1) {
-			setCurrentStep((prev) => prev + 1);
+		setIsStepPending(true);
+		try {
+			const fieldsToValidate = getStepFields(currentStep);
+			if (fieldsToValidate.length > 0) {
+				const isValid = await form.trigger(fieldsToValidate);
+				if (!isValid) {
+					setServerError("Please fix the errors in the current step before proceeding.");
+					return;
+				}
+			}
+			setServerError(null); // Clear error if moving forward
+			if (currentStep < WIZARD_STEPS.length - 1) {
+				setCurrentStep((prev) => prev + 1);
+			}
+		} finally {
+			setIsStepPending(false);
 		}
 	};
 
@@ -162,7 +174,7 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			if (values.address) formData.append("address", values.address);
 			if (values.profession) formData.append("profession", values.profession);
 			formData.append("birthDate", values.birthDate || "");
-			formData.append("category", values.category || "adult");
+			formData.append("category", values.category || ClientCategory.ADULT.toString());
 			if (values.gender) formData.append("gender", values.gender);
 			if (values.referralSource)
 				formData.append("referralSource", values.referralSource);
@@ -183,7 +195,27 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			}
 
 			if (result?.error) {
-				setServerError(result.error);
+				if (result.issues) {
+					// Map Zod issues to form errors
+					let hasFieldErrors = false;
+					Object.entries(result.issues).forEach(([key, value]: [string, any]) => {
+						if (key === "_errors") return;
+						if (value && value._errors && Array.isArray(value._errors)) {
+							form.setError(key as keyof ClientFormValues, {
+								message: value._errors.join(", "),
+							});
+							hasFieldErrors = true;
+						}
+					});
+					
+					if (hasFieldErrors) {
+						setServerError("Please fix the highlighted errors.");
+					} else {
+						setServerError(result.error);
+					}
+				} else {
+					setServerError(result.error);
+				}
 			} else {
 				if (mode === "create") localStorage.removeItem(STORAGE_KEY);
 				router.push("/clients");
@@ -220,8 +252,9 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 						onNext={handleNext}
 						onBack={handleBack}
 						onSubmit={form.handleSubmit(onSubmit)}
-						isSubmitting={isPending}
+						isSubmitting={isPending || isStepPending}
 						submitLabel={mode === "create" ? "Create Client" : "Update Client"}
+						mode={mode}
 					>
 						{currentStep === 0 && <StepPersonalDetails form={form} />}
 						{currentStep === 1 && (

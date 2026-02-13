@@ -35,7 +35,7 @@ export async function storeUserTokens(
   });
 }
 
-export async function getValidAccessToken(userId: string): Promise<string | null> {
+export async function getValidAccessToken(userId: string): Promise<string> {
   try {
     const storedToken = await db.query.userTokens.findFirst({
       where: eq(userTokens.userId, userId),
@@ -43,7 +43,7 @@ export async function getValidAccessToken(userId: string): Promise<string | null
 
     if (!storedToken) {
       console.error("No stored tokens found in database for user:", userId);
-      return null;
+      throw new Error("REAUTH_REQUIRED");
     }
 
     // Check if access token is still valid (with 5 minute buffer)
@@ -68,7 +68,7 @@ export async function getValidAccessToken(userId: string): Promise<string | null
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Google API Token Refresh Failed: ${errorText}`);
-      return null;
+      throw new Error("REAUTH_REQUIRED");
     }
 
     const data: TokenResponse = await response.json();
@@ -84,6 +84,14 @@ export async function getValidAccessToken(userId: string): Promise<string | null
     return data.access_token;
   } catch (error) {
     console.error("Error in getValidAccessToken:", error);
-    return null;
+    if (error instanceof Error && error.message === "REAUTH_REQUIRED") {
+      throw error;
+    }
+    // For other errors, we also might want to force reauth if it's critical,
+    // but let's stick to the plan: if we can't get a token, it's a reauth case or system error.
+    // If it's a system error (db down), we might not want to redirect to login immediately,
+    // but for "stability" and strictness, failing to get a token generally means we can't do the action.
+    // However, to be safe and precise:
+    throw new Error("REAUTH_REQUIRED");
   }
 }

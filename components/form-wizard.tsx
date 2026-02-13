@@ -21,6 +21,7 @@ interface FormWizardProps {
 	canProceed?: boolean;
 	children: React.ReactNode;
 	submitLabel?: string;
+	mode?: "create" | "edit";
 }
 
 export function FormWizard({
@@ -33,6 +34,7 @@ export function FormWizard({
 	canProceed = true,
 	children,
 	submitLabel = "Create Profile",
+	mode = "create",
 }: FormWizardProps) {
 	const isFirstStep = currentStep === 0;
 	const isLastStep = currentStep === steps.length - 1;
@@ -123,20 +125,23 @@ export function FormWizard({
 				{isLastStep ? (
 					<Button
 						type="submit"
-						onClick={onSubmit}
 						disabled={isSubmitting || !canProceed}
 					>
 						{isSubmitting ? (
 							<>
 								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-								Creating...
+								{mode === "create" ? "Creating..." : "Updating..."}
 							</>
 						) : (
 							submitLabel
 						)}
 					</Button>
 				) : (
-					<Button type="button" onClick={onNext} disabled={!canProceed}>
+					<Button
+						type="button"
+						onClick={onNext}
+						disabled={!canProceed || isSubmitting}
+					>
 						Next
 						<ChevronRight className="ml-2 h-4 w-4" />
 					</Button>
