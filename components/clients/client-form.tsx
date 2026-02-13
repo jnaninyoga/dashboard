@@ -17,6 +17,7 @@ import { clientSchema, type ClientFormValues } from "@/lib/validators";
 import { StepPersonalDetails } from "@/components/clients/forms/step-personal-details";
 import { StepHealthWellness } from "@/components/clients/forms/step-health-wellness";
 import { StepConsultation } from "@/components/clients/forms/step-consultation";
+import { StepMembership } from "@/components/clients/forms/step-membership";
 import { ClientCategory } from "@/lib/types";
 
 const WIZARD_STEPS: WizardStep[] = [
@@ -27,6 +28,7 @@ const WIZARD_STEPS: WizardStep[] = [
 		title: "Wellness",
 		description: "Lifestyle & Mental Health",
 	},
+	{ id: "membership", title: "Membership", description: "Select Plan" },
 	{ id: "consultation", title: "Consultation", description: "Notes & Submit" },
 ];
 
@@ -75,6 +77,12 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			// Ensure enums are set or undefined, not null
 			gender: initialData?.gender || undefined,
 			referralSource: initialData?.referralSource || undefined,
+            // Map active product to initialProductId for Edit mode display
+            // @ts-ignore - dynamic prop from getClientById
+            initialProductId: initialData?.activeProductId || undefined,
+            // Map existing healthLogs if any (for Edit mode)
+            // @ts-ignore - dynamic prop
+            healthLogs: initialData?.healthLogs || [],
 		},
 	});
 
@@ -126,6 +134,8 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			case 2:
 				return []; // flexible intake data
 			case 3:
+				return []; // membership selection
+			case 4:
 				return ["consultationReason"];
 			default:
 				return [];
@@ -180,6 +190,12 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 				formData.append("referralSource", values.referralSource);
 			if (values.consultationReason)
 				formData.append("consultationReason", values.consultationReason);
+            
+            // @ts-ignore - Validated by wizard state but not in main schema yet
+            if (values.initialProductId) {
+                // @ts-ignore
+                formData.append("initialProductId", values.initialProductId);
+            }
 
 			if (values.intakeData) {
 				Object.entries(values.intakeData).forEach(([key, val]) => {
@@ -270,7 +286,10 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 								sections={getHealthSectionsByStep(2)}
 							/>
 						)}
-						{currentStep === 3 && <StepConsultation form={form} />}
+						{currentStep === 3 && (
+                            <StepMembership form={form} />
+                        )}
+						{currentStep === 4 && <StepConsultation form={form} />}
 					</FormWizard>
 				</form>
 			</Form>

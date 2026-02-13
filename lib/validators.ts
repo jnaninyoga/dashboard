@@ -48,6 +48,15 @@ export const clientSchema = createInsertSchema(clients, {
 	createdAt: true,
 	googleContactResourceName: true,
 	photoUrl: true,
+}).extend({
+    healthLogs: z.array(z.object({
+        category: z.string(),
+        condition: z.string(),
+        severity: z.string(),
+        isAlert: z.boolean(),
+        startDate: z.string()
+    })).optional(),
+    initialProductId: z.string().optional(),
 });
 
 export type ClientFormValues = z.infer<typeof clientSchema>;
