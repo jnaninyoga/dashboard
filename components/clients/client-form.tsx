@@ -252,7 +252,8 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 						onNext={handleNext}
 						onBack={handleBack}
 						onSubmit={form.handleSubmit(onSubmit)}
-						isSubmitting={isPending || isStepPending}
+						isSubmitting={isPending}
+						isStepPending={isStepPending}
 						submitLabel={mode === "create" ? "Create Client" : "Update Client"}
 						mode={mode}
 					>

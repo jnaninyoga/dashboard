@@ -18,6 +18,7 @@ interface FormWizardProps {
 	onBack: () => void;
 	onSubmit: () => void;
 	isSubmitting?: boolean;
+	isStepPending?: boolean;
 	canProceed?: boolean;
 	children: React.ReactNode;
 	submitLabel?: string;
@@ -31,6 +32,7 @@ export function FormWizard({
 	onBack,
 	onSubmit,
 	isSubmitting = false,
+	isStepPending = false,
 	canProceed = true,
 	children,
 	submitLabel = "Create Profile",
@@ -116,7 +118,7 @@ export function FormWizard({
 					type="button"
 					variant="outline"
 					onClick={onBack}
-					disabled={isFirstStep || isSubmitting}
+					disabled={isFirstStep || isSubmitting || isStepPending}
 				>
 					<ChevronLeft className="mr-2 h-4 w-4" />
 					Back
@@ -124,8 +126,9 @@ export function FormWizard({
 
 				{isLastStep ? (
 					<Button
+						key="submit-step-btn"
 						type="submit"
-						disabled={isSubmitting || !canProceed}
+						disabled={isSubmitting || !canProceed || isStepPending}
 					>
 						{isSubmitting ? (
 							<>
@@ -138,12 +141,22 @@ export function FormWizard({
 					</Button>
 				) : (
 					<Button
+						key="next-step-btn"
 						type="button"
 						onClick={onNext}
-						disabled={!canProceed || isSubmitting}
+						disabled={!canProceed || isSubmitting || isStepPending}
 					>
-						Next
-						<ChevronRight className="ml-2 h-4 w-4" />
+						{isStepPending ? (
+							<>
+								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								Validating...
+							</>
+						) : (
+							<>
+								Next
+								<ChevronRight className="ml-2 h-4 w-4" />
+							</>
+						)}
 					</Button>
 				)}
 			</div>
