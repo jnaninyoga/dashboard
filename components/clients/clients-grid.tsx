@@ -3,12 +3,18 @@
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ClientActions } from "./client-actions";
 import { getGoogleContactPhotoAction } from "@/actions/clients";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Mail, Phone, MapPin, Briefcase, Calendar } from "lucide-react";
+import { AlertCircle, Phone, Briefcase } from "lucide-react";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 // Types
 interface Client {
@@ -23,9 +29,85 @@ interface Client {
 	birthDate?: string | null;
 	googleContactResourceName?: string | null;
 	createdAt: Date;
+	wallets?: {
+		remainingCredits: number;
+		product: {
+			name: string;
+			defaultCredits: number;
+		} | null;
+		ledgerEntries?: {
+			checkInTime: Date;
+		}[];
+	}[];
+	healthLogs?: {
+		condition: string;
+		isAlert: boolean;
+	}[];
 }
 
-function ClientAvatar({ client }: { client: Client }) {
+// Helper to check if client is online (checked in today)
+function isClientOnline(client: Client) {
+	const lastCheckIn = client.wallets?.[0]?.ledgerEntries?.[0]?.checkInTime;
+	if (!lastCheckIn) return false;
+
+	const checkInDate = new Date(lastCheckIn);
+	const today = new Date();
+	return (
+		checkInDate.getDate() === today.getDate() &&
+		checkInDate.getMonth() === today.getMonth() &&
+		checkInDate.getFullYear() === today.getFullYear()
+	);
+}
+
+function CreditBattery({
+	remaining,
+	total,
+}: {
+	remaining: number;
+	total: number;
+}) {
+	const percentage = Math.max(0, Math.min(100, (remaining / total) * 100));
+
+	let colorClass = "bg-primary"; // Default Green-ish (primary)
+	if (percentage <= 20)
+		colorClass = "bg-destructive"; // Red
+	else if (percentage <= 50)
+		colorClass = "bg-yellow-500"; // Yellow/Orange
+	else colorClass = "bg-green-500"; // Green
+
+	return (
+		<div className="flex flex-col gap-1 items-end">
+			<div className="flex items-center gap-1">
+				<span
+					className={cn(
+						"text-[10px] font-medium mr-1",
+						percentage <= 20 ? "text-destructive" : "text-muted-foreground",
+					)}
+				>
+					{remaining} / {total}
+				</span>
+
+				{/* Battery Body */}
+				<div className="relative h-2.5 w-6 rounded-sm border border-muted-foreground/30 p-[0.5px] flex items-center">
+					<div
+						className={cn("h-full rounded-[0.5px] transition-all", colorClass)}
+						style={{ width: `${percentage}%` }}
+					/>
+				</div>
+				{/* Battery Tip */}
+				<div className="h-1 w-0.5 rounded-r-[0.5px] bg-muted-foreground/30 -ml-0.5"></div>
+			</div>
+		</div>
+	);
+}
+
+function ClientAvatar({
+	client,
+	className,
+}: {
+	client: Client;
+	className?: string;
+}) {
 	const [photoUrl, setPhotoUrl] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -41,9 +123,14 @@ function ClientAvatar({ client }: { client: Client }) {
 	}, [client.googleContactResourceName]);
 
 	return (
-		<Avatar className="h-20 w-20 border-2 border-background shadow-md">
+		<Avatar
+			className={cn(
+				"h-20 w-20 border-2 border-background shadow-md",
+				className,
+			)}
+		>
 			<AvatarImage src={photoUrl || undefined} alt={client.fullName} />
-			<AvatarFallback className="text-2xl bg-primary/10 text-primary font-semibold">
+			<AvatarFallback className="text-xl bg-primary/10 text-primary font-semibold">
 				{client.fullName.charAt(0)}
 			</AvatarFallback>
 		</Avatar>
@@ -60,84 +147,140 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-			{clients.map((client) => (
-				<Card
-					key={client.id}
-					className="group relative overflow-hidden transition-all hover:shadow-lg hover:-translate-y-1 border-muted/60"
-				>
-					<div className="absolute right-3 top-3 z-10">
-						<ClientActions client={client} />
-					</div>
+		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+			{clients.map((client) => {
+				const activeWallet = client.wallets?.[0];
 
-					<CardContent className="flex flex-col items-center p-6 pt-8 space-y-4 text-center">
-						<Link
-							href={`/clients/${client.id}`}
-							className="flex flex-col items-center gap-4 w-full"
-						>
-							<ClientAvatar client={client} />
-							<div className="space-y-1 w-full">
-								<h3 className="text-xl font-bold leading-tight group-hover:text-primary transition-colors">
-									{client.fullName}
-								</h3>
-								{client.profession ? (
-									<p className="text-sm text-muted-foreground flex items-center justify-center gap-1.5">
-										<Briefcase className="h-3.5 w-3.5" />
-										{client.profession}
-									</p>
-								) : (
-									<p className="text-sm text-muted-foreground capitalize">
-										{client.category}
-									</p>
-								)}
-							</div>
-						</Link>
+				// Filter for actual alerts
+				const alerts = client.healthLogs?.filter((l: any) => l.isAlert) || [];
+				const hasAlerts = alerts.length > 0;
+				const isOnline = isClientOnline(client);
 
-						{/* Status Badges */}
-						<div className="flex flex-wrap justify-center gap-2">
-							{client.gender && (
-								<Badge
-									variant="secondary"
-									className="capitalize text-xs font-medium px-2.5 py-0.5"
-								>
-									{client.gender}
-								</Badge>
+				return (
+					<Card
+						key={client.id}
+						className={cn(
+							"group relative flex flex-col overflow-hidden transition-all hover:shadow-md border-muted/60",
+							isOnline && "ring-1 ring-green-500/50 border-green-500/50",
+						)}
+					>
+						{/* Top Status Bar & Actions */}
+						<div className="absolute top-3 right-3 z-10 flex gap-2 items-center">
+							{isOnline && (
+								<TooltipProvider>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<div className="flex h-2.5 w-2.5 relative cursor-help">
+												<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+												<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 border border-white"></span>
+											</div>
+										</TooltipTrigger>
+										<TooltipContent side="left">
+											<p className="font-semibold text-xs text-green-600">
+												Checked in today
+											</p>
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
 							)}
-							<Badge
-								variant="outline"
-								className="capitalize text-xs font-medium text-muted-foreground px-2.5 py-0.5"
-							>
-								{client.category}
-							</Badge>
+							<ClientActions client={client} />
 						</div>
 
-						{/* Separator-like visual */}
-						<div className="w-full border-t border-border/50 my-2"></div>
+						<CardContent className="p-4 space-y-4">
+							{/* Horizontal Identity Section */}
+							<div className="flex items-start gap-3 pr-8">
+								<Link
+									href={`/clients/${client.id}`}
+									className="shrink-0 group/avatar"
+								>
+									<ClientAvatar
+										client={client}
+										className="h-12 w-12 border-2 border-background shadow-sm"
+									/>
+								</Link>
 
-						{/* Contact Info Grid */}
-						<div className="flex flex-col gap-2.5 text-sm text-muted-foreground w-full">
-							<div className="flex items-center justify-center gap-2">
-								<Phone className="h-4 w-4 shrink-0 opacity-70" />
-								<span className="truncate font-medium">{client.phone}</span>
-							</div>
-							{client.birthDate && (
-								<div className="flex items-center justify-center gap-2">
-									<Calendar className="h-4 w-4 shrink-0 opacity-70" />
-									<span className="truncate">{client.birthDate}</span>
+								<div className="flex flex-col min-w-0 pt-0.5">
+									<Link href={`/clients/${client.id}`} className="group/name">
+										<h3 className="font-bold text-base leading-tight truncate group-hover/name:text-primary transition-colors">
+											{client.fullName}
+										</h3>
+									</Link>
+									<p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 truncate h-4">
+										{client.profession ? (
+											<span className="truncate">{client.profession}</span>
+										) : (
+											<span className="capitalize">{client.category}</span>
+										)}
+									</p>
+
+									{/* Health Alerts Inline */}
+									{hasAlerts && (
+										<div className="flex items-center gap-1 text-destructive text-[10px] font-bold uppercase tracking-wider mt-1.5">
+											<AlertCircle className="h-3 w-3" />
+											<span>
+												{alerts.length} Alert{alerts.length > 1 ? "s" : ""}
+											</span>
+										</div>
+									)}
 								</div>
-							)}
-							{client.email && (
-								<div className="flex items-center justify-center gap-2">
-									<Mail className="h-4 w-4 shrink-0 opacity-70" />
-									<span className="truncate max-w-[200px]" title={client.email}>
-										{client.email}
+							</div>
+
+							<div className="w-full border-t border-border/40"></div>
+
+							{/* Compact Membership Block */}
+							<div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs items-center">
+								<div className="flex flex-col gap-0.5">
+									<span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wide">
+										Membership
+									</span>
+									<span
+										className="font-medium truncate"
+										title={activeWallet?.product?.name || "None"}
+									>
+										{activeWallet?.product?.name || "None"}
 									</span>
 								</div>
-							)}
-						</div>
-					</CardContent>
-				</Card>
-			))}
+
+								<div className="flex flex-col gap-0.5 items-end">
+									<span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wide">
+										Credits
+									</span>
+									{activeWallet?.product ? (
+										<CreditBattery
+											remaining={activeWallet.remainingCredits}
+											total={activeWallet.product.defaultCredits}
+										/>
+									) : (
+										<span className="text-muted-foreground">-</span>
+									)}
+								</div>
+							</div>
+
+							{/* Compact Footer */}
+							<div className="flex items-center justify-between text-xs text-muted-foreground bg-secondary/30 rounded-md py-1.5 px-2.5 -mx-1">
+								<div className="flex items-center gap-1.5 truncate max-w-[60%]">
+									<Phone className="h-3 w-3 shrink-0 opacity-70" />
+									<span className="truncate">{client.phone}</span>
+								</div>
+
+								<div className="flex items-center gap-1.5 shrink-0">
+									<span
+										className={cn(
+											"h-1.5 w-1.5 rounded-full",
+											client.gender === "male"
+												? "bg-blue-400"
+												: client.gender === "female"
+													? "bg-pink-400"
+													: "bg-gray-400",
+										)}
+									/>
+									<span className="capitalize">{client.category}</span>
+								</div>
+							</div>
+						</CardContent>
+					</Card>
+				);
+			})}
 		</div>
 	);
 }

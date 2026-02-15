@@ -1,0 +1,1 @@
+ALTER TABLE "health_logs" ADD COLUMN "treatment" text;

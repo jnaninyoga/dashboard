@@ -71,6 +71,7 @@ export const healthLogs = pgTable("health_logs", {
 		.notNull(),
 	category: healthCategoryEnum("category").notNull(),
 	condition: text("condition").notNull(),
+	treatment: text("treatment"),
 	severity: healthSeverityEnum("severity").default("info").notNull(),
 	isAlert: boolean("is_alert").default(false).notNull(),
 	startDate: date("start_date").defaultNow().notNull(),

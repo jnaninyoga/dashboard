@@ -5,6 +5,7 @@ import {
 	clients,
 	healthLogs,
 	clientWallets,
+	attendanceLedger,
 } from "@/drizzle/schema";
 import { eq, and, or, ilike, desc, isNull } from "drizzle-orm";
 import { createClient } from "@/supabase/server";
@@ -100,13 +101,13 @@ export async function createClientAction(
 		referralSource,
 		consultationReason,
 		intakeData,
-        healthLogs,
+		healthLogs,
 	} = parsed.data;
 
 	const initialProductId = formData.get("initialProductId") as string | null;
 
 	try {
-        let clientWithId: { id: string }[] = [];
+		let clientWithId: { id: string }[] = [];
 
 		await db.transaction(async (tx) => {
 			// Use the dedicated service for Google Contacts sync
@@ -128,131 +129,136 @@ export async function createClientAction(
 			);
 
 			// 5. Insert into DB
-			clientWithId = await tx.insert(clients).values({
-				fullName,
-				phone,
-				email: email || null,
-				address: address || null,
-				profession: profession || null,
-				birthDate,
-				category: category || ClientCategory.ADULT,
-				gender: gender || Gender.MALE, 
-				referralSource: referralSource ?? null,
-				consultationReason: consultationReason || null,
-				intakeData: intakeData || {}, // Store as plain JSONB
-				googleContactResourceName: resourceName || null,
-				photoUrl: photoUrl || null,
-			}).returning({ id: clients.id });
+			clientWithId = await tx
+				.insert(clients)
+				.values({
+					fullName,
+					phone,
+					email: email || null,
+					address: address || null,
+					profession: profession || null,
+					birthDate,
+					category: category || ClientCategory.ADULT,
+					gender: gender || Gender.MALE,
+					referralSource: referralSource ?? null,
+					consultationReason: consultationReason || null,
+					intakeData: intakeData || {}, // Store as plain JSONB
+					googleContactResourceName: resourceName || null,
+					photoUrl: photoUrl || null,
+				})
+				.returning({ id: clients.id });
 
-            const newClientId = clientWithId[0].id;
+			const newClientId = clientWithId[0].id;
 
-            // --- Auto-Generate Health Logs ---
-            const logsToInsert: any[] = [];
-            const nowStr = new Date().toISOString().split("T")[0];
+			// --- Auto-Generate Health Logs ---
+			const logsToInsert: any[] = [];
+			const nowStr = new Date().toISOString().split("T")[0];
 
-            // 1. Explicit Health Logs from Dynamic List (Priority)
-            if (parsed.data.healthLogs && parsed.data.healthLogs.length > 0) {
-                 parsed.data.healthLogs.forEach(log => {
-                     logsToInsert.push({
-                         clientId: newClientId,
-                         category: log.category,
-                         severity: log.severity,
-                         condition: log.condition,
-                         isAlert: log.isAlert,
-                         startDate: log.startDate || nowStr
-                     });
-                 });
-            }
+			// 1. Explicit Health Logs from Dynamic List (Priority)
+			if (parsed.data.healthLogs && parsed.data.healthLogs.length > 0) {
+				parsed.data.healthLogs.forEach((log) => {
+					logsToInsert.push({
+						clientId: newClientId,
+						category: log.category,
+						severity: log.severity,
+						condition: log.condition,
+						treatment: log.treatment || null,
+						isAlert: log.isAlert,
+						startDate: log.startDate || nowStr,
+					});
+				});
+			}
 
-            // 2. Fallback: Parse legacy intake fields ONLY if they are NOT covered by dynamic list?
-            // "Merge" logic: The user wants "Current Care" (wizard step) to BE active logs.
-            // "Medical History" (step 2 bottom) is static background.
-            // So we should iterate the OTHER fields from intakeData that are NOT "Physical" (since Physical is now the dynamic list).
-            
-            if (intakeData) {
-                const intake = intakeData as Record<string, string>;
+			// 2. Fallback: Parse legacy intake fields ONLY if they are NOT covered by dynamic list?
+			// "Merge" logic: The user wants "Current Care" (wizard step) to BE active logs.
+			// "Medical History" (step 2 bottom) is static background.
+			// So we should iterate the OTHER fields from intakeData that are NOT "Physical" (since Physical is now the dynamic list).
 
-                // Helper to check and add
-                const addLog = (key: string, cat: string, sev: string, alert: boolean) => {
-                     const val = intake[key];
-                     if (val) {
-                         // Check if this condition is already in dynamic list to avoid dupe? 
-                         // Simple check: unlikely exact string match, but let's just add them as "Background".
-                         logsToInsert.push({
-                             clientId: newClientId,
-                             category: cat,
-                             severity: sev,
-                             condition: `${key.replace(/([A-Z])/g, ' $1').trim()}: ${val}`, 
-                             isAlert: alert,
-                             startDate: nowStr
-                         });
-                     }
-                };
+			if (intakeData) {
+				const intake = intakeData as Record<string, string>;
 
-                // Medical History is still useful as alerts? 
-                // User said: "Wizard 'Medical History' = Static Background"
-                // So maybe we do NOT create alerts for them anymore, just store in intakeData?
-                // Request: "Wizard 'Current Care' = Active Health Logs... Wizard 'Medical History' = Static Background"
-                // Implies we ONLY insert health_logs for the Dynamic List (Current Care replacements).
-                // But previous req wanted "Knee Pain" from history to be alert.
-                // Re-reading: "Merge 'Current Care' with 'Health Logs'... 'Medical History' = Static Background".
-                // Okay, so we STOP generating logs from 'medicalHistory' fields?
-                // "Auto-Generate Health Logs from Intake" was Task 1 of Phase 2.5.
-                // Task 1 of Phase 3 says "Replace 'Current Care' text area... with Dynamic Condition List... saved directly to health_logs".
-                // Use discretion: If user explicitly adds it to the list, it's a log.
-                // If they fill out "Medical History", it stays in `intakeData` JSON.
-                // So I should REMOVE the auto-generation logic for medical history fields to avoid duplication/noise, 
-                // defaulting to ONLY what is in `parsed.data.healthLogs`.
-            }
-            
-            if (logsToInsert.length > 0) {
-                // @ts-ignore - types are tricky with dynamic array
-                await tx.insert(healthLogs).values(logsToInsert);
-            }
+				// Helper to check and add
+				const addLog = (
+					key: string,
+					cat: string,
+					sev: string,
+					alert: boolean,
+				) => {
+					const val = intake[key];
+					if (val) {
+						// Check if this condition is already in dynamic list to avoid dupe?
+						// Simple check: unlikely exact string match, but let's just add them as "Background".
+						logsToInsert.push({
+							clientId: newClientId,
+							category: cat,
+							severity: sev,
+							condition: `${key.replace(/([A-Z])/g, " $1").trim()}: ${val}`,
+							isAlert: alert,
+							treatment: null,
+							startDate: nowStr,
+						});
+					}
+				};
 
-            // --- Assign Initial Product ---
-            if (initialProductId) {
-                // Inline wallet assignment logic to reuse transaction
-                // Ideally calling logic from wallets.ts, but that func doesn't accept tx
-                // Duplicating small logic here for transaction safety is okay for now,
-                // OR we just run it after transaction. But better inside.
-                // Let's import the table refs and do it here.
-                
-                // Need to fetch product credits
-                // tx.query.membershipProducts is available? Yes if using same db instance structure?
-                // `db.transaction(async (tx) => ...)` passes a transaction object. 
-                // It should have query builder if using drizzle(client, { schema }).
+				// Medical History is still useful as alerts?
+				// User said: "Wizard 'Medical History' = Static Background"
+				// So maybe we do NOT create alerts for them anymore, just store in intakeData?
+				// Request: "Wizard 'Current Care' = Active Health Logs... Wizard 'Medical History' = Static Background"
+				// Implies we ONLY insert health_logs for the Dynamic List (Current Care replacements).
+				// But previous req wanted "Knee Pain" from history to be alert.
+				// Re-reading: "Merge 'Current Care' with 'Health Logs'... 'Medical History' = Static Background".
+				// Okay, so we STOP generating logs from 'medicalHistory' fields?
+				// "Auto-Generate Health Logs from Intake" was Task 1 of Phase 2.5.
+				// Task 1 of Phase 3 says "Replace 'Current Care' text area... with Dynamic Condition List... saved directly to health_logs".
+				// Use discretion: If user explicitly adds it to the list, it's a log.
+				// If they fill out "Medical History", it stays in `intakeData` JSON.
+				// So I should REMOVE the auto-generation logic for medical history fields to avoid duplication/noise,
+				// defaulting to ONLY what is in `parsed.data.healthLogs`.
+			}
 
-                // Since we need to query product first.
-                // Note: Actions usually don't share TX unless properly structured (e.g. services accepting TX).
-                // Let's just do it simple: insert wallet row if product exists.
-                // We assume product ID is valid (selected from UI list).
-                
-                // We need the default credits.
-                // For simplified "Unification", let's trust the ID or fetch it.
-                // Fetching inside TX:
-                // We'll need to import membershipProducts schema at top level if not already. 
-                // It is imported as `import { ..., membershipProducts } ...`. Wait, I need to check imports.
-                
-                // Let's check imports in the file currently... 
-                // `import { clients, healthLogs, clientWallets } from "@/drizzle/schema";`
-                // Need to add membershipProducts to imports.
-            }
+			if (logsToInsert.length > 0) {
+				// @ts-ignore - types are tricky with dynamic array
+				await tx.insert(healthLogs).values(logsToInsert);
+			}
+
+			// --- Assign Initial Product ---
+			if (initialProductId) {
+				// Inline wallet assignment logic to reuse transaction
+				// Ideally calling logic from wallets.ts, but that func doesn't accept tx
+				// Duplicating small logic here for transaction safety is okay for now,
+				// OR we just run it after transaction. But better inside.
+				// Let's import the table refs and do it here.
+				// Need to fetch product credits
+				// tx.query.membershipProducts is available? Yes if using same db instance structure?
+				// `db.transaction(async (tx) => ...)` passes a transaction object.
+				// It should have query builder if using drizzle(client, { schema }).
+				// Since we need to query product first.
+				// Note: Actions usually don't share TX unless properly structured (e.g. services accepting TX).
+				// Let's just do it simple: insert wallet row if product exists.
+				// We assume product ID is valid (selected from UI list).
+				// We need the default credits.
+				// For simplified "Unification", let's trust the ID or fetch it.
+				// Fetching inside TX:
+				// We'll need to import membershipProducts schema at top level if not already.
+				// It is imported as `import { ..., membershipProducts } ...`. Wait, I need to check imports.
+				// Let's check imports in the file currently...
+				// `import { clients, healthLogs, clientWallets } from "@/drizzle/schema";`
+				// Need to add membershipProducts to imports.
+			}
 		});
-        
-        // If initialProductId was passed, and we didn't do it inside TX (due to complexity of fetching product inside Drizzle TX without configured query builder sometimes?),
-        // we can call the action? But calling action from action is weird.
-        // Better to update imports and do it inside TX.
-        // I will update imports in a separate step or same step.
-        // Let's finish the replacement content assuming imports are there, 
-        // I will add the import in a prior/next step or use `db.select` if needed.
-        // Actually, let's defer the wallet part to a second `await` if strictly needed, but better inside.
-        
-        // Re-implementing wallet assignment inside:
-        if (initialProductId) {
-               await assignWalletInternal(clientWithId[0].id, initialProductId);
-        }
 
+		// If initialProductId was passed, and we didn't do it inside TX (due to complexity of fetching product inside Drizzle TX without configured query builder sometimes?),
+		// we can call the action? But calling action from action is weird.
+		// Better to update imports and do it inside TX.
+		// I will update imports in a separate step or same step.
+		// Let's finish the replacement content assuming imports are there,
+		// I will add the import in a prior/next step or use `db.select` if needed.
+		// Actually, let's defer the wallet part to a second `await` if strictly needed, but better inside.
+
+		// Re-implementing wallet assignment inside:
+		if (initialProductId) {
+			await assignWalletInternal(clientWithId[0].id, initialProductId);
+		}
 	} catch (err: unknown) {
 		console.error("Error creating client:", err);
 		const message =
@@ -267,9 +273,8 @@ export async function createClientAction(
 // We can just call the action? "Server Actions can be called from other Server Actions".
 // Yes, Next.js allows this.
 async function assignWalletInternal(clientId: string, productId: string) {
-    await assignProductToClient(clientId, productId);
+	await assignProductToClient(clientId, productId);
 }
-
 
 export async function getClientsAction(
 	page = 1,
@@ -301,15 +306,11 @@ export async function getClientsAction(
 	}
 
 	if (filters.category && filters.category !== ClientCategory.ALL) {
-		whereConditions.push(
-			eq(clients.category, filters.category),
-		);
+		whereConditions.push(eq(clients.category, filters.category));
 	}
 
 	if (filters.gender && filters.gender !== Gender.ALL) {
-		whereConditions.push(
-			eq(clients.gender, filters.gender),
-		);
+		whereConditions.push(eq(clients.gender, filters.gender));
 	}
 
 	try {
@@ -321,6 +322,27 @@ export async function getClientsAction(
 			limit: pageSize,
 			offset: offset,
 			orderBy: [desc(clients.createdAt)],
+			with: {
+				wallets: {
+					where: eq(clientWallets.status, "active"),
+					with: {
+						product: true,
+						// Fetch recent ledger entries to check for "Online" status
+						ledgerEntries: {
+							orderBy: desc(attendanceLedger.checkInTime),
+							limit: 1,
+						},
+					},
+					orderBy: desc(clientWallets.activatedAt),
+					limit: 1,
+				},
+				healthLogs: {
+					where: and(
+						eq(healthLogs.isAlert, true),
+						isNull(healthLogs.endDate), // Active alerts only
+					),
+				},
+			},
 		});
 
 		return { success: true, data };
@@ -344,11 +366,11 @@ export async function getClientByIdAction(id: string) {
 			with: {
 				healthLogs: {
 					orderBy: desc(healthLogs.startDate),
-                    where: isNull(healthLogs.endDate) // access active only? 
-                    // Actually, for "Edit Client", we want ACTIVE logs to populate the form.
-                    // Resolved logs (history) shouldn't appear in the "Current Care" list unless we decided to show them elsewhere.
-                    // The requirement says: "If an item is removed... mark it as 'Resolved'...".
-                    // So form should only load Active logs.
+					where: isNull(healthLogs.endDate), // access active only?
+					// Actually, for "Edit Client", we want ACTIVE logs to populate the form.
+					// Resolved logs (history) shouldn't appear in the "Current Care" list unless we decided to show them elsewhere.
+					// The requirement says: "If an item is removed... mark it as 'Resolved'...".
+					// So form should only load Active logs.
 				},
 				wallets: {
 					with: {
@@ -361,18 +383,18 @@ export async function getClientByIdAction(id: string) {
 
 		if (!client) return { error: "Client not found" };
 
-        // Filter for active wallet to pre-fill form
-        const activeWallet = client.wallets.find(w => w.status === 'active');
-        
-		return { 
-            success: true, 
-            client: {
-                ...client,
-                // Flatten active product for form consumption if needed, 
-                // or let client component handle it.
-                activeProductId: activeWallet?.productId
-            } 
-        };
+		// Filter for active wallet to pre-fill form
+		const activeWallet = client.wallets.find((w) => w.status === "active");
+
+		return {
+			success: true,
+			client: {
+				...client,
+				// Flatten active product for form consumption if needed,
+				// or let client component handle it.
+				activeProductId: activeWallet?.productId,
+			},
+		};
 	} catch (error) {
 		console.error("Error fetching client:", error);
 		return { error: "Failed to fetch client" };
@@ -457,19 +479,21 @@ export async function updateClientAction(
 		referralSource: getString("referralSource"),
 		consultationReason: getString("consultationReason"),
 		intakeData: intakeDataRaw,
-        // @ts-ignore - healthLogs might be in formData as JSON string if not handled by hydration?
-        // Actually, Zod handles it if passed as object. Server Actions receive FormData.
-        // We aren't parsing FormData for healthLogs array manually here yet!
-        // The wizard (client-side) needs to serialize `healthLogs` into FormData if it's a complex array.
-        // Or we rely on `parseOrIgnore`? 
-        // Wait, FormData doesn't support arrays of objects naturally. 
-        // Client side `step-health-wellness` uses `useFieldArray`.
-        // `ClientForm` onSubmit needs to stringify `healthLogs` or append them individually.
-        // Let's assume ClientForm appends `healthLogs` as a JSON string or we parse it?
-        // Check `client-form.tsx` onSubmit. 
-        // (Self-correction: I haven't updated ClientForm onSubmit to handle healthLogs array yet!)
-        // I will need to update ClientForm. For now, let's assume it sends a JSON string "healthLogs".
-        healthLogs: formData.get("healthLogs") ? JSON.parse(formData.get("healthLogs") as string) : [],
+		// @ts-ignore - healthLogs might be in formData as JSON string if not handled by hydration?
+		// Actually, Zod handles it if passed as object. Server Actions receive FormData.
+		// We aren't parsing FormData for healthLogs array manually here yet!
+		// The wizard (client-side) needs to serialize `healthLogs` into FormData if it's a complex array.
+		// Or we rely on `parseOrIgnore`?
+		// Wait, FormData doesn't support arrays of objects naturally.
+		// Client side `step-health-wellness` uses `useFieldArray`.
+		// `ClientForm` onSubmit needs to stringify `healthLogs` or append them individually.
+		// Let's assume ClientForm appends `healthLogs` as a JSON string or we parse it?
+		// Check `client-form.tsx` onSubmit.
+		// (Self-correction: I haven't updated ClientForm onSubmit to handle healthLogs array yet!)
+		// I will need to update ClientForm. For now, let's assume it sends a JSON string "healthLogs".
+		healthLogs: formData.get("healthLogs")
+			? JSON.parse(formData.get("healthLogs") as string)
+			: [],
 	};
 
 	const parsed = clientSchema.safeParse(rawData);
@@ -478,76 +502,94 @@ export async function updateClientAction(
 		return { error: "Validation failed", issues: parsed.error.format() };
 	}
 
-    const { healthLogs: submittedLogs } = parsed.data;
+	const { healthLogs: submittedLogs } = parsed.data;
 
 	try {
-        await db.transaction(async (tx) => {
-             // 1. Update Core Client Data
-             await tx
-                .update(clients)
-                .set({
-                    ...parsed.data,
-                    category: parsed.data.category,
-                    gender: parsed.data.gender,
-                    // exclude healthLogs from client table update
-                    intakeData: parsed.data.intakeData || {}, 
-                })
-                .where(eq(clients.id, id));
+		await db.transaction(async (tx) => {
+			// 1. Update Core Client Data
+			await tx
+				.update(clients)
+				.set({
+					...parsed.data,
+					category: parsed.data.category,
+					gender: parsed.data.gender,
+					// exclude healthLogs from client table update
+					intakeData: parsed.data.intakeData || {},
+				})
+				.where(eq(clients.id, id));
 
-             // 2. Handle Health Logs Sync
-             const existingLogs = await tx.query.healthLogs.findMany({
-                 where: eq(healthLogs.clientId, id)
-             });
+			// 2. Handle Health Logs Sync
+			const existingLogs = await tx.query.healthLogs.findMany({
+				where: eq(healthLogs.clientId, id),
+			});
 
-             const nowStr = new Date().toISOString().split("T")[0];
+			const nowStr = new Date().toISOString().split("T")[0];
 
-             if (submittedLogs && submittedLogs.length > 0) {
-                 const submittedConditions = new Set(submittedLogs.map(l => l.condition.trim().toLowerCase()));
-                 
-                 for (const log of submittedLogs) {
-                     const match = existingLogs.find(
-                         ex => ex.condition.trim().toLowerCase() === log.condition.trim().toLowerCase() && !ex.endDate
-                     );
-                     
-                     if (match) {
-                         // Update existing
-                         if (match.severity !== log.severity || match.isAlert !== log.isAlert) {
-                             await tx.update(healthLogs)
-                                .set({ 
-                                    severity: log.severity as any, 
-                                    isAlert: log.isAlert 
-                                })
-                                .where(eq(healthLogs.id, match.id));
-                         }
-                     } else {
-                         // Insert new
-                         await tx.insert(healthLogs).values({
-                             clientId: id,
-                             category: log.category as any,
-                             condition: log.condition,
-                             severity: log.severity as any,
-                             isAlert: log.isAlert,
-                             startDate: log.startDate || nowStr
-                         });
-                     }
-                 }
+			if (submittedLogs && submittedLogs.length > 0) {
+				const submittedConditions = new Set(
+					submittedLogs.map((l) => l.condition.trim().toLowerCase()),
+				);
 
-                 // Resolve missing
-                 for (const ex of existingLogs) {
-                     if (!ex.endDate && !submittedConditions.has(ex.condition.trim().toLowerCase())) {
-                          await tx.update(healthLogs)
-                            .set({ endDate: nowStr, isAlert: false })
-                            .where(eq(healthLogs.id, ex.id));
-                     }
-                 }
-             } else {
-                 if (submittedLogs) {
-                      await tx.update(healthLogs)
-                        .set({ endDate: nowStr, isAlert: false })
-                        .where(and(eq(healthLogs.clientId, id), isNull(healthLogs.endDate)));
-                 }
-             }
-        });
+				for (const log of submittedLogs) {
+					const match = existingLogs.find(
+						(ex) =>
+							ex.condition.trim().toLowerCase() ===
+								log.condition.trim().toLowerCase() && !ex.endDate,
+					);
+
+					if (match) {
+						// Update existing
+						if (
+							match.severity !== log.severity ||
+							match.isAlert !== log.isAlert ||
+							match.treatment !== (log.treatment || null)
+						) {
+							await tx
+								.update(healthLogs)
+								.set({
+									severity: log.severity as any,
+									isAlert: log.isAlert,
+									treatment: log.treatment || null,
+								})
+								.where(eq(healthLogs.id, match.id));
+						}
+					} else {
+						// Insert new
+						await tx.insert(healthLogs).values({
+							clientId: id,
+							category: log.category as any,
+							condition: log.condition,
+							severity: log.severity as any,
+							treatment: log.treatment || null,
+							isAlert: log.isAlert,
+							startDate: log.startDate || nowStr,
+						});
+					}
+				}
+
+				// Resolve missing
+				for (const ex of existingLogs) {
+					if (
+						!ex.endDate &&
+						!submittedConditions.has(ex.condition.trim().toLowerCase())
+					) {
+						await tx
+							.update(healthLogs)
+							.set({ endDate: nowStr, isAlert: false })
+							.where(eq(healthLogs.id, ex.id));
+					}
+				}
+			} else {
+				if (submittedLogs) {
+					await tx
+						.update(healthLogs)
+						.set({ endDate: nowStr, isAlert: false })
+						.where(
+							and(eq(healthLogs.clientId, id), isNull(healthLogs.endDate)),
+						);
+				}
+			}
+		});
 
 		// 1. Fetch existing client to get resource name
 		const existingClient = await db.query.clients.findFirst({
@@ -579,10 +621,7 @@ export async function updateClientAction(
 
 				// Update photoUrl if we got one back
 				if (photoUrl) {
-					await db
-						.update(clients)
-						.set({ photoUrl })
-						.where(eq(clients.id, id));
+					await db.update(clients).set({ photoUrl }).where(eq(clients.id, id));
 				}
 			} catch (e: any) {
 				console.error("Failed to sync update to Google Contacts:", e);

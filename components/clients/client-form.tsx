@@ -22,11 +22,10 @@ import { ClientCategory } from "@/lib/types";
 
 const WIZARD_STEPS: WizardStep[] = [
 	{ id: "personal", title: "Personal Info", description: "Identity & Contact" },
-	{ id: "health", title: "Health History", description: "Medical Background" },
 	{
-		id: "wellness",
-		title: "Wellness",
-		description: "Lifestyle & Mental Health",
+		id: "health",
+		title: "Health & Wellness",
+		description: "Medical & Lifestyle",
 	},
 	{ id: "membership", title: "Membership", description: "Select Plan" },
 	{ id: "consultation", title: "Consultation", description: "Notes & Submit" },
@@ -35,13 +34,7 @@ const WIZARD_STEPS: WizardStep[] = [
 const getHealthSectionsByStep = (step: number): HealthSection[] => {
 	switch (step) {
 		case 1:
-			return HEALTH_TEMPLATE.filter(
-				(s) => s.category === "physical" || s.category === "medical_history",
-			);
-		case 2:
-			return HEALTH_TEMPLATE.filter(
-				(s) => s.category === "mental" || s.category === "lifestyle",
-			);
+			return HEALTH_TEMPLATE;
 		default:
 			return [];
 	}
@@ -77,12 +70,12 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			// Ensure enums are set or undefined, not null
 			gender: initialData?.gender || undefined,
 			referralSource: initialData?.referralSource || undefined,
-            // Map active product to initialProductId for Edit mode display
-            // @ts-ignore - dynamic prop from getClientById
-            initialProductId: initialData?.activeProductId || undefined,
-            // Map existing healthLogs if any (for Edit mode)
-            // @ts-ignore - dynamic prop
-            healthLogs: initialData?.healthLogs || [],
+			// Map active product to initialProductId for Edit mode display
+			// @ts-ignore - dynamic prop from getClientById
+			initialProductId: initialData?.activeProductId || undefined,
+			// Map existing healthLogs if any (for Edit mode)
+			// @ts-ignore - dynamic prop
+			healthLogs: initialData?.healthLogs || [],
 		},
 	});
 
@@ -132,10 +125,8 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			case 1:
 				return []; // flexible intake data
 			case 2:
-				return []; // flexible intake data
-			case 3:
 				return []; // membership selection
-			case 4:
+			case 3:
 				return ["consultationReason"];
 			default:
 				return [];
@@ -149,7 +140,9 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			if (fieldsToValidate.length > 0) {
 				const isValid = await form.trigger(fieldsToValidate);
 				if (!isValid) {
-					setServerError("Please fix the errors in the current step before proceeding.");
+					setServerError(
+						"Please fix the errors in the current step before proceeding.",
+					);
 					return;
 				}
 			}
@@ -184,23 +177,31 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			if (values.address) formData.append("address", values.address);
 			if (values.profession) formData.append("profession", values.profession);
 			formData.append("birthDate", values.birthDate || "");
-			formData.append("category", values.category || ClientCategory.ADULT.toString());
+			formData.append(
+				"category",
+				values.category || ClientCategory.ADULT.toString(),
+			);
 			if (values.gender) formData.append("gender", values.gender);
 			if (values.referralSource)
 				formData.append("referralSource", values.referralSource);
 			if (values.consultationReason)
 				formData.append("consultationReason", values.consultationReason);
-            
-            // @ts-ignore - Validated by wizard state but not in main schema yet
-            if (values.initialProductId) {
-                // @ts-ignore
-                formData.append("initialProductId", values.initialProductId);
-            }
+
+			// @ts-ignore - Validated by wizard state but not in main schema yet
+			if (values.initialProductId) {
+				// @ts-ignore
+				formData.append("initialProductId", values.initialProductId);
+			}
 
 			if (values.intakeData) {
 				Object.entries(values.intakeData).forEach(([key, val]) => {
 					if (val) formData.append(key, val);
 				});
+			}
+
+			// Append healthLogs as JSON string if exists
+			if (values.healthLogs && values.healthLogs.length > 0) {
+				formData.append("healthLogs", JSON.stringify(values.healthLogs));
 			}
 
 			let result;
@@ -214,16 +215,18 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 				if (result.issues) {
 					// Map Zod issues to form errors
 					let hasFieldErrors = false;
-					Object.entries(result.issues).forEach(([key, value]: [string, any]) => {
-						if (key === "_errors") return;
-						if (value && value._errors && Array.isArray(value._errors)) {
-							form.setError(key as keyof ClientFormValues, {
-								message: value._errors.join(", "),
-							});
-							hasFieldErrors = true;
-						}
-					});
-					
+					Object.entries(result.issues).forEach(
+						([key, value]: [string, any]) => {
+							if (key === "_errors") return;
+							if (value && value._errors && Array.isArray(value._errors)) {
+								form.setError(key as keyof ClientFormValues, {
+									message: value._errors.join(", "),
+								});
+								hasFieldErrors = true;
+							}
+						},
+					);
+
 					if (hasFieldErrors) {
 						setServerError("Please fix the highlighted errors.");
 					} else {
@@ -280,16 +283,8 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 								sections={getHealthSectionsByStep(1)}
 							/>
 						)}
-						{currentStep === 2 && (
-							<StepHealthWellness
-								form={form}
-								sections={getHealthSectionsByStep(2)}
-							/>
-						)}
-						{currentStep === 3 && (
-                            <StepMembership form={form} />
-                        )}
-						{currentStep === 4 && <StepConsultation form={form} />}
+						{currentStep === 2 && <StepMembership form={form} />}
+						{currentStep === 3 && <StepConsultation form={form} />}
 					</FormWizard>
 				</form>
 			</Form>

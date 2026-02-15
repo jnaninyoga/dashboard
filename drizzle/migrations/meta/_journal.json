@@ -15,6 +15,13 @@
       "when": 1770983232373,
       "tag": "0001_curvy_sentinels",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771165003993,
+      "tag": "0002_empty_black_tom",
+      "breakpoints": true
     }
   ]
 }
