@@ -16,6 +16,8 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { getCountries } from "react-phone-number-input";
 import { Textarea } from "@/components/ui/textarea";
 import {
 	Select,
@@ -116,8 +118,13 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 												}
 												autoFocus
 												captionLayout="dropdown"
-												fromYear={1900}
-												toYear={new Date().getFullYear()}
+												startMonth={new Date(1900, 0)}
+												endMonth={new Date(new Date().getFullYear(), 11)}
+												classNames={{
+													dropdown:
+														"opacity-100 relative bg-background rounded px-1 py-0.5 mx-0.5 text-sm font-medium",
+													caption_label: "hidden",
+												}}
 											/>
 										</PopoverContent>
 									</Popover>
@@ -130,32 +137,32 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 						control={form.control}
 						name="gender"
 						render={({ field, fieldState }) => (
-						<FormItem>
-							<FormLabel>
-								Gender <span className="text-destructive">*</span>
-							</FormLabel>
-							<Select
-								onValueChange={field.onChange}
-								defaultValue={field.value ?? undefined}
-							>
-								<FormControl>
-									<SelectTrigger
-										className={cn(
-											"w-full",
-											fieldState.error && "border-destructive",
-										)}
-									>
-										<SelectValue placeholder="Select..." />
-									</SelectTrigger>
-								</FormControl>
-								<SelectContent>
-									<SelectItem value={Gender.MALE}>Male</SelectItem>
-									<SelectItem value={Gender.FEMALE}>Female</SelectItem>
-								</SelectContent>
-							</Select>
-							<FormMessage />
-						</FormItem>
-					)}
+							<FormItem>
+								<FormLabel>
+									Gender <span className="text-destructive">*</span>
+								</FormLabel>
+								<Select
+									onValueChange={field.onChange}
+									defaultValue={field.value ?? undefined}
+								>
+									<FormControl>
+										<SelectTrigger
+											className={cn(
+												"w-full",
+												fieldState.error && "border-destructive",
+											)}
+										>
+											<SelectValue placeholder="Select..." />
+										</SelectTrigger>
+									</FormControl>
+									<SelectContent>
+										<SelectItem value={Gender.MALE}>Male</SelectItem>
+										<SelectItem value={Gender.FEMALE}>Female</SelectItem>
+									</SelectContent>
+								</Select>
+								<FormMessage />
+							</FormItem>
+						)}
 					/>
 					<FormField
 						control={form.control}
@@ -166,11 +173,14 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 									Phone Number <span className="text-destructive">*</span>
 								</FormLabel>
 								<FormControl>
-									<Input
-										placeholder="+1 234 567 8900"
-										type="tel"
+									<PhoneInput
+										placeholder="+212 6 12 34 56 78"
+										defaultCountry="MA"
+										// excluding Israel and Western Sahara does are not countries
+										countries={getCountries().filter(
+											(country) => country !== "IL" && country !== "EH",
+										)}
 										{...field}
-										value={field.value ?? ""}
 									/>
 								</FormControl>
 								<FormMessage />
@@ -240,7 +250,9 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 									<SelectContent>
 										<SelectItem value={ClientCategory.ADULT}>Adult</SelectItem>
 										<SelectItem value={ClientCategory.CHILD}>Child</SelectItem>
-										<SelectItem value={ClientCategory.STUDENT}>Student</SelectItem>
+										<SelectItem value={ClientCategory.STUDENT}>
+											Student
+										</SelectItem>
 									</SelectContent>
 								</Select>
 								<FormMessage />
@@ -280,9 +292,15 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
-										<SelectItem value={ReferralSource.SOCIAL_MEDIA}>Social Media</SelectItem>
-										<SelectItem value={ReferralSource.WEBSITE}>Website</SelectItem>
-										<SelectItem value={ReferralSource.FRIEND}>Friend</SelectItem>
+										<SelectItem value={ReferralSource.SOCIAL_MEDIA}>
+											Social Media
+										</SelectItem>
+										<SelectItem value={ReferralSource.WEBSITE}>
+											Website
+										</SelectItem>
+										<SelectItem value={ReferralSource.FRIEND}>
+											Friend
+										</SelectItem>
 										<SelectItem value={ReferralSource.PROFESSIONAL_NETWORK}>
 											Professional Network
 										</SelectItem>
