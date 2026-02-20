@@ -1,9 +1,9 @@
 "use server";
 
 import { db } from "@/drizzle";
-import { clientWallets, membershipProducts } from "@/drizzle/schema";
+import { clientWallets, membershipProducts, clients, appSettings } from "@/drizzle/schema";
 import { createClient } from "@/supabase/server";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function assignProductToClient(clientId: string, productId: string) {
@@ -17,7 +17,22 @@ export async function assignProductToClient(clientId: string, productId: string)
 	}
 
 	try {
-		// 1. Fetch product details
+		// 1. Fetch Client with Category Relation
+		const clientData = await db.query.clients.findFirst({
+			where: eq(clients.id, clientId),
+			with: {
+				category: true,
+			},
+		});
+
+		if (!clientData) {
+			return { error: "Client not found" };
+		}
+        
+        // Use the category relation (if exists) for discounts
+        const clientCategory = clientData.category;
+
+		// 2. Fetch product details
 		const product = await db.query.membershipProducts.findFirst({
 			where: eq(membershipProducts.id, productId),
 		});
@@ -26,16 +41,34 @@ export async function assignProductToClient(clientId: string, productId: string)
 			return { error: "Product not found" };
 		}
 
-		// 2. Insert into client_wallets
+		// 3. Calculate Final Price
+		let finalPrice = parseFloat(product.basePrice);
+
+		// Apply Dynamic Category Discount
+		if (clientCategory) {
+			const discountValue = parseFloat(clientCategory.discountValue);
+			if (discountValue > 0) {
+				if (clientCategory.discountType === "percentage") {
+					const discountAmount = (finalPrice * discountValue) / 100;
+					finalPrice -= discountAmount;
+				} else {
+					// Fixed amount discount
+					finalPrice = Math.max(0, finalPrice - discountValue);
+				}
+			}
+		}
+
+		// 4. Insert into client_wallets
 		await db.insert(clientWallets).values({
 			clientId,
 			productId,
 			remainingCredits: product.defaultCredits,
 			status: "active",
+            amountPaid: finalPrice.toFixed(2),
 			activatedAt: new Date(),
 		});
 
-		// 3. Revalidate
+		// 5. Revalidate
 		revalidatePath(`/clients/${clientId}`);
         
 		return { success: true };
@@ -56,8 +89,9 @@ export async function getMembershipProductsAction() {
 	}
 
 	try {
-        // Fetch all products
+        // Fetch all active products
 		const products = await db.query.membershipProducts.findMany({
+            where: eq(membershipProducts.isArchived, false),
             orderBy: (products, { asc }) => [asc(products.basePrice)]
         });
 		return { success: true, products };

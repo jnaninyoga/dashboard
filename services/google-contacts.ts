@@ -8,7 +8,7 @@ interface ContactData {
 	address?: string | null;
 	profession?: string | null;
 	birthDate: string;
-	category: "adult" | "child" | "student";
+	category: string;
 	gender?: "male" | "female";
 	referralSource?: string | null;
 	consultationReason?: string | null;

@@ -24,12 +24,15 @@ export const clientSchema = createInsertSchema(clients, {
 		.refine((val) => val.replace(/\D/g, "").length >= 10, {
 			message: "Phone number must contain at least 10 digits",
 		}),
-	category: z.enum(
-		[ClientCategory.ADULT, ClientCategory.CHILD, ClientCategory.STUDENT],
-		{
+	// categoryId replaces the old category enum
+	categoryId: z
+		.string()
+		.uuid({
 			message: "Please select a valid category",
-		},
-	),
+		})
+		.optional()
+		.nullable()
+		.or(z.literal("")),
 	gender: z.enum([Gender.MALE, Gender.FEMALE], {
 		message: "Please select a gender",
 	}),

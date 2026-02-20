@@ -6,6 +6,7 @@ import {
 	healthLogs,
 	clientWallets,
 	attendanceLedger,
+	clientCategories,
 } from "@/drizzle/schema";
 import { eq, and, or, ilike, desc, isNull } from "drizzle-orm";
 import { createClient } from "@/supabase/server";
@@ -18,7 +19,7 @@ import { redirect } from "next/navigation";
 import { clientSchema } from "@/lib/validators";
 import { HEALTH_TEMPLATE } from "@/config/health";
 import { getValidAccessToken } from "@/services/google-tokens";
-import { ClientCategory, Gender } from "@/lib/types";
+import { Gender } from "@/lib/types";
 import { assignProductToClient } from "./wallets";
 
 export async function createClientAction(
@@ -76,11 +77,14 @@ export async function createClientAction(
 		address: getString("address"),
 		profession: getString("profession"),
 		birthDate: getString("birthDate"),
-		category: getString("category"),
+		categoryId: getString("categoryId"),
 		gender: getString("gender"),
 		referralSource: getString("referralSource"),
 		consultationReason: getString("consultationReason"),
 		intakeData: intakeDataRaw,
+		healthLogs: formData.get("healthLogs")
+			? JSON.parse(formData.get("healthLogs") as string)
+			: [],
 	};
 
 	const parsed = clientSchema.safeParse(rawData);
@@ -96,7 +100,7 @@ export async function createClientAction(
 		address,
 		profession,
 		birthDate,
-		category,
+		categoryId,
 		gender,
 		referralSource,
 		consultationReason,
@@ -110,6 +114,18 @@ export async function createClientAction(
 		let clientWithId: { id: string }[] = [];
 
 		await db.transaction(async (tx) => {
+			let categoryName = "Uncategorized";
+
+			if (categoryId) {
+				const categoryObj = await tx.query.clientCategories.findFirst({
+					where: eq(clientCategories.id, categoryId as string),
+					columns: { name: true },
+				});
+				if (categoryObj) {
+					categoryName = categoryObj.name;
+				}
+			}
+
 			// Use the dedicated service for Google Contacts sync
 			const { resourceName, photoUrl } = await syncClientToGoogleContacts(
 				accessToken,
@@ -120,7 +136,7 @@ export async function createClientAction(
 					address: address || null,
 					profession: profession || null,
 					birthDate,
-					category: category || ClientCategory.ADULT,
+					category: categoryName,
 					gender: gender,
 					referralSource: referralSource || null,
 					consultationReason: consultationReason || null,
@@ -138,7 +154,7 @@ export async function createClientAction(
 					address: address || null,
 					profession: profession || null,
 					birthDate,
-					category: category || ClientCategory.ADULT,
+					categoryId: categoryId,
 					gender: gender || Gender.MALE,
 					referralSource: referralSource ?? null,
 					consultationReason: consultationReason || null,
@@ -159,7 +175,7 @@ export async function createClientAction(
 				parsed.data.healthLogs.forEach((log) => {
 					logsToInsert.push({
 						clientId: newClientId,
-						category: log.category,
+						category: log.category, // This is HEALTH category, not CLIENT category. Needs verification if healthLogs table uses enum or fk? Schema says healthCategoryEnum. So this is fine.
 						severity: log.severity,
 						condition: log.condition,
 						treatment: log.treatment || null,
@@ -280,7 +296,7 @@ export async function getClientsAction(
 	page = 1,
 	pageSize = 10,
 	query = "",
-	filters: { category?: ClientCategory; gender?: Gender } = {},
+	filters: { categoryId?: string; gender?: Gender } = {},
 ) {
 	const supabase = await createClient();
 	const {
@@ -305,8 +321,8 @@ export async function getClientsAction(
 		);
 	}
 
-	if (filters.category && filters.category !== ClientCategory.ALL) {
-		whereConditions.push(eq(clients.category, filters.category));
+	if (filters.categoryId && filters.categoryId !== "all") {
+		whereConditions.push(eq(clients.categoryId, filters.categoryId));
 	}
 
 	if (filters.gender && filters.gender !== Gender.ALL) {
@@ -323,6 +339,7 @@ export async function getClientsAction(
 			offset: offset,
 			orderBy: [desc(clients.createdAt)],
 			with: {
+                category: true,
 				wallets: {
 					where: eq(clientWallets.status, "active"),
 					with: {
@@ -364,6 +381,7 @@ export async function getClientByIdAction(id: string) {
 		const client = await db.query.clients.findFirst({
 			where: eq(clients.id, id),
 			with: {
+                category: true,
 				healthLogs: {
 					orderBy: desc(healthLogs.startDate),
 					where: isNull(healthLogs.endDate), // access active only?
@@ -507,13 +525,19 @@ export async function updateClientAction(
 	try {
 		await db.transaction(async (tx) => {
 			// 1. Update Core Client Data
+			// 1. Update Core Client Data
+			const {
+				healthLogs: _hl,
+				initialProductId: _ip,
+				...clientUpdateData
+			} = parsed.data;
+
 			await tx
 				.update(clients)
 				.set({
-					...parsed.data,
-					category: parsed.data.category,
+					...clientUpdateData,
+					categoryId: parsed.data.categoryId,
 					gender: parsed.data.gender,
-					// exclude healthLogs from client table update
 					intakeData: parsed.data.intakeData || {},
 				})
 				.where(eq(clients.id, id));
@@ -601,6 +625,19 @@ export async function updateClientAction(
 			let accessToken: string;
 			try {
 				accessToken = await getValidAccessToken(user.id);
+				
+				// Fetch category name
+				let categoryName = "Uncategorized";
+				if (parsed.data.categoryId) {
+					const categoryObj = await db.query.clientCategories.findFirst({
+						where: eq(clientCategories.id, parsed.data.categoryId as string),
+						columns: { name: true },
+					});
+					if (categoryObj) {
+						categoryName = categoryObj.name;
+					}
+				}
+
 				const photoUrl = await updateClientInGoogleContacts(
 					accessToken,
 					existingClient.googleContactResourceName,
@@ -611,7 +648,7 @@ export async function updateClientAction(
 						address: parsed.data.address || null,
 						profession: parsed.data.profession || null,
 						birthDate: parsed.data.birthDate,
-						category: parsed.data.category || ClientCategory.ADULT,
+						category: categoryName,
 						gender: parsed.data.gender,
 						referralSource: parsed.data.referralSource || null,
 						consultationReason: parsed.data.consultationReason || null,

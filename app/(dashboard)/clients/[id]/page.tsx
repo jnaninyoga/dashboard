@@ -78,7 +78,7 @@ export default async function ClientProfilePage(props: { params: Params }) {
 						</h1>
 						<div className="flex flex-wrap items-center gap-2 mt-1">
 							<Badge variant="outline" className="capitalize">
-								{client.category}
+								{client.category?.name || "Uncategorized"}
 							</Badge>
 							{client.gender && (
 								<Badge variant="secondary" className="capitalize">

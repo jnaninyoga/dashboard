@@ -9,10 +9,12 @@ import { ClientViewToggle } from "@/components/clients/client-view-toggle";
 import { getClientsAction } from "@/actions/clients";
 import { ClientCategory, Gender, View } from "@/lib/types";
 
+import { getClientCategories } from "@/actions/settings";
+
 type SearchParams = Promise<{
 	view: View;
 	query: string;
-	category: ClientCategory;
+	categoryId: string;
 	gender: Gender;
 	page: number;
 }>;
@@ -23,12 +25,15 @@ export default async function ClientsPage(props: {
 	const searchParams = await props.searchParams;
 	const view = searchParams.view || View.GRID;
 	const query = searchParams.query || "";
-	const category = searchParams.category || ClientCategory.ALL;
+	const categoryId = searchParams.categoryId || "all";
 	const gender = searchParams.gender || Gender.ALL;
 	const page = searchParams.page || 1;
 
+	// Fetch categories for filter
+	const categories = await getClientCategories();
+
 	const { data: clients, error } = await getClientsAction(page, 50, query, {
-		category,
+		categoryId,
 		gender,
 	});
 
@@ -54,7 +59,7 @@ export default async function ClientsPage(props: {
 			</div>
 
 			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<ClientFilters />
+				<ClientFilters categories={categories || []} />
 				<ClientViewToggle />
 			</div>
 

@@ -81,6 +81,24 @@ export function AppSidebar({
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
+
+				<SidebarGroup>
+					<SidebarGroupLabel>Settings</SidebarGroupLabel>
+					<SidebarGroupContent>
+						<SidebarMenu>
+							{dashboardConfig.settings.map((item) => (
+								<SidebarMenuItem key={item.title}>
+									<SidebarMenuButton asChild isActive={pathname === item.url}>
+										<Link href={item.url}>
+											<item.icon />
+											<span>{item.title}</span>
+										</Link>
+									</SidebarMenuButton>
+								</SidebarMenuItem>
+							))}
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter>
 				<NavUser user={user} />

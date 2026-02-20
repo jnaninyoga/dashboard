@@ -37,13 +37,16 @@ import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, isValid } from "date-fns";
 import type { ClientFormValues } from "@/lib/validators";
-import { ClientCategory, Gender, ReferralSource } from "@/lib/types";
+import { type Category, ClientCategory, Gender, ReferralSource } from "@/lib/types";
 
 interface StepPersonalDetailsProps {
 	form: UseFormReturn<ClientFormValues>;
+    categories: Category[];
 }
 
-export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
+export function StepPersonalDetails({ form, categories }: StepPersonalDetailsProps) {
+// ... (start of component unchanged until category field)
+
 	return (
 		<div className="space-y-6">
 			<Card>
@@ -234,13 +237,13 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 				<CardContent className="grid gap-4 sm:grid-cols-2">
 					<FormField
 						control={form.control}
-						name="category"
+						name="categoryId"
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Category</FormLabel>
 								<Select
 									onValueChange={field.onChange}
-									defaultValue={field.value}
+									value={field.value || undefined}
 								>
 									<FormControl>
 										<SelectTrigger className="w-full">
@@ -248,11 +251,11 @@ export function StepPersonalDetails({ form }: StepPersonalDetailsProps) {
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
-										<SelectItem value={ClientCategory.ADULT}>Adult</SelectItem>
-										<SelectItem value={ClientCategory.CHILD}>Child</SelectItem>
-										<SelectItem value={ClientCategory.STUDENT}>
-											Student
-										</SelectItem>
+                                        {categories.map((cat) => (
+                                            <SelectItem key={cat.id} value={cat.id}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
 									</SelectContent>
 								</Select>
 								<FormMessage />

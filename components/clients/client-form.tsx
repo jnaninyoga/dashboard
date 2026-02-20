@@ -18,7 +18,7 @@ import { StepPersonalDetails } from "@/components/clients/forms/step-personal-de
 import { StepHealthWellness } from "@/components/clients/forms/step-health-wellness";
 import { StepConsultation } from "@/components/clients/forms/step-consultation";
 import { StepMembership } from "@/components/clients/forms/step-membership";
-import { ClientCategory } from "@/lib/types";
+import { type Category, ClientCategory } from "@/lib/types";
 
 const WIZARD_STEPS: WizardStep[] = [
 	{ id: "personal", title: "Personal Info", description: "Identity & Contact" },
@@ -40,12 +40,15 @@ const getHealthSectionsByStep = (step: number): HealthSection[] => {
 	}
 };
 
+
+
 interface ClientFormProps {
 	initialData?: Partial<ClientFormValues> & { id?: string };
 	mode: "create" | "edit";
+    categories: Category[];
 }
 
-export function ClientForm({ initialData, mode }: ClientFormProps) {
+export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 	const [isPending, startTransition] = useTransition();
 	const [serverError, setServerError] = useState<string | null>(null);
 	const [currentStep, setCurrentStep] = useState(0);
@@ -63,7 +66,7 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			address: "",
 			profession: "",
 			birthDate: "",
-			category: ClientCategory.ADULT,
+			categoryId: "",
 			consultationReason: "",
 			intakeData: {},
 			...initialData,
@@ -121,7 +124,7 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 	const getStepFields = (step: number): (keyof ClientFormValues)[] => {
 		switch (step) {
 			case 0:
-				return ["fullName", "phone", "birthDate", "category", "gender"];
+				return ["fullName", "phone", "birthDate", "categoryId", "gender"];
 			case 1:
 				return []; // flexible intake data
 			case 2:
@@ -178,8 +181,8 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 			if (values.profession) formData.append("profession", values.profession);
 			formData.append("birthDate", values.birthDate || "");
 			formData.append(
-				"category",
-				values.category || ClientCategory.ADULT.toString(),
+				"categoryId",
+				values.categoryId || "",
 			);
 			if (values.gender) formData.append("gender", values.gender);
 			if (values.referralSource)
@@ -276,15 +279,15 @@ export function ClientForm({ initialData, mode }: ClientFormProps) {
 						submitLabel={mode === "create" ? "Create Client" : "Update Client"}
 						mode={mode}
 					>
-						{currentStep === 0 && <StepPersonalDetails form={form} />}
+						{currentStep === 0 && <StepPersonalDetails form={form} categories={categories} />}
 						{currentStep === 1 && (
 							<StepHealthWellness
 								form={form}
 								sections={getHealthSectionsByStep(1)}
 							/>
 						)}
-						{currentStep === 2 && <StepMembership form={form} />}
-						{currentStep === 3 && <StepConsultation form={form} />}
+						{currentStep === 2 && <StepMembership form={form} categories={categories} mode={mode} />}
+						{currentStep === 3 && <StepConsultation form={form} categories={categories} />}
 					</FormWizard>
 				</form>
 			</Form>

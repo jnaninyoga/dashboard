@@ -135,7 +135,7 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
 									<TableCell>
 										<div className="flex flex-col gap-1">
 											<Badge variant="secondary" className="capitalize w-fit">
-												{client.category}
+												{client.category?.name || "Uncategorized"}
 											</Badge>
 											{client.gender && (
 												<span className="text-xs text-muted-foreground capitalize">

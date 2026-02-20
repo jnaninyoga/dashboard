@@ -10,9 +10,13 @@ import {
 } from "@/components/ui/select";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
-import { ClientCategory, Gender } from "@/lib/types";
+import { type Category, Gender } from "@/lib/types";
 
-export function ClientFilters() {
+interface ClientFiltersProps {
+    categories: Category[];
+}
+
+export function ClientFilters({ categories }: ClientFiltersProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [isPending, startTransition] = useTransition();
@@ -32,7 +36,7 @@ export function ClientFilters() {
 
 	const handleFilterChange = (key: string, value: string) => {
 		const params = new URLSearchParams(searchParams);
-		if (value && value !== ClientCategory.ALL && value !== Gender.ALL) {
+		if (value && value !== "all" && value !== Gender.ALL) {
 			params.set(key, value);
 		} else {
 			params.delete(key);
@@ -53,17 +57,19 @@ export function ClientFilters() {
 			/>
 			<div className="flex w-full gap-4 sm:w-auto">
 				<Select
-					onValueChange={(v) => handleFilterChange("category", v)}
-					defaultValue={searchParams.get("category") || ClientCategory.ALL}
+					onValueChange={(v) => handleFilterChange("categoryId", v)}
+					defaultValue={searchParams.get("categoryId") || "all"}
 				>
 					<SelectTrigger className="w-full sm:w-[180px]">
 						<SelectValue placeholder="Category" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value={ClientCategory.ALL}>All Categories</SelectItem>
-						<SelectItem value={ClientCategory.ADULT}>Adult</SelectItem>
-						<SelectItem value={ClientCategory.CHILD}>Child</SelectItem>
-						<SelectItem value={ClientCategory.STUDENT}>Student</SelectItem>
+						<SelectItem value="all">All Categories</SelectItem>
+                        {categories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.id}>
+                                {cat.name}
+                            </SelectItem>
+                        ))}
 					</SelectContent>
 				</Select>
 				<Select

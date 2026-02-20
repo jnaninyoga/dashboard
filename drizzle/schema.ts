@@ -45,6 +45,8 @@ export const healthSeverityEnum = pgEnum("health_severity", [
 	"critical",
 ]);
 
+export const discountTypeEnum = pgEnum("discount_type", ["percentage", "fixed"]);
+
 export const clients = pgTable("clients", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	googleContactResourceName: text("google_contact_resource_name"),
@@ -57,7 +59,8 @@ export const clients = pgTable("clients", {
 	profession: text("profession"),
 	consultationReason: text("consultation_reason"),
 	referralSource: referralSourceEnum("referral_source"),
-	category: categoryEnum("category").notNull().default("adult"),
+	// category: categoryEnum("category").notNull().default("adult"), // Deprecated
+    categoryId: uuid("category_id").references(() => clientCategories.id), // New FK
 	// Structured dossier for the detailed questionnaire
 	intakeData: jsonb("intake_data"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -82,7 +85,22 @@ export const membershipProducts = pgTable("membership_products", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	name: text("name").notNull(),
 	defaultCredits: integer("default_credits").notNull(),
+	durationMonths: integer("duration_months"),
 	basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
+	isArchived: boolean("is_archived").default(false).notNull(),
+});
+
+export const clientCategories = pgTable("client_categories", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	name: text("name").notNull(), // e.g., "Student", "Adult"
+	discountType: discountTypeEnum("discount_type").notNull().default("percentage"),
+	discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull().default("0"),
+	isArchived: boolean("is_archived").default(false).notNull(),
+});
+
+export const appSettings = pgTable("app_settings", {
+    key: text("key").primaryKey(), // e.g., 'discount_student'
+    value: text("value").notNull(), // e.g., '20' (Percentage)
 });
 
 export const clientWallets = pgTable("client_wallets", {
@@ -94,6 +112,7 @@ export const clientWallets = pgTable("client_wallets", {
 	physicalCardRef: text("physical_card_ref"),
 	remainingCredits: integer("remaining_credits").notNull(),
 	status: walletStatusEnum("status").notNull().default("active"),
+    amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }), // Actual amount paid after discount
 	activatedAt: timestamp("activated_at").defaultNow(),
 	lastUsedAt: timestamp("last_used_at"),
 });
@@ -109,9 +128,13 @@ export const attendanceLedger = pgTable("attendance_ledger", {
 	note: text("note"),
 });
 
-export const clientsRelations = relations(clients, ({ many }) => ({
+export const clientsRelations = relations(clients, ({ many, one }) => ({
 	healthLogs: many(healthLogs),
 	wallets: many(clientWallets),
+    category: one(clientCategories, {
+        fields: [clients.categoryId],
+        references: [clientCategories.id]
+    })
 }));
 
 export const healthLogsRelations = relations(healthLogs, ({ one }) => ({

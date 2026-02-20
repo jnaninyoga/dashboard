@@ -1,7 +1,8 @@
 import { getClientByIdAction } from "@/actions/clients";
 import { ClientForm } from "@/components/clients/client-form";
-import { ClientCategory, Gender, ReferralSource } from "@/lib/types";
+import { Gender, ReferralSource } from "@/lib/types";
 import { notFound } from "next/navigation";
+import { getClientCategories } from "@/actions/settings";
 
 // Next.js 15+ params are promises
 type Params = Promise<{ id: string }>;
@@ -10,7 +11,12 @@ export default async function EditClientPage(props: { params: Params }) {
 	const params = await props.params;
 	const { id } = params;
 
-	const { client, error } = await getClientByIdAction(id);
+    const [clientResult, categories] = await Promise.all([
+        getClientByIdAction(id),
+        getClientCategories()
+    ]);
+    
+    const { client, error } = clientResult;
 
 	if (error || !client) {
 		notFound();
@@ -27,14 +33,22 @@ export default async function EditClientPage(props: { params: Params }) {
 		birthDate: formattedDate,
 		profession: client.profession || undefined,
 		consultationReason: client.consultationReason || "",
-// ...
-		// Use ClientFormValues['category'] or Exclude<ClientCategory, ClientCategory.ALL>
-		category: (client.category as Exclude<ClientCategory, ClientCategory.ALL>) || ClientCategory.ADULT,
-// Use Exclude to narrow the type to allowed values
+		categoryId: client.categoryId || undefined,
 		gender: (client.gender as Exclude<Gender, Gender.ALL>) || Gender.MALE,
 		referralSource: (client.referralSource as ReferralSource) || undefined,
 		intakeData: (client.intakeData as Record<string, string>) || {},
+		// Map existing active health logs for the form
+		healthLogs: (client.healthLogs || []).map((log: any) => ({
+			category: log.category,
+			condition: log.condition,
+			treatment: log.treatment || "",
+			severity: log.severity,
+			isAlert: log.isAlert,
+			startDate: log.startDate,
+		})),
+		// Map active product for display
+		activeProductId: client.activeProductId || undefined,
 	};
 
-	return <ClientForm mode="edit" initialData={initialData} />;
+	return <ClientForm mode="edit" initialData={initialData} categories={categories} />;
 }

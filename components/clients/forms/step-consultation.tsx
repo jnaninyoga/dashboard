@@ -17,13 +17,17 @@ import {
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import type { ClientFormValues } from "@/lib/validators";
+import { type Category } from "@/lib/types";
 
 interface StepConsultationProps {
 	form: UseFormReturn<ClientFormValues>;
+    categories: Category[];
 }
 
-export function StepConsultation({ form }: StepConsultationProps) {
+export function StepConsultation({ form, categories }: StepConsultationProps) {
 	const values = useWatch({ control: form.control });
+    const categoryName = categories.find((c) => c.id === values.categoryId)?.name;
+    
 	return (
 		<div className="space-y-6">
 			<Card>
@@ -77,7 +81,7 @@ export function StepConsultation({ form }: StepConsultationProps) {
 						<strong>Email:</strong> {values.email || "—"}
 					</p>
 					<p>
-						<strong>Category:</strong> {values.category || "—"}
+						<strong>Category:</strong> {categoryName || "—"}
 					</p>
 				</CardContent>
 			</Card>
