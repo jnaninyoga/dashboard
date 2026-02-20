@@ -16,6 +16,34 @@ export async function getAppSettings() {
     }, {} as Record<string, string>);
 }
 
+export type WorkingHoursConfig = Record<string, { isOpen: boolean; start: string; end: string }>;
+
+export async function getWorkingHours(): Promise<WorkingHoursConfig | null> {
+    const setting = await db.query.appSettings.findFirst({
+        where: eq(appSettings.key, "working_hours")
+    });
+    
+    if (!setting || !setting.value) return null;
+    try {
+        return JSON.parse(setting.value) as WorkingHoursConfig;
+    } catch {
+        return null;
+    }
+}
+
+export async function setWorkingHours(config: WorkingHoursConfig) {
+    const valueStr = JSON.stringify(config);
+    await db.insert(appSettings).values({
+        key: "working_hours",
+        value: valueStr
+    }).onConflictDoUpdate({
+        target: appSettings.key,
+        set: { value: valueStr }
+    });
+    revalidatePath("/settings");
+    revalidatePath("/");
+}
+
 // --- Dynamic Categories ---
 
 export async function getClientCategories() {

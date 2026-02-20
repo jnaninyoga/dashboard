@@ -1,4 +1,4 @@
-import { Calendar, Home, Users, Plus, CreditCard, Tag } from "lucide-react";
+import { Calendar, Home, Users, Plus, CreditCard, Tag, Clock } from "lucide-react";
 
 export const dashboardConfig = {
 	navMain: [
@@ -35,6 +35,11 @@ export const dashboardConfig = {
 			title: "Categories",
 			url: "/settings/categories",
 			icon: Tag,
+		},
+		{
+			title: "Schedule",
+			url: "/settings/schedule",
+			icon: Clock,
 		},
 	],
 };

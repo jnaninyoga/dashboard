@@ -31,6 +31,7 @@ export const slotTypeEnum = pgEnum("slot_type", [
 	"group",
 	"private",
 	"outdoor",
+	"b2b",
 ]);
 
 export const healthCategoryEnum = pgEnum("health_category", [

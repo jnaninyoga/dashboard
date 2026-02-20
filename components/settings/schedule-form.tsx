@@ -1,0 +1,144 @@
+"use client";
+
+import { useState } from "react";
+import { toast } from "sonner";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { setWorkingHours, WorkingHoursConfig } from "@/actions/settings";
+import { Save, Loader2 } from "lucide-react";
+
+const daySchema = z.object({
+	isOpen: z.boolean(),
+	start: z.string(),
+	end: z.string(),
+});
+
+const scheduleSchema = z.record(z.string(), daySchema);
+
+type ScheduleFormValues = z.infer<typeof scheduleSchema>;
+
+const DAYS = [
+	{ key: "1", label: "Monday" },
+	{ key: "2", label: "Tuesday" },
+	{ key: "3", label: "Wednesday" },
+	{ key: "4", label: "Thursday" },
+	{ key: "5", label: "Friday" },
+	{ key: "6", label: "Saturday" },
+	{ key: "0", label: "Sunday" },
+];
+
+const DEFAULT_HOURS: WorkingHoursConfig = {
+	"1": { isOpen: true, start: "08:00", end: "20:00" },
+	"2": { isOpen: true, start: "08:00", end: "20:00" },
+	"3": { isOpen: true, start: "08:00", end: "20:00" },
+	"4": { isOpen: true, start: "08:00", end: "20:00" },
+	"5": { isOpen: true, start: "08:00", end: "20:00" },
+	"6": { isOpen: true, start: "08:00", end: "14:00" },
+	"0": { isOpen: false, start: "08:00", end: "20:00" },
+};
+
+export function ScheduleForm({
+	initialData,
+}: {
+	initialData: WorkingHoursConfig | null;
+}) {
+	const [isSaving, setIsSaving] = useState(false);
+
+	const { control, handleSubmit, watch } = useForm<ScheduleFormValues>({
+		resolver: zodResolver(scheduleSchema),
+		defaultValues: initialData || DEFAULT_HOURS,
+	});
+
+	const onSubmit = async (data: ScheduleFormValues) => {
+		setIsSaving(true);
+		try {
+			await setWorkingHours(data);
+			toast.success("Schedule updated successfully.");
+		} catch (error) {
+			console.error(error);
+			toast.error("Failed to update schedule.");
+		} finally {
+			setIsSaving(false);
+		}
+	};
+
+	return (
+		<form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+			<Card>
+				<CardContent className="p-6">
+					<div className="space-y-6">
+						{DAYS.map((day) => {
+							const isOpen = watch(`${day.key}.isOpen`);
+
+							return (
+								<div
+									key={day.key}
+									className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-card"
+								>
+									<div className="flex items-center gap-4 min-w-[140px]">
+										<Controller
+											control={control}
+											name={`${day.key}.isOpen`}
+											render={({ field }) => (
+												<Switch
+													checked={field.value}
+													onCheckedChange={field.onChange}
+												/>
+											)}
+										/>
+										<Label className="font-medium">{day.label}</Label>
+									</div>
+
+									<div className="flex items-center gap-2">
+										<Controller
+											control={control}
+											name={`${day.key}.start`}
+											render={({ field }) => (
+												<Input
+													type="time"
+													{...field}
+													disabled={!isOpen}
+													className="w-[120px]"
+												/>
+											)}
+										/>
+										<span className="text-muted-foreground">-</span>
+										<Controller
+											control={control}
+											name={`${day.key}.end`}
+											render={({ field }) => (
+												<Input
+													type="time"
+													{...field}
+													disabled={!isOpen}
+													className="w-[120px]"
+												/>
+											)}
+										/>
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				</CardContent>
+			</Card>
+
+			<div className="flex justify-end">
+				<Button type="submit" disabled={isSaving}>
+					{isSaving ? (
+						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+					) : (
+						<Save className="mr-2 h-4 w-4" />
+					)}
+					Save Schedule
+				</Button>
+			</div>
+		</form>
+	);
+}
