@@ -105,7 +105,6 @@ export async function createClientAction(
 		referralSource,
 		consultationReason,
 		intakeData,
-		healthLogs,
 	} = parsed.data;
 
 	const initialProductId = formData.get("initialProductId") as string | null;
@@ -339,7 +338,7 @@ export async function getClientsAction(
 			offset: offset,
 			orderBy: [desc(clients.createdAt)],
 			with: {
-                category: true,
+				category: true,
 				wallets: {
 					where: eq(clientWallets.status, "active"),
 					with: {
@@ -381,7 +380,7 @@ export async function getClientByIdAction(id: string) {
 		const client = await db.query.clients.findFirst({
 			where: eq(clients.id, id),
 			with: {
-                category: true,
+				category: true,
 				healthLogs: {
 					orderBy: desc(healthLogs.startDate),
 					where: isNull(healthLogs.endDate), // access active only?
@@ -625,7 +624,7 @@ export async function updateClientAction(
 			let accessToken: string;
 			try {
 				accessToken = await getValidAccessToken(user.id);
-				
+
 				// Fetch category name
 				let categoryName = "Uncategorized";
 				if (parsed.data.categoryId) {

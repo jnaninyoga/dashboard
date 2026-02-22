@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -36,13 +35,16 @@ import { addHealthLog, toggleHealthAlert } from "@/actions/health";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { HEALTH_TEMPLATE } from "@/config/health";
 
 interface HealthTabProps {
-	clientId: string;
-	healthLogs: any[]; // TODO: Type properly from DB schema
+	client: any; // TODO: Type properly from DB schema
 }
 
-export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
+export function HealthTab({ client }: HealthTabProps) {
+	const clientId = client.id;
+	const healthLogs: any[] = client.healthLogs || [];
+	const intakeData = (client.intakeData as Record<string, string>) || {};
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const router = useRouter();
@@ -58,8 +60,8 @@ export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
 	);
 
 	const activeAlerts = healthLogs.filter((log) => log.isAlert);
-	const historyLogs = healthLogs; // Show all in history, or filter out alerts? 
-    // Requirement: "Health History. A chronological list of all logs."
+	const historyLogs = healthLogs; // Show all in history, or filter out alerts?
+	// Requirement: "Health History. A chronological list of all logs."
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -77,9 +79,9 @@ export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
 				setIsOpen(false);
 				setCondition("");
 				setSeverity(HealthSeverity.INFO);
-                // Router refresh handled by action revalidatePath, but client needs to refresh view? 
-                // revalidatePath refreshes server data, but client router cache might hold old data?
-                // Usually Server Actions + revalidatePath updates the UI automatically if using standard navigation.
+				// Router refresh handled by action revalidatePath, but client needs to refresh view?
+				// revalidatePath refreshes server data, but client router cache might hold old data?
+				// Usually Server Actions + revalidatePath updates the UI automatically if using standard navigation.
 			} else {
 				console.error(result.error);
 				alert("Failed to add log");
@@ -97,7 +99,7 @@ export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="max-w-3xl mx-auto space-y-6">
 			{/* Active Alerts Section */}
 			{activeAlerts.length > 0 && (
 				<Card className="border-red-200 bg-red-50 dark:bg-red-900/10">
@@ -118,7 +120,9 @@ export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
 										<div className="flex items-center gap-2 mb-1">
 											<Badge
 												variant={
-													log.severity === "critical" ? "destructive" : "default"
+													log.severity === "critical"
+														? "destructive"
+														: "default"
 												}
 												className={cn(
 													log.severity === "warning" &&
@@ -148,6 +152,54 @@ export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
 					</CardContent>
 				</Card>
 			)}
+
+			{/* Static Health & Wellness Profile */}
+			<Card>
+				<CardHeader>
+					<CardTitle className="text-lg flex items-center gap-2">
+						<Info className="h-5 w-5" />
+						Health & Wellness Profile
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					{HEALTH_TEMPLATE.map((section) => {
+						const hasData = section.fields.some((f) => intakeData[f.key]);
+						if (!hasData) return null;
+
+						return (
+							<div key={section.category} className="mb-6 last:mb-0">
+								<h4 className="mb-3 font-semibold text-sm text-muted-foreground uppercase tracking-wider border-b pb-1">
+									{section.label}
+								</h4>
+								<div className="grid gap-2 text-sm">
+									{section.fields.map((field) => {
+										if (!intakeData[field.key]) return null;
+										return (
+											<div
+												key={field.key}
+												className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4 py-1.5"
+											>
+												<span className="font-medium whitespace-nowrap min-w-[30%]">
+													{field.label}
+												</span>
+												<span className="text-muted-foreground text-left sm:text-right break-words">
+													{intakeData[field.key]}
+												</span>
+											</div>
+										);
+									})}
+								</div>
+							</div>
+						);
+					})}
+
+					{Object.keys(intakeData).length === 0 && (
+						<p className="text-sm text-muted-foreground italic">
+							No health data recorded.
+						</p>
+					)}
+				</CardContent>
+			</Card>
 
 			<div className="flex justify-end">
 				<Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -245,9 +297,10 @@ export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
 						<History className="h-5 w-5" />
 						Health Changes Log
 					</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Historical record of all health events. Manage active conditions via "Edit Profile".
-                    </p>
+					<p className="text-sm text-muted-foreground mt-1">
+						Historical record of all health events. Manage active conditions via
+						"Edit Profile".
+					</p>
 				</CardHeader>
 				<CardContent>
 					<div className="space-y-4">
@@ -283,17 +336,19 @@ export function HealthTab({ clientId, healthLogs }: HealthTabProps) {
 										</div>
 									</div>
 									<div className="flex items-center gap-2">
-                                        {!log.isAlert && (log.severity === 'warning' || log.severity === 'critical') && (
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 text-xs"
-                                                onClick={() => handleToggleAlert(log.id, true)}
-                                            >
-                                                Re-activate
-                                            </Button>
-                                        )}
-                                    </div>
+										{!log.isAlert &&
+											(log.severity === "warning" ||
+												log.severity === "critical") && (
+												<Button
+													variant="outline"
+													size="sm"
+													className="h-7 text-xs"
+													onClick={() => handleToggleAlert(log.id, true)}
+												>
+													Re-activate
+												</Button>
+											)}
+									</div>
 								</div>
 							))
 						)}

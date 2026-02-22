@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -61,7 +60,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 	};
 
 	return (
-		<div className="space-y-6">
+		<div className="max-w-3xl mx-auto space-y-6">
 			{/* Status Card */}
 			<div className="grid gap-6 md:grid-cols-2">
 				<Card className="bg-primary/5 dark:bg-primary/10 border-primary/20">
@@ -148,11 +147,18 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 									<div>
 										<h4 className="font-medium flex items-center gap-2">
 											{wallet.product?.name || "Unknown Product"}
-                                            {wallet.status === 'active' ? (
-                                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">Active</Badge>
-                                            ) : (
-                                                <Badge variant="secondary" className="text-xs">{wallet.status}</Badge>
-                                            )}
+											{wallet.status === "active" ? (
+												<Badge
+													variant="outline"
+													className="text-xs bg-green-50 text-green-700 border-green-200"
+												>
+													Active
+												</Badge>
+											) : (
+												<Badge variant="secondary" className="text-xs">
+													{wallet.status}
+												</Badge>
+											)}
 										</h4>
 										<div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
 											<span className="flex items-center gap-1">
@@ -167,7 +173,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 											</span>
 										</div>
 									</div>
-                                    {/* Actions like "Use Credit" are handled in check-in, not here directly? Or manual adjust? */}
+									{/* Actions like "Use Credit" are handled in check-in, not here directly? Or manual adjust? */}
 								</div>
 							))
 						)}

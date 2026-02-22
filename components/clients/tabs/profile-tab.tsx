@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -7,72 +6,51 @@ import {
 	MapPin,
 	Calendar,
 	User,
+	Briefcase,
 	FileText,
 } from "lucide-react";
+import Link from "next/link";
+import { WhatsAppIcon } from "@/components/icons/whatsapp";
 
-// Use a loose type for now, or import strictly if possible. 
-// We expect the client object from DB.
 interface ProfileTabProps {
-	client: any; // TODO: Strict typing with relations
+	client: any;
 }
 
 export function ProfileTab({ client }: ProfileTabProps) {
-	const intakeData = (client.intakeData as Record<string, string>) || {};
-
-	const renderHealthSection = (title: string, keys: string[]) => {
-		const hasData = keys.some((k) => intakeData[k]);
-		if (!hasData) return null;
-
-		return (
-			<div className="mb-4">
-				<h4 className="mb-2 font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-					{title}
-				</h4>
-				<div className="grid gap-2 text-sm">
-					{keys.map((key) => {
-						if (!intakeData[key]) return null;
-						const label = key
-							.replace(/([A-Z])/g, " $1")
-							.replace(/^./, (str) => str.toUpperCase());
-						return (
-							<div
-								key={key}
-								className="flex flex-col sm:flex-row sm:justify-between border-b pb-2 last:border-0"
-							>
-								<span className="font-medium">{label}</span>
-								<span className="text-muted-foreground text-right">
-									{intakeData[key]}
-								</span>
-							</div>
-						);
-					})}
-				</div>
-			</div>
-		);
-	};
-
 	return (
-		<div className="grid gap-6 md:grid-cols-3">
-			{/* Left Column: Contact & Metadata */}
-			<div className="space-y-6 md:col-span-1">
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-lg flex items-center gap-2">
-							<User className="h-5 w-5" />
-							Contact Details
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
+		<div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-2">
+			{/* Contact Info Card */}
+			<Card>
+				<CardHeader className="pb-4">
+					<CardTitle className="text-xl flex items-center gap-2">
+						<User className="h-6 w-6" />
+						Contact Information
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className="grid gap-3">
 						<div className="flex items-center gap-3">
-							<Phone className="h-4 w-4 text-muted-foreground" />
-							<span className="text-sm">{client.phone}</span>
+							<Link
+								href={`https://wa.me/${client.phone.replace(/[^0-9]/g, "")}`}
+								target="_blank"
+								className="group flex items-center ml-1 text-muted-foreground hover:text-[#25D366] transition-colors"
+							>
+								<WhatsAppIcon className="w-5 h-5 transition-colors" />
+							</Link>
+							<Link
+								href={`tel:${client.phone}`}
+								className="flex items-center gap-2 hover:text-primary transition-colors"
+							>
+								<Phone className="h-5 w-5 text-muted-foreground" />
+								<span className="text-base">{client.phone}</span>
+							</Link>
 						</div>
 						{client.email && (
 							<div className="flex items-center gap-3">
-								<Mail className="h-4 w-4 text-muted-foreground" />
+								<Mail className="h-5 w-5 text-muted-foreground" />
 								<a
 									href={`mailto:${client.email}`}
-									className="text-sm hover:underline hover:text-primary"
+									className="text-base hover:underline hover:text-primary"
 								>
 									{client.email}
 								</a>
@@ -80,28 +58,48 @@ export function ProfileTab({ client }: ProfileTabProps) {
 						)}
 						{client.address && (
 							<div className="flex items-start gap-3">
-								<MapPin className="h-4 w-4 text-muted-foreground mt-1" />
-								<span className="text-sm">{client.address}</span>
+								<MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+								<span className="text-base">{client.address}</span>
 							</div>
 						)}
+					</div>
+				</CardContent>
+			</Card>
+
+			{/* Personal Details Card */}
+			<Card>
+				<CardHeader className="pb-4">
+					<CardTitle className="text-lg flex items-center gap-2">
+						<Calendar className="h-5 w-5" />
+						Personal Details
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<div className="grid gap-3">
 						<div className="flex items-center gap-3">
-							<Calendar className="h-4 w-4 text-muted-foreground" />
-							<span className="text-sm">Born: {client.birthDate}</span>
+							<span className="text-muted-foreground w-20">Born:</span>
+							<span className="text-base">{client.birthDate}</span>
 						</div>
-
-						<Separator className="my-2" />
-
-						<div className="grid grid-cols-2 gap-4 text-sm pt-2">
+						{client.profession && (
+							<div className="flex items-center gap-3">
+								<span className="text-muted-foreground w-20">Profession:</span>
+								<span className="text-base capitalize">
+									{client.profession}
+								</span>
+							</div>
+						)}
+						<Separator />
+						<div className="grid grid-cols-2 gap-4 mt-2">
 							<div className="flex flex-col">
-								<span className="text-muted-foreground text-xs uppercase tracking-wider">
-									Referral
+								<span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">
+									Referral Source
 								</span>
 								<span className="font-medium capitalize">
 									{client.referralSource?.replace("_", " ") || "N/A"}
 								</span>
 							</div>
 							<div className="flex flex-col">
-								<span className="text-muted-foreground text-xs uppercase tracking-wider">
+								<span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">
 									Client Since
 								</span>
 								<span className="font-medium">
@@ -109,60 +107,24 @@ export function ProfileTab({ client }: ProfileTabProps) {
 								</span>
 							</div>
 						</div>
-					</CardContent>
-				</Card>
-			</div>
+					</div>
+				</CardContent>
+			</Card>
 
-			{/* Right Column: Health & Notes */}
-			<div className="space-y-6 md:col-span-2">
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-lg flex items-center gap-2">
-							<FileText className="h-5 w-5" />
-							Consultation
-						</CardTitle>
-					</CardHeader>
-					<CardContent className="space-y-4">
-						<div>
-							<h4 className="font-semibold text-sm mb-1">
-								Reason for Consultation
-							</h4>
-							<p className="text-sm text-muted-foreground">
-								{client.consultationReason || "No specific reason recorded."}
-							</p>
-						</div>
-					</CardContent>
-				</Card>
-
-				<Card>
-					<CardHeader>
-						<CardTitle className="text-lg">Health & Wellness Profile</CardTitle>
-					</CardHeader>
-					<CardContent>
-						{renderHealthSection("Physical Health", [
-							"medicalHistory",
-							"surgeries",
-							"injuries",
-							"medications",
-							"currentPain",
-						])}
-						{renderHealthSection("Wellness & Lifestyle", [
-							"stressLevels",
-							"sleepQuality",
-							"nutrition",
-							"exercise",
-							"occupation",
-							"emotionalHealth",
-						])}
-
-						{Object.keys(intakeData).length === 0 && (
-							<p className="text-sm text-muted-foreground italic">
-								No health data recorded.
-							</p>
-						)}
-					</CardContent>
-				</Card>
-			</div>
+			{/* Consultation Reason Card */}
+			<Card className="md:col-span-2">
+				<CardHeader className="pb-4">
+					<CardTitle className="text-lg flex items-center gap-2">
+						<FileText className="h-5 w-5" />
+						Consultation Reason
+					</CardTitle>
+				</CardHeader>
+				<CardContent>
+					<p className="text-base">
+						{client.consultationReason || "No specific reason recorded."}
+					</p>
+				</CardContent>
+			</Card>
 		</div>
 	);
 }
