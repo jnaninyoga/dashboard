@@ -19,7 +19,6 @@ export const metadata: Metadata = {
 	description: "Digital Command Center",
 };
 
-export const runtime = "edge";
 
 export default function RootLayout({
 	children,

@@ -1,5 +1,3 @@
-export const runtime = "edge";
-
 import { NextResponse } from "next/server";
 import { createClient } from "@/supabase/server";
 import { storeUserTokens } from "@/services/google-tokens";
