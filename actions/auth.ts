@@ -6,8 +6,14 @@ import { createClient } from "@/supabase/server";
 
 export async function loginWithGoogle() {
 	const supabase = await createClient();
+	const headersList = await headers();
+	const host = headersList.get("host");
+	const protocol = host?.includes("localhost") ? "http" : "https";
+	
 	const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 
-		(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+		(host ? `${protocol}://${host}` : 
+		(process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"));
+	
 	const redirectUrl = `${siteUrl}/auth/callback`;
 
 	const { data, error } = await supabase.auth.signInWithOAuth({
