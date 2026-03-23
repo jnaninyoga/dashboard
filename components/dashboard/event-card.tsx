@@ -1,10 +1,12 @@
 "use client";
 
 import { format, isWithinInterval, subMinutes, parseISO } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export function EventCard({ event }: { event: any }) {
     const startIso = event.start?.dateTime;
@@ -71,6 +73,13 @@ export function EventCard({ event }: { event: any }) {
                     )}
                 </div>
             </CardContent>
+            <CardFooter className="pt-2 pb-4">
+                <Button asChild className="w-full" variant={isLive ? "default" : "secondary"}>
+                    <Link href={`/check-in/${event.id}`}>
+                        Manage Check-in
+                    </Link>
+                </Button>
+            </CardFooter>
         </Card>
     );
 }
