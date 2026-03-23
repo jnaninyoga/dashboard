@@ -177,3 +177,26 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7) {
 		throw new Error("Failed to fetch events from Google Calendar.");
 	}
 }
+
+/**
+ * Fetches a specific event by its ID.
+ */
+export async function getEventById(accessToken: string, eventId: string) {
+	const auth = new google.auth.OAuth2();
+	auth.setCredentials({ access_token: accessToken });
+
+	const calendar = google.calendar({ version: "v3", auth });
+
+	try {
+		const response = await calendar.events.get({
+			calendarId: "primary",
+			eventId: eventId,
+		});
+
+		return response.data;
+	} catch (error) {
+		console.error("Error fetching event by ID:", error);
+		throw new Error("Failed to fetch event from Google Calendar.");
+	}
+}
+

@@ -86,14 +86,38 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
 									<TableCell>
 										<ClientAvatar client={client} />
 									</TableCell>
-									<TableCell className="font-medium">
-										<Link
-											href={`/clients/${client.id}`}
-											className="block hover:text-primary hover:underline"
-										>
-											<div>{client.fullName}</div>
-										</Link>
-										<div className="text-sm text-muted-foreground">
+									<TableCell className="font-medium align-top">
+										<div className="flex items-center gap-2">
+											<Link
+												href={`/clients/${client.id}`}
+												className="block hover:text-primary hover:underline"
+											>
+												<span className="font-bold text-gray-900">{client.fullName}</span>
+											</Link>
+											{client.activeSessionName && (
+												<TooltipProvider>
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<div className="flex items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full text-green-700 shadow-sm">
+																<span className="relative flex h-1.5 w-1.5">
+																  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+																  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+																</span>
+																<span className="text-[9px] font-bold uppercase tracking-wider truncate max-w-[100px]">
+																	{client.activeSessionName}
+																</span>
+															</div>
+														</TooltipTrigger>
+														<TooltipContent>
+															<p className="font-semibold text-xs text-green-600">
+																Checked in today
+															</p>
+														</TooltipContent>
+													</Tooltip>
+												</TooltipProvider>
+											)}
+										</div>
+										<div className="text-sm text-muted-foreground mt-0.5">
 											{client.email}
 										</div>
 									</TableCell>

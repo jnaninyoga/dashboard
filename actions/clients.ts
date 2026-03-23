@@ -8,7 +8,7 @@ import {
 	attendanceLedger,
 	clientCategories,
 } from "@/drizzle/schema";
-import { eq, and, or, ilike, desc, isNull } from "drizzle-orm";
+import { eq, and, or, ilike, desc, isNull, inArray, gte } from "drizzle-orm";
 import { createClient } from "@/supabase/server";
 import { revalidatePath } from "next/cache";
 import {
@@ -19,6 +19,7 @@ import { redirect } from "next/navigation";
 import { clientSchema } from "@/lib/validators";
 import { HEALTH_TEMPLATE } from "@/config/health";
 import { getValidAccessToken } from "@/services/google-tokens";
+import { getTodayEvents } from "@/services/google-calendar";
 import { Gender } from "@/lib/types";
 import { assignProductToClient } from "./wallets";
 
@@ -304,6 +305,13 @@ export async function getClientsAction(
 
 	if (!user) return { error: "Not authenticated" };
 
+	let accessToken: string | null = null;
+	try {
+		accessToken = await getValidAccessToken(user.id);
+	} catch (e) {
+		console.warn("Could not get access token for google calendar", e);
+	}
+
 	const offset = (page - 1) * pageSize;
 
 	// Build where clause
@@ -360,6 +368,45 @@ export async function getClientsAction(
 				},
 			},
 		});
+
+        // 2. Add Live Session Info if checked in today
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        if (data.length > 0) {
+            const clientIds = data.map(c => c.id);
+            const recentLedgers = await db
+                .select({
+                    clientId: clientWallets.clientId,
+                    googleEventId: attendanceLedger.googleEventId,
+                    checkInTime: attendanceLedger.checkInTime,
+                })
+                .from(attendanceLedger)
+                .innerJoin(clientWallets, eq(attendanceLedger.walletId, clientWallets.id))
+                .where(
+                    and(
+                        inArray(clientWallets.clientId, clientIds),
+                        gte(attendanceLedger.checkInTime, startOfToday)
+                    )
+                )
+                .orderBy(desc(attendanceLedger.checkInTime));
+
+            if (recentLedgers.length > 0 && accessToken) {
+                try {
+                    const todayEvents = await getTodayEvents(accessToken);
+                    const eventMap = new Map(todayEvents.map(e => [e.id, e.summary]));
+
+                    data.forEach((client: any) => {
+                        const latestLedger = recentLedgers.find(l => l.clientId === client.id);
+                        if (latestLedger && latestLedger.googleEventId) {
+                            client.activeSessionName = eventMap.get(latestLedger.googleEventId) || "Unknown Session";
+                        }
+                    });
+                } catch (e) {
+                    console.error("Failed to fetch today events for live status", e);
+                }
+            }
+        }
 
 		return { success: true, data };
 	} catch (error) {

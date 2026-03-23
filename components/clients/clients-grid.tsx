@@ -48,16 +48,8 @@ interface Client {
 
 // Helper to check if client is online (checked in today)
 function isClientOnline(client: Client) {
-	const lastCheckIn = client.wallets?.[0]?.ledgerEntries?.[0]?.checkInTime;
-	if (!lastCheckIn) return false;
-
-	const checkInDate = new Date(lastCheckIn);
-	const today = new Date();
-	return (
-		checkInDate.getDate() === today.getDate() &&
-		checkInDate.getMonth() === today.getMonth() &&
-		checkInDate.getFullYear() === today.getFullYear()
-	);
+	// isClientOnline has been simplified relying on activeSessionName populated by getClientsAction
+	return !!(client as any).activeSessionName;
 }
 
 function CreditBattery({
@@ -171,14 +163,19 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 								<TooltipProvider>
 									<Tooltip>
 										<TooltipTrigger asChild>
-											<div className="flex h-2.5 w-2.5 relative cursor-help">
-												<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-												<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500 border border-white"></span>
+											<div className="flex items-center gap-1.5 bg-green-500/10 backdrop-blur-sm border border-green-500/20 px-2.5 py-1 rounded-full text-green-600 shadow-sm cursor-help">
+												<span className="relative flex h-2 w-2">
+												  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+												  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+												</span>
+												<span className="text-[10px] font-bold uppercase tracking-wider truncate max-w-[120px]">
+													{(client as any).activeSessionName || "Live"}
+												</span>
 											</div>
 										</TooltipTrigger>
 										<TooltipContent side="left">
 											<p className="font-semibold text-xs text-green-600">
-												Checked in today
+												Checked in to {(client as any).activeSessionName || "a session"} today
 											</p>
 										</TooltipContent>
 									</Tooltip>
