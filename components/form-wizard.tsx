@@ -46,7 +46,7 @@ export function FormWizard({
 			{/* Progress Indicator */}
 			<div className="relative">
 				{/* Progress Line */}
-				<div className="absolute top-5 left-0 right-0 h-0.5 bg-muted">
+				<div className="absolute top-5 left-0 right-0 h-0.5 bg-secondary-foreground/20">
 					<div
 						className="h-full bg-primary transition-all duration-300 ease-in-out"
 						style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
@@ -61,29 +61,26 @@ export function FormWizard({
 
 						return (
 							<div key={step.id} className="flex flex-col items-center">
-								{/* Circle */}
-								<div
-									className={cn(
-										"flex h-10 w-10 items-center justify-center rounded-full border-2 bg-background transition-all duration-200",
-										isCompleted &&
-											"border-primary bg-primary text-primary-foreground",
-										isCurrent && "border-primary",
-										!isCompleted && !isCurrent && "border-muted",
+								<div className="relative">
+									{isCurrent && (
+										<span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
 									)}
-								>
-									{isCompleted ? (
-										<Check className="h-5 w-5" />
-									) : (
-										<span
-											className={cn(
-												"text-sm font-medium",
-												isCurrent && "text-primary",
-												!isCurrent && "text-muted-foreground",
-											)}
-										>
-											{index + 1}
-										</span>
-									)}
+									<div
+										className={cn(
+											"relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
+											isCompleted && "bg-primary text-primary-foreground",
+											isCurrent && "bg-primary text-primary-foreground scale-110",
+											!isCompleted && !isCurrent && "border-2 border-secondary-foreground/30 bg-background text-secondary-foreground/60",
+										)}
+									>
+										{isCompleted ? (
+											<Check className="h-5 w-5" />
+										) : (
+											<span className="text-sm font-semibold">
+												{index + 1}
+											</span>
+										)}
+									</div>
 								</div>
 
 								{/* Label */}

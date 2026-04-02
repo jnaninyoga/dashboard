@@ -1,11 +1,20 @@
-import { Calendar, Home, Users, Plus, CreditCard, Tag, Clock, CheckCircle } from "lucide-react";
+import { 
+	Home2, 
+	Calendar, 
+	People, 
+	UserAdd, 
+	Card, 
+	Category2, 
+	Timer1, 
+	TickCircle 
+} from "iconsax-reactjs";
 
 export const dashboardConfig = {
 	navMain: [
 		{
 			title: "Dashboard",
 			url: "/",
-			icon: Home,
+			icon: Home2,
 		},
 		{
 			title: "Schedule",
@@ -15,36 +24,36 @@ export const dashboardConfig = {
 		{
 			title: "Check-in",
 			url: "/check-in",
-			icon: CheckCircle,
+			icon: TickCircle,
 		},
 		{
 			title: "Clients",
 			url: "/clients",
-			icon: Users,
+			icon: People,
 		},
 	],
 	actions: [
 		{
 			title: "Add Client",
 			url: "/clients/add",
-			icon: Plus,
+			icon: UserAdd,
 		},
 	],
 	settings: [
 		{
 			title: "Memberships",
 			url: "/settings/memberships",
-			icon: CreditCard,
+			icon: Card,
 		},
 		{
 			title: "Categories",
 			url: "/settings/categories",
-			icon: Tag,
+			icon: Category2,
 		},
 		{
 			title: "Schedule",
 			url: "/settings/schedule",
-			icon: Clock,
+			icon: Timer1,
 		},
 	],
 };

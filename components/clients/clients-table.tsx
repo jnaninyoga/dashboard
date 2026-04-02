@@ -54,8 +54,8 @@ function ClientAvatar({ client }: { client: Client }) {
 
 export function ClientsTable({ clients }: { clients: Client[] }) {
 	return (
-		<div className="rounded-md border">
-			<Table>
+		<div className="rounded-md border overflow-x-auto w-full relative bg-white p-2">
+			<Table className="[&_tr]:border-secondary-foreground/10">
 				<TableHeader>
 					<TableRow>
 						<TableHead className="w-[50px]"></TableHead>

@@ -42,14 +42,14 @@ export default async function ClientsPage(props: {
 	}
 
 	return (
-		<main className="flex flex-col gap-6 p-6">
+		<>
 			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-					<p className="text-muted-foreground">
+				<header className="space-y-1">
+					<h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">Clients</h1>
+					<p className="text-md text-muted-foreground">
 						Manage your client base and view their progress.
 					</p>
-				</div>
+				</header>
 				<Link href="/clients/add">
 					<Button>
 						<Plus className="mr-2 h-4 w-4" />
@@ -68,6 +68,6 @@ export default async function ClientsPage(props: {
 			) : (
 				<ClientsTable clients={clients || []} />
 			)}
-		</main>
+		</>
 	);
 }

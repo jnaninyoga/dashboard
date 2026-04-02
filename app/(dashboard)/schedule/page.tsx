@@ -20,10 +20,10 @@ export default async function SchedulePage() {
     }
 
     return (
-        <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
-            <header className="flex flex-col mb-2">
-                <h1 className="text-3xl font-bold tracking-tight">Weekly Schedule</h1>
-                <p className="text-muted-foreground">View all upcoming sessions and classes for the week ahead.</p>
+        <>
+            <header className="flex flex-col space-y-1">
+                <h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">Weekly Schedule</h1>
+                <p className="text-md text-muted-foreground">View all upcoming sessions and classes for the week ahead.</p>
             </header>
             
             {errorMsg ? (
@@ -33,6 +33,6 @@ export default async function SchedulePage() {
             ) : (
                 <ScheduleClient initialEvents={events} />
             )}
-        </div>
+        </>
     );
 }

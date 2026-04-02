@@ -10,25 +10,29 @@ export function CockpitClient({ initialEvents, initialError }: { initialEvents: 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Today's Schedule</h2>
-                <Button onClick={() => setIsDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nouveau Session
+        <div className="flex flex-col gap-5">
+            <div className="flex justify-between items-center bg-card zen-shadow p-5 rounded-3xl">
+                <div className="flex flex-col gap-0.5">
+                    <h2 className="text-lg font-heading font-semibold text-foreground tracking-tight">Today&apos;s Agenda</h2>
+                    <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">{initialEvents.length} Sessions</span>
+                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="rounded-full zen-glow-teal min-h-[48px] px-6 font-semibold" variant="default">
+                    <Plus className="h-5 w-5 text-white" />
+                    New Session
                 </Button>
             </div>
 
             {initialError && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-md border border-red-200">
+                <div className="p-5 bg-red-50 text-red-700 rounded-2xl zen-shadow font-medium">
                     {initialError}
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-3">
                 {initialEvents.length === 0 && !initialError ? (
-                    <div className="col-span-full p-8 text-center bg-muted/30 rounded-lg border border-dashed">
-                        <p className="text-muted-foreground">No sessions scheduled for today. Have a relaxing day!</p>
+                    <div className="p-12 text-center bg-card rounded-3xl zen-shadow">
+                        <p className="text-muted-foreground font-medium text-base">The studio is quiet today.</p>
+                        <p className="text-xs text-muted-foreground mt-2">Enjoy the peaceful downtime, or add a private session.</p>
                     </div>
                 ) : (
                     initialEvents.map((event) => (

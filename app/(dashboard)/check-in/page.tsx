@@ -23,13 +23,13 @@ export default async function CheckInIndexPage() {
     }
 
     return (
-        <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">
-            <header className="mb-6">
-                <h1 className="text-3xl font-bold tracking-tight">Check-in Portal</h1>
-                <p className="text-muted-foreground">Select a session from today's schedule to manage client attendance.</p>
+        <>
+            <header className="flex flex-col space-y-1">
+                <h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">Check-in Portal</h1>
+                <p className="text-md text-muted-foreground">Select a session from today&apos;s schedule to manage client attendance.</p>
             </header>
             
             <CockpitClient initialEvents={events} initialError={errorMsg} />
-        </div>
+        </>
     );
 }

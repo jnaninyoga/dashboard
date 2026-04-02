@@ -22,12 +22,21 @@ export function ClientViewToggle() {
 			type="single"
 			value={view.toString()}
 			onValueChange={handleViewChange}
-			className="hidden md:inline-flex"
+			spacing={1}
+			className="hidden md:inline-flex bg-white rounded-2xl shadow-sm p-1 gap-1"
 		>
-			<ToggleGroupItem value={View.LIST.toString()} aria-label="Table View">
+			<ToggleGroupItem
+				value={View.LIST.toString()}
+				aria-label="Table View"
+				className="rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background"
+			>
 				<List className="h-4 w-4" />
 			</ToggleGroupItem>
-			<ToggleGroupItem value={View.GRID.toString()} aria-label="Grid View">
+			<ToggleGroupItem
+				value={View.GRID.toString()}
+				aria-label="Grid View"
+				className="rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background"
+			>
 				<LayoutGrid className="h-4 w-4" />
 			</ToggleGroupItem>
 		</ToggleGroup>
