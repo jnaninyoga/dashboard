@@ -43,7 +43,7 @@ export function ScheduleClient({ initialEvents }: { initialEvents: any[] }) {
                         <h3 className="text-lg font-semibold border-b pb-2">
                             {format(parseISO(dateKey), "EEEE, MMMM do")}
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="flex flex-col gap-3">
                             {groupedEvents[dateKey].map((event: any) => (
                                 <EventCard key={event.id} event={event} />
                             ))}

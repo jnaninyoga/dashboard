@@ -23,15 +23,17 @@ export default async function Home() {
     const todayStr = format(new Date(), "EEEE, MMMM do, yyyy");
 
     return (
-        <div className="flex flex-1 flex-col gap-4 p-4 md:p-8">
-            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Bonjour, Ourda 👋</h1>
-                    <p className="text-muted-foreground">{todayStr}</p>
+        <main className="flex flex-1 flex-col gap-6 p-6">
+            <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+                <div className="space-y-1 block">
+                    <h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">
+                        Bonjour, Ourda
+                    </h1>
+                    <p className="text-md text-muted-foreground">{todayStr}</p>
                 </div>
             </header>
             
             <CockpitClient initialEvents={events} initialError={errorMsg} />
-        </div>
+        </main>
     );
 }

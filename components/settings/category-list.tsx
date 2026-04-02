@@ -58,15 +58,9 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
 
     return (
         <div className="space-y-8">
-            <div className="flex justify-end">
-                <Button onClick={() => setIsCreateOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Category
-                </Button>
-            </div>
 
-            <div className="rounded-md border">
-                <Table>
+            <div className="rounded-md border bg-white p-2">
+                <Table className="[&_tr]:border-secondary-foreground/10">
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
@@ -125,8 +119,8 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
             {archivedCategories.length > 0 && (
                 <div className="opacity-70">
                     <h3 className="text-sm font-medium mb-2 text-muted-foreground">Archived Categories</h3>
-                    <div className="rounded-md border">
-                        <Table>
+                    <div className="rounded-md border bg-white p-2">
+                        <Table className="[&_tr]:border-secondary-foreground/10">
                             <TableBody>
                                 {archivedCategories.map((category) => (
                                     <TableRow key={category.id} className="bg-muted/50">

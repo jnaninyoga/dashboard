@@ -7,7 +7,7 @@ import { ClientActions } from "./client-actions";
 import { getGoogleContactPhotoAction } from "@/actions/clients";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertCircle, Phone, Briefcase, Mail } from "lucide-react";
+import { AlertCircle, Phone, Briefcase, Mail, User, CheckCircle, AlertTriangle } from "lucide-react";
 import {
 	Tooltip,
 	TooltipContent,
@@ -23,7 +23,7 @@ interface Client {
 	fullName: string;
 	email?: string | null;
 	phone: string;
-	category: { name: string } | null;
+	category: { name: string; discountType?: "percentage" | "fixed" | null; discountValue?: string | null } | null;
 	gender?: string | null;
 	profession?: string | null;
 	address?: string | null;
@@ -43,6 +43,7 @@ interface Client {
 	healthLogs?: {
 		condition: string;
 		isAlert: boolean;
+		severity?: string;
 	}[];
 }
 
@@ -140,20 +141,19 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+		<div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
 			{clients.map((client) => {
 				const activeWallet = client.wallets?.[0];
 
 				// Filter for actual alerts
 				const alerts = client.healthLogs?.filter((l: any) => l.isAlert) || [];
-				const hasAlerts = alerts.length > 0;
 				const isOnline = isClientOnline(client);
 
 				return (
 					<Card
 						key={client.id}
 						className={cn(
-							"group relative flex flex-col overflow-hidden transition-all hover:shadow-md border-muted/60",
+							"group relative flex flex-col overflow-hidden transition-all duration-300 ease-out rounded-3xl border-muted/60 hover:zen-shadow-md",
 							isOnline && "ring-1 ring-green-500/50 border-green-500/50",
 						)}
 					>
@@ -184,7 +184,7 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 							<ClientActions client={client} />
 						</div>
 
-						<CardContent className="p-4 space-y-4">
+						<CardContent className="p-4 flex flex-col flex-1 gap-4">
 							{/* Horizontal Identity Section */}
 							<div className="flex items-start gap-3 pr-8">
 								<Link
@@ -212,20 +212,44 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 											</span>
 										)}
 									</p>
-
-									{/* Health Alerts Inline */}
-									{hasAlerts && (
-										<div className="flex items-center gap-1 text-destructive text-[10px] font-bold uppercase tracking-wider mt-1.5">
-											<AlertCircle className="h-3 w-3" />
-											<span>
-												{alerts.length} Alert{alerts.length > 1 ? "s" : ""}
-											</span>
-										</div>
-									)}
 								</div>
 							</div>
 
 							<div className="w-full border-t border-border/40"></div>
+
+							{/* Gender Section — above membership */}
+							<div className="flex items-center gap-3 text-xs">
+								<span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wide">
+									Gender
+								</span>
+								<TooltipProvider delayDuration={150}>
+									<Tooltip>
+										<TooltipTrigger asChild>
+											<div className="flex items-center gap-1.5 font-medium cursor-default">
+												{client.gender === "male" ? (
+													<>
+														<User className="size-3.5 text-blue-500" />
+														<span className="capitalize text-foreground">Male</span>
+													</>
+												) : client.gender === "female" ? (
+													<>
+														<User className="size-3.5 text-pink-500" />
+														<span className="capitalize text-foreground">Female</span>
+													</>
+												) : (
+													<>
+														<User className="size-3.5 text-gray-400" />
+														<span className="capitalize text-foreground">Unspecified</span>
+													</>
+												)}
+											</div>
+										</TooltipTrigger>
+										<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg capitalize">
+											{client.gender || "Not specified"}
+										</TooltipContent>
+									</Tooltip>
+								</TooltipProvider>
+							</div>
 
 							{/* Compact Membership Block */}
 							<div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs items-center">
@@ -256,52 +280,125 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 								</div>
 							</div>
 
-							{/* Compact Footer */}
-							<div className="flex items-center justify-between text-xs text-muted-foreground bg-secondary/30 rounded-md py-1.5 px-2.5 -mx-1">
-								<div className="flex items-center gap-2 truncate max-w-[60%]">
-									{client.email && (
-										<Link
-											href={`mailto:${client.email}`}
-											className="flex items-center gap-1.5"
-										>
-											<Mail className="h-3 w-3 shrink-0 opacity-70" />
-											<span>{client.email}</span>
-										</Link>
+							{/* Category Discount Section */}
+							<div className="flex flex-col gap-1.5">
+								<span className="text-muted-foreground font-medium text-[10px] uppercase tracking-wide">
+									Category Discount
+								</span>
+								<div className="flex flex-wrap gap-1.5">
+									{client.category ? (
+										<Badge variant="secondary" className="font-semibold text-[10px] tracking-wide px-2 py-0.5 rounded-full bg-primary/10 text-primary border-0">
+											{client.category.name}
+											{client.category.discountValue && client.category.discountValue !== "0" && client.category.discountType === "percentage" 
+												? ` (${client.category.discountValue}%)` 
+												: client.category.discountValue && client.category.discountValue !== "0" 
+													? ` (${client.category.discountValue} MAD)` 
+													: ""}
+										</Badge>
+									) : (
+										<Badge variant="outline" className="font-semibold text-[10px] tracking-wide px-2 py-0.5 rounded-full border-dashed opacity-60">
+											Uncategorized
+										</Badge>
 									)}
-
-									<Link
-										href={`https://wa.me/${client.phone}`}
-										target="_blank"
-										className="flex items-center hover:text-[#25D366] transition-colors"
-									>
-										{/* WhatsApp SVG Icon */}
-										<WhatsAppIcon className="h-3 w-3 shrink-0 opacity-70" />
-									</Link>
-
-									<Link
-										href={`tel:${client.phone}`}
-										className="flex items-center gap-1.5"
-									>
-										<Phone className="h-3 w-3 shrink-0 opacity-70" />
-										<span>{client.phone}</span>
-									</Link>
 								</div>
+							</div>
 
-								<div className="flex items-center gap-1.5 shrink-0">
-									<span
-										className={cn(
-											"h-1.5 w-1.5 rounded-full",
-											client.gender === "male"
-												? "bg-blue-400"
-												: client.gender === "female"
-													? "bg-pink-400"
-													: "bg-gray-400",
+							{/* Compact Footer — Split with Vertical Separator */}
+							<div className="mt-auto flex items-stretch text-xs text-muted-foreground bg-secondary/30 rounded-md py-2 overflow-hidden">
+								<TooltipProvider delayDuration={150}>
+									{/* Left Section: Social Icons */}
+									<div className="flex items-center gap-4 px-3 flex-1 border-r border-foreground/10 justify-center sm:justify-start">
+										{client.email && (
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<Link
+														href={`mailto:${client.email}`}
+														className="hover:text-primary transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
+													>
+														<Mail className="h-4 w-4 opacity-90" />
+													</Link>
+												</TooltipTrigger>
+												<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg z-50">
+													{client.email}
+												</TooltipContent>
+											</Tooltip>
 										)}
-									/>
-									<span className="capitalize">
-										{client.category?.name || "Uncategorized"}
-									</span>
-								</div>
+
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Link
+													href={`https://wa.me/${client.phone}`}
+													target="_blank"
+													className="hover:text-[#25D366] transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
+												>
+													<WhatsAppIcon className="h-4 w-4 opacity-90" />
+												</Link>
+											</TooltipTrigger>
+											<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg bg-emerald-50 text-emerald-700 z-50">
+												WhatsApp: {client.phone}
+											</TooltipContent>
+										</Tooltip>
+
+										<Tooltip>
+											<TooltipTrigger asChild>
+												<Link
+													href={`tel:${client.phone}`}
+													className="hover:text-primary transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
+												>
+													<Phone className="h-4 w-4 opacity-90" />
+												</Link>
+											</TooltipTrigger>
+											<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg z-50">
+												Call: {client.phone}
+											</TooltipContent>
+										</Tooltip>
+									</div>
+
+									{/* Right Section: Health Status Indicator */}
+									<div className="flex items-center justify-center px-4 shrink-0 min-w-[35%]">
+										{alerts.length > 0 ? (
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<div className="flex items-center gap-2 text-destructive font-bold cursor-help group/health animate-pulse p-1">
+														<AlertTriangle className="size-4" />
+														<span className="text-[10px] uppercase tracking-tighter hidden xs:inline">Alerts ({alerts.length})</span>
+													</div>
+												</TooltipTrigger>
+												<TooltipContent sideOffset={6} className="text-[11px] border-0 zen-shadow-lg rounded-xl p-3 bg-red-50 text-red-900 z-50 max-w-xs">
+													<div className="flex flex-col gap-2">
+														<div className="font-bold flex items-center gap-1.5 text-red-700 pb-1 border-b border-red-200">
+															<AlertCircle className="size-3.5" />
+															Active Health Alerts
+														</div>
+														{alerts.map((log: any, idx: number) => (
+															<div key={idx} className="flex flex-col gap-0.5">
+																<div className="flex items-center gap-1.5">
+																	<span className={cn(
+																		"size-1.5 rounded-full shrink-0",
+																		log.severity === "critical" ? "bg-red-600" : "bg-orange-400"
+																	)} />
+																	<span className="font-bold">{log.condition}</span>
+																</div>
+															</div>
+														))}
+													</div>
+												</TooltipContent>
+											</Tooltip>
+										) : (
+											<Tooltip>
+												<TooltipTrigger asChild>
+													<div className="flex items-center gap-2 text-primary font-bold cursor-help p-1 opacity-80 hover:opacity-100 transition-opacity">
+														<CheckCircle className="size-4" />
+														<span className="text-[10px] uppercase tracking-tighter hidden xs:inline">Safe</span>
+													</div>
+												</TooltipTrigger>
+												<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg bg-emerald-50 text-emerald-700 z-50">
+													No health alerts recorded
+												</TooltipContent>
+											</Tooltip>
+										)}
+									</div>
+								</TooltipProvider>
 							</div>
 						</CardContent>
 					</Card>

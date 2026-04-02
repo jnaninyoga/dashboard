@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,
 	SidebarProvider,
@@ -44,13 +43,12 @@ export default async function DashboardLayout({
 		<SidebarProvider>
 			<AppSidebar user={userData} />
 			<SidebarInset>
-				<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b px-4">
+				<header className="flex h-14 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-6 sticky top-0 bg-sidebar border border-b-secondary-foreground/10 backdrop-blur-xl z-50">
 					<div className="flex items-center gap-2">
-						<SidebarTrigger className="-ml-1" />
-						<Separator orientation="vertical" className="mr-2 h-4" />
+						<SidebarTrigger className="-ml-1 min-h-[48px] min-w-[48px]" />
 					</div>
 				</header>
-				<main className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
+				<div className="flex flex-1 flex-col max-w-5xl w-full mx-auto animate-slide-up">{children}</div>
 			</SidebarInset>
 		</SidebarProvider>
 	);

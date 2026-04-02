@@ -16,16 +16,16 @@ export default async function MembershipSettingsPage() {
 		<div className="flex flex-col gap-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Membership Products</h1>
-					<p className="text-muted-foreground">
+					<h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">Membership Products</h1>
+					<p className="text-md text-muted-foreground">
 						Manage your class passes and membership types.
 					</p>
 				</div>
                 <CreateMembershipDialog />
 			</div>
 
-			<div className="border rounded-lg">
-				<Table>
+			<div className="border rounded-lg bg-white p-2">
+				<Table className="[&_tr]:border-secondary-foreground/10">
 					<TableHeader>
 						<TableRow>
 							<TableHead>Name</TableHead>
