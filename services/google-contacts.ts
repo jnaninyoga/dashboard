@@ -213,20 +213,57 @@ export async function updateClientInGoogleContacts(
 export async function getContactPhoto(
 	accessToken: string,
 	resourceName: string,
-): Promise<string | null> {
+	phone?: string,
+): Promise<{ photoUrl: string | null; newResourceName?: string }> {
+	// Ensure the resourceName starts with 'people/' if it doesn't already
+	const sanitizedResourceName = resourceName.startsWith("people/")
+		? resourceName
+		: `people/${resourceName}`;
+
+	const google = getGoogleClient(accessToken);
+
+	// Try direct lookup first
 	try {
-		const google = getGoogleClient(accessToken);
 		const person = await google.people.people.get({
-			resourceName,
+			resourceName: sanitizedResourceName,
 			personFields: "photos",
 		});
 
 		const photoUrl = person.data.photos?.[0]?.url;
-		return photoUrl || null;
-	} catch (error) {
-		console.error("Error fetching contact photo:", error);
-		return null;
+		if (photoUrl) return { photoUrl };
+	} catch {
+		// Direct lookup failed (404 — contact may have been merged or ID changed).
+		// Fall through to connections list fallback.
 	}
+
+	// Fallback: search through connections matching by phone number
+	if (!phone) return { photoUrl: null };
+
+	try {
+		// Normalize the phone for comparison (strip spaces, dashes, etc.)
+		const normalizePhone = (p: string) => p.replace(/[\s\-()]+/g, "");
+		const normalizedPhone = normalizePhone(phone);
+
+		const connections = await google.people.people.connections.list({
+			resourceName: "people/me",
+			personFields: "photos,phoneNumbers",
+			pageSize: 1000,
+		});
+
+		for (const person of connections.data.connections || []) {
+			const phones = person.phoneNumbers?.map((p) => normalizePhone(p.value || "")) || [];
+			if (phones.some((p) => p === normalizedPhone || p.endsWith(normalizedPhone) || normalizedPhone.endsWith(p))) {
+				const photoUrl = person.photos?.[0]?.url;
+				if (photoUrl && person.resourceName) {
+					return { photoUrl, newResourceName: person.resourceName };
+				}
+			}
+		}
+	} catch (error) {
+		console.error("Error fetching contact photo via connections fallback:", error);
+	}
+
+	return { photoUrl: null };
 }
 
 export async function deleteContact(
