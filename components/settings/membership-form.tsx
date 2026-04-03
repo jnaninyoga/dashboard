@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -14,9 +14,8 @@ import {
 	FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useEffect } from "react";
 import { createMembershipProduct, updateMembershipProduct } from "@/actions/memberships";
-import { Loader2 } from "lucide-react";
+import { Refresh as Loader2 } from "iconsax-reactjs";
 
 const formSchema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -36,8 +35,6 @@ type MembershipFormProps = {
 	onSuccess: () => void;
 };
 
-type FormValues = z.infer<typeof formSchema>;
-
 export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) {
 	const form = useForm({
 		resolver: zodResolver(formSchema),
@@ -49,18 +46,6 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 		},
 	});
 
-	const durationMonths = useWatch({
-		control: form.control,
-		name: "durationMonths",
-	});
-
-	// Auto-calculate credits when duration changes, but only if not editing or explicit user override (simplified: just auto-fill if user hasn't manually changed credits yet? Or just always update on duration change? Prompt says "Auto-Calculate Logic: Add a read-only (but overrideable) input... When the user types Duration, auto-fill the Credits")
-	// I'll use useEffect to update credits when duration changes, but checking if the field is dirty might be complex.
-	// Simple approach: When duration changes, set credits to duration * 12. User can then edit credits.
-    // However, for Edit mode, we shouldn't overwrite existing credits unless duration changes? 
-    // Actually, prompt says "When the user types Duration (Months), auto-fill the Credits field".
-    // I will watch "durationMonths" and update "defaultCredits" if the user is interacting with duration.
-    // But `useWatch` triggers on every render or change.
     // I will use `onChange` in the render to trigger the calc.
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {

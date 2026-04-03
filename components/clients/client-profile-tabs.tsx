@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ProfileTab } from "./tabs/profile-tab";
 import { HealthTab } from "./tabs/health-tab";
 import { WalletTab } from "./tabs/wallet-tab";
-import { User, Activity, Wallet } from "lucide-react";
 
 interface ClientProfileTabsProps {
 	client: any; // TODO: Strict typing

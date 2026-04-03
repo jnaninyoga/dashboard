@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { format } from "date-fns";
-import { ShieldAlert, Users, Calendar as CalendarIcon, MapPin, ArrowLeft } from "lucide-react";
+import { Calendar as CalendarIcon, ArrowLeft2 } from "iconsax-reactjs";
 import Link from "next/link";
 import { getEventById, type JnaninEventType } from "@/services/google-calendar";
 import { getEventAttendanceAction } from "@/actions/attendance";
@@ -23,6 +23,7 @@ export default async function CheckInPage({ params }: PageProps) {
     const { eventId } = await params;
 
     let accessToken: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let eventDetails: any = null;
     
     try {
@@ -51,7 +52,7 @@ export default async function CheckInPage({ params }: PageProps) {
                 <div className="max-w-4xl mx-auto flex flex-col gap-4">
                     <div className="flex justify-between items-center text-sm md:text-base mb-1">
                         <Link href="/check-in" className="group flex items-center text-primary-foreground hover:text-white transition-colors font-semibold min-h-[48px]">
-                            <ArrowLeft className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
+                            <ArrowLeft2 className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
                             <span>Back to Schedule</span>
                         </Link>
                         <span className="px-4 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold uppercase tracking-widest">
@@ -64,7 +65,7 @@ export default async function CheckInPage({ params }: PageProps) {
                     </h1>
                     
                     <div className="flex items-center gap-2 text-primary-foreground font-medium text-base mt-1">
-                        <CalendarIcon className="w-5 h-5 flex-shrink-0" />
+                        <CalendarIcon className="w-5 h-5 shrink-0" variant="Outline" />
                         {startTime ? format(new Date(startTime), "EEEE, MMMM d, yyyy 'at' h:mm a") : "Time TBA"}
                     </div>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { CreditCard, Plus, ShoppingCart, Tag } from "lucide-react";
+import { Card as CreditCard, Bag2 as ShoppingCart, Tag } from "iconsax-reactjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,8 +26,8 @@ import { Badge } from "@/components/ui/badge";
 
 interface WalletTabProps {
 	clientId: string;
-	wallets: any[]; // TODO: Type properly from DB schema
-	products: any[]; // TODO: Type properly
+	wallets: Record<string, any>[];
+	products: Record<string, any>[];
 }
 
 export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
@@ -36,9 +36,9 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 	const [selectedProductId, setSelectedProductId] = useState<string>("");
 
 	// Calculate total credits
-	const totalCredits = wallets
+	const totalCredits = (wallets as any[])
 		.filter((w) => w.status === "active")
-		.reduce((sum, w) => sum + w.remainingCredits, 0);
+		.reduce((sum, w) => sum + (w.remainingCredits || 0), 0);
 
 	const handleSellProduct = async () => {
 		if (!selectedProductId) return;

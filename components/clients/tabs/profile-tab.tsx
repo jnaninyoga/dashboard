@@ -1,14 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
-	Mail,
-	Phone,
-	MapPin,
+	Sms as Mail,
+	Call as Phone,
+	Location as MapPin,
 	Calendar,
 	User,
 	Briefcase,
-	FileText,
-} from "lucide-react";
+	DocumentText as FileText,
+} from "iconsax-reactjs";
 import Link from "next/link";
 import { WhatsAppIcon } from "@/components/icons/whatsapp";
 

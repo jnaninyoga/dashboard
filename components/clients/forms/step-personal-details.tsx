@@ -33,7 +33,7 @@ import {
 	PopoverContent,
 	PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { Calendar as CalendarIcon } from "iconsax-reactjs";
 import { cn } from "@/lib/utils";
 import { format, isValid } from "date-fns";
 import type { ClientFormValues } from "@/lib/validators";
@@ -102,7 +102,7 @@ export function StepPersonalDetails({ form, categories }: StepPersonalDetailsPro
 													!field.value && "text-muted-foreground",
 												)}
 											>
-												<CalendarIcon className="h-4 w-4" />
+												<CalendarIcon className="h-4 w-4" variant="Outline" />
 											</Button>
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="end">

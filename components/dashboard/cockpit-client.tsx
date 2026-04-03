@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Add } from "iconsax-reactjs";
 import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/dashboard/event-card";
 import { NewSessionDialog } from "@/components/dashboard/new-session-dialog";
@@ -17,7 +17,7 @@ export function CockpitClient({ initialEvents, initialError }: { initialEvents: 
                     <span className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">{initialEvents.length} Sessions</span>
                 </div>
                 <Button onClick={() => setIsDialogOpen(true)} className="rounded-full zen-glow-teal min-h-[48px] px-6 font-semibold" variant="default">
-                    <Plus className="h-5 w-5 text-white" />
+                    <Add className="h-5 w-5 text-white" variant="Outline" />
                     New Session
                 </Button>
             </div>

@@ -23,8 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClientCategory, updateClientCategory } from "@/actions/settings";
-import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Refresh as Loader2 } from "iconsax-reactjs";
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),

@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import {
-	ChevronDownIcon,
-	ChevronLeftIcon,
-	ChevronRightIcon,
-} from "lucide-react";
+	ArrowDown2,
+	ArrowLeft2,
+	ArrowRight2,
+} from "iconsax-reactjs";
 import {
 	DayPicker,
 	getDefaultClassNames,
@@ -145,21 +145,22 @@ function Calendar({
 				Chevron: ({ className, orientation, ...props }) => {
 					if (orientation === "left") {
 						return (
-							<ChevronLeftIcon className={cn("size-4", className)} {...props} />
+							<ArrowLeft2 className={cn("size-4", className)} variant="Outline" {...props} />
 						);
 					}
 
 					if (orientation === "right") {
 						return (
-							<ChevronRightIcon
+							<ArrowRight2
 								className={cn("size-4", className)}
+								variant="Outline"
 								{...props}
 							/>
 						);
 					}
 
 					return (
-						<ChevronDownIcon className={cn("size-4", className)} {...props} />
+						<ArrowDown2 className={cn("size-4", className)} variant="Outline" {...props} />
 					);
 				},
 				DayButton: CalendarDayButton,

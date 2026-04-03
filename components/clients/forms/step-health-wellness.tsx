@@ -1,7 +1,6 @@
 import { UseFormReturn, useFieldArray } from "react-hook-form";
-import { Plus, Trash2, AlertTriangle, AlertCircle, Info } from "lucide-react";
+import { Add, Trash } from "iconsax-reactjs";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	Card,
@@ -41,7 +40,7 @@ export function StepHealthWellness({
 }: StepHealthWellnessProps) {
 	const { fields, append, remove } = useFieldArray({
 		control: form.control,
-		// @ts-ignore
+		// @ts-expect-error - healthLogs is a dynamic field array name
 		name: "healthLogs",
 	});
 
@@ -81,7 +80,7 @@ export function StepHealthWellness({
 								<div className="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4">
 									<FormField
 										control={form.control}
-										// @ts-ignore
+										// @ts-expect-error - dynamic index access
 										name={`healthLogs.${index}.condition`}
 										render={({ field }) => (
 											<FormItem>
@@ -100,7 +99,7 @@ export function StepHealthWellness({
 									/>
 									<FormField
 										control={form.control}
-										// @ts-ignore
+										// @ts-expect-error - dynamic index access
 										name={`healthLogs.${index}.treatment`}
 										render={({ field }) => (
 											<FormItem>
@@ -123,7 +122,7 @@ export function StepHealthWellness({
 								<div className="md:col-span-11">
 									<FormField
 										control={form.control}
-										// @ts-ignore
+										// @ts-expect-error - dynamic index access
 										name={`healthLogs.${index}.severity`}
 										render={({ field }) => (
 											<FormItem>
@@ -136,23 +135,23 @@ export function StepHealthWellness({
 															const isAlert =
 																val === HealthSeverity.WARNING ||
 																val === HealthSeverity.CRITICAL;
-															// @ts-ignore
+															// @ts-expect-error - dynamic form field access
 															form.setValue(
 																`healthLogs.${index}.isAlert`,
 																isAlert,
 															);
 															// Set category default
-															// @ts-ignore
+															// @ts-expect-error - dynamic form field access
 															form.setValue(
 																`healthLogs.${index}.category`,
 																HealthCategory.PHYSICAL,
 															); // Default to physical
 															// Set startDate
-															// @ts-ignore
+															// @ts-expect-error - dynamic form field access
 															if (
 																!form.getValues(`healthLogs.${index}.startDate`)
 															) {
-																// @ts-ignore
+																// @ts-expect-error - dynamic form field access
 																form.setValue(
 																	`healthLogs.${index}.startDate`,
 																	new Date().toISOString().split("T")[0],
@@ -206,7 +205,7 @@ export function StepHealthWellness({
 										onClick={() => remove(index)}
 										className="text-muted-foreground hover:text-destructive"
 									>
-										<Trash2 className="h-4 w-4" />
+										<Trash className="h-4 w-4" variant="Outline" />
 									</Button>
 								</div>
 							</div>
@@ -228,7 +227,7 @@ export function StepHealthWellness({
 								})
 							}
 						>
-							<Plus className="mr-2 h-4 w-4" /> Add Condition
+							<Add className="mr-2 h-4 w-4" variant="Outline" /> Add Condition
 						</Button>
 					</CardContent>
 				</Card>

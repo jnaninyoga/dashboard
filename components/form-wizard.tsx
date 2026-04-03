@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { TickCircle, ArrowLeft2, ArrowRight2, Refresh } from "iconsax-reactjs";
 
 export interface WizardStep {
 	id: string;
@@ -74,7 +74,7 @@ export function FormWizard({
 										)}
 									>
 										{isCompleted ? (
-											<Check className="h-5 w-5" />
+											<TickCircle className="h-5 w-5" variant="Bold" />
 										) : (
 											<span className="text-sm font-semibold">
 												{index + 1}
@@ -117,7 +117,7 @@ export function FormWizard({
 					onClick={onBack}
 					disabled={isFirstStep || isSubmitting || isStepPending}
 				>
-					<ChevronLeft className="mr-2 h-4 w-4" />
+					<ArrowLeft2 className="mr-2 h-4 w-4" variant="Outline" />
 					Back
 				</Button>
 
@@ -129,7 +129,7 @@ export function FormWizard({
 					>
 						{isSubmitting ? (
 							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								<Refresh className="mr-2 h-4 w-4 animate-spin" variant="Outline" />
 								{mode === "create" ? "Creating..." : "Updating..."}
 							</>
 						) : (
@@ -145,13 +145,13 @@ export function FormWizard({
 					>
 						{isStepPending ? (
 							<>
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								<Refresh className="mr-2 h-4 w-4 animate-spin" variant="Outline" />
 								Validating...
 							</>
 						) : (
 							<>
 								Next
-								<ChevronRight className="ml-2 h-4 w-4" />
+								<ArrowRight2 className="ml-2 h-4 w-4" variant="Outline" />
 							</>
 						)}
 					</Button>

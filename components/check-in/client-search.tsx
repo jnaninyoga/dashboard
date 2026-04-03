@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Search, X } from "lucide-react";
+import { Refresh, SearchNormal1, CloseCircle } from "iconsax-reactjs";
 import { cn } from "@/lib/utils";
 import { getClientsAction } from "@/actions/clients";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -54,7 +54,7 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any)
 					? "zen-shadow-md ring-2 ring-primary/20"
 					: "zen-shadow-glow hover:zen-shadow-md"
 			)}>
-				<Search className="size-5 text-primary/60 shrink-0" />
+				<SearchNormal1 className="size-5 text-primary/60 shrink-0" variant="Outline" />
 				<input
 					ref={inputRef}
 					type="text"
@@ -71,11 +71,11 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any)
 						onClick={() => { setSearchQuery(""); inputRef.current?.focus(); }}
 						className="size-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
 					>
-						<X className="size-4 text-muted-foreground" />
+						<CloseCircle className="size-5 text-muted-foreground" variant="Outline" />
 					</button>
 				)}
 				{isLoading && (
-					<Loader2 className="size-5 text-primary animate-spin shrink-0" />
+					<Refresh className="size-5 text-primary animate-spin shrink-0" variant="Outline" />
 				)}
 			</div>
 

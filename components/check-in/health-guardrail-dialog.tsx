@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Info } from "lucide-react";
+import { Danger, InfoCircle } from "iconsax-reactjs";
 import {
   Dialog,
   DialogContent,
@@ -39,7 +39,7 @@ export function HealthGuardrailDialog({
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2 text-destructive text-xl font-heading font-bold">
 							<div className="bg-red-100 p-2 rounded-full">
-								<AlertTriangle className="h-5 w-5" />
+								<Danger className="h-5 w-5" variant="Bulk" />
 							</div>
 							Health Guardrails
 						</DialogTitle>
@@ -53,7 +53,7 @@ export function HealthGuardrailDialog({
 					{alerts.length > 0 ? (
 						alerts.map((log: any) => (
 							<Alert key={log.id} variant="destructive" className="bg-red-50 border-0 rounded-2xl p-5 zen-shadow">
-								<AlertTriangle className="h-5 w-5 text-red-600" />
+								<Danger className="h-5 w-5 text-red-600" variant="Bulk" />
 								<AlertTitle className="capitalize text-red-800 font-bold ml-2">
                                     {log.category === 'physical' ? 'Body' : log.category === 'mental' ? 'Mind' : 'Lifestyle'} Issue - {log.severity}
                                 </AlertTitle>
@@ -65,7 +65,7 @@ export function HealthGuardrailDialog({
 						))
 					) : (
 						<Alert className="rounded-2xl border-0 bg-muted">
-							<Info className="h-4 w-4" />
+							<InfoCircle className="h-4 w-4" variant="Outline" />
 							<AlertTitle>No Active Alerts</AlertTitle>
 							<AlertDescription>This client has no active health alerts.</AlertDescription>
 						</Alert>

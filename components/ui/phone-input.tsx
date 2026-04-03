@@ -1,5 +1,5 @@
 import * as React from "react";
-import { CheckIcon, ChevronsUpDown } from "lucide-react";
+import { TickCircle, ArrowSwapVertical } from "iconsax-reactjs";
 import * as RPNInput from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
 import { Button } from "@/components/ui/button";
@@ -109,7 +109,7 @@ const CountrySelect = ({
 						country={selectedCountry}
 						countryName={selectedCountry}
 					/>
-					<ChevronsUpDown
+					<ArrowSwapVertical
 						className={cn(
 							"-mr-2 size-4 opacity-50",
 							disabled ? "hidden" : "opacity-100",
@@ -184,7 +184,8 @@ const CountrySelectOption = ({
 			<FlagComponent country={country} countryName={countryName} />
 			<span className="flex-1 text-sm">{countryName}</span>
 			<span className="text-sm text-foreground/50">{`+${RPNInput.getCountryCallingCode(country)}`}</span>
-			<CheckIcon
+			<TickCircle
+				variant="Bulk"
 				className={`ml-auto size-4 ${country === selectedCountry ? "opacity-100" : "opacity-0"}`}
 			/>
 		</CommandItem>

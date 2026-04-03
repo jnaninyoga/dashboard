@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { ShieldAlert, Users, User, MapPin, CheckCircle2 } from "lucide-react";
+import { SecurityUser, People, User, Location, TickCircle } from "iconsax-reactjs";
 import { checkInClientAction } from "@/actions/attendance";
 import { ClientSearch } from "./client-search";
 import { HealthGuardrailDialog } from "./health-guardrail-dialog";
@@ -68,7 +68,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                 {!checkedInClient ? (
                     <div className="bg-card zen-shadow-lg p-8 md:p-12 rounded-3xl flex flex-col items-center justify-center min-h-[50vh] gap-8 transition-all">
                         <div className="bg-primary/10 p-6 rounded-full">
-                            <User className="w-16 h-16 text-primary" />
+                            <User className="w-16 h-16 text-primary" variant="Outline" />
                         </div>
                         <div className="text-center flex flex-col gap-2">
                             <h2 className="text-2xl font-heading font-bold text-foreground">Private Session Ready</h2>
@@ -88,7 +88,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                                     <AvatarFallback className="text-4xl bg-primary/10 text-primary font-bold">{checkedInClient.fullName[0]}</AvatarFallback>
                                 </Avatar>
                                 <div className="absolute bottom-2 right-2 bg-card rounded-full p-1 zen-shadow">
-                                    <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                                    <TickCircle className="w-8 h-8 text-emerald-500" variant="Bulk" />
                                 </div>
                             </div>
                             <div className="text-center flex flex-col gap-1">
@@ -105,7 +105,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
 
                         <div className="flex flex-col gap-4">
                             <h3 className="font-heading font-bold text-xl flex items-center gap-2 text-foreground">
-                                <ShieldAlert className="w-6 h-6 text-amber-500" />
+                                <SecurityUser className="w-6 h-6 text-amber-500" variant="Outline" />
                                 Health Guardrails
                             </h3>
                             <div className="bg-muted rounded-2xl p-5 md:p-6 max-h-[45vh] overflow-y-auto">
@@ -127,7 +127,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                                 ) : (
                                     <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                                         <div className="size-12 bg-emerald-50 rounded-full flex items-center justify-center mb-3">
-                                            <CheckCircle2 className="w-6 h-6 text-emerald-500" />
+                                            <TickCircle className="w-6 h-6 text-emerald-500" variant="Bulk" />
                                         </div>
                                         <p className="font-medium">No active health alerts.</p>
                                     </div>
@@ -161,9 +161,9 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                 <div className="flex items-center justify-between mb-8 pb-4 border-b border-muted">
                     <h2 className="text-lg md:text-xl font-heading font-bold flex items-center gap-3 text-foreground">
                         {eventType === "outdoor" ? (
-                            <div className="bg-emerald-50 p-2 rounded-2xl"><MapPin className="w-5 h-5 text-emerald-600" /></div>
+                            <div className="bg-emerald-50 p-2 rounded-2xl"><Location className="w-5 h-5 text-emerald-600" variant="Outline" /></div>
                         ) : (
-                            <div className="bg-primary/10 p-2 rounded-2xl"><Users className="w-5 h-5 text-primary" /></div>
+                            <div className="bg-primary/10 p-2 rounded-2xl"><People className="w-5 h-5 text-primary" variant="Outline" /></div>
                         )}
                         Active Manifest
                     </h2>
@@ -177,7 +177,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
 
                 {attendance.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                        <Users className="w-20 h-20 mb-6 opacity-15" />
+                        <People className="w-20 h-20 mb-6 opacity-15" variant="Outline" />
                         <h3 className="text-xl font-heading font-semibold text-foreground/60">The studio is empty</h3>
                         <p className="text-muted-foreground mt-2 text-center max-w-sm">Use the search bar above to begin checking clients into the session.</p>
                     </div>
@@ -195,7 +195,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                                         <AvatarFallback className="text-lg bg-muted text-muted-foreground font-bold">{record.client.fullName[0]}</AvatarFallback>
                                     </Avatar>
                                     <div className="absolute -bottom-1 -right-1 bg-card rounded-full p-0.5 shadow-sm">
-                                        <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                                        <TickCircle className="w-5 h-5 text-emerald-500" variant="Bulk" />
                                     </div>
                                 </div>
                                 <div className="flex flex-col flex-1 min-w-0">

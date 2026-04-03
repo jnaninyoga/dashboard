@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Add } from "iconsax-reactjs";
 
 import { ClientsTable } from "@/components/clients/clients-table";
 import { ClientsGrid } from "@/components/clients/clients-grid";
@@ -52,7 +52,7 @@ export default async function ClientsPage(props: {
 				</header>
 				<Link href="/clients/add">
 					<Button>
-						<Plus className="mr-2 h-4 w-4" />
+						<Add className="mr-2 h-4 w-4" variant="Outline" />
 						Add Client
 					</Button>
 				</Link>
