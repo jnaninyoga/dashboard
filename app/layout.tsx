@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Great_Vibes,Philosopher, Plus_Jakarta_Sans } from "next/font/google";
 
 import { OfflineDetector } from "@/components/offline-detector";
+import { SerwistRegistration } from "@/components/serwist-registration";
 
 import { Toaster } from "sonner";
 
@@ -57,6 +58,7 @@ export default function RootLayout({
 				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} selection:bg-primary/20 font-sans antialiased`}
 			>
 				{children}
+				<SerwistRegistration />
 				<Toaster
 					richColors
 					position="top-center"
