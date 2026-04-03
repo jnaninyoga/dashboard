@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowSwapVertical, Logout } from "iconsax-reactjs";
-
+import { signOut } from "@/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -17,7 +16,8 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { signOut } from "@/actions/auth";
+
+import { ArrowSwapVertical, Logout } from "iconsax-reactjs";
 
 export function NavUser({
 	user,

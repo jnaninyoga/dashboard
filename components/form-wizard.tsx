@@ -1,9 +1,11 @@
 "use client";
 
 import * as React from "react";
+
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { TickCircle, ArrowLeft2, ArrowRight2, Refresh } from "iconsax-reactjs";
+
+import { ArrowLeft2, ArrowRight2, Refresh,TickCircle } from "iconsax-reactjs";
 
 export interface WizardStep {
 	id: string;
@@ -30,7 +32,7 @@ export function FormWizard({
 	currentStep,
 	onNext,
 	onBack,
-	onSubmit,
+	onSubmit: _onSubmit,
 	isSubmitting = false,
 	isStepPending = false,
 	canProceed = true,
@@ -46,9 +48,9 @@ export function FormWizard({
 			{/* Progress Indicator */}
 			<div className="relative">
 				{/* Progress Line */}
-				<div className="absolute top-5 left-0 right-0 h-0.5 bg-secondary-foreground/20">
+				<div className="bg-secondary-foreground/20 absolute top-5 right-0 left-0 h-0.5">
 					<div
-						className="h-full bg-primary transition-all duration-300 ease-in-out"
+						className="bg-primary h-full transition-all duration-300 ease-in-out"
 						style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
 					/>
 				</div>
@@ -62,15 +64,15 @@ export function FormWizard({
 						return (
 							<div key={step.id} className="flex flex-col items-center">
 								<div className="relative">
-									{isCurrent && (
-										<span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-									)}
+									{isCurrent ? (
+										<span className="bg-primary/30 absolute inset-0 animate-ping rounded-full" />
+									) : null}
 									<div
 										className={cn(
 											"relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
 											isCompleted && "bg-primary text-primary-foreground",
 											isCurrent && "bg-primary text-primary-foreground scale-110",
-											!isCompleted && !isCurrent && "border-2 border-secondary-foreground/30 bg-background text-secondary-foreground/60",
+											!isCompleted && !isCurrent && "border-secondary-foreground/30 bg-background text-secondary-foreground/60 border-2",
 										)}
 									>
 										{isCompleted ? (
@@ -94,11 +96,11 @@ export function FormWizard({
 									>
 										{step.title}
 									</p>
-									{step.description && (
-										<p className="text-xs text-muted-foreground hidden sm:block">
+									{step.description ? (
+										<p className="text-muted-foreground hidden text-xs sm:block">
 											{step.description}
 										</p>
-									)}
+									) : null}
 								</div>
 							</div>
 						);
@@ -110,7 +112,7 @@ export function FormWizard({
 			<div className="min-h-[400px]">{children}</div>
 
 			{/* Navigation Buttons */}
-			<div className="flex justify-between pt-6 border-t">
+			<div className="flex justify-between border-t pt-6">
 				<Button
 					type="button"
 					variant="outline"

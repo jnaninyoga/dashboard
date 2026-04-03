@@ -1,16 +1,31 @@
 "use server";
 
-import { db } from "@/drizzle";
-import { attendanceLedger, clientWallets, clients } from "@/drizzle/schema";
-import { eq, desc, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+
+import { db } from "@/drizzle";
+import { attendanceLedger, clients,clientWallets } from "@/drizzle/schema";
+import { HealthLog } from "@/drizzle/schema";
 import { type JnaninEventType } from "@/services/google-calendar";
+
+import { and,desc, eq } from "drizzle-orm";
+
+export interface AttendanceRecord {
+	id: string;
+	checkInTime: string;
+	slotType: JnaninEventType;
+	client: {
+		id: string;
+		fullName: string;
+		photoUrl: string | null;
+		healthLogs?: HealthLog[];
+	};
+}
 
 export async function checkInClientAction(
 	clientId: string,
 	eventId: string,
 	slotType: JnaninEventType
-) {
+): Promise<{ success: boolean; message: string }> {
 	// First, check if already checked in
 	const existingCheckIns = await db
 		.select()
@@ -85,11 +100,11 @@ export async function checkInClientAction(
 	return { success: true, message: "Check-in Successful. 1 credit deducted." };
 }
 
-export async function getEventAttendanceAction(eventId: string) {
+export async function getEventAttendanceAction(eventId: string): Promise<AttendanceRecord[]> {
 	const records = await db
 		.select({
 			id: attendanceLedger.id,
-			checkInTime: attendanceLedger.checkInTime,
+			checkInTime: attendanceLedger.checkInTime, // This is Date in DB, we need to convert to string for the interface if required, or keep as Date.
 			slotType: attendanceLedger.slotType,
 			client: {
 				id: clients.id,
@@ -103,5 +118,10 @@ export async function getEventAttendanceAction(eventId: string) {
 		.where(eq(attendanceLedger.googleEventId, eventId))
 		.orderBy(desc(attendanceLedger.checkInTime));
 
-	return records;
+	// Convert Date to ISO string for consistency in the frontend if needed
+	return records.map(r => ({
+		...r,
+		checkInTime: r.checkInTime.toISOString(),
+		slotType: r.slotType as JnaninEventType
+	}));
 }

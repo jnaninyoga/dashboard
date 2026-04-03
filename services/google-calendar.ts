@@ -1,4 +1,6 @@
-import { google } from "googleapis";
+import { CalendarEvent } from "@/lib/types";
+
+import { calendar_v3,google } from "googleapis";
 
 /**
  * Checks if the primary calendar is free during the requested time window.
@@ -60,7 +62,7 @@ interface CreateEventData {
 export async function createStudioEvent(
 	accessToken: string,
 	data: CreateEventData,
-) {
+): Promise<calendar_v3.Schema$Event> {
 	const auth = new google.auth.OAuth2();
 	auth.setCredentials({ access_token: accessToken });
 
@@ -117,7 +119,7 @@ export async function createStudioEvent(
 /**
  * Fetches today's events from the primary calendar to display on the dashboard.
  */
-export async function getTodayEvents(accessToken: string) {
+export async function getTodayEvents(accessToken: string): Promise<CalendarEvent[]> {
 	const auth = new google.auth.OAuth2();
 	auth.setCredentials({ access_token: accessToken });
 
@@ -149,7 +151,7 @@ export async function getTodayEvents(accessToken: string) {
 /**
  * Fetches upcoming events from the primary calendar.
  */
-export async function getUpcomingEvents(accessToken: string, daysForward = 7) {
+export async function getUpcomingEvents(accessToken: string, daysForward = 7): Promise<CalendarEvent[]> {
 	const auth = new google.auth.OAuth2();
 	auth.setCredentials({ access_token: accessToken });
 
@@ -181,7 +183,7 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7) {
 /**
  * Fetches a specific event by its ID.
  */
-export async function getEventById(accessToken: string, eventId: string) {
+export async function getEventById(accessToken: string, eventId: string): Promise<CalendarEvent> {
 	const auth = new google.auth.OAuth2();
 	auth.setCredentials({ access_token: accessToken });
 

@@ -7,7 +7,7 @@ export default async function ScheduleSettingsPage() {
 	return (
 		<>
 			<header className="space-y-1">
-				<h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">Studio Schedule</h1>
+				<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Studio Schedule</h1>
 				<p className="text-md text-muted-foreground">
 					Define your baseline working hours. Event bookings outside these times will be blocked.
 				</p>

@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import * as SelectPrimitive from "@radix-ui/react-select"
-import { TickCircle, ArrowDown2, ArrowUp2 } from "iconsax-reactjs"
 
 import { cn } from "@/lib/utils"
+
+import * as SelectPrimitive from "@radix-ui/react-select"
+import { ArrowDown2, ArrowUp2,TickCircle } from "iconsax-reactjs"
 
 function Select({
   ...props

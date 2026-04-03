@@ -1,8 +1,6 @@
 import React from "react";
 
-interface WhatsAppIconProps extends React.SVGProps<SVGSVGElement> {}
-
-export function WhatsAppIcon({ className, ...props }: WhatsAppIconProps) {
+export function WhatsAppIcon({ className, ...props }: React.SVGProps<SVGSVGElement>) {
 	return (
 		<svg
 			xmlns="http://www.w3.org/2000/svg"

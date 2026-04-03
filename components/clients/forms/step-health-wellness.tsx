@@ -1,7 +1,6 @@
-import { UseFormReturn, useFieldArray } from "react-hook-form";
-import { Add, Trash } from "iconsax-reactjs";
+import { useFieldArray,UseFormReturn } from "react-hook-form";
+
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	Card,
 	CardContent,
@@ -17,7 +16,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
 	Select,
 	SelectContent,
@@ -25,9 +24,12 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import type { ClientFormValues } from "@/lib/validators";
+import { Textarea } from "@/components/ui/textarea";
 import { type HealthSection } from "@/config/health";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
+import type { ClientFormValues } from "@/lib/validators";
+
+import { Add, Trash } from "iconsax-reactjs";
 
 interface StepHealthWellnessProps {
 	form: UseFormReturn<ClientFormValues>;
@@ -40,30 +42,16 @@ export function StepHealthWellness({
 }: StepHealthWellnessProps) {
 	const { fields, append, remove } = useFieldArray({
 		control: form.control,
-		// @ts-expect-error - healthLogs is a dynamic field array name
 		name: "healthLogs",
 	});
 
-	const currentCareFields = [{ label: "Condition / Issue", value: "" }];
-
-	// Helper to get severity color
-	const getSeverityColor = (sev: string) => {
-		switch (sev) {
-			case HealthSeverity.CRITICAL:
-				return "bg-red-500 hover:bg-red-600";
-			case HealthSeverity.WARNING:
-				return "bg-amber-500 hover:bg-amber-600";
-			default:
-				return "bg-blue-500 hover:bg-blue-600";
-		}
-	};
 
 	return (
 		<div className="space-y-6">
-			{sections.some((s) => s.category === "physical") && (
-				<Card className="mb-6 border-l-4 border-l-primary">
+			{sections.some((s) => s.category === "physical") ? (
+				<Card className="border-l-primary mb-6 border-l-4">
 					<CardHeader>
-						<CardTitle className="text-lg flex items-center gap-2">
+						<CardTitle className="flex items-center gap-2 text-lg">
 							Active Health Conditions & Care
 						</CardTitle>
 						<CardDescription>
@@ -75,12 +63,11 @@ export function StepHealthWellness({
 						{fields.map((field, index) => (
 							<div
 								key={field.id}
-								className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start p-4 border rounded-lg bg-muted/20"
+								className="bg-muted/20 grid grid-cols-1 items-start gap-4 rounded-lg border p-4 md:grid-cols-12"
 							>
-								<div className="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+								<div className="grid grid-cols-1 gap-4 md:col-span-12 md:grid-cols-2">
 									<FormField
 										control={form.control}
-										// @ts-expect-error - dynamic index access
 										name={`healthLogs.${index}.condition`}
 										render={({ field }) => (
 											<FormItem>
@@ -99,7 +86,6 @@ export function StepHealthWellness({
 									/>
 									<FormField
 										control={form.control}
-										// @ts-expect-error - dynamic index access
 										name={`healthLogs.${index}.treatment`}
 										render={({ field }) => (
 											<FormItem>
@@ -110,7 +96,7 @@ export function StepHealthWellness({
 													<Textarea
 														{...field}
 														placeholder="e.g. Physiotherapy twice a week, Medication X..."
-														className="min-h-[38px] h-[38px] resize-none py-2"
+														className="h-[38px] min-h-[38px] resize-none py-2"
 													/>
 												</FormControl>
 												<FormMessage />
@@ -122,7 +108,6 @@ export function StepHealthWellness({
 								<div className="md:col-span-11">
 									<FormField
 										control={form.control}
-										// @ts-expect-error - dynamic index access
 										name={`healthLogs.${index}.severity`}
 										render={({ field }) => (
 											<FormItem>
@@ -135,23 +120,19 @@ export function StepHealthWellness({
 															const isAlert =
 																val === HealthSeverity.WARNING ||
 																val === HealthSeverity.CRITICAL;
-															// @ts-expect-error - dynamic form field access
 															form.setValue(
 																`healthLogs.${index}.isAlert`,
 																isAlert,
 															);
 															// Set category default
-															// @ts-expect-error - dynamic form field access
 															form.setValue(
 																`healthLogs.${index}.category`,
 																HealthCategory.PHYSICAL,
 															); // Default to physical
 															// Set startDate
-															// @ts-expect-error - dynamic form field access
 															if (
 																!form.getValues(`healthLogs.${index}.startDate`)
 															) {
-																// @ts-expect-error - dynamic form field access
 																form.setValue(
 																	`healthLogs.${index}.startDate`,
 																	new Date().toISOString().split("T")[0],
@@ -161,33 +142,33 @@ export function StepHealthWellness({
 														defaultValue={field.value}
 														className="flex gap-2"
 													>
-														<FormItem className="flex items-center space-x-1 space-y-0">
+														<FormItem className="flex items-center space-y-0 space-x-1">
 															<FormControl>
 																<RadioGroupItem value={HealthSeverity.INFO} />
 															</FormControl>
-															<FormLabel className="font-normal text-xs">
+															<FormLabel className="text-xs font-normal">
 																Info
 															</FormLabel>
 														</FormItem>
-														<FormItem className="flex items-center space-x-1 space-y-0 text-amber-600">
+														<FormItem className="flex items-center space-y-0 space-x-1 text-amber-600">
 															<FormControl>
 																<RadioGroupItem
 																	value={HealthSeverity.WARNING}
-																	className="text-amber-600 border-amber-600"
+																	className="border-amber-600 text-amber-600"
 																/>
 															</FormControl>
-															<FormLabel className="font-normal text-xs">
+															<FormLabel className="text-xs font-normal">
 																Warning
 															</FormLabel>
 														</FormItem>
-														<FormItem className="flex items-center space-x-1 space-y-0 text-red-600">
+														<FormItem className="flex items-center space-y-0 space-x-1 text-red-600">
 															<FormControl>
 																<RadioGroupItem
 																	value={HealthSeverity.CRITICAL}
-																	className="text-red-600 border-red-600"
+																	className="border-red-600 text-red-600"
 																/>
 															</FormControl>
-															<FormLabel className="font-normal text-xs">
+															<FormLabel className="text-xs font-normal">
 																Critical
 															</FormLabel>
 														</FormItem>
@@ -197,7 +178,7 @@ export function StepHealthWellness({
 										)}
 									/>
 								</div>
-								<div className="md:col-span-1 flex justify-end pt-6">
+								<div className="flex justify-end pt-6 md:col-span-1">
 									<Button
 										type="button"
 										variant="ghost"
@@ -231,7 +212,7 @@ export function StepHealthWellness({
 						</Button>
 					</CardContent>
 				</Card>
-			)}
+			) : null}
 
 			{sections.map((section) => (
 				<Card key={section.category + section.label} className="mb-6">
@@ -272,7 +253,7 @@ export function StepHealthWellness({
 											) : healthField.type === "textarea" ? (
 												<Textarea
 													placeholder={healthField.placeholder}
-													className="resize-none min-h-[80px]"
+													className="min-h-[80px] resize-none"
 													{...field}
 													value={field.value ?? ""}
 												/>

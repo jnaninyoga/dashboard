@@ -9,7 +9,7 @@ export default async function CategorySettingsPage() {
 		<>
 			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
 				<header className="space-y-1">
-					<h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">
+					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
 						Category Settings
 					</h1>
 					<p className="text-md text-muted-foreground">

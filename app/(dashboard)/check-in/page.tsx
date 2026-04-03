@@ -1,8 +1,10 @@
-import { createClient } from "@/supabase/server";
-import { getValidAccessToken } from "@/services/google-tokens";
-import { getTodayEvents } from "@/services/google-calendar";
-import { CockpitClient } from "@/components/dashboard/cockpit-client";
 import { redirect } from "next/navigation";
+
+import { CockpitClient } from "@/components/dashboard/cockpit-client";
+import { CalendarEvent } from "@/lib/types";
+import { getTodayEvents } from "@/services/google-calendar";
+import { getValidAccessToken } from "@/services/google-tokens";
+import { createClient } from "@/supabase/server";
 
 export default async function CheckInIndexPage() {
     const supabase = await createClient();
@@ -12,20 +14,20 @@ export default async function CheckInIndexPage() {
         redirect("/login");
     }
 
-    let events: any[] = [];
-    let errorMsg = null;
+    let events: CalendarEvent[] = [];
+    let errorMsg: string | null = null;
 
     try {
         const token = await getValidAccessToken(user.id);
         events = await getTodayEvents(token);
-    } catch (e) {
+    } catch {
         errorMsg = "Please reconnect Google Calendar to view today's schedule.";
     }
 
     return (
         <>
             <header className="flex flex-col space-y-1">
-                <h1 className="text-3xl md:text-4xl font-heading font-medium tracking-tight text-foreground">Check-in Portal</h1>
+                <h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Check-in Portal</h1>
                 <p className="text-md text-muted-foreground">Select a session from today&apos;s schedule to manage client attendance.</p>
             </header>
             

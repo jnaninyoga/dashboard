@@ -42,7 +42,7 @@ const ClassicLotus = ({
   return (
     // Wrapper 1: The downward fall (Gravity)
     <div 
-      className="absolute pointer-events-none"
+      className="pointer-events-none absolute"
       style={{
         ...style,
         width: size,
@@ -145,7 +145,7 @@ export const BloomingBlossoms = () => {
   });
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       {lotuses.map((l) => (
         <ClassicLotus
           key={l.id}

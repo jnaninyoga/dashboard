@@ -1,6 +1,7 @@
 
 import { db } from "@/drizzle";
 import { appSettings, clientCategories, clients } from "@/drizzle/schema";
+
 import { eq } from "drizzle-orm";
 
 async function main() {
@@ -57,7 +58,8 @@ async function main() {
         // Map old enum string to new UUID
         // Old enum values: 'adult', 'student', 'child'
         // If undefined/null, default to adult
-        const oldCat = (client as any).category || "adult"; 
+        const clientData = client as unknown as { category: string };
+        const oldCat = clientData.category || "adult"; 
         const newId = categoryMap[oldCat];
 
         if (newId) {

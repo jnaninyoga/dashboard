@@ -1,13 +1,12 @@
 import { 
-	Home2, 
 	Calendar, 
-	People, 
-	UserAdd, 
 	Card, 
 	Category2, 
+	Home2, 
+	People, 
+	TickCircle, 
 	Timer1, 
-	TickCircle 
-} from "iconsax-reactjs";
+	UserAdd} from "iconsax-reactjs";
 
 export const dashboardConfig = {
 	navMain: [

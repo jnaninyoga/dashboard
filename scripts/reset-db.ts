@@ -1,7 +1,6 @@
 
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
 import * as dotenv from "dotenv";
+import postgres from 'postgres';
 
 dotenv.config({ path: ".env" });
 
@@ -9,16 +8,15 @@ if (!process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is not defined');
 }
 
-const client = postgres(process.env.DATABASE_URL);
-const db = drizzle(client);
+const sql = postgres(process.env.DATABASE_URL);
 
 async function main() {
     console.log("💣 Nuking Database (dropping schema public)...");
     
-    await client`DROP SCHEMA IF EXISTS public CASCADE`;
-    await client`CREATE SCHEMA public`;
-    await client`GRANT ALL ON SCHEMA public TO postgres`;
-    await client`GRANT ALL ON SCHEMA public TO public`;
+    await sql`DROP SCHEMA IF EXISTS public CASCADE`;
+    await sql`CREATE SCHEMA public`;
+    await sql`GRANT ALL ON SCHEMA public TO postgres`;
+    await sql`GRANT ALL ON SCHEMA public TO public`;
     
     console.log("✅ Database reset complete.");
     process.exit(0);

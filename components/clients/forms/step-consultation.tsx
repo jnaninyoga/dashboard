@@ -1,6 +1,7 @@
 "use client";
 
 import { UseFormReturn, useWatch } from "react-hook-form";
+
 import {
 	Card,
 	CardContent,
@@ -16,8 +17,8 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import type { ClientFormValues } from "@/lib/validators";
 import { type Category } from "@/lib/types";
+import type { ClientFormValues } from "@/lib/validators";
 
 interface StepConsultationProps {
 	form: UseFormReturn<ClientFormValues>;
@@ -47,7 +48,7 @@ export function StepConsultation({ form, categories }: StepConsultationProps) {
 								<FormControl>
 									<Textarea
 										placeholder="Why are they visiting?"
-										className="resize-none min-h-[120px]"
+										className="min-h-[120px] resize-none"
 										{...field}
 										value={field.value ?? ""}
 									/>
@@ -67,7 +68,7 @@ export function StepConsultation({ form, categories }: StepConsultationProps) {
 						Please review the information before creating the profile.
 					</CardDescription>
 				</CardHeader>
-				<CardContent className="text-sm space-y-2">
+				<CardContent className="space-y-2 text-sm">
 					<p>
 						<strong>Name:</strong> {values.fullName || "—"}
 					</p>

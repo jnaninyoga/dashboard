@@ -1,15 +1,18 @@
 "use client";
 
-import { format, isWithinInterval, subMinutes, parseISO } from "date-fns";
-import { Card, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Clock, LinkCircle } from "iconsax-reactjs";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function EventCard({ event }: { event: any }) {
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CalendarEvent } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
+import { format, isWithinInterval, parseISO,subMinutes } from "date-fns";
+import { Clock, LinkCircle } from "iconsax-reactjs";
+
+export function EventCard({ event }: { event: CalendarEvent }) {
     const calendarLink = event.htmlLink as string | undefined;
     const startIso = event.start?.dateTime;
     const endIso = event.end?.dateTime;
@@ -53,30 +56,30 @@ export function EventCard({ event }: { event: any }) {
 
     return (
         <Card className={cn(
-            "group flex flex-col md:flex-row md:items-center justify-between border-0 transition-all duration-300 ease-out overflow-hidden rounded-3xl",
-            isLive ? "bg-card zen-shadow-md ring-1 ring-primary/20 hover:-translate-y-0.5" 
+            "group flex flex-col justify-between overflow-hidden rounded-3xl border-0 transition-all duration-300 ease-out md:flex-row md:items-center",
+            isLive ? "bg-card zen-shadow-md ring-primary/20 ring-1 hover:-translate-y-0.5" 
                     : "bg-card zen-shadow opacity-95"
         )}>
-            <div className="p-6 flex-1 flex flex-col justify-center">
-                <div className="flex items-center gap-3 mb-1.5">
-                    <Badge variant={badgeVariant} className="uppercase text-[10px] tracking-wider rounded-full font-bold px-3 py-1 shadow-none border-0">{badgeText}</Badge>
-                    {isLive && (
+            <div className="flex flex-1 flex-col justify-center p-6">
+                <div className="mb-1.5 flex items-center gap-3">
+                    <Badge variant={badgeVariant} className="rounded-full border-0 px-3 py-1 text-[10px] font-bold tracking-wider uppercase shadow-none">{badgeText}</Badge>
+                    {isLive ? (
                         <span className="inline-flex items-center">
-                            <span className="w-2 h-2 rounded-full bg-destructive animate-pulse mr-1.5 shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
-                            <span className="text-[11px] font-bold text-destructive uppercase tracking-widest">Active</span>
+                            <span className="bg-destructive mr-1.5 h-2 w-2 animate-pulse rounded-full shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+                            <span className="text-destructive text-[11px] font-bold tracking-widest uppercase">Active</span>
                         </span>
-                    )}
+                    ) : null}
                 </div>
-                <CardTitle className="text-3xl capitalize font-vibes font-semibold truncate pr-2 text-foreground" title={event.summary}>
+                <CardTitle className="font-vibes text-foreground pr-2 text-3xl font-semibold capitalize" title={event.summary ?? undefined}>
                     {event.summary || "Untitled Event"}
                 </CardTitle>
-                <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2.5 font-medium">
+                <div className="text-muted-foreground mt-2.5 flex items-center gap-3 text-sm font-medium">
                     <span className="flex items-center">
-                    <Clock className="w-4 h-4 mr-2" />
+                    <Clock className="mr-2 h-4 w-4" />
                         {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
                     </span>
                     <TooltipProvider delayDuration={150}>
-                    {calendarLink && (
+                    {calendarLink ? (
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <a
@@ -84,22 +87,22 @@ export function EventCard({ event }: { event: any }) {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     title="Open in Google Calendar"
-                                    className="inline-flex items-center gap-1 text-muted-foreground/60 hover:text-primary transition-colors duration-200"
+                                    className="text-muted-foreground/60 hover:text-primary inline-flex items-center gap-1 transition-colors duration-200"
                                 >
-                                    <LinkCircle className="w-4 h-4" variant="Bulk" />
+                                    <LinkCircle className="h-4 w-4" variant="Bulk" />
                                 </a>
                             </TooltipTrigger>
                             <TooltipContent>
                                 <p>Open in Google Calendar</p>
                             </TooltipContent>
                         </Tooltip>
-                    )}
+                    ) : null}
                     </TooltipProvider>
                 </div>
             </div>
             
-            <div className="p-5 md:p-6 md:pl-0 md:bg-transparent mt-auto md:mt-0">
-                <Button asChild className={cn("w-full md:w-auto min-h-[48px] md:min-h-[44px] px-8 rounded-2xl font-semibold transition-all", isLive && "zen-glow-teal")} variant={isLive ? "default" : "secondary"}>
+            <div className="mt-auto p-5 md:mt-0 md:bg-transparent md:p-6 md:pl-0">
+                <Button asChild className={cn("min-h-[48px] w-full rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:w-auto", isLive && "zen-glow-teal")} variant={isLive ? "default" : "secondary"}>
                     <Link href={`/check-in/${event.id}`}>
                         Check In
                     </Link>

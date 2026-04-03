@@ -1,19 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { format, parse } from "date-fns";
-import { toast } from "sonner";
+import { Controller,useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+
+import { ScheduleEventInput,scheduleNewEventAction } from "@/actions/schedule";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription,DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { scheduleNewEventAction, ScheduleEventInput } from "@/actions/schedule";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { format, parse } from "date-fns";
 import { Refresh } from "iconsax-reactjs";
+import { toast } from "sonner";
+import * as z from "zod";
 
 const sessionSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -131,7 +133,7 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="bg-card sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Nouveau Session</DialogTitle>
                     <DialogDescription>
@@ -147,7 +149,7 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
                             name="title"
                             render={({ field }) => <Input placeholder="Vinyasa Flow..." {...field} />}
                         />
-                        {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
+                        {errors.title ? <p className="text-sm text-red-500">{errors.title.message}</p> : null}
                     </div>
 
                     <div className="space-y-2">
@@ -171,7 +173,7 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
                         />
                     </div>
 
-                    {selectedType === "outdoor" && (
+                    {selectedType === "outdoor" ? (
                         <div className="space-y-2">
                             <Label>Price per person (MAD)</Label>
                             <Controller
@@ -179,9 +181,9 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
                                 name="outdoorPrice"
                                 render={({ field }) => <Input type="number" placeholder="150" {...field} />}
                             />
-                            {errors.outdoorPrice && <p className="text-sm text-red-500">{errors.outdoorPrice.message}</p>}
+                            {errors.outdoorPrice ? <p className="text-sm text-red-500">{errors.outdoorPrice.message}</p> : null}
                         </div>
-                    )}
+                    ) : null}
 
                     <div className="space-y-2">
                         <Label>Date</Label>
@@ -190,7 +192,7 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
                             name="dateStr"
                             render={({ field }) => <Input type="date" {...field} />}
                         />
-                        {errors.dateStr && <p className="text-sm text-red-500">{errors.dateStr.message}</p>}
+                        {errors.dateStr ? <p className="text-sm text-red-500">{errors.dateStr.message}</p> : null}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -201,7 +203,7 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
                                 name="startTimeStr"
                                 render={({ field }) => <Input type="time" {...field} />}
                             />
-                            {errors.startTimeStr && <p className="text-sm text-red-500">{errors.startTimeStr.message}</p>}
+                            {errors.startTimeStr ? <p className="text-sm text-red-500">{errors.startTimeStr.message}</p> : null}
                         </div>
                         <div className="space-y-2">
                             <Label>End Time</Label>
@@ -210,11 +212,11 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
                                 name="endTimeStr"
                                 render={({ field }) => <Input type="time" {...field} />}
                             />
-                            {errors.endTimeStr && <p className="text-sm text-red-500">{errors.endTimeStr.message}</p>}
+                            {errors.endTimeStr ? <p className="text-sm text-red-500">{errors.endTimeStr.message}</p> : null}
                         </div>
                     </div>
 
-                    <div className="pt-4 flex justify-end space-x-2">
+                    <div className="flex justify-end space-x-2 pt-4">
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? <Refresh className="mr-2 h-4 w-4 animate-spin" /> : null}

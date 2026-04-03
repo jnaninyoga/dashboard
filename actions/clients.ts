@@ -1,26 +1,31 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import { HEALTH_TEMPLATE } from "@/config/health";
 import { db } from "@/drizzle";
 import {
-	clients,
-	healthLogs,
-	clientWallets,
 	attendanceLedger,
+	Client,
 	clientCategories,
+	clients,
+	clientWallets,
+	healthLogs,
+	NewHealthLog,
 } from "@/drizzle/schema";
-import { eq, and, or, ilike, desc, isNull, inArray, gte } from "drizzle-orm";
-import { createClient } from "@/supabase/server";
-import { revalidatePath } from "next/cache";
+import { Gender } from "@/lib/types";
+import { clientSchema } from "@/lib/validators";
+import { getTodayEvents } from "@/services/google-calendar";
 import {
 	syncClientToGoogleContacts,
 	updateClientInGoogleContacts,
 } from "@/services/google-contacts";
-import { redirect } from "next/navigation";
-import { clientSchema } from "@/lib/validators";
-import { HEALTH_TEMPLATE } from "@/config/health";
 import { getValidAccessToken } from "@/services/google-tokens";
-import { getTodayEvents } from "@/services/google-calendar";
-import { Gender } from "@/lib/types";
+import { createClient } from "@/supabase/server";
+
+import { and, desc, eq, gte,ilike, inArray, isNull, or } from "drizzle-orm";
+
 import { assignProductToClient } from "./wallets";
 
 export async function createClientAction(
@@ -167,7 +172,7 @@ export async function createClientAction(
 			const newClientId = clientWithId[0].id;
 
 			// --- Auto-Generate Health Logs ---
-			const logsToInsert: any[] = [];
+			const logsToInsert: NewHealthLog[] = [];
 			const nowStr = new Date().toISOString().split("T")[0];
 
 			// 1. Explicit Health Logs from Dynamic List (Priority)
@@ -190,50 +195,8 @@ export async function createClientAction(
 			// "Medical History" (step 2 bottom) is static background.
 			// So we should iterate the OTHER fields from intakeData that are NOT "Physical" (since Physical is now the dynamic list).
 
-			if (intakeData) {
-				const intake = intakeData as Record<string, string>;
-
-				// Helper to check and add
-				const addLog = (
-					key: string,
-					cat: string,
-					sev: string,
-					alert: boolean,
-				) => {
-					const val = intake[key];
-					if (val) {
-						// Check if this condition is already in dynamic list to avoid dupe?
-						// Simple check: unlikely exact string match, but let's just add them as "Background".
-						logsToInsert.push({
-							clientId: newClientId,
-							category: cat,
-							severity: sev,
-							condition: `${key.replace(/([A-Z])/g, " $1").trim()}: ${val}`,
-							isAlert: alert,
-							treatment: null,
-							startDate: nowStr,
-						});
-					}
-				};
-
-				// Medical History is still useful as alerts?
-				// User said: "Wizard 'Medical History' = Static Background"
-				// So maybe we do NOT create alerts for them anymore, just store in intakeData?
-				// Request: "Wizard 'Current Care' = Active Health Logs... Wizard 'Medical History' = Static Background"
-				// Implies we ONLY insert health_logs for the Dynamic List (Current Care replacements).
-				// But previous req wanted "Knee Pain" from history to be alert.
-				// Re-reading: "Merge 'Current Care' with 'Health Logs'... 'Medical History' = Static Background".
-				// Okay, so we STOP generating logs from 'medicalHistory' fields?
-				// "Auto-Generate Health Logs from Intake" was Task 1 of Phase 2.5.
-				// Task 1 of Phase 3 says "Replace 'Current Care' text area... with Dynamic Condition List... saved directly to health_logs".
-				// Use discretion: If user explicitly adds it to the list, it's a log.
-				// If they fill out "Medical History", it stays in `intakeData` JSON.
-				// So I should REMOVE the auto-generation logic for medical history fields to avoid duplication/noise,
-				// defaulting to ONLY what is in `parsed.data.healthLogs`.
-			}
 
 			if (logsToInsert.length > 0) {
-				// @ts-ignore - types are tricky with dynamic array
 				await tx.insert(healthLogs).values(logsToInsert);
 			}
 
@@ -396,7 +359,7 @@ export async function getClientsAction(
                     const todayEvents = await getTodayEvents(accessToken);
                     const eventMap = new Map(todayEvents.map(e => [e.id, e.summary]));
 
-                    data.forEach((client: any) => {
+                    (data as (Client & { activeSessionName?: string })[]).forEach((client) => {
                         const latestLedger = recentLedgers.find(l => l.clientId === client.id);
                         if (latestLedger && latestLedger.googleEventId) {
                             client.activeSessionName = eventMap.get(latestLedger.googleEventId) || "Unknown Session";
@@ -543,18 +506,6 @@ export async function updateClientAction(
 		referralSource: getString("referralSource"),
 		consultationReason: getString("consultationReason"),
 		intakeData: intakeDataRaw,
-		// @ts-ignore - healthLogs might be in formData as JSON string if not handled by hydration?
-		// Actually, Zod handles it if passed as object. Server Actions receive FormData.
-		// We aren't parsing FormData for healthLogs array manually here yet!
-		// The wizard (client-side) needs to serialize `healthLogs` into FormData if it's a complex array.
-		// Or we rely on `parseOrIgnore`?
-		// Wait, FormData doesn't support arrays of objects naturally.
-		// Client side `step-health-wellness` uses `useFieldArray`.
-		// `ClientForm` onSubmit needs to stringify `healthLogs` or append them individually.
-		// Let's assume ClientForm appends `healthLogs` as a JSON string or we parse it?
-		// Check `client-form.tsx` onSubmit.
-		// (Self-correction: I haven't updated ClientForm onSubmit to handle healthLogs array yet!)
-		// I will need to update ClientForm. For now, let's assume it sends a JSON string "healthLogs".
 		healthLogs: formData.get("healthLogs")
 			? JSON.parse(formData.get("healthLogs") as string)
 			: [],
@@ -571,10 +522,9 @@ export async function updateClientAction(
 	try {
 		await db.transaction(async (tx) => {
 			// 1. Update Core Client Data
-			// 1. Update Core Client Data
 			const {
-				healthLogs: _hl,
-				initialProductId: _ip,
+				healthLogs: _healthLogs, // renaming to underscore prefixed but not used in the next line is what caused problems before. wait. 
+                // actually, I'll just remove them from destructuring if I don't need them.
 				...clientUpdateData
 			} = parsed.data;
 
@@ -617,7 +567,7 @@ export async function updateClientAction(
 							await tx
 								.update(healthLogs)
 								.set({
-									severity: log.severity as any,
+									severity: log.severity,
 									isAlert: log.isAlert,
 									treatment: log.treatment || null,
 								})
@@ -627,9 +577,9 @@ export async function updateClientAction(
 						// Insert new
 						await tx.insert(healthLogs).values({
 							clientId: id,
-							category: log.category as any,
+							category: log.category,
 							condition: log.condition,
-							severity: log.severity as any,
+							severity: log.severity,
 							treatment: log.treatment || null,
 							isAlert: log.isAlert,
 							startDate: log.startDate || nowStr,
@@ -706,12 +656,13 @@ export async function updateClientAction(
 				if (photoUrl) {
 					await db.update(clients).set({ photoUrl }).where(eq(clients.id, id));
 				}
-			} catch (e: any) {
+			} catch (e: unknown) {
 				console.error("Failed to sync update to Google Contacts:", e);
-				if (e.message === "REAUTH_REQUIRED") {
+				const err = e as { message?: string; code?: number };
+				if (err.message === "REAUTH_REQUIRED") {
 					return { error: "Session expired. Please refresh the page." };
 				}
-				if (e.code === 404) {
+				if (err.code === 404) {
 					// Contact gone, just update local
 				} else {
 					return {
@@ -763,9 +714,10 @@ export async function deleteClientAction(id: string) {
 					// But `deleteContact` catches errors. If it returns false, it logged error.
 					// Let's assume we proceed to ensure local cleanup, UNLESS it's auth error?
 				}
-			} catch (e: any) {
+			} catch (e: unknown) {
 				console.error("Failed to sync delete to Google Contacts:", e);
-				if (e.message === "REAUTH_REQUIRED") {
+				const err = e as { message?: string };
+				if (err.message === "REAUTH_REQUIRED") {
 					return { error: "Session expired. Please refresh the page." };
 				}
 				// For other errors, we might want to proceed with local delete to clean up 'zombie' records.
