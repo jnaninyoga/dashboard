@@ -1,0 +1,171 @@
+
+> jnaninyoga-dashboard@0.1.0 lint /home/whybe/projects/jnaninyoga-dashboard
+> eslint
+
+
+/home/whybe/projects/jnaninyoga-dashboard/actions/schedule.ts
+  63:11  warning  'error' is defined but never used  unused-imports/no-unused-vars
+
+/home/whybe/projects/jnaninyoga-dashboard/app/(dashboard)/check-in/page.tsx
+  16:17  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:14  warning  'e' is defined but never used             unused-imports/no-unused-vars
+
+/home/whybe/projects/jnaninyoga-dashboard/app/(dashboard)/clients/[id]/edit/page.tsx
+  42:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/whybe/projects/jnaninyoga-dashboard/app/(dashboard)/clients/[id]/page.tsx
+   85:9   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+   90:9   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  107:30  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/app/(dashboard)/page.tsx
+  12:17  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  19:18  warning  'e' is defined but never used             unused-imports/no-unused-vars
+
+/home/whybe/projects/jnaninyoga-dashboard/app/(dashboard)/schedule/page.tsx
+  11:17  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:18  warning  'e' is defined but never used             unused-imports/no-unused-vars
+
+/home/whybe/projects/jnaninyoga-dashboard/components/check-in/check-in-manager.tsx
+  131:50  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/check-in/client-search.tsx
+   12:77  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+   15:47  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+   37:87  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+   70:6   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+   79:6   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+   85:5   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  112:11  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  112:39  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+
+/home/whybe/projects/jnaninyoga-dashboard/components/check-in/health-guardrail-dialog.tsx
+  24:14  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  31:60  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  55:24  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  63:11  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/client-actions.tsx
+  66:7  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/client-filters.tsx
+  23:9  warning  'isPending' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/client-form.tsx
+  265:5  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  286:8  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  287:8  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  293:8  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  294:8  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/client-profile-tabs.tsx
+  10:10  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/clients-grid.tsx
+   54:37  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  163:9   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  173:26  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  179:39  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  380:33  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/clients-table.tsx
+  107:13  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  150:12  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  174:13  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/forms/step-health-wellness.tsx
+  51:5  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/forms/step-membership.tsx
+   39:34  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render   react-hooks/rules-of-hooks
+   39:43  error  Unexpected any. Specify a different type                                                                                      @typescript-eslint/no-explicit-any
+   40:36  error  React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render   react-hooks/rules-of-hooks
+   42:21  error  React Hook "useWatch" is called conditionally. React Hooks must be called in the exact same order in every component render   react-hooks/rules-of-hooks
+   49:2   error  React Hook "useEffect" is called conditionally. React Hooks must be called in the exact same order in every component render  react-hooks/rules-of-hooks
+   87:6   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM                                      no-restricted-syntax
+   90:8   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM                                      no-restricted-syntax
+  152:16  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM                                      no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/tabs/health-tab.tsx
+   41:10  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+   46:35  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  102:5   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  194:7   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  317:13  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  320:13  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  323:13  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  337:12  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/tabs/profile-tab.tsx
+  17:10  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  49:8   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  60:8   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  84:8   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/clients/tabs/wallet-tab.tsx
+  31:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  41:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/whybe/projects/jnaninyoga-dashboard/components/dashboard/cockpit-client.tsx
+  11:81  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
+  27:14  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/dashboard/event-card.tsx
+  66:22  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  82:22  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/dashboard/new-session-dialog.tsx
+  152:26  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  176:22  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  184:30  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  195:26  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  206:30  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  215:30  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/form-wizard.tsx
+  35:2   warning  'onSubmit' is defined but never used. Allowed unused args must match /^_/u                unused-imports/no-unused-vars
+  67:11  error    Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  99:11  error    Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/icons/whatsapp.tsx
+  3:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/home/whybe/projects/jnaninyoga-dashboard/components/settings/category-dialog.tsx
+  151:34  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/settings/category-list.tsx
+  122:14  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  153:14  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/settings/membership-form.tsx
+  135:30  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  147:26  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/ui/dialog.tsx
+   71:10  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+  113:8   error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/ui/phone-input.tsx
+  100:5  warning  Expected an assignment or function call and instead saw an expression                     @typescript-eslint/no-unused-expressions
+  202:5  error    Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/components/ui/sidebar.tsx
+  622:8  error  Prefer ternary over && for conditional rendering to avoid accidental falsy values in DOM  no-restricted-syntax
+
+/home/whybe/projects/jnaninyoga-dashboard/scripts/migrate-categories.ts
+  61:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/whybe/projects/jnaninyoga-dashboard/scripts/reset-db.ts
+  13:7  warning  'db' is assigned a value but never used. Allowed unused vars must match /^_/u  unused-imports/no-unused-vars
+
+/home/whybe/projects/jnaninyoga-dashboard/supabase/middleware.ts
+  21:48  warning  'options' is defined but never used. Allowed unused args must match /^_/u  unused-imports/no-unused-vars
+
+/home/whybe/projects/jnaninyoga-dashboard/supabase/server.ts
+  21:20  warning  'error' is defined but never used  unused-imports/no-unused-vars
+
+✖ 93 problems (83 errors, 10 warnings)
+
+ ELIFECYCLE  Command failed with exit code 1.

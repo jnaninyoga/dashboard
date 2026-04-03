@@ -2,14 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { More, Edit2, Trash, Refresh } from "iconsax-reactjs";
-import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
+import { deleteClientAction } from "@/actions/clients";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -20,7 +14,15 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { deleteClientAction } from "@/actions/clients";
+import { Button } from "@/components/ui/button";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+import { Edit2, More, Refresh,Trash } from "iconsax-reactjs";
 // Define a minimal type for client to avoid circular deps or huge imports
 type Client = {
 	id: string;
@@ -61,17 +63,17 @@ export function ClientActions({
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
-					{showEdit && (
+					{showEdit ? (
 						<DropdownMenuItem
 							onClick={() => router.push(`/clients/${client.id}/edit`)}
 						>
 							<Edit2 className="mr-2 h-4 w-4 text-current" variant="Outline" />
 							Edit
 						</DropdownMenuItem>
-					)}
+					) : null}
 					<DropdownMenuItem
 						onClick={() => setShowDeleteDialog(true)}
-						className="text-red-600 focus:bg-secondary focus:text-red-600 focus:[&_svg]:text-red-600"
+						className="focus:bg-secondary text-red-600 focus:text-red-600 focus:[&_svg]:text-red-600"
 					>
 						<Trash className="mr-2 h-4 w-4 text-red-600" variant="Outline" />
 						Delete

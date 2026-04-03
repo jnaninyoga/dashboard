@@ -1,10 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { Record } from "iconsax-reactjs"
-import { RadioGroup as RadioGroupPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
+
+import { Record } from "iconsax-reactjs"
+import { RadioGroup as RadioGroupPrimitive } from "radix-ui"
 
 function RadioGroup({
   className,

@@ -1,8 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans, Philosopher, Great_Vibes } from "next/font/google";
-import "@/styles/globals.css";
-import { Toaster } from "sonner";
+import { Great_Vibes,Philosopher, Plus_Jakarta_Sans } from "next/font/google";
+
 import { OfflineDetector } from "@/components/offline-detector";
+
+import { Toaster } from "sonner";
+
+import "@/styles/globals.css";
 
 const plusJakarta = Plus_Jakarta_Sans({
 	variable: "--font-plus-jakarta",
@@ -51,7 +54,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} font-sans antialiased selection:bg-primary/20`}
+				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} selection:bg-primary/20 font-sans antialiased`}
 			>
 				{children}
 				<Toaster

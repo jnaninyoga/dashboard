@@ -1,21 +1,23 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+
+import { createMembershipProduct, updateMembershipProduct } from "@/actions/memberships";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
 	FormControl,
+	FormDescription,
 	FormField,
 	FormItem,
 	FormLabel,
 	FormMessage,
-	FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { createMembershipProduct, updateMembershipProduct } from "@/actions/memberships";
+
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
+import * as z from "zod";
 
 const formSchema = z.object({
 	name: z.string().min(1, "Name is required"),
@@ -130,11 +132,11 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 							<FormControl>
 								<Input type="number" {...field} value={field.value as number} />
 							</FormControl>
-                            {initialData && (
-                                <FormDescription className="text-amber-600 font-medium text-xs">
+                            {initialData ? (
+                                <FormDescription className="text-xs font-medium text-amber-600">
                                     Note: Changing credits will only affect future sales. Active client wallets are preserved.
                                 </FormDescription>
-                            )}
+                            ) : null}
 							<FormMessage />
 						</FormItem>
 					)}
@@ -142,7 +144,7 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 
 				<div className="flex justify-end pt-4">
 					<Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
 						{initialData ? "Update Product" : "Create Product"}
 					</Button>
 				</div>

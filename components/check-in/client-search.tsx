@@ -1,16 +1,19 @@
 "use client";
 
 import * as React from "react";
-import { Refresh, SearchNormal1, CloseCircle } from "iconsax-reactjs";
-import { cn } from "@/lib/utils";
-import { getClientsAction } from "@/actions/clients";
-import { useDebounce } from "@/hooks/use-debounce";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any) => void }) {
+import { getClientsAction } from "@/actions/clients";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { type Client, type HealthLog } from "@/drizzle/schema";
+import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
+
+import { CloseCircle,Refresh, SearchNormal1 } from "iconsax-reactjs";
+
+export function ClientSearch({ onSelectClient }: { onSelectClient: (client: Client & { healthLogs?: HealthLog[] }) => void }) {
 	const [searchQuery, setSearchQuery] = React.useState("");
 	const [isLoading, setIsLoading] = React.useState(false);
-	const [clients, setClients] = React.useState<any[]>([]);
+	const [clients, setClients] = React.useState<(Client & { healthLogs?: HealthLog[] })[]>([]);
 	const [isFocused, setIsFocused] = React.useState(false);
 	const debouncedQuery = useDebounce(searchQuery, 300);
 	const inputRef = React.useRef<HTMLInputElement>(null);
@@ -32,7 +35,7 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any)
 		async function fetchClients() {
 			if (!debouncedQuery.trim() && !isFocused) return;
 			setIsLoading(true);
-			const res = await getClientsAction(1, 10, debouncedQuery, { categoryId: "all" } as any);
+			const res = await getClientsAction(1, 10, debouncedQuery, { categoryId: "all" });
 			if (isMounted && res.success && res.data) {
 				setClients(res.data);
 			}
@@ -49,12 +52,12 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any)
 		<div ref={containerRef} className="relative w-full">
 			{/* Single search input — no double-click needed */}
 			<div className={cn(
-				"flex items-center gap-3 min-h-[56px] w-full rounded-2xl bg-card px-5 transition-all duration-200",
+				"bg-card flex min-h-[56px] w-full items-center gap-3 rounded-2xl px-5 transition-all duration-200",
 				isFocused
-					? "zen-shadow-md ring-2 ring-primary/20"
+					? "zen-shadow-md ring-primary/20 ring-2"
 					: "zen-shadow-glow hover:zen-shadow-md"
 			)}>
-				<SearchNormal1 className="size-5 text-primary/60 shrink-0" variant="Outline" />
+				<SearchNormal1 className="text-primary/60 size-5 shrink-0" variant="Outline" />
 				<input
 					ref={inputRef}
 					type="text"
@@ -62,32 +65,32 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any)
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
 					onFocus={() => setIsFocused(true)}
-					className="flex-1 h-full bg-transparent text-base text-foreground placeholder:text-muted-foreground outline-none"
+					className="text-foreground placeholder:text-muted-foreground h-full flex-1 bg-transparent text-base outline-none"
 					autoComplete="off"
 				/>
-				{searchQuery && (
+				{searchQuery ? (
 					<button
 						type="button"
 						onClick={() => { setSearchQuery(""); inputRef.current?.focus(); }}
-						className="size-8 flex items-center justify-center rounded-full hover:bg-muted transition-colors"
+						className="hover:bg-muted flex size-8 items-center justify-center rounded-full transition-colors"
 					>
-						<CloseCircle className="size-5 text-muted-foreground" variant="Outline" />
+						<CloseCircle className="text-muted-foreground size-5" variant="Outline" />
 					</button>
-				)}
-				{isLoading && (
-					<Refresh className="size-5 text-primary animate-spin shrink-0" variant="Outline" />
-				)}
+				) : null}
+				{isLoading ? (
+					<Refresh className="text-primary size-5 shrink-0 animate-spin" variant="Outline" />
+				) : null}
 			</div>
 
 			{/* Results dropdown */}
-			{showDropdown && (
-				<div className="absolute top-full left-0 right-0 mt-2 bg-card rounded-2xl zen-shadow-lg z-50 overflow-hidden animate-slide-up max-h-[60vh] overflow-y-auto">
+			{showDropdown ? (
+				<div className="bg-card zen-shadow-lg animate-slide-up absolute top-full right-0 left-0 z-50 mt-2 max-h-[60vh] overflow-hidden overflow-y-auto rounded-2xl">
 					{clients.length === 0 && !isLoading ? (
-						<div className="py-8 text-center text-muted-foreground text-sm">
+						<div className="text-muted-foreground py-8 text-center text-sm">
 							No clients found.
 						</div>
 					) : (
-						<div className="p-2 flex flex-col gap-0.5">
+						<div className="flex flex-col gap-0.5 p-2">
 							{clients.map((client) => (
 								<button
 									key={client.id}
@@ -97,27 +100,27 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any)
 										setSearchQuery("");
 										setIsFocused(false);
 									}}
-									className="flex items-center gap-3 w-full p-3.5 rounded-xl hover:bg-muted transition-colors text-left min-h-[56px] cursor-pointer"
+									className="hover:bg-muted flex min-h-[56px] w-full cursor-pointer items-center gap-3 rounded-xl p-3.5 text-left transition-colors"
 								>
 									<Avatar className="size-10">
 										<AvatarImage src={client.photoUrl || undefined} />
 										<AvatarFallback className="bg-primary/10 text-primary font-semibold">{client.fullName[0]}</AvatarFallback>
 									</Avatar>
-									<div className="flex flex-col flex-1 min-w-0">
-										<span className="font-semibold text-base text-foreground truncate">{client.fullName}</span>
-										<span className="text-sm text-muted-foreground truncate">{client.phone} • {client.email}</span>
+									<div className="flex min-w-0 flex-1 flex-col">
+										<span className="text-foreground truncate text-base font-semibold">{client.fullName}</span>
+										<span className="text-muted-foreground truncate text-sm">{client.phone} • {client.email}</span>
 									</div>
-									{client.healthLogs?.some((l: any) => l.isAlert) && (
-										<div className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full shrink-0">
+									{(client.healthLogs || []).some((l) => l.isAlert) ? (
+										<div className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
 											Alerts
 										</div>
-									)}
+									) : null}
 								</button>
 							))}
 						</div>
 					)}
 				</div>
-			)}
+			) : null}
 		</div>
 	);
 }

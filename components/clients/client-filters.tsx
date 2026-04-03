@@ -1,5 +1,8 @@
 "use client";
 
+import { useTransition } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -8,8 +11,6 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
 import { type Category, Gender } from "@/lib/types";
 
 interface ClientFiltersProps {
@@ -19,7 +20,7 @@ interface ClientFiltersProps {
 export function ClientFilters({ categories }: ClientFiltersProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
-	const [isPending, startTransition] = useTransition();
+	const [_isPending, startTransition] = useTransition();
 
 	const handleSearch = (term: string) => {
 		const params = new URLSearchParams(searchParams);
@@ -51,7 +52,7 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 		<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
 			<Input
 				placeholder="Search clients..."
-				className="w-full sm:w-[300px] bg-white"
+				className="w-full bg-white sm:w-[300px]"
 				defaultValue={searchParams.get("query")?.toString()}
 				onChange={(e) => handleSearch(e.target.value)}
 			/>
@@ -60,7 +61,7 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 					onValueChange={(v) => handleFilterChange("categoryId", v)}
 					defaultValue={searchParams.get("categoryId") || "all"}
 				>
-					<SelectTrigger className="w-full sm:w-[180px] bg-white">
+					<SelectTrigger className="w-full bg-white sm:w-[180px]">
 						<SelectValue placeholder="Category" />
 					</SelectTrigger>
 					<SelectContent>
@@ -76,7 +77,7 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 					onValueChange={(v) => handleFilterChange("gender", v)}
 					defaultValue={searchParams.get("gender") || Gender.ALL}
 				>
-					<SelectTrigger className="w-full sm:w-[180px] bg-white">
+					<SelectTrigger className="w-full bg-white sm:w-[180px]">
 						<SelectValue placeholder="Gender" />
 					</SelectTrigger>
 					<SelectContent>

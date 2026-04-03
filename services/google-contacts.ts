@@ -1,5 +1,5 @@
-import { getGoogleClient } from "@/lib/google";
 import { HEALTH_TEMPLATE } from "@/config/health";
+import { getGoogleClient } from "@/lib/google";
 
 interface ContactData {
 	fullName: string;
@@ -15,12 +15,17 @@ interface ContactData {
 	intakeData?: Record<string, string | undefined> | null;
 }
 
+interface SyncResult {
+	resourceName: string;
+	photoUrl: string | null;
+}
+
 const CONTACTS_LABEL = "JnaninYoga Clients";
 
 export async function syncClientToGoogleContacts(
 	accessToken: string,
 	data: ContactData,
-) {
+): Promise<SyncResult> {
 	const google = getGoogleClient(accessToken);
 	let labelResourceName = null;
 
@@ -130,7 +135,7 @@ export async function updateClientInGoogleContacts(
 	accessToken: string,
 	resourceName: string,
 	data: ContactData,
-) {
+): Promise<string | null> {
 	const google = getGoogleClient(accessToken);
 
 	// 1. Get current Etag
@@ -234,15 +239,16 @@ export async function deleteContact(
 			resourceName,
 		});
 		return true;
-	} catch (error: any) {
+	} catch (error: unknown) {
 		// Robust handling: If resource not found (404), consider it deleted/success
-		if (error.code === 404 || error.message?.includes("not found")) {
+		const err = error as { code?: number; message?: string };
+		if (err.code === 404 || err.message?.includes("not found")) {
 			console.warn(
 				`Contact ${resourceName} not found in Google (404). Assuming already deleted.`,
 			);
 			return true;
 		}
-		console.error("Error deleting contact:", error);
+		console.error("Error deleting contact:", err);
 		return false;
 	}
 }

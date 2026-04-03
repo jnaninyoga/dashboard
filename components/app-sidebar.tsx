@@ -1,23 +1,23 @@
 "use client";
 import * as React from "react";
 import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
+import { NavUser } from "@/components/nav-user";
 import {
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
-	SidebarGroup,
-	SidebarGroupLabel,
-	SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { NavUser } from "@/components/nav-user";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { dashboardConfig } from "@/config/dashboard";
 
 interface UserProfile {
@@ -37,11 +37,11 @@ export function AppSidebar({
 			<SidebarHeader>
 				<div className="flex items-center gap-2 p-2 px-1">
 					<div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-transparent">
-						<Image src="/logo.png" alt="JnaninYoga Logo" width={40} height={40} className="w-full h-full object-contain drop-shadow-sm" />
+						<Image src="/logo.png" alt="JnaninYoga Logo" width={40} height={40} className="h-full w-full object-contain drop-shadow-sm" />
 					</div>
-					<div className="grid flex-1 text-left text-sm leading-tight ml-1">
-						<span className="truncate text-2xl text-foreground uppercase font-heading font-bold tracking-tight">Jnanin Yoga</span>
-						<span className="truncate text-xs font-semibold text-muted-foreground font-heading uppercase tracking-widest leading-none">Command Center</span>
+					<div className="ml-1 grid flex-1 text-left text-sm leading-tight">
+						<span className="text-foreground font-heading truncate text-2xl font-bold tracking-tight uppercase">Jnanin Yoga</span>
+						<span className="text-muted-foreground font-heading truncate text-xs leading-none font-semibold tracking-widest uppercase">Command Center</span>
 					</div>
 				</div>
 			</SidebarHeader>

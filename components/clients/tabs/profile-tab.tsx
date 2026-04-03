@@ -1,28 +1,30 @@
+import Link from "next/link";
+
+import { WhatsAppIcon } from "@/components/icons/whatsapp";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { type Client } from "@/drizzle/schema";
+
 import {
-	Sms as Mail,
-	Call as Phone,
-	Location as MapPin,
 	Calendar,
-	User,
-	Briefcase,
+	Call as Phone,
 	DocumentText as FileText,
+	Location as MapPin,
+	Sms as Mail,
+	User,
 } from "iconsax-reactjs";
-import Link from "next/link";
-import { WhatsAppIcon } from "@/components/icons/whatsapp";
 
 interface ProfileTabProps {
-	client: any;
+	client: Client;
 }
 
 export function ProfileTab({ client }: ProfileTabProps) {
 	return (
-		<div className="max-w-4xl mx-auto grid gap-6 md:grid-cols-2">
+		<div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-2">
 			{/* Contact Info Card */}
 			<Card>
 				<CardHeader className="pb-4">
-					<CardTitle className="text-xl flex items-center gap-2">
+					<CardTitle className="flex items-center gap-2 text-xl">
 						<User className="h-6 w-6" />
 						Contact Information
 					</CardTitle>
@@ -33,35 +35,35 @@ export function ProfileTab({ client }: ProfileTabProps) {
 							<Link
 								href={`https://wa.me/${client.phone.replace(/[^0-9]/g, "")}`}
 								target="_blank"
-								className="group flex items-center ml-1 text-muted-foreground hover:text-[#25D366] transition-colors"
+								className="group text-muted-foreground ml-1 flex items-center transition-colors hover:text-[#25D366]"
 							>
-								<WhatsAppIcon className="w-5 h-5 transition-colors" />
+								<WhatsAppIcon className="h-5 w-5 transition-colors" />
 							</Link>
 							<Link
 								href={`tel:${client.phone}`}
-								className="flex items-center gap-2 hover:text-primary transition-colors"
+								className="hover:text-primary flex items-center gap-2 transition-colors"
 							>
-								<Phone className="h-5 w-5 text-muted-foreground" />
+								<Phone className="text-muted-foreground h-5 w-5" />
 								<span className="text-base">{client.phone}</span>
 							</Link>
 						</div>
-						{client.email && (
+						{client.email ? (
 							<div className="flex items-center gap-3">
-								<Mail className="h-5 w-5 text-muted-foreground" />
+								<Mail className="text-muted-foreground h-5 w-5" />
 								<a
 									href={`mailto:${client.email}`}
-									className="text-base hover:underline hover:text-primary"
+									className="hover:text-primary text-base hover:underline"
 								>
 									{client.email}
 								</a>
 							</div>
-						)}
-						{client.address && (
+						) : null}
+						{client.address ? (
 							<div className="flex items-start gap-3">
-								<MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
+								<MapPin className="text-muted-foreground mt-0.5 h-5 w-5" />
 								<span className="text-base">{client.address}</span>
 							</div>
-						)}
+						) : null}
 					</div>
 				</CardContent>
 			</Card>
@@ -69,7 +71,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 			{/* Personal Details Card */}
 			<Card>
 				<CardHeader className="pb-4">
-					<CardTitle className="text-lg flex items-center gap-2">
+					<CardTitle className="flex items-center gap-2 text-lg">
 						<Calendar className="h-5 w-5" />
 						Personal Details
 					</CardTitle>
@@ -80,18 +82,18 @@ export function ProfileTab({ client }: ProfileTabProps) {
 							<span className="text-muted-foreground w-20">Born:</span>
 							<span className="text-base">{client.birthDate}</span>
 						</div>
-						{client.profession && (
+						{client.profession ? (
 							<div className="flex items-center gap-3">
 								<span className="text-muted-foreground w-20">Profession:</span>
 								<span className="text-base capitalize">
 									{client.profession}
 								</span>
 							</div>
-						)}
+						) : null}
 						<Separator />
-						<div className="grid grid-cols-2 gap-4 mt-2">
+						<div className="mt-2 grid grid-cols-2 gap-4">
 							<div className="flex flex-col">
-								<span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">
+								<span className="text-muted-foreground mb-1 text-xs tracking-wider uppercase">
 									Referral Source
 								</span>
 								<span className="font-medium capitalize">
@@ -99,7 +101,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 								</span>
 							</div>
 							<div className="flex flex-col">
-								<span className="text-muted-foreground text-xs uppercase tracking-wider mb-1">
+								<span className="text-muted-foreground mb-1 text-xs tracking-wider uppercase">
 									Client Since
 								</span>
 								<span className="font-medium">
@@ -114,7 +116,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 			{/* Consultation Reason Card */}
 			<Card className="md:col-span-2">
 				<CardHeader className="pb-4">
-					<CardTitle className="text-lg flex items-center gap-2">
+					<CardTitle className="flex items-center gap-2 text-lg">
 						<FileText className="h-5 w-5" />
 						Consultation Reason
 					</CardTitle>

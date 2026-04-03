@@ -1,12 +1,14 @@
-import { notFound, redirect } from "next/navigation";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon, ArrowLeft2 } from "iconsax-reactjs";
 import Link from "next/link";
-import { getEventById, type JnaninEventType } from "@/services/google-calendar";
+import { notFound, redirect } from "next/navigation";
+
 import { getEventAttendanceAction } from "@/actions/attendance";
-import { createClient } from "@/supabase/server";
-import { getValidAccessToken } from "@/services/google-tokens";
 import { CheckInManager } from "@/components/check-in/check-in-manager";
+import { getEventById, type JnaninEventType } from "@/services/google-calendar";
+import { getValidAccessToken } from "@/services/google-tokens";
+import { createClient } from "@/supabase/server";
+
+import { format } from "date-fns";
+import { ArrowLeft2,Calendar as CalendarIcon } from "iconsax-reactjs";
 
 interface PageProps {
     params: Promise<{ eventId: string }>;
@@ -46,33 +48,33 @@ export default async function CheckInPage({ params }: PageProps) {
     const attendanceRecords = await getEventAttendanceAction(eventId);
 
     return (
-        <div className="flex flex-col min-h-screen bg-background pb-24 font-sans">
+        <div className="bg-background flex min-h-screen flex-col pb-24 font-sans">
             {/* Zen Header — soft, borderless, with warm surface */}
-            <header className="bg-primary/70 zen-shadow px-6 py-8 md:py-10 z-10 relative rounded-b-3xl">
-                <div className="max-w-4xl mx-auto flex flex-col gap-4">
-                    <div className="flex justify-between items-center text-sm md:text-base mb-1">
-                        <Link href="/check-in" className="group flex items-center text-primary-foreground hover:text-white transition-colors font-semibold min-h-[48px]">
-                            <ArrowLeft2 className="w-5 h-5 mr-2 transition-transform group-hover:-translate-x-1" />
+            <header className="bg-primary/70 zen-shadow relative z-10 rounded-b-3xl px-6 py-8 md:py-10">
+                <div className="mx-auto flex max-w-4xl flex-col gap-4">
+                    <div className="mb-1 flex items-center justify-between text-sm md:text-base">
+                        <Link href="/check-in" className="group text-primary-foreground flex min-h-[48px] items-center font-semibold transition-colors hover:text-white">
+                            <ArrowLeft2 className="mr-2 h-5 w-5 transition-transform group-hover:-translate-x-1" />
                             <span>Back to Schedule</span>
                         </Link>
-                        <span className="px-4 py-1.5 rounded-full bg-secondary text-secondary-foreground text-xs font-bold uppercase tracking-widest">
+                        <span className="bg-secondary text-secondary-foreground rounded-full px-4 py-1.5 text-xs font-bold tracking-widest uppercase">
                             {type} Session
                         </span>
                     </div>
                     
-                    <h1 className="text-5xl md:text-7xl capitalize font-vibes tracking-tight text-primary-foreground">
+                    <h1 className="font-vibes text-primary-foreground text-5xl tracking-tight capitalize md:text-7xl">
                         {title}
                     </h1>
                     
-                    <div className="flex items-center gap-2 text-primary-foreground font-medium text-base mt-1">
-                        <CalendarIcon className="w-5 h-5 shrink-0" variant="Outline" />
+                    <div className="text-primary-foreground mt-1 flex items-center gap-2 text-base font-medium">
+                        <CalendarIcon className="h-5 w-5 shrink-0" variant="Outline" />
                         {startTime ? format(new Date(startTime), "EEEE, MMMM d, yyyy 'at' h:mm a") : "Time TBA"}
                     </div>
                 </div>
             </header>
 
             {/* Main Content Area */}
-            <main className="flex-1 max-w-4xl w-full mx-auto px-5 md:px-6 py-6 flex flex-col gap-6 relative z-20">
+            <main className="relative z-20 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
                 <CheckInManager 
                     eventId={eventId} 
                     eventType={type} 

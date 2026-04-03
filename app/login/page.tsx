@@ -1,22 +1,24 @@
-import { loginWithGoogle } from "@/actions/auth";
-import { Google } from "iconsax-reactjs";
 import Image from "next/image";
+
+import { loginWithGoogle } from "@/actions/auth";
 import { BloomingBlossoms } from "@/components/ui/blooming-blossoms";
+
+import { Google } from "iconsax-reactjs";
 
 export default function LoginPage() {
 	return (
-		<div className="flex min-h-dvh w-full items-center justify-center bg-background px-5 py-10 relative overflow-hidden">
+		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
 			{/* Blooming Blossoms Animation */}
 			<BloomingBlossoms />
 
 			{/* Ambient background blobs */}
-			<div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary/8 blur-3xl pointer-events-none" />
-			<div className="absolute bottom-[-15%] left-[-10%] w-[400px] h-[400px] rounded-full bg-secondary/15 blur-3xl pointer-events-none" />
+			<div className="bg-primary/8 pointer-events-none absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full blur-3xl" />
+			<div className="bg-secondary/15 pointer-events-none absolute bottom-[-15%] left-[-10%] h-[400px] w-[400px] rounded-full blur-3xl" />
 			
-			<div className="w-full max-w-md flex flex-col items-center gap-10 animate-slide-up relative z-10">
+			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-10">
 				{/* Logo & Brand */}
 				<div className="flex flex-col items-center gap-4">
-					<div className="relative size-28 zen-shadow-lg rounded-full overflow-hidden bg-card p-3">
+					<div className="zen-shadow-lg bg-card relative size-28 overflow-hidden rounded-full p-3">
 						<Image
 							src="/logo.png"
 							alt="Jnanin Yoga Studio"
@@ -25,8 +27,8 @@ export default function LoginPage() {
 							priority
 						/>
 					</div>
-					<div className="text-center flex flex-col gap-1.5">
-						<h1 className="text-4xl font-heading font-bold uppercase tracking-tight text-foreground">
+					<div className="flex flex-col gap-1.5 text-center">
+						<h1 className="font-heading text-foreground text-4xl font-bold tracking-tight uppercase">
 							Jnanin Yoga
 						</h1>
 						<p className="text-muted-foreground text-base font-medium tracking-wide">
@@ -36,7 +38,7 @@ export default function LoginPage() {
 				</div>
 
 				{/* Main Card */}
-				<div className="w-full bg-card zen-shadow-lg rounded-3xl p-8 flex flex-col gap-6">
+				<div className="bg-card zen-shadow-lg flex w-full flex-col gap-6 rounded-3xl p-8">
 					{/* MVP Notice
 					<div className="rounded-2xl bg-secondary/30 p-5 flex gap-3.5">
 						<div className="flex-shrink-0 mt-0.5">
@@ -58,7 +60,7 @@ export default function LoginPage() {
 					<form action={loginWithGoogle}>
 						<button
 							type="submit"
-							className="hover:cursor-pointer group relative flex w-full items-center justify-center min-h-[56px] rounded-2xl bg-primary text-primary-foreground font-semibold text-base zen-glow-teal hover:brightness-105 active:scale-[0.98] transition-all duration-200 ease-out gap-3"
+							className="group bg-primary text-primary-foreground zen-glow-teal relative flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl text-base font-semibold transition-all duration-200 ease-out hover:cursor-pointer hover:brightness-105 active:scale-[0.98]"
 						>
 							<Google size={22} variant="Bold" />
 							Sign in with Google
@@ -67,7 +69,7 @@ export default function LoginPage() {
 				</div>
 
 				{/* Footer */}
-				<p className="text-xs text-muted-foreground/60 text-center max-w-xs">
+				<p className="text-muted-foreground/60 max-w-xs text-center text-xs">
 					By signing in, you authorize access to Google Calendar and Contacts for studio management.
 				</p>
 			</div>

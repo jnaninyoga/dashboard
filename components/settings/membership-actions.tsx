@@ -1,15 +1,10 @@
 "use client";
 
 import { useState } from "react";
+
+import { archiveMembershipProduct, deleteMembershipProduct } from "@/actions/memberships";
+import { MembershipForm } from "@/components/settings/membership-form";
 import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuLabel,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
 	Dialog,
 	DialogContent,
@@ -18,9 +13,16 @@ import {
 	DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuLabel,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
 import { ArchiveBook as Archive, Edit2 as Edit, More, Trash } from "iconsax-reactjs";
-import { archiveMembershipProduct, deleteMembershipProduct } from "@/actions/memberships";
-import { MembershipForm } from "@/components/settings/membership-form";
 // import { toast } from "sonner"; 
 
 type Product = {
@@ -78,7 +80,7 @@ export function MembershipActions({ product }: { product: Product }) {
                             <Archive className="mr-2 h-4 w-4" />
                             Archive
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:bg-secondary focus:text-red-600 focus:[&_svg]:text-red-600">
+                        <DropdownMenuItem onClick={handleDelete} className="focus:bg-secondary text-red-600 focus:text-red-600 focus:[&_svg]:text-red-600">
                             <Trash className="mr-2 h-4 w-4 text-red-600" variant="Outline" />
                             Delete
                         </DropdownMenuItem>

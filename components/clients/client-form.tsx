@@ -1,24 +1,25 @@
 "use client";
 
-import { useTransition, useState, useEffect } from "react";
-import { createClientAction, updateClientAction } from "@/actions/clients";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Danger } from "iconsax-reactjs";
-import { Form } from "@/components/ui/form";
+import { useEffect,useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { HEALTH_TEMPLATE, type HealthSection } from "@/config/health";
-import { FormWizard, type WizardStep } from "@/components/form-wizard";
-import { clientSchema, type ClientFormValues } from "@/lib/validators";
 
+import { createClientAction, updateClientAction } from "@/actions/clients";
+import { StepConsultation } from "@/components/clients/forms/step-consultation";
+import { StepHealthWellness } from "@/components/clients/forms/step-health-wellness";
+import { StepMembership } from "@/components/clients/forms/step-membership";
 // Import Refactored Steps
 import { StepPersonalDetails } from "@/components/clients/forms/step-personal-details";
-import { StepHealthWellness } from "@/components/clients/forms/step-health-wellness";
-import { StepConsultation } from "@/components/clients/forms/step-consultation";
-import { StepMembership } from "@/components/clients/forms/step-membership";
-import { type Category, ClientCategory } from "@/lib/types";
+import { FormWizard, type WizardStep } from "@/components/form-wizard";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Form } from "@/components/ui/form";
+import { HEALTH_TEMPLATE, type HealthSection } from "@/config/health";
+import { type Category } from "@/lib/types";
+import { type ClientFormValues,clientSchema } from "@/lib/validators";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Danger } from "iconsax-reactjs";
 
 const WIZARD_STEPS: WizardStep[] = [
 	{ id: "personal", title: "Personal Info", description: "Identity & Contact" },
@@ -42,8 +43,14 @@ const getHealthSectionsByStep = (step: number): HealthSection[] => {
 
 
 
+import { type HealthLog } from "@/drizzle/schema";
+
 interface ClientFormProps {
-	initialData?: Partial<ClientFormValues> & { id?: string };
+	initialData?: Partial<ClientFormValues> & { 
+		id?: string;
+		activeProductId?: string;
+		healthLogs?: HealthLog[];
+	};
 	mode: "create" | "edit";
     categories: Category[];
 }
@@ -74,10 +81,8 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			gender: initialData?.gender || undefined,
 			referralSource: initialData?.referralSource || undefined,
 			// Map active product to initialProductId for Edit mode display
-			// @ts-ignore - dynamic prop from getClientById
 			initialProductId: initialData?.activeProductId || undefined,
 			// Map existing healthLogs if any (for Edit mode)
-			// @ts-ignore - dynamic prop
 			healthLogs: initialData?.healthLogs || [],
 		},
 	});
@@ -190,9 +195,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			if (values.consultationReason)
 				formData.append("consultationReason", values.consultationReason);
 
-			// @ts-ignore - Validated by wizard state but not in main schema yet
 			if (values.initialProductId) {
-				// @ts-ignore
 				formData.append("initialProductId", values.initialProductId);
 			}
 
@@ -219,11 +222,12 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 					// Map Zod issues to form errors
 					let hasFieldErrors = false;
 					Object.entries(result.issues).forEach(
-						([key, value]: [string, any]) => {
+						([key, value]) => {
 							if (key === "_errors") return;
-							if (value && value._errors && Array.isArray(value._errors)) {
+							const val = value as { _errors?: string[] };
+							if (val && val._errors && Array.isArray(val._errors)) {
 								form.setError(key as keyof ClientFormValues, {
-									message: value._errors.join(", "),
+									message: val._errors.join(", "),
 								});
 								hasFieldErrors = true;
 							}
@@ -246,7 +250,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 	}
 
 	return (
-		<div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-5xl mx-auto w-full">
+		<div className="mx-auto w-full max-w-5xl flex-1 space-y-4 p-4 pt-6 md:p-8">
 			<div className="flex items-center justify-between space-y-2">
 				<h2 className="text-3xl font-bold tracking-tight">
 					{mode === "create" ? "Add New Client" : "Edit Client"}
@@ -258,13 +262,13 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 				</div>
 			</div>
 
-			{serverError && (
+			{serverError ? (
 				<Alert variant="destructive">
 					<Danger className="h-4 w-4" variant="Bulk" />
 					<AlertTitle>Error</AlertTitle>
 					<AlertDescription>{serverError}</AlertDescription>
 				</Alert>
-			)}
+			) : null}
 
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)}>
@@ -279,15 +283,15 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 						submitLabel={mode === "create" ? "Create Client" : "Update Client"}
 						mode={mode}
 					>
-						{currentStep === 0 && <StepPersonalDetails form={form} categories={categories} />}
-						{currentStep === 1 && (
+						{currentStep === 0 ? <StepPersonalDetails form={form} categories={categories} /> : null}
+						{currentStep === 1 ? (
 							<StepHealthWellness
 								form={form}
 								sections={getHealthSectionsByStep(1)}
 							/>
-						)}
-						{currentStep === 2 && <StepMembership form={form} categories={categories} mode={mode} />}
-						{currentStep === 3 && <StepConsultation form={form} categories={categories} />}
+						) : null}
+						{currentStep === 2 ? <StepMembership form={form} categories={categories} mode={mode} /> : null}
+						{currentStep === 3 ? <StepConsultation form={form} categories={categories} /> : null}
 					</FormWizard>
 				</form>
 			</Form>

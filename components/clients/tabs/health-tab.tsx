@@ -1,25 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { format } from "date-fns";
-import {
-	Danger as AlertTriangle,
-	Add as Plus,
-	Timer1 as History,
-	InfoCircle as Info,
-	TickCircle as CheckCircle,
-	CloseCircle as XCircle,
-} from "iconsax-reactjs";
+
+import { addHealthLog, toggleHealthAlert } from "@/actions/health";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-	DialogFooter,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
 	Select,
 	SelectContent,
@@ -27,21 +23,33 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { addHealthLog, toggleHealthAlert } from "@/actions/health";
+import { HEALTH_TEMPLATE } from "@/config/health";
+import { type Client, type HealthLog } from "@/drizzle/schema";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import { cn } from "@/lib/utils";
-import { HEALTH_TEMPLATE } from "@/config/health";
+
+import { format } from "date-fns";
+import {
+	Add as Plus,
+	CloseCircle as XCircle,
+	Danger as AlertTriangle,
+	InfoCircle as Info,
+	TickCircle as CheckCircle,
+	Timer1 as History,
+} from "iconsax-reactjs";
+
+type ClientWithLogs = Client & {
+	healthLogs?: HealthLog[];
+	intakeData?: unknown;
+};
 
 interface HealthTabProps {
-	client: any; // TODO: Type properly from DB schema
+	client: ClientWithLogs;
 }
 
 export function HealthTab({ client }: HealthTabProps) {
 	const clientId = client.id;
-	const healthLogs: Record<string, any>[] = client.healthLogs || [];
+	const healthLogs = (client.healthLogs as HealthLog[]) || [];
 	const intakeData = (client.intakeData as Record<string, string>) || {};
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,12 +103,12 @@ export function HealthTab({ client }: HealthTabProps) {
 	};
 
 	return (
-		<div className="max-w-3xl mx-auto space-y-6">
+		<div className="mx-auto max-w-3xl space-y-6">
 			{/* Active Alerts Section */}
-			{activeAlerts.length > 0 && (
+			{activeAlerts.length > 0 ? (
 				<Card className="border-red-200 bg-red-50 dark:bg-red-900/10">
 					<CardHeader className="pb-2">
-						<CardTitle className="text-lg flex items-center gap-2 text-red-600 dark:text-red-400">
+						<CardTitle className="flex items-center gap-2 text-lg text-red-600 dark:text-red-400">
 							<AlertTriangle className="h-5 w-5" />
 							Active Health Alerts
 						</CardTitle>
@@ -110,10 +118,10 @@ export function HealthTab({ client }: HealthTabProps) {
 							{activeAlerts.map((log) => (
 								<div
 									key={log.id}
-									className="flex items-start justify-between bg-white dark:bg-background p-3 rounded-md border border-red-100 dark:border-red-900/20 shadow-sm"
+									className="dark:bg-background flex items-start justify-between rounded-md border border-red-100 bg-white p-3 shadow-sm dark:border-red-900/20"
 								>
 									<div>
-										<div className="flex items-center gap-2 mb-1">
+										<div className="mb-1 flex items-center gap-2">
 											<Badge
 												variant={
 													log.severity === "critical"
@@ -122,14 +130,14 @@ export function HealthTab({ client }: HealthTabProps) {
 												}
 												className={cn(
 													log.severity === "warning" &&
-														"bg-yellow-500 hover:bg-yellow-600 text-white",
+														"bg-yellow-500 text-white hover:bg-yellow-600",
 												)}
 											>
 												{log.severity}
 											</Badge>
 											<span className="font-medium">{log.condition}</span>
 										</div>
-										<p className="text-sm text-muted-foreground">
+										<p className="text-muted-foreground text-sm">
 											From: {format(new Date(log.startDate), "PPP")}
 										</p>
 									</div>
@@ -147,12 +155,12 @@ export function HealthTab({ client }: HealthTabProps) {
 						</div>
 					</CardContent>
 				</Card>
-			)}
+			) : null}
 
 			{/* Static Health & Wellness Profile */}
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-lg flex items-center gap-2">
+					<CardTitle className="flex items-center gap-2 text-lg">
 						<Info className="h-5 w-5" />
 						Health & Wellness Profile
 					</CardTitle>
@@ -164,7 +172,7 @@ export function HealthTab({ client }: HealthTabProps) {
 
 						return (
 							<div key={section.category} className="mb-6 last:mb-0">
-								<h4 className="mb-3 font-semibold text-sm text-muted-foreground uppercase tracking-wider border-b pb-1">
+								<h4 className="text-muted-foreground mb-3 border-b pb-1 text-sm font-semibold tracking-wider uppercase">
 									{section.label}
 								</h4>
 								<div className="grid gap-2 text-sm">
@@ -173,12 +181,12 @@ export function HealthTab({ client }: HealthTabProps) {
 										return (
 											<div
 												key={field.key}
-												className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-1 sm:gap-4 py-1.5"
+												className="flex flex-col gap-1 py-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
 											>
-												<span className="font-medium whitespace-nowrap min-w-[30%]">
+												<span className="min-w-[30%] font-medium whitespace-nowrap">
 													{field.label}
 												</span>
-												<span className="text-muted-foreground text-left sm:text-right wrap-break-word">
+												<span className="text-muted-foreground text-left wrap-break-word sm:text-right">
 													{intakeData[field.key]}
 												</span>
 											</div>
@@ -189,11 +197,11 @@ export function HealthTab({ client }: HealthTabProps) {
 						);
 					})}
 
-					{Object.keys(intakeData).length === 0 && (
-						<p className="text-sm text-muted-foreground italic">
+					{Object.keys(intakeData).length === 0 ? (
+						<p className="text-muted-foreground text-sm italic">
 							No health data recorded.
 						</p>
-					)}
+					) : null}
 				</CardContent>
 			</Card>
 
@@ -262,7 +270,7 @@ export function HealthTab({ client }: HealthTabProps) {
 										</SelectItem>
 									</SelectContent>
 								</Select>
-								<p className="text-xs text-muted-foreground">
+								<p className="text-muted-foreground text-xs">
 									Warning and Critical items trigger an active alert.
 								</p>
 							</div>
@@ -289,11 +297,11 @@ export function HealthTab({ client }: HealthTabProps) {
 
 			<Card>
 				<CardHeader>
-					<CardTitle className="text-lg flex items-center gap-2">
+					<CardTitle className="flex items-center gap-2 text-lg">
 						<History className="h-5 w-5" />
 						Health Changes Log
 					</CardTitle>
-					<p className="text-sm text-muted-foreground mt-1">
+					<p className="text-muted-foreground mt-1 text-sm">
 						Historical record of all health events. Manage active conditions via
 						&quot;Edit Profile&quot;.
 					</p>
@@ -308,23 +316,23 @@ export function HealthTab({ client }: HealthTabProps) {
 							healthLogs.map((log) => (
 								<div
 									key={log.id}
-									className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 last:border-0 last:pb-0 gap-2"
+									className="flex flex-col justify-between gap-2 border-b pb-3 last:border-0 last:pb-0 sm:flex-row sm:items-center"
 								>
 									<div className="flex items-start gap-3">
 										<div className="mt-1">
-											{log.severity === "info" && (
+											{log.severity === "info" ? (
 												<Info className="h-4 w-4 text-blue-500" />
-											)}
-											{log.severity === "warning" && (
+											) : null}
+											{log.severity === "warning" ? (
 												<AlertTriangle className="h-4 w-4 text-yellow-500" />
-											)}
-											{log.severity === "critical" && (
+											) : null}
+											{log.severity === "critical" ? (
 												<XCircle className="h-4 w-4 text-red-500" />
-											)}
+											) : null}
 										</div>
 										<div>
-											<p className="font-medium text-sm">{log.condition}</p>
-											<div className="flex items-center gap-2 text-xs text-muted-foreground">
+											<p className="text-sm font-medium">{log.condition}</p>
+											<div className="text-muted-foreground flex items-center gap-2 text-xs">
 												<span className="capitalize">{log.category}</span>
 												<span>•</span>
 												<span>{format(new Date(log.startDate), "PPP")}</span>
@@ -333,17 +341,17 @@ export function HealthTab({ client }: HealthTabProps) {
 									</div>
 									<div className="flex items-center gap-2">
 										{!log.isAlert &&
-											(log.severity === "warning" ||
-												log.severity === "critical") && (
-												<Button
-													variant="outline"
-													size="sm"
-													className="h-7 text-xs"
-													onClick={() => handleToggleAlert(log.id, true)}
-												>
-													Re-activate
-												</Button>
-											)}
+										(log.severity === "warning" ||
+											log.severity === "critical") ? (
+											<Button
+												variant="outline"
+												size="sm"
+												className="h-7 text-xs"
+												onClick={() => handleToggleAlert(log.id, true)}
+											>
+												Re-activate
+											</Button>
+										) : null}
 									</div>
 								</div>
 							))

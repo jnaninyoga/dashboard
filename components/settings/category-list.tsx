@@ -2,7 +2,16 @@
 "use client";
 
 import { useState } from "react";
+
+import { archiveClientCategory, deleteClientCategory, restoreClientCategory } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
     Table,
     TableBody,
@@ -11,16 +20,10 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ArchiveBook as Archive, Edit2 as Edit, More, Trash, RotateLeft } from "iconsax-reactjs";
+
+import { ArchiveBook as Archive, Edit2 as Edit, More, RotateLeft,Trash } from "iconsax-reactjs";
+
 import { CategoryDialog } from "./category-dialog";
-import { archiveClientCategory, deleteClientCategory, restoreClientCategory } from "@/actions/settings";
 
 interface Category {
     id: string;
@@ -102,7 +105,7 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                                                     <Archive className="mr-2 h-4 w-4" />
                                                     Archive
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDelete(category.id)} className="text-red-600 focus:bg-secondary focus:text-red-600 focus:[&_svg]:text-red-600">
+                                                <DropdownMenuItem onClick={() => handleDelete(category.id)} className="focus:bg-secondary text-red-600 focus:text-red-600 focus:[&_svg]:text-red-600">
                                                     <Trash className="mr-2 h-4 w-4 text-red-600" variant="Outline" />
                                                     Delete
                                                 </DropdownMenuItem>
@@ -116,9 +119,9 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                 </Table>
             </div>
             
-            {archivedCategories.length > 0 && (
+            {archivedCategories.length > 0 ? (
                 <div className="opacity-70">
-                    <h3 className="text-sm font-medium mb-2 text-muted-foreground">Archived Categories</h3>
+                    <h3 className="text-muted-foreground mb-2 text-sm font-medium">Archived Categories</h3>
                     <div className="rounded-md border bg-white p-2">
                         <Table className="[&_tr]:border-secondary-foreground/10">
                             <TableBody>
@@ -140,20 +143,20 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                         </Table>
                     </div>
                 </div>
-            )}
+            ) : null}
 
             <CategoryDialog 
                 open={isCreateOpen} 
                 onOpenChange={setIsCreateOpen} 
             />
             
-            {editingCategory && (
+            {editingCategory ? (
                 <CategoryDialog 
                     open={!!editingCategory} 
                     onOpenChange={(open) => !open && setEditingCategory(null)}
                     category={editingCategory}
                 />
-            )}
+            ) : null}
         </div>
     );
 }

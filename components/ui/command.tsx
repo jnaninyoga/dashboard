@@ -1,10 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Command as CommandPrimitive } from "cmdk"
-import { SearchNormal1 } from "iconsax-reactjs"
 
-import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogContent,
@@ -12,6 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { cn } from "@/lib/utils"
+
+import { Command as CommandPrimitive } from "cmdk"
+import { SearchNormal1 } from "iconsax-reactjs"
 
 function Command({
   className,
@@ -67,7 +68,7 @@ function CommandInput({
   return (
     <div
       data-slot="command-input-wrapper"
-      className="flex h-12 items-center gap-2.5 border-b border-muted/60 px-4"
+      className="border-muted/60 flex h-12 items-center gap-2.5 border-b px-4"
     >
       <SearchNormal1 className="size-5 shrink-0 opacity-40" />
       <CommandPrimitive.Input
@@ -174,11 +175,11 @@ function CommandShortcut({
 export {
   Command,
   CommandDialog,
-  CommandInput,
-  CommandList,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
-  CommandShortcut,
+  CommandList,
   CommandSeparator,
+  CommandShortcut,
 }

@@ -1,23 +1,25 @@
 
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
 import {
 	getClientByIdAction,
 	getGoogleContactPhotoAction,
 } from "@/actions/clients";
-import { notFound } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-	Card,
-	Tag,
-    Briefcase,
-    Edit2,
-} from "iconsax-reactjs";
-import Link from "next/link";
+import { getMembershipProductsAction } from "@/actions/wallets";
 import { ClientActions } from "@/components/clients/client-actions";
 import { ClientProfileTabs } from "@/components/clients/client-profile-tabs";
-import { getMembershipProductsAction } from "@/actions/wallets";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+
+import {
+    Briefcase,
+	Card,
+    Edit2,
+	Tag,
+} from "iconsax-reactjs";
 
 // Next.js 15 params
 type Params = Promise<{ id: string }>;
@@ -62,11 +64,11 @@ export default async function ClientProfilePage(props: { params: Params }) {
 
 
 	return (
-		<div className="flex flex-col gap-6 p-6 max-w-5xl mx-auto w-full">
+		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
 			{/* Header */}
-			<div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+			<div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 				<div className="flex items-center gap-4">
-					<Avatar className="h-20 w-20 border-2 border-primary/10">
+					<Avatar className="border-primary/10 h-20 w-20 border-2">
 						<AvatarImage src={photoUrl || undefined} alt={client.fullName} />
 						<AvatarFallback className="text-2xl">
 							{client.fullName.charAt(0)}
@@ -76,38 +78,38 @@ export default async function ClientProfilePage(props: { params: Params }) {
 						<h1 className="text-3xl font-bold tracking-tight">
 							{client.fullName}
 						</h1>
-						<div className="flex flex-wrap items-center gap-2 mt-1">
+						<div className="mt-1 flex flex-wrap items-center gap-2">
 							<Badge variant="outline" className="capitalize">
 								{client.category?.name || "Uncategorized"}
 							</Badge>
-							{client.gender && (
+							{client.gender ? (
 								<Badge variant="secondary" className="capitalize">
 									{client.gender}
 								</Badge>
-							)}
-							{client.profession && (
-								<span className="text-sm text-muted-foreground flex items-center gap-1">
+							) : null}
+							{client.profession ? (
+								<span className="text-muted-foreground flex items-center gap-1 text-sm">
 									<Briefcase className="h-3 w-3" variant="Outline" />
 									{client.profession}
 								</span>
-							)}
+							) : null}
 						</div>
                         
                         {/* Status Badges */}
-                        <div className="flex items-center gap-2 mt-3">
+                        <div className="mt-3 flex items-center gap-2">
                             <Badge 
-                                className={`text-sm px-3 py-1 ${totalCredits > 2 ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                                className={`px-3 py-1 text-sm ${totalCredits > 2 ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
                             >
-                                <Tag className="w-3 h-3 mr-1" variant="Bulk" />
+                                <Tag className="mr-1 h-3 w-3" variant="Bulk" />
                                 {totalCredits} Credits
                             </Badge>
                             
-                            {activeProductName && (
-                                <Badge variant="outline" className="text-sm px-3 py-1 border-primary/20 bg-primary/5 text-primary">
-                                    <Card className="w-3 h-3 mr-1" variant="Outline" />
+                            {activeProductName ? (
+                                <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary px-3 py-1 text-sm">
+                                    <Card className="mr-1 h-3 w-3" variant="Outline" />
                                     {activeProductName}
                                 </Badge>
-                            )}
+                            ) : null}
                         </div>
 					</div>
 				</div>

@@ -1,16 +1,16 @@
-import {
-	pgTable,
-	uuid,
-	text,
-	date,
-	timestamp,
-	integer,
-	decimal,
-	pgEnum,
-	boolean,
-	jsonb,
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import {
+	boolean,
+	date,
+	decimal,
+	integer,
+	jsonb,
+	pgEnum,
+	pgTable,
+	text,
+	timestamp,
+	uuid,
+} from "drizzle-orm/pg-core";
 
 export const categoryEnum = pgEnum("category", ["adult", "child", "student"]);
 export const genderEnum = pgEnum("gender", ["male", "female"]);
@@ -67,6 +67,8 @@ export const clients = pgTable("clients", {
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	photoUrl: text("photo_url"),
 });
+export type Client = typeof clients.$inferSelect;
+export type NewClient = typeof clients.$inferInsert;
 
 export const healthLogs = pgTable("health_logs", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -81,6 +83,8 @@ export const healthLogs = pgTable("health_logs", {
 	startDate: date("start_date").defaultNow().notNull(),
 	endDate: date("end_date"), // Null = Permanent
 });
+export type HealthLog = typeof healthLogs.$inferSelect;
+export type NewHealthLog = typeof healthLogs.$inferInsert;
 
 export const membershipProducts = pgTable("membership_products", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -90,6 +94,8 @@ export const membershipProducts = pgTable("membership_products", {
 	basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
 	isArchived: boolean("is_archived").default(false).notNull(),
 });
+export type MembershipProduct = typeof membershipProducts.$inferSelect;
+export type NewMembershipProduct = typeof membershipProducts.$inferInsert;
 
 export const clientCategories = pgTable("client_categories", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -98,6 +104,8 @@ export const clientCategories = pgTable("client_categories", {
 	discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull().default("0"),
 	isArchived: boolean("is_archived").default(false).notNull(),
 });
+export type ClientCategory = typeof clientCategories.$inferSelect;
+export type NewClientCategory = typeof clientCategories.$inferInsert;
 
 export const appSettings = pgTable("app_settings", {
     key: text("key").primaryKey(), // e.g., 'discount_student'
@@ -117,6 +125,8 @@ export const clientWallets = pgTable("client_wallets", {
 	activatedAt: timestamp("activated_at").defaultNow(),
 	lastUsedAt: timestamp("last_used_at"),
 });
+export type ClientWallet = typeof clientWallets.$inferSelect;
+export type NewClientWallet = typeof clientWallets.$inferInsert;
 
 export const attendanceLedger = pgTable("attendance_ledger", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -128,6 +138,8 @@ export const attendanceLedger = pgTable("attendance_ledger", {
 	slotType: slotTypeEnum("slot_type").notNull(),
 	note: text("note"),
 });
+export type AttendanceLedger = typeof attendanceLedger.$inferSelect;
+export type NewAttendanceLedger = typeof attendanceLedger.$inferInsert;
 
 export const clientsRelations = relations(clients, ({ many, one }) => ({
 	healthLogs: many(healthLogs),

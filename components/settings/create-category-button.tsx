@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
+
 import { Add as Plus } from "iconsax-reactjs";
+
 import { CategoryDialog } from "./category-dialog";
 
 export function CreateCategoryButton() {
