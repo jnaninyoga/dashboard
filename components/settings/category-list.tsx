@@ -102,8 +102,8 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                                                     <Archive className="mr-2 h-4 w-4" />
                                                     Archive
                                                 </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleDelete(category.id)} className="text-destructive focus:text-destructive">
-                                                    <Trash className="mr-2 h-4 w-4" />
+                                                <DropdownMenuItem onClick={() => handleDelete(category.id)} className="text-red-600 focus:bg-secondary focus:text-red-600 focus:[&_svg]:text-red-600">
+                                                    <Trash className="mr-2 h-4 w-4 text-red-600" variant="Outline" />
                                                     Delete
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>

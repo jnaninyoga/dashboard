@@ -163,8 +163,8 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 										<TooltipTrigger asChild>
 											<div className="flex items-center gap-1.5 bg-green-500/10 backdrop-blur-sm border border-green-500/20 px-2.5 py-1 rounded-full text-green-600 shadow-sm cursor-help">
 												<span className="relative flex h-2 w-2">
-												  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-												  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+													<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+													<span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
 												</span>
 												<span className="text-[10px] font-bold uppercase tracking-wider truncate max-w-[120px]">
 													{(client as any).activeSessionName || "Live"}
@@ -306,27 +306,27 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 								<TooltipProvider delayDuration={150}>
 									{/* Left Section: Social Icons */}
 									<div className="flex items-center gap-4 px-3 flex-1 border-r border-foreground/10 justify-center sm:justify-start">
-										{client.email ? (
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<Link
-														href={`mailto:${client.email}`}
-														className="hover:text-primary transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
+										<Tooltip>
+											<TooltipTrigger asChild>
+												{client.email ? (
+															<Link
+																href={`mailto:${client.email}`}
+																className="hover:text-primary transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
+															>
+																<Sms className="h-4 w-4 opacity-90" variant="Outline" />
+															</Link>
+												) : (
+													<div
+														className="flex items-center justify-center p-1 text-muted-foreground/50"
 													>
-														<Sms className="h-4 w-4 opacity-90" variant="Outline" />
-													</Link>
-												</TooltipTrigger>
-												<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg z-50">
-													{client.email}
-												</TooltipContent>
-											</Tooltip>
-										) : (
-											<div
-												className="flex items-center justify-center p-1 text-muted-foreground/50"
-											>
-												<Sms className="h-4 w-4" variant="Outline" />
-											</div>
-										)}
+														<Sms className="h-4 w-4" variant="Outline" />
+													</div>
+												)}
+											</TooltipTrigger>
+											<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg z-50">
+												{client.email || "No Email"}
+											</TooltipContent>
+										</Tooltip>
 
 										<Tooltip>
 											<TooltipTrigger asChild>

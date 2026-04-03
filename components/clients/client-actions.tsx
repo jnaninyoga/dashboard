@@ -65,15 +65,15 @@ export function ClientActions({
 						<DropdownMenuItem
 							onClick={() => router.push(`/clients/${client.id}/edit`)}
 						>
-							<Edit2 className="mr-2 h-4 w-4" variant="Outline" />
+							<Edit2 className="mr-2 h-4 w-4 text-current" variant="Outline" />
 							Edit
 						</DropdownMenuItem>
 					)}
 					<DropdownMenuItem
 						onClick={() => setShowDeleteDialog(true)}
-						className="text-red-600 focus:text-red-600"
+						className="text-red-600 focus:bg-secondary focus:text-red-600 focus:[&_svg]:text-red-600"
 					>
-						<Trash className="mr-2 h-4 w-4" variant="Outline" />
+						<Trash className="mr-2 h-4 w-4 text-red-600" variant="Outline" />
 						Delete
 					</DropdownMenuItem>
 				</DropdownMenuContent>
