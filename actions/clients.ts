@@ -446,15 +446,32 @@ export async function getGoogleContactPhotoAction(
 		redirect("/login");
 	}
 
-	const { getContactPhoto } = await import("@/services/google-contacts");
-	const photoUrl = await getContactPhoto(accessToken, resourceName);
-
-	// Read-through cache: Update DB if we successfully fetched a photo and have a clientId
-	if (photoUrl && clientId) {
+	// Look up client phone for fallback matching
+	let phone: string | undefined;
+	if (clientId) {
 		try {
+			const client = await db.query.clients.findFirst({
+				where: eq(clients.id, clientId),
+				columns: { phone: true },
+			});
+			phone = client?.phone;
+		} catch {
+			// Non-blocking — proceed without phone fallback
+		}
+	}
+
+	const { getContactPhoto } = await import("@/services/google-contacts");
+	const { photoUrl, newResourceName } = await getContactPhoto(accessToken, resourceName, phone);
+
+	// Cache photo URL and update resource name if it changed
+	if (clientId && (photoUrl || newResourceName)) {
+		try {
+			const updates: Record<string, string> = {};
+			if (photoUrl) updates.photoUrl = photoUrl;
+			if (newResourceName) updates.googleContactResourceName = newResourceName;
 			await db
 				.update(clients)
-				.set({ photoUrl })
+				.set(updates)
 				.where(eq(clients.id, clientId));
 		} catch (err) {
 			console.error("Failed to cache photo URL:", err);

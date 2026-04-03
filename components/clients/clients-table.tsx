@@ -40,11 +40,14 @@ type ClientWithRelations = Client & {
 };
 
 function ClientAvatar({ client }: { client: ClientWithRelations }) {
-	const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+	const [photoUrl, setPhotoUrl] = useState<string | null>(client.photoUrl || null);
 
 	useEffect(() => {
+		// Skip API call if we already have a cached photo URL
+		if (photoUrl) return;
+
 		if (client.googleContactResourceName) {
-			getGoogleContactPhotoAction(client.googleContactResourceName).then(
+			getGoogleContactPhotoAction(client.googleContactResourceName, client.id).then(
 				(res) => {
 					if (res.success && res.url) {
 						setPhotoUrl(res.url);
@@ -52,7 +55,7 @@ function ClientAvatar({ client }: { client: ClientWithRelations }) {
 				},
 			);
 		}
-	}, [client.googleContactResourceName]);
+	}, [client.googleContactResourceName, client.id, photoUrl]);
 
 	return (
 		<Avatar className="h-9 w-9">

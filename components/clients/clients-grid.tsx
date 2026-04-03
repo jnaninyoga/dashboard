@@ -31,6 +31,7 @@ interface Client {
 	address?: string | null;
 	birthDate?: string | null;
 	googleContactResourceName?: string | null;
+	photoUrl?: string | null;
 	createdAt: Date;
 	wallets?: {
 		remainingCredits: number;
@@ -104,11 +105,14 @@ function ClientAvatar({
 	client: Client;
 	className?: string;
 }) {
-	const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+	const [photoUrl, setPhotoUrl] = useState<string | null>(client.photoUrl || null);
 
 	useEffect(() => {
+		// Skip API call if we already have a cached photo URL
+		if (photoUrl) return;
+
 		if (client.googleContactResourceName) {
-			getGoogleContactPhotoAction(client.googleContactResourceName).then(
+			getGoogleContactPhotoAction(client.googleContactResourceName, client.id).then(
 				(res) => {
 					if (res.success && res.url) {
 						setPhotoUrl(res.url);
@@ -116,7 +120,7 @@ function ClientAvatar({
 				},
 			);
 		}
-	}, [client.googleContactResourceName]);
+	}, [client.googleContactResourceName, client.id, photoUrl]);
 
 	return (
 		<Avatar
