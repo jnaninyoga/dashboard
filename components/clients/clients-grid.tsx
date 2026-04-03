@@ -7,7 +7,7 @@ import { ClientActions } from "./client-actions";
 import { getGoogleContactPhotoAction } from "@/actions/clients";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { AlertCircle, Phone, Briefcase, Mail, User, CheckCircle, AlertTriangle } from "lucide-react";
+import { Danger, Call, Sms, User, TickCircle, Whatsapp } from "iconsax-reactjs";
 import {
 	Tooltip,
 	TooltipContent,
@@ -15,7 +15,6 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { WhatsAppIcon } from "@/components/icons/whatsapp";
 
 // Types
 interface Client {
@@ -49,8 +48,7 @@ interface Client {
 
 // Helper to check if client is online (checked in today)
 function isClientOnline(client: Client) {
-	// isClientOnline has been simplified relying on activeSessionName populated by getClientsAction
-	return !!(client as any).activeSessionName;
+	return !!(client as Record<string, any>).activeSessionName;
 }
 
 function CreditBattery({
@@ -131,7 +129,7 @@ function ClientAvatar({
 	);
 }
 
-export function ClientsGrid({ clients }: { clients: any[] }) {
+export function ClientsGrid({ clients }: { clients: Client[] }) {
 	if (clients.length === 0) {
 		return (
 			<div className="flex h-64 items-center justify-center rounded-md border border-dashed">
@@ -146,7 +144,7 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 				const activeWallet = client.wallets?.[0];
 
 				// Filter for actual alerts
-				const alerts = client.healthLogs?.filter((l: any) => l.isAlert) || [];
+				const alerts = client.healthLogs?.filter((l) => l.isAlert) || [];
 				const isOnline = isClientOnline(client);
 
 				return (
@@ -228,17 +226,17 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 											<div className="flex items-center gap-1.5 font-medium cursor-default">
 												{client.gender === "male" ? (
 													<>
-														<User className="size-3.5 text-blue-500" />
+														<User className="size-3.5 text-blue-500" variant="Bulk" />
 														<span className="capitalize text-foreground">Male</span>
 													</>
 												) : client.gender === "female" ? (
 													<>
-														<User className="size-3.5 text-pink-500" />
+														<User className="size-3.5 text-pink-500" variant="Bulk" />
 														<span className="capitalize text-foreground">Female</span>
 													</>
 												) : (
 													<>
-														<User className="size-3.5 text-gray-400" />
+														<User className="size-3.5 text-gray-400" variant="Outline" />
 														<span className="capitalize text-foreground">Unspecified</span>
 													</>
 												)}
@@ -308,20 +306,26 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 								<TooltipProvider delayDuration={150}>
 									{/* Left Section: Social Icons */}
 									<div className="flex items-center gap-4 px-3 flex-1 border-r border-foreground/10 justify-center sm:justify-start">
-										{client.email && (
+										{client.email ? (
 											<Tooltip>
 												<TooltipTrigger asChild>
 													<Link
 														href={`mailto:${client.email}`}
 														className="hover:text-primary transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
 													>
-														<Mail className="h-4 w-4 opacity-90" />
+														<Sms className="h-4 w-4 opacity-90" variant="Outline" />
 													</Link>
 												</TooltipTrigger>
 												<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg z-50">
 													{client.email}
 												</TooltipContent>
 											</Tooltip>
+										) : (
+											<div
+												className="flex items-center justify-center p-1 text-muted-foreground/50"
+											>
+												<Sms className="h-4 w-4" variant="Outline" />
+											</div>
 										)}
 
 										<Tooltip>
@@ -331,7 +335,7 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 													target="_blank"
 													className="hover:text-[#25D366] transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
 												>
-													<WhatsAppIcon className="h-4 w-4 opacity-90" />
+													<Whatsapp className="h-4 w-4" variant="Outline" />
 												</Link>
 											</TooltipTrigger>
 											<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg bg-emerald-50 text-emerald-700 z-50">
@@ -345,7 +349,7 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 													href={`tel:${client.phone}`}
 													className="hover:text-primary transition-colors hover:scale-110 active:scale-95 flex items-center justify-center p-1"
 												>
-													<Phone className="h-4 w-4 opacity-90" />
+													<Call className="h-4 w-4 opacity-90" variant="Outline" />
 												</Link>
 											</TooltipTrigger>
 											<TooltipContent sideOffset={6} className="text-[11px] font-bold px-2 py-1 border-0 zen-shadow-sm rounded-lg z-50">
@@ -360,14 +364,14 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 											<Tooltip>
 												<TooltipTrigger asChild>
 													<div className="flex items-center gap-2 text-destructive font-bold cursor-help group/health animate-pulse p-1">
-														<AlertTriangle className="size-4" />
+														<Danger className="size-4" variant="Bulk" />
 														<span className="text-[10px] uppercase tracking-tighter hidden xs:inline">Alerts ({alerts.length})</span>
 													</div>
 												</TooltipTrigger>
 												<TooltipContent sideOffset={6} className="text-[11px] border-0 zen-shadow-lg rounded-xl p-3 bg-red-50 text-red-900 z-50 max-w-xs">
 													<div className="flex flex-col gap-2">
 														<div className="font-bold flex items-center gap-1.5 text-red-700 pb-1 border-b border-red-200">
-															<AlertCircle className="size-3.5" />
+															<Danger className="size-3.5" variant="Bulk" />
 															Active Health Alerts
 														</div>
 														{alerts.map((log: any, idx: number) => (
@@ -388,7 +392,7 @@ export function ClientsGrid({ clients }: { clients: any[] }) {
 											<Tooltip>
 												<TooltipTrigger asChild>
 													<div className="flex items-center gap-2 text-primary font-bold cursor-help p-1 opacity-80 hover:opacity-100 transition-opacity">
-														<CheckCircle className="size-4" />
+														<TickCircle className="size-4" variant="Outline" />
 														<span className="text-[10px] uppercase tracking-tighter hidden xs:inline">Safe</span>
 													</div>
 												</TooltipTrigger>

@@ -18,7 +18,7 @@ import {
 	DialogTitle,
     DialogTrigger
 } from "@/components/ui/dialog";
-import { MoreHorizontal, Pencil, Archive, Trash2 } from "lucide-react";
+import { ArchiveBook as Archive, Edit2 as Edit, More, Trash } from "iconsax-reactjs";
 import { archiveMembershipProduct, deleteMembershipProduct } from "@/actions/memberships";
 import { MembershipForm } from "@/components/settings/membership-form";
 // import { toast } from "sonner"; 
@@ -40,7 +40,7 @@ export function MembershipActions({ product }: { product: Product }) {
         if (confirm("Are you sure you want to archive this product? It will be hidden from new sales.")) {
             try {
                 await archiveMembershipProduct(product.id);
-            } catch (e) {
+            } catch {
                 alert("Failed to archive");
             }
         }
@@ -50,8 +50,9 @@ export function MembershipActions({ product }: { product: Product }) {
         if (confirm("Are you sure you want to PERMANENTLY delete this product?")) {
             try {
                 await deleteMembershipProduct(product.id);
-            } catch (e: any) {
-                alert(e.message);
+            } catch (err: unknown) {
+                const error = err as Error;
+                alert(error.message);
             }
         }
     };
@@ -63,13 +64,13 @@ export function MembershipActions({ product }: { product: Product }) {
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
                             <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
+                            <More className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => setIsEditOpen(true)}>
-                            <Pencil className="mr-2 h-4 w-4" />
+                            <Edit className="mr-2 h-4 w-4" />
                             Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
@@ -78,7 +79,7 @@ export function MembershipActions({ product }: { product: Product }) {
                             Archive
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
+                            <Trash className="mr-2 h-4 w-4" />
                             Delete
                         </DropdownMenuItem>
                     </DropdownMenuContent>

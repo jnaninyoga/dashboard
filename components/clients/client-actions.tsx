@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Pencil, Trash2, Loader2 } from "lucide-react";
+import { More, Edit2, Trash, Refresh } from "iconsax-reactjs";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -57,7 +57,7 @@ export function ClientActions({
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" className="h-8 w-8 p-0">
 						<span className="sr-only">Open menu</span>
-						<MoreHorizontal className="h-4 w-4" />
+						<More className="h-4 w-4" variant="Outline" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
@@ -65,7 +65,7 @@ export function ClientActions({
 						<DropdownMenuItem
 							onClick={() => router.push(`/clients/${client.id}/edit`)}
 						>
-							<Pencil className="mr-2 h-4 w-4" />
+							<Edit2 className="mr-2 h-4 w-4" variant="Outline" />
 							Edit
 						</DropdownMenuItem>
 					)}
@@ -73,7 +73,7 @@ export function ClientActions({
 						onClick={() => setShowDeleteDialog(true)}
 						className="text-red-600 focus:text-red-600"
 					>
-						<Trash2 className="mr-2 h-4 w-4" />
+						<Trash className="mr-2 h-4 w-4" variant="Outline" />
 						Delete
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -98,9 +98,9 @@ export function ClientActions({
 							disabled={isPending}
 						>
 							{isPending ? (
-								<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+								<Refresh className="mr-2 h-4 w-4 animate-spin" variant="Outline" />
 							) : (
-								<Trash2 className="mr-2 h-4 w-4" />
+								<Trash className="mr-2 h-4 w-4" variant="Bulk" />
 							)}
 							Delete
 						</AlertDialogAction>

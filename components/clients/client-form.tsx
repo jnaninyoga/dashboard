@@ -4,7 +4,7 @@ import { useTransition, useState, useEffect } from "react";
 import { createClientAction, updateClientAction } from "@/actions/clients";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { Danger } from "iconsax-reactjs";
 import { Form } from "@/components/ui/form";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -260,7 +260,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 
 			{serverError && (
 				<Alert variant="destructive">
-					<AlertCircle className="h-4 w-4" />
+					<Danger className="h-4 w-4" variant="Bulk" />
 					<AlertTitle>Error</AlertTitle>
 					<AlertDescription>{serverError}</AlertDescription>
 				</Alert>

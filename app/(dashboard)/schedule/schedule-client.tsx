@@ -4,13 +4,14 @@ import { useState } from "react";
 import { EventCard } from "@/components/dashboard/event-card";
 import { format, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Add } from "iconsax-reactjs";
 import { NewSessionDialog } from "@/components/dashboard/new-session-dialog";
 
 export function ScheduleClient({ initialEvents }: { initialEvents: any[] }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     // Group events by day
+    // @ts-expect-error - dynamic event grouping
     const groupedEvents = initialEvents.reduce((acc, event) => {
         const startIso = event.start?.dateTime;
         if (!startIso) return acc;
@@ -28,7 +29,7 @@ export function ScheduleClient({ initialEvents }: { initialEvents: any[] }) {
         <div className="space-y-8">
             <div className="flex justify-end mb-4">
                 <Button onClick={() => setIsDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Add className="mr-2 h-4 w-4" variant="Outline" />
                     Nouveau Session
                 </Button>
             </div>

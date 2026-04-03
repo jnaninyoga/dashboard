@@ -36,7 +36,6 @@
     "drizzle-zod": "^0.8.3",
     "googleapis": "^171.4.0",
     "iconsax-reactjs": "^0.0.8",
-    "lucide-react": "^0.574.0",
     "next": "16.1.6",
     "postgres": "^3.4.8",
     "radix-ui": "^1.4.3",

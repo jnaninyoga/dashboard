@@ -18,10 +18,9 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Archive, Edit, MoreHorizontal, Plus, Trash, Undo2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { ArchiveBook as Archive, Edit2 as Edit, More, Trash, RotateLeft } from "iconsax-reactjs";
 import { CategoryDialog } from "./category-dialog";
-import { archiveClientCategory, deleteClientCategory, restoreClientCategory } from "@/actions/settings"; // Assume these exist now
+import { archiveClientCategory, deleteClientCategory, restoreClientCategory } from "@/actions/settings";
 
 interface Category {
     id: string;
@@ -42,8 +41,9 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
         if (!confirm("Are you sure you want to delete this category?")) return;
         try {
             await deleteClientCategory(id);
-        } catch (e: any) {
-            alert(e.message);
+        } catch (e: unknown) {
+            const error = e as Error;
+            alert(error.message);
         }
     };
 
@@ -89,7 +89,7 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
                                                     <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    <More className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
@@ -131,7 +131,7 @@ export function CategoryList({ initialCategories }: { initialCategories: Categor
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <Button variant="ghost" size="sm" onClick={() => handleRestore(category.id)}>
-                                                <Undo2 className="mr-2 h-4 w-4" /> Restore
+                                                <RotateLeft className="mr-2 h-4 w-4" /> Restore
                                             </Button>
                                         </TableCell>
                                     </TableRow>

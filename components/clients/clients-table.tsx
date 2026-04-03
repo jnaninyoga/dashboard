@@ -18,7 +18,7 @@ import { ClientActions } from "./client-actions";
 import { getGoogleContactPhotoAction } from "@/actions/clients";
 import { useEffect, useState } from "react";
 
-import { CreditCard, AlertCircle } from "lucide-react";
+import { Card, Danger } from "iconsax-reactjs";
 import {
 	Tooltip,
 	TooltipContent,
@@ -128,7 +128,7 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
 													{activeWallet.product?.name}
 												</span>
 												<div className="flex items-center gap-1 text-xs text-muted-foreground">
-													<CreditCard className="h-3 w-3" />
+													<Card className="h-3 w-3" variant="Outline" />
 													<span>{activeWallet.remainingCredits} credits</span>
 												</div>
 											</div>
@@ -142,7 +142,7 @@ export function ClientsTable({ clients }: { clients: Client[] }) {
 												<Tooltip>
 													<TooltipTrigger asChild>
 														<div className="inline-flex items-center justify-center p-1 rounded-full bg-destructive/10 text-destructive cursor-help">
-															<AlertCircle className="h-4 w-4" />
+															<Danger className="h-4 w-4" variant="Bulk" />
 														</div>
 													</TooltipTrigger>
 													<TooltipContent>

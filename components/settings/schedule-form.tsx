@@ -11,7 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { setWorkingHours, WorkingHoursConfig } from "@/actions/settings";
-import { Save, Loader2 } from "lucide-react";
+import { TickCircle as Save, Refresh as Loader2 } from "iconsax-reactjs";
 
 const daySchema = z.object({
 	isOpen: z.boolean(),

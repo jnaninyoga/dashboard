@@ -1,6 +1,6 @@
 "use client";
 
-import { LayoutGrid, List } from "lucide-react";
+import { Grid7 as Grid, RowVertical as List } from "iconsax-reactjs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useRouter, useSearchParams } from "next/navigation";
 import { View } from "@/lib/types";
@@ -30,14 +30,14 @@ export function ClientViewToggle() {
 				aria-label="Table View"
 				className="rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background"
 			>
-				<List className="h-4 w-4" />
+				<List className="h-4 w-4" variant={view === View.LIST ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>
 			<ToggleGroupItem
 				value={View.GRID.toString()}
 				aria-label="Grid View"
 				className="rounded-xl data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background"
 			>
-				<LayoutGrid className="h-4 w-4" />
+				<Grid className="h-4 w-4" variant={view === View.GRID ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>
 		</ToggleGroup>
 	);

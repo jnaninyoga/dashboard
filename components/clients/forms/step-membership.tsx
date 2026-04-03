@@ -12,7 +12,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ClientFormValues } from "@/lib/validators";
 import { getMembershipProductsAction } from "@/actions/wallets";
-import { Loader2 } from "lucide-react";
+import { Refresh } from "iconsax-reactjs";
 import { Badge } from "@/components/ui/badge";
 import { type Category } from "@/lib/types";
 
@@ -93,12 +93,12 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 
 			{isLoading ? (
 				<div className="flex justify-center py-12">
-					<Loader2 className="h-8 w-8 animate-spin text-primary" />
+					<Refresh className="h-8 w-8 animate-spin text-primary" variant="Outline" />
 				</div>
 			) : (
 				<FormField
 					control={form.control}
-					// @ts-ignore
+					// @ts-expect-error - dynamic field assignment
 					name="initialProductId"
 					render={({ field }) => (
 						<FormItem className="space-y-3">

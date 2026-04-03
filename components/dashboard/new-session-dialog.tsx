@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { scheduleNewEventAction, ScheduleEventInput } from "@/actions/schedule";
-import { Loader2 } from "lucide-react";
+import { Refresh } from "iconsax-reactjs";
 
 const sessionSchema = z.object({
     title: z.string().min(1, "Title is required"),
@@ -217,7 +217,7 @@ export function NewSessionDialog({ open, onOpenChange }: { open: boolean, onOpen
                     <div className="pt-4 flex justify-end space-x-2">
                         <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            {isSubmitting ? <Refresh className="mr-2 h-4 w-4 animate-spin" /> : null}
                             Schedule
                         </Button>
                     </div>

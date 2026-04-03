@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import {
-	AlertTriangle,
-	Plus,
-	History,
-	Info,
-	CheckCircle,
-	XCircle,
-} from "lucide-react";
+	Danger as AlertTriangle,
+	Add as Plus,
+	Timer1 as History,
+	InfoCircle as Info,
+	TickCircle as CheckCircle,
+	CloseCircle as XCircle,
+} from "iconsax-reactjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -29,11 +29,9 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { addHealthLog, toggleHealthAlert } from "@/actions/health";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { HEALTH_TEMPLATE } from "@/config/health";
 
@@ -43,11 +41,10 @@ interface HealthTabProps {
 
 export function HealthTab({ client }: HealthTabProps) {
 	const clientId = client.id;
-	const healthLogs: any[] = client.healthLogs || [];
+	const healthLogs: Record<string, any>[] = client.healthLogs || [];
 	const intakeData = (client.intakeData as Record<string, string>) || {};
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const router = useRouter();
 
 	// Form State
 	const [category, setCategory] = useState<HealthCategory>(
@@ -60,7 +57,6 @@ export function HealthTab({ client }: HealthTabProps) {
 	);
 
 	const activeAlerts = healthLogs.filter((log) => log.isAlert);
-	const historyLogs = healthLogs; // Show all in history, or filter out alerts?
 	// Requirement: "Health History. A chronological list of all logs."
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -182,7 +178,7 @@ export function HealthTab({ client }: HealthTabProps) {
 												<span className="font-medium whitespace-nowrap min-w-[30%]">
 													{field.label}
 												</span>
-												<span className="text-muted-foreground text-left sm:text-right break-words">
+												<span className="text-muted-foreground text-left sm:text-right wrap-break-word">
 													{intakeData[field.key]}
 												</span>
 											</div>
@@ -299,7 +295,7 @@ export function HealthTab({ client }: HealthTabProps) {
 					</CardTitle>
 					<p className="text-sm text-muted-foreground mt-1">
 						Historical record of all health events. Manage active conditions via
-						"Edit Profile".
+						&quot;Edit Profile&quot;.
 					</p>
 				</CardHeader>
 				<CardContent>

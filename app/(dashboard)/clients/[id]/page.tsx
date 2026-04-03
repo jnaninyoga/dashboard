@@ -9,11 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-	CreditCard,
+	Card,
 	Tag,
     Briefcase,
-    Pencil,
-} from "lucide-react";
+    Edit2,
+} from "iconsax-reactjs";
 import Link from "next/link";
 import { ClientActions } from "@/components/clients/client-actions";
 import { ClientProfileTabs } from "@/components/clients/client-profile-tabs";
@@ -87,7 +87,7 @@ export default async function ClientProfilePage(props: { params: Params }) {
 							)}
 							{client.profession && (
 								<span className="text-sm text-muted-foreground flex items-center gap-1">
-									<Briefcase className="h-3 w-3" />
+									<Briefcase className="h-3 w-3" variant="Outline" />
 									{client.profession}
 								</span>
 							)}
@@ -98,13 +98,13 @@ export default async function ClientProfilePage(props: { params: Params }) {
                             <Badge 
                                 className={`text-sm px-3 py-1 ${totalCredits > 2 ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
                             >
-                                <Tag className="w-3 h-3 mr-1" />
+                                <Tag className="w-3 h-3 mr-1" variant="Bulk" />
                                 {totalCredits} Credits
                             </Badge>
                             
                             {activeProductName && (
                                 <Badge variant="outline" className="text-sm px-3 py-1 border-primary/20 bg-primary/5 text-primary">
-                                    <CreditCard className="w-3 h-3 mr-1" />
+                                    <Card className="w-3 h-3 mr-1" variant="Outline" />
                                     {activeProductName}
                                 </Badge>
                             )}
@@ -114,7 +114,7 @@ export default async function ClientProfilePage(props: { params: Params }) {
 				<div className="flex items-center gap-2">
 					<Link href={`/clients/${client.id}/edit`}>
 						<Button variant="outline">
-							<Pencil className="mr-2 h-4 w-4" />
+							<Edit2 className="mr-2 h-4 w-4" variant="Outline" />
 							Edit Profile
 						</Button>
 					</Link>
