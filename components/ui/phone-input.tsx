@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import * as RPNInput from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
