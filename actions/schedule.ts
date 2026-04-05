@@ -15,6 +15,8 @@ export interface ScheduleEventInput {
 	weekday: number; // 0-6 (Sunday-Saturday)
 	type: JnaninEventType;
 	outdoorPrice?: number | null;
+	b2bPrice?: number | null;
+	b2bPaxLabel?: string | null;
 }
 
 const DEFAULT_HOURS: WorkingHoursConfig = {
@@ -78,6 +80,8 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 			endTime: data.isoEnd,
 			type: data.type,
 			outdoorPrice: data.outdoorPrice,
+			b2bPrice: data.b2bPrice,
+			b2bPaxLabel: data.b2bPaxLabel,
 		});
 
 		return { success: true, event: newEvent };

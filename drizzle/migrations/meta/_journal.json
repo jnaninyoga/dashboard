@@ -8,6 +8,13 @@
       "when": 1771503476002,
       "tag": "0000_illegal_doomsday",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775388624450,
+      "tag": "0001_secret_purple_man",
+      "breakpoints": true
     }
   ]
 }

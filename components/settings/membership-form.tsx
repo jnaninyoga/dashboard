@@ -1,5 +1,4 @@
-"use client";
-
+import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
 import { createMembershipProduct, updateMembershipProduct } from "@/actions/memberships";
@@ -17,6 +16,7 @@ import { Input } from "@/components/ui/input";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
+import { toast } from "sonner";
 import * as z from "zod";
 
 const formSchema = z.object({
@@ -38,8 +38,15 @@ type MembershipFormProps = {
 };
 
 export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) {
+    const isEditing = !!initialData;
+    const action = isEditing && initialData 
+        ? updateMembershipProduct.bind(null, initialData.id) 
+        : createMembershipProduct;
+
+    const [state, formAction, isPending] = useActionState(action, null);
+
 	const form = useForm({
-		resolver: zodResolver(formSchema),
+		resolver: zodResolver(formSchema) as any,
 		defaultValues: {
 			name: initialData?.name || "",
 			basePrice: initialData ? parseFloat(initialData.basePrice) : 0,
@@ -48,23 +55,20 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 		},
 	});
 
-    // I will use `onChange` in the render to trigger the calc.
+    useEffect(() => {
+        if (state?.success) {
+            toast.success(isEditing ? "Product updated" : "Product created");
+            onSuccess();
+        } else if (state?.error) {
+            toast.error(state.error);
+        }
+    }, [state, isEditing, onSuccess]);
 
 	async function onSubmit(values: z.infer<typeof formSchema>) {
-		try {
-			if (initialData) {
-				await updateMembershipProduct(initialData.id, values);
-			} else {
-				await createMembershipProduct(values);
-			}
-			onSuccess();
-		} catch (error) {
-			console.error("Failed to save membership product", error);
-            // In a real app, I'd show a toast here
-		}
+        startTransition(() => {
+            formAction(values);
+        });
 	}
-
-    const { isSubmitting } = form.formState;
 
 	return (
 		<Form {...form}>
@@ -143,8 +147,8 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 				/>
 
 				<div className="flex justify-end pt-4">
-					<Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+					<Button type="submit" disabled={isPending}>
+                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
 						{initialData ? "Update Product" : "Create Product"}
 					</Button>
 				</div>

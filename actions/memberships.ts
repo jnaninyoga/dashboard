@@ -15,24 +15,34 @@ export async function getMembershipProducts() {
 		.orderBy(desc(membershipProducts.name));
 }
 
-export async function createMembershipProduct(data: {
-	name: string;
-	basePrice: number;
-	defaultCredits: number;
-	durationMonths: number;
-}) {
-	await db.insert(membershipProducts).values({
-		name: data.name,
-		basePrice: data.basePrice.toString(),
-		defaultCredits: data.defaultCredits,
-		durationMonths: data.durationMonths,
-	});
+export async function createMembershipProduct(
+    _prevState: any,
+    data: {
+        name: string;
+        basePrice: number;
+        defaultCredits: number;
+        durationMonths: number;
+    }
+) {
+    try {
+        await db.insert(membershipProducts).values({
+            name: data.name,
+            basePrice: data.basePrice.toString(),
+            defaultCredits: data.defaultCredits,
+            durationMonths: data.durationMonths,
+        });
 
-	revalidatePath("/settings/memberships");
+        revalidatePath("/settings/memberships");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to create membership product" };
+    }
 }
 
 export async function updateMembershipProduct(
 	id: string,
+    _prevState: any,
 	data: {
 		name: string;
 		basePrice: number;
@@ -40,17 +50,23 @@ export async function updateMembershipProduct(
 		durationMonths: number;
 	},
 ) {
-	await db
-		.update(membershipProducts)
-		.set({
-			name: data.name,
-			basePrice: data.basePrice.toString(),
-			defaultCredits: data.defaultCredits,
-			durationMonths: data.durationMonths,
-		})
-		.where(eq(membershipProducts.id, id));
+    try {
+        await db
+            .update(membershipProducts)
+            .set({
+                name: data.name,
+                basePrice: data.basePrice.toString(),
+                defaultCredits: data.defaultCredits,
+                durationMonths: data.durationMonths,
+            })
+            .where(eq(membershipProducts.id, id));
 
-	revalidatePath("/settings/memberships");
+        revalidatePath("/settings/memberships");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to update membership product" };
+    }
 }
 
 export async function archiveMembershipProduct(id: string) {

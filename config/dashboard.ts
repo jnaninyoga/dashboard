@@ -1,4 +1,5 @@
 import { 
+	Buildings,
 	Calendar, 
 	Card, 
 	Category2, 
@@ -6,7 +7,8 @@ import {
 	People, 
 	TickCircle, 
 	Timer1, 
-	UserAdd} from "iconsax-reactjs";
+	UserAdd
+} from "iconsax-reactjs";
 
 export const dashboardConfig = {
 	navMain: [
@@ -48,6 +50,11 @@ export const dashboardConfig = {
 			title: "Categories",
 			url: "/settings/categories",
 			icon: Category2,
+		},
+		{
+			title: "B2B Pricing",
+			url: "/settings/b2b",
+			icon: Buildings,
 		},
 		{
 			title: "Schedule",
