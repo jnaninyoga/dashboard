@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -21,13 +19,9 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { type Client } from "@/lib/types";
 
-import { Edit2, More, Refresh,Trash } from "iconsax-reactjs";
-// Define a minimal type for client to avoid circular deps or huge imports
-type Client = {
-	id: string;
-	fullName: string;
-};
+import { Edit2, More, Refresh, Trash } from "iconsax-reactjs";
 
 export function ClientActions({
 	client,

@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
@@ -13,43 +11,12 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { type ClientWithRelations as Client } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 import { Call, Danger, Sms, TickCircle, User, Whatsapp } from "iconsax-reactjs";
 
 import { ClientActions } from "./client-actions";
-
-// Types
-interface Client {
-	id: string;
-	fullName: string;
-	email?: string | null;
-	phone: string;
-	category: { name: string; discountType?: "percentage" | "fixed" | null; discountValue?: string | null } | null;
-	gender?: string | null;
-	profession?: string | null;
-	address?: string | null;
-	birthDate?: string | null;
-	googleContactResourceName?: string | null;
-	photoUrl?: string | null;
-	createdAt: Date;
-	wallets?: {
-		remainingCredits: number;
-		product: {
-			name: string;
-			defaultCredits: number;
-		} | null;
-		ledgerEntries?: {
-			checkInTime: Date;
-		}[];
-	}[];
-	activeSessionName?: string | null;
-	healthLogs?: {
-		condition: string;
-		isAlert: boolean;
-		severity?: string;
-	}[];
-}
 
 // Helper to check if client is online (checked in today)
 function isClientOnline(client: Client) {

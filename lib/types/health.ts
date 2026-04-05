@@ -1,3 +1,5 @@
+import { type HealthLog as HealthLogSchema } from "@/drizzle/schema";
+
 export enum HealthCategory {
 	PHYSICAL = "physical",
 	MENTAL = "mental",
@@ -9,3 +11,6 @@ export enum HealthSeverity {
 	WARNING = "warning",
 	CRITICAL = "critical",
 }
+
+export type HealthLog = HealthLogSchema;
+export type { NewHealthLog } from "@/drizzle/schema";

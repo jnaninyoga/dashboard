@@ -1,6 +1,3 @@
-
-"use client";
-
 import { useState } from "react";
 
 import { archiveClientCategory, deleteClientCategory, restoreClientCategory } from "@/actions/settings";
@@ -20,18 +17,11 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { type Category } from "@/lib/types";
 
-import { ArchiveBook as Archive, Edit2 as Edit, More, RotateLeft,Trash } from "iconsax-reactjs";
+import { ArchiveBook as Archive, Edit2 as Edit, More, RotateLeft, Trash } from "iconsax-reactjs";
 
 import { CategoryDialog } from "./category-dialog";
-
-interface Category {
-    id: string;
-    name: string;
-    discountType: "percentage" | "fixed";
-    discountValue: string;
-    isArchived: boolean;
-}
 
 export function CategoryList({ initialCategories }: { initialCategories: Category[] }) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);

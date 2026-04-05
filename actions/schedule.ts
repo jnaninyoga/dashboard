@@ -1,23 +1,11 @@
 "use server";
 
-import { getWorkingHours, WorkingHoursConfig } from "@/actions/settings";
-import { checkAvailability, createStudioEvent, JnaninEventType } from "@/services/google-calendar";
+import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
+import { checkAvailability, createStudioEvent } from "@/services/google-calendar";
 import { getValidAccessToken } from "@/services/google-tokens";
 import { createClient } from "@/supabase/server";
 
-export interface ScheduleEventInput {
-	title: string;
-	dateStr: string; // "YYYY-MM-DD"
-	startTimeStr: string; // "HH:mm"
-	endTimeStr: string; // "HH:mm"
-	isoStart: string; // ISO 8601 string containing explicit offset
-	isoEnd: string; // ISO 8601 string containing explicit offset
-	weekday: number; // 0-6 (Sunday-Saturday)
-	type: JnaninEventType;
-	outdoorPrice?: number | null;
-	b2bPrice?: number | null;
-	b2bPaxLabel?: string | null;
-}
+import { getWorkingHours } from "./settings";
 
 const DEFAULT_HOURS: WorkingHoursConfig = {
 	"1": { isOpen: true, start: "08:00", end: "20:00" },

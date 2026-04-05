@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 
 import { deleteB2BTierAction, toggleArchiveB2BTierAction } from "@/actions/settings";
@@ -19,18 +17,12 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { type B2BTier } from "@/lib/types";
 
 import { ArchiveBook as Archive, Edit2 as Edit, More, RotateLeft, Trash } from "iconsax-reactjs";
 import { toast } from "sonner";
 
 import { B2BTierDialog } from "./b2b-tier-dialog";
-
-interface B2BTier {
-    id: string;
-    name: string;
-    price: number;
-    isArchived: boolean;
-}
 
 export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
     const [isCreateOpen, setIsCreateOpen] = useState(false);

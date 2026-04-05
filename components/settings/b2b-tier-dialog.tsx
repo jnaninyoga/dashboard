@@ -1,7 +1,5 @@
-"use client";
-
 import { useActionState, useEffect } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { createB2BTierAction, updateB2BTierAction } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
@@ -21,25 +19,12 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { type B2BTier } from "@/lib/types";
+import { type B2BTierFormValues,b2bTierSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
 import { toast } from "sonner";
-import * as z from "zod";
-
-const formSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    price: z.number().min(0, "Price must be positive"),
-});
-
-type B2BTierValues = z.infer<typeof formSchema>;
-
-interface B2BTier {
-    id: string;
-    name: string;
-    price: number;
-    isArchived: boolean;
-}
 
 interface B2BTierDialogProps {
     open: boolean;
@@ -50,17 +35,15 @@ interface B2BTierDialogProps {
 export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) {
     const isEditing = !!tier;
     
-    const action = isEditing && tier 
-        ? updateB2BTierAction.bind(null, tier.id) 
-        : createB2BTierAction;
+    const action = tier ? updateB2BTierAction.bind(null, tier.id) : createB2BTierAction;
 
     const [state, formAction, isPending] = useActionState(action, null);
 
-    const form = useForm<B2BTierValues>({
-        resolver: zodResolver(formSchema) as any,
+    const form = useForm<B2BTierFormValues>({
+        resolver: zodResolver(b2bTierSchema),
         defaultValues: {
-            name: tier?.name || "",
-            price: tier?.price || 0,
+            name: tier?.name ?? "",
+            price: tier?.price ?? 0,
         },
     });
 
@@ -83,7 +66,7 @@ export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) 
         }
     }, [open, tier, form]);
 
-    const onSubmit = (values: B2BTierValues) => {
+    const onSubmit = async (values: B2BTierFormValues) => {
         const formData = new FormData();
         formData.append("name", values.name);
         formData.append("price", values.price.toString());

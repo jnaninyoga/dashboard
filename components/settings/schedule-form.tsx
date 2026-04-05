@@ -1,15 +1,19 @@
-import { startTransition, useActionState } from "react";
-import { Controller,useForm } from "react-hook-form";
+"use client";
 
-import { setWorkingHours, WorkingHoursConfig } from "@/actions/settings";
+import { startTransition, useActionState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
+
+import { setWorkingHours } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { DAYS, DEFAULT_HOURS } from "@/config/schedule";
+import { type WorkingHoursConfig } from "@/lib/types";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Refresh as Loader2,TickCircle as Save } from "iconsax-reactjs";
+import { Refresh as Loader2, TickCircle as Save } from "iconsax-reactjs";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -23,32 +27,13 @@ const scheduleSchema = z.record(z.string(), daySchema);
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
-const DAYS = [
-	{ key: "1", label: "Monday" },
-	{ key: "2", label: "Tuesday" },
-	{ key: "3", label: "Wednesday" },
-	{ key: "4", label: "Thursday" },
-	{ key: "5", label: "Friday" },
-	{ key: "6", label: "Saturday" },
-	{ key: "0", label: "Sunday" },
-];
-
-const DEFAULT_HOURS: WorkingHoursConfig = {
-	"1": { isOpen: true, start: "08:00", end: "20:00" },
-	"2": { isOpen: true, start: "08:00", end: "20:00" },
-	"3": { isOpen: true, start: "08:00", end: "20:00" },
-	"4": { isOpen: true, start: "08:00", end: "20:00" },
-	"5": { isOpen: true, start: "08:00", end: "20:00" },
-	"6": { isOpen: true, start: "08:00", end: "14:00" },
-	"0": { isOpen: false, start: "08:00", end: "20:00" },
-};
 
 export function ScheduleForm({
 	initialData,
 }: {
 	initialData: WorkingHoursConfig | null;
 }) {
-	const [, formAction, isPending] = useActionState(async (_: any, data: WorkingHoursConfig) => {
+	const [, formAction, isPending] = useActionState(async (_: unknown, data: WorkingHoursConfig) => {
         try {
             await setWorkingHours(data);
             toast.success("Schedule updated successfully.");
@@ -60,14 +45,16 @@ export function ScheduleForm({
         }
     }, null);
 
-	const { control, handleSubmit, watch } = useForm<ScheduleFormValues>({
+	const { control, handleSubmit } = useForm<ScheduleFormValues>({
 		resolver: zodResolver(scheduleSchema),
 		defaultValues: initialData || DEFAULT_HOURS,
 	});
 
+	const formValues = useWatch({ control });
+
 	const onSubmit = async (data: ScheduleFormValues) => {
         startTransition(() => {
-            formAction(data);
+            formAction(data as WorkingHoursConfig);
         });
 	};
 
@@ -77,7 +64,7 @@ export function ScheduleForm({
 				<CardContent className="p-6">
 					<div className="space-y-6">
 						{DAYS.map((day) => {
-							const isOpen = watch(`${day.key}.isOpen`);
+							const isOpen = formValues?.[day.key]?.isOpen;
 
 							return (
 								<div

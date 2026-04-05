@@ -1,7 +1,5 @@
-"use client";
-
-import { useActionState, useEffect } from "react";
-import { useForm, type Resolver } from "react-hook-form";
+import { startTransition, useActionState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 
 import { createClientCategory, updateClientCategory } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
@@ -22,27 +20,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { type Category } from "@/lib/types";
+import { type CategoryFormValues,categorySchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
 import { toast } from "sonner";
-import * as z from "zod";
-
-const formSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    discountType: z.enum(["percentage", "fixed"]),
-    discountValue: z.number().min(0, "Value must be positive"),
-});
-
-type CategoryValues = z.infer<typeof formSchema>;
-
-interface Category {
-    id: string;
-    name: string;
-    discountType: "percentage" | "fixed";
-    discountValue: string;
-    isArchived: boolean;
-}
 
 interface CategoryDialogProps {
     open: boolean;
@@ -59,11 +42,11 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
 
     const [state, formAction, isPending] = useActionState(action, null);
 
-    const form = useForm<CategoryValues>({
-        resolver: zodResolver(formSchema) as any,
+    const form = useForm<CategoryFormValues>({
+        resolver: zodResolver(categorySchema),
         defaultValues: {
-            name: category?.name || "",
-            discountType: category?.discountType || "percentage",
+            name: category?.name ?? "",
+            discountType: category?.discountType ?? "percentage",
             discountValue: category?.discountValue ? parseFloat(category.discountValue) : 0,
         },
     });
@@ -87,21 +70,13 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
             });
         }
     }, [open, category, form]);
-
-    const handleSubmit = async (values: z.infer<typeof formSchema>) => {
-        // We pass the values to the formAction
-        // Since useActionState action expects (prevState, data), 
-        // we can call it in a transition or if it's already bound, just trigger it.
-        // Wait, formAction from useActionState expects FormData for native forms, 
-        // but can be any data if we call it manually.
-        // Actually, the recommended way with RHF is to use startTransition.
-        // However, we can also just use the action as a normal function.
-        // Let's use startTransition for the modernization feel.
-        // But for these simple objects, we can just pass the data if the action supports it.
-        // My actions are: createClientCategory(prevState, data: { name ... })
-        const { startTransition } = await import("react");
+    const handleSubmit = async (values: CategoryFormValues) => {
+        const data = {
+            ...values,
+            discountType: values.discountType ?? "percentage",
+        };
         startTransition(() => {
-            formAction(values);
+            formAction(data);
         });
     };
 

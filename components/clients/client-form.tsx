@@ -1,5 +1,3 @@
-"use client";
-
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -8,14 +6,16 @@ import { createClientAction, updateClientAction } from "@/actions/clients";
 import { StepConsultation } from "@/components/clients/forms/step-consultation";
 import { StepHealthWellness } from "@/components/clients/forms/step-health-wellness";
 import { StepMembership } from "@/components/clients/forms/step-membership";
-// Import Refactored Steps
 import { StepPersonalDetails } from "@/components/clients/forms/step-personal-details";
 import { FormWizard, type WizardStep } from "@/components/form-wizard";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { HEALTH_TEMPLATE, type HealthSection } from "@/config/health";
-import { type Category } from "@/lib/types";
-import { type ClientFormValues,clientSchema } from "@/lib/validators";
+import { 
+    type Category, 
+    type HealthLog 
+} from "@/lib/types";
+import { type ClientFormValues, clientSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -40,8 +40,6 @@ const getHealthSectionsByStep = (step: number): HealthSection[] => {
 	}
 };
 
-import { type HealthLog } from "@/drizzle/schema";
-
 interface ClientFormProps {
 	initialData?: Partial<ClientFormValues> & { 
 		id?: string;
@@ -56,7 +54,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 	const router = useRouter();
 	const STORAGE_KEY = `client-form-progress-${mode}-${initialData?.id || "new"}`;
 
-    const [state, formAction, isPending] = useActionState(async (_: any, formData: FormData) => {
+    const [state, formAction, isPending] = useActionState(async (_: unknown, formData: FormData) => {
         if (mode === "edit" && initialData?.id) {
             return await updateClientAction(initialData.id, null, formData);
         } else {

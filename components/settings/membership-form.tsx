@@ -13,27 +13,17 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { type MembershipProduct } from "@/lib/types";
+import { 
+	type MembershipProductFormValues, 
+	membershipProductSchema} from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
 import { toast } from "sonner";
-import * as z from "zod";
-
-const formSchema = z.object({
-	name: z.string().min(1, "Name is required"),
-	basePrice: z.coerce.number().min(0, "Price must be positive"),
-	durationMonths: z.coerce.number().int().min(1, "Duration must be at least 1 month"),
-	defaultCredits: z.coerce.number().int().min(1, "Credits must be at least 1"),
-});
 
 type MembershipFormProps = {
-	initialData?: {
-		id: string;
-		name: string;
-		basePrice: string; // Decimal comes as string
-		defaultCredits: number;
-		durationMonths: number | null;
-	};
+	initialData?: MembershipProduct;
 	onSuccess: () => void;
 };
 
@@ -45,13 +35,13 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 
     const [state, formAction, isPending] = useActionState(action, null);
 
-	const form = useForm({
-		resolver: zodResolver(formSchema) as any,
+	const form = useForm<MembershipProductFormValues>({
+		resolver: zodResolver(membershipProductSchema),
 		defaultValues: {
-			name: initialData?.name || "",
-			basePrice: initialData ? parseFloat(initialData.basePrice) : 0,
-			durationMonths: initialData?.durationMonths || 1,
-			defaultCredits: initialData?.defaultCredits || 12,
+			name: initialData?.name ?? "",
+			basePrice: initialData?.basePrice ? parseFloat(initialData.basePrice) : 0,
+			durationMonths: initialData?.durationMonths ?? 1,
+			defaultCredits: initialData?.defaultCredits ?? 10,
 		},
 	});
 
@@ -64,10 +54,10 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
         }
     }, [state, isEditing, onSuccess]);
 
-	async function onSubmit(values: z.infer<typeof formSchema>) {
-        startTransition(() => {
-            formAction(values);
-        });
+	async function onSubmit(values: MembershipProductFormValues) {
+		startTransition(() => {
+			formAction(values);
+		});
 	}
 
 	return (
@@ -94,7 +84,13 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 							<FormItem>
 								<FormLabel>Price (MAD)</FormLabel>
 								<FormControl>
-									<Input type="number" step="0.01" {...field} value={field.value as number} />
+									<Input 
+										type="number" 
+										step="0.01" 
+										{...field} 
+										value={field.value ?? ""} 
+										onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+									/>
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -110,12 +106,13 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 									<Input 
                                         type="number" 
                                         {...field} 
-                                        value={field.value as number}
+                                        value={field.value ?? ""}
                                         onChange={(e) => {
-                                            field.onChange(e);
-                                            // Auto-calc logic: Months * 12
-                                            const months = parseInt(e.target.value);
-                                            if (!isNaN(months)) {
+                                            const months = parseInt(e.target.value) || 0;
+                                            field.onChange(months);
+                                            // Auto-calc logic: Months * 10 (or whatever the logic was)
+                                            // Previous logic: months * 12
+                                            if (months > 0) {
                                                 form.setValue("defaultCredits", months * 12);
                                             }
                                         }}
@@ -134,7 +131,12 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 						<FormItem>
 							<FormLabel>Credits (Classes)</FormLabel>
 							<FormControl>
-								<Input type="number" {...field} value={field.value as number} />
+								<Input 
+									type="number" 
+									{...field} 
+									value={field.value ?? ""} 
+									onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+								/>
 							</FormControl>
                             {initialData ? (
                                 <FormDescription className="text-xs font-medium text-amber-600">

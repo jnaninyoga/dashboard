@@ -15,8 +15,9 @@ export async function getMembershipProducts() {
 		.orderBy(desc(membershipProducts.name));
 }
 
+
 export async function createMembershipProduct(
-    _prevState: any,
+    _prevState: unknown,
     data: {
         name: string;
         basePrice: number;
@@ -42,7 +43,7 @@ export async function createMembershipProduct(
 
 export async function updateMembershipProduct(
 	id: string,
-    _prevState: any,
+    _prevState: unknown,
 	data: {
 		name: string;
 		basePrice: number;
