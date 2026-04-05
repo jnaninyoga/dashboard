@@ -1,3 +1,5 @@
+"use client";
+
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
