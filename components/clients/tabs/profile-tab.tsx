@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { WhatsAppIcon } from "@/components/icons/whatsapp";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { type Client } from "@/drizzle/schema";
@@ -12,6 +11,7 @@ import {
 	Location as MapPin,
 	Sms as Mail,
 	User,
+	Whatsapp,
 } from "iconsax-reactjs";
 
 interface ProfileTabProps {
@@ -37,7 +37,10 @@ export function ProfileTab({ client }: ProfileTabProps) {
 								target="_blank"
 								className="group text-muted-foreground ml-1 flex items-center transition-colors hover:text-[#25D366]"
 							>
-								<WhatsAppIcon className="h-5 w-5 transition-colors" />
+								<Whatsapp
+									className="h-5 w-5 transition-colors"
+									variant="Bulk"
+								/>
 							</Link>
 							<Link
 								href={`tel:${client.phone}`}

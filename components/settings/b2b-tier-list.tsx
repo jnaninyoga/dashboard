@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from "react";
 
 import { deleteB2BTierAction, toggleArchiveB2BTierAction } from "@/actions/settings";

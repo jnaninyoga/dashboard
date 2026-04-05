@@ -22,6 +22,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Prevent indexing via header (belt-and-suspenders approach)
+  response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+
   return response;
 }
 

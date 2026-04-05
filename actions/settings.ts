@@ -137,19 +137,22 @@ export async function getB2BPricingTiers() {
     });
 }
 
-export async function createB2BTierAction(_prevState: unknown, formData: FormData) {
-    const name = formData.get("name") as string;
-    const price = parseInt(formData.get("price") as string);
+import { b2bTierSchema } from "@/lib/validators";
 
-    if (!name || isNaN(price)) {
-        return { error: "Name and valid price are required" };
+export async function createB2BTierAction(_prevState: unknown, formData: FormData) {
+    const rawData = {
+        name: formData.get("name") as string,
+        price: Number(formData.get("price")),
+    };
+
+    const parsed = b2bTierSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        return { error: "Validation failed", issues: parsed.error.format() };
     }
 
     try {
-        await db.insert(b2bPricingTiers).values({
-            name,
-            price,
-        });
+        await db.insert(b2bPricingTiers).values(parsed.data);
         revalidatePath("/settings/b2b");
         return { success: true };
     } catch (error) {
@@ -159,16 +162,20 @@ export async function createB2BTierAction(_prevState: unknown, formData: FormDat
 }
 
 export async function updateB2BTierAction(id: string, _prevState: unknown, formData: FormData) {
-    const name = formData.get("name") as string;
-    const price = parseInt(formData.get("price") as string);
+    const rawData = {
+        name: formData.get("name") as string,
+        price: Number(formData.get("price")),
+    };
 
-    if (!name || isNaN(price)) {
-        return { error: "Name and valid price are required" };
+    const parsed = b2bTierSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+        return { error: "Validation failed", issues: parsed.error.format() };
     }
 
     try {
         await db.update(b2bPricingTiers)
-            .set({ name, price })
+            .set(parsed.data)
             .where(eq(b2bPricingTiers.id, id));
         revalidatePath("/settings/b2b");
         return { success: true };

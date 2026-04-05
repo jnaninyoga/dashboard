@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getClientsAction } from "@/actions/clients";
+import { getClientsAction } from "@/actions/clients/queries";
 import { getClientCategories } from "@/actions/settings";
 import { ClientFilters } from "@/components/clients/client-filters";
 import { ClientViewToggle } from "@/components/clients/client-view-toggle";
