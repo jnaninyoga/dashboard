@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect,useState, useTransition } from "react";
+import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
@@ -11,7 +11,6 @@ import { StepMembership } from "@/components/clients/forms/step-membership";
 // Import Refactored Steps
 import { StepPersonalDetails } from "@/components/clients/forms/step-personal-details";
 import { FormWizard, type WizardStep } from "@/components/form-wizard";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { HEALTH_TEMPLATE, type HealthSection } from "@/config/health";
@@ -19,7 +18,7 @@ import { type Category } from "@/lib/types";
 import { type ClientFormValues,clientSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Danger } from "iconsax-reactjs";
+import { toast } from "sonner";
 
 const WIZARD_STEPS: WizardStep[] = [
 	{ id: "personal", title: "Personal Info", description: "Identity & Contact" },
@@ -41,8 +40,6 @@ const getHealthSectionsByStep = (step: number): HealthSection[] => {
 	}
 };
 
-
-
 import { type HealthLog } from "@/drizzle/schema";
 
 interface ClientFormProps {
@@ -56,12 +53,19 @@ interface ClientFormProps {
 }
 
 export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
-	const [isPending, startTransition] = useTransition();
-	const [serverError, setServerError] = useState<string | null>(null);
-	const [currentStep, setCurrentStep] = useState(0);
-	const [isStepPending, setIsStepPending] = useState(false);
 	const router = useRouter();
 	const STORAGE_KEY = `client-form-progress-${mode}-${initialData?.id || "new"}`;
+
+    const [state, formAction, isPending] = useActionState(async (_: any, formData: FormData) => {
+        if (mode === "edit" && initialData?.id) {
+            return await updateClientAction(initialData.id, null, formData);
+        } else {
+            return await createClientAction(null, formData);
+        }
+    }, null);
+
+	const [currentStep, setCurrentStep] = useState(0);
+	const [isStepPending, setIsStepPending] = useState(false);
 
 	const form = useForm<ClientFormValues>({
 		resolver: zodResolver(clientSchema),
@@ -87,12 +91,8 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 		},
 	});
 
-	// Load saved progress on mount (only for create mode usually, or if we want draft edits)
-	// For Edit mode, we rely on initialData mainly.
-	// Let's only use local storage for "create" to avoid overwriting DB data with stale local data
+	// Load saved progress on mount
 	useEffect(() => {
-		if (mode === "edit") return;
-
 		const saved = localStorage.getItem(STORAGE_KEY);
 		if (saved) {
 			try {
@@ -100,7 +100,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 				if (values) {
 					form.reset({ ...form.getValues(), ...values });
 				}
-				if (typeof step === "number") {
+				if (typeof step === "number" && mode === "create") {
 					setCurrentStep(step);
 				}
 			} catch (e) {
@@ -111,8 +111,6 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 
 	// Save progress
 	useEffect(() => {
-		if (mode === "edit") return;
-
 		const subscription = form.watch((values) => {
 			localStorage.setItem(
 				STORAGE_KEY,
@@ -125,6 +123,29 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 
 		return () => subscription.unsubscribe();
 	}, [form, currentStep, mode, STORAGE_KEY]);
+
+    // Handle server state
+    useEffect(() => {
+        if (state?.success) {
+            toast.success(mode === "create" ? "Client created successfully!" : "Client updated successfully!");
+            localStorage.removeItem(STORAGE_KEY);
+            router.push("/clients");
+        } else if (state?.error) {
+            if (state.issues) {
+                // Map Zod issues to form errors
+                Object.entries(state.issues).forEach(([key, value]) => {
+                    if (key === "_errors") return;
+                    const val = value as { _errors?: string[] };
+                    if (val && val._errors && Array.isArray(val._errors)) {
+                        form.setError(key as keyof ClientFormValues, {
+                            message: val._errors.join(", "),
+                        });
+                    }
+                });
+            }
+            toast.error(state.error);
+        }
+    }, [state, mode, router, STORAGE_KEY, form]);
 
 	const getStepFields = (step: number): (keyof ClientFormValues)[] => {
 		switch (step) {
@@ -148,13 +169,10 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			if (fieldsToValidate.length > 0) {
 				const isValid = await form.trigger(fieldsToValidate);
 				if (!isValid) {
-					setServerError(
-						"Please fix the errors in the current step before proceeding.",
-					);
+					toast.error("Please fix the errors in the current step before proceeding.");
 					return;
 				}
 			}
-			setServerError(null); // Clear error if moving forward
 			if (currentStep < WIZARD_STEPS.length - 1) {
 				setCurrentStep((prev) => prev + 1);
 			}
@@ -175,7 +193,6 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			return;
 		}
 
-		setServerError(null);
 		startTransition(async () => {
 			const formData = new FormData();
 
@@ -210,42 +227,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 				formData.append("healthLogs", JSON.stringify(values.healthLogs));
 			}
 
-			let result;
-			if (mode === "edit" && initialData?.id) {
-				result = await updateClientAction(initialData.id, null, formData);
-			} else {
-				result = await createClientAction(null, formData);
-			}
-
-			if (result?.error) {
-				if (result.issues) {
-					// Map Zod issues to form errors
-					let hasFieldErrors = false;
-					Object.entries(result.issues).forEach(
-						([key, value]) => {
-							if (key === "_errors") return;
-							const val = value as { _errors?: string[] };
-							if (val && val._errors && Array.isArray(val._errors)) {
-								form.setError(key as keyof ClientFormValues, {
-									message: val._errors.join(", "),
-								});
-								hasFieldErrors = true;
-							}
-						},
-					);
-
-					if (hasFieldErrors) {
-						setServerError("Please fix the highlighted errors.");
-					} else {
-						setServerError(result.error);
-					}
-				} else {
-					setServerError(result.error);
-				}
-			} else {
-				if (mode === "create") localStorage.removeItem(STORAGE_KEY);
-				router.push("/clients");
-			}
+            formAction(formData);
 		});
 	}
 
@@ -261,14 +243,6 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 					</Button>
 				</div>
 			</div>
-
-			{serverError ? (
-				<Alert variant="destructive">
-					<Danger className="h-4 w-4" variant="Bulk" />
-					<AlertTitle>Error</AlertTitle>
-					<AlertDescription>{serverError}</AlertDescription>
-				</Alert>
-			) : null}
 
 			<Form {...form}>
 				<form onSubmit={form.handleSubmit(onSubmit)}>

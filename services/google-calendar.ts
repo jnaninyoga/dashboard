@@ -54,6 +54,8 @@ interface CreateEventData {
 	endTime: string; // ISO string
 	type: JnaninEventType;
 	outdoorPrice?: number | null;
+	b2bPrice?: number | null;
+	b2bPaxLabel?: string | null;
 }
 
 /**
@@ -89,6 +91,12 @@ export async function createStudioEvent(
 			jnaninEventType: data.type,
 			...(data.outdoorPrice
 				? { outdoorPrice: data.outdoorPrice.toString() }
+				: {}),
+			...(data.b2bPrice
+				? { jnaninEventPrice: data.b2bPrice.toString() }
+				: {}),
+			...(data.b2bPaxLabel
+				? { jnaninB2BPaxLabel: data.b2bPaxLabel }
 				: {}),
 		},
 	};

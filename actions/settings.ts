@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { db } from "@/drizzle";
-import { appSettings, clientCategories, clients } from "@/drizzle/schema";
+import { appSettings, b2bPricingTiers, clientCategories, clients } from "@/drizzle/schema";
 
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 
 // --- App Settings (Legacy/General) ---
 
@@ -54,32 +54,51 @@ export async function getClientCategories() {
     });
 }
 
-export async function createClientCategory(data: {
-    name: string;
-    discountType: "percentage" | "fixed";
-    discountValue: number;
-}) {
-    await db.insert(clientCategories).values({
-        name: data.name,
-        discountType: data.discountType,
-        discountValue: data.discountValue.toString(),
-    });
-    revalidatePath("/settings/categories");
-}
-
-export async function updateClientCategory(id: string, data: {
-    name: string;
-    discountType: "percentage" | "fixed";
-    discountValue: number;
-}) {
-    await db.update(clientCategories)
-        .set({
+export async function createClientCategory(
+    _prevState: any,
+    data: {
+        name: string;
+        discountType: "percentage" | "fixed";
+        discountValue: number;
+    }
+) {
+    try {
+        await db.insert(clientCategories).values({
             name: data.name,
             discountType: data.discountType,
             discountValue: data.discountValue.toString(),
-        })
-        .where(eq(clientCategories.id, id));
-    revalidatePath("/settings/categories");
+        });
+        revalidatePath("/settings/categories");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to create category" };
+    }
+}
+
+export async function updateClientCategory(
+    id: string,
+    _prevState: any,
+    data: {
+        name: string;
+        discountType: "percentage" | "fixed";
+        discountValue: number;
+    }
+) {
+    try {
+        await db.update(clientCategories)
+            .set({
+                name: data.name,
+                discountType: data.discountType,
+                discountValue: data.discountValue.toString(),
+            })
+            .where(eq(clientCategories.id, id));
+        revalidatePath("/settings/categories");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to update category" };
+    }
 }
 
 export async function archiveClientCategory(id: string) {
@@ -108,4 +127,77 @@ export async function deleteClientCategory(id: string) {
 
     await db.delete(clientCategories).where(eq(clientCategories.id, id));
     revalidatePath("/settings/categories");
+}
+
+// --- B2B Pricing Tiers ---
+
+export async function getB2BPricingTiers() {
+    return await db.query.b2bPricingTiers.findMany({
+        orderBy: [asc(b2bPricingTiers.name)],
+    });
+}
+
+export async function createB2BTierAction(_prevState: any, formData: FormData) {
+    const name = formData.get("name") as string;
+    const price = parseInt(formData.get("price") as string);
+
+    if (!name || isNaN(price)) {
+        return { error: "Name and valid price are required" };
+    }
+
+    try {
+        await db.insert(b2bPricingTiers).values({
+            name,
+            price,
+        });
+        revalidatePath("/settings/b2b");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to create B2B tier" };
+    }
+}
+
+export async function updateB2BTierAction(id: string, _prevState: any, formData: FormData) {
+    const name = formData.get("name") as string;
+    const price = parseInt(formData.get("price") as string);
+
+    if (!name || isNaN(price)) {
+        return { error: "Name and valid price are required" };
+    }
+
+    try {
+        await db.update(b2bPricingTiers)
+            .set({ name, price })
+            .where(eq(b2bPricingTiers.id, id));
+        revalidatePath("/settings/b2b");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to update B2B tier" };
+    }
+}
+
+export async function deleteB2BTierAction(id: string) {
+    try {
+        await db.delete(b2bPricingTiers).where(eq(b2bPricingTiers.id, id));
+        revalidatePath("/settings/b2b");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to delete B2B tier" };
+    }
+}
+
+export async function toggleArchiveB2BTierAction(id: string, isArchived: boolean) {
+    try {
+        await db.update(b2bPricingTiers)
+            .set({ isArchived: !isArchived })
+            .where(eq(b2bPricingTiers.id, id));
+        revalidatePath("/settings/b2b");
+        return { success: true };
+    } catch (error) {
+        console.error(error);
+        return { error: "Failed to update archive status" };
+    }
 }

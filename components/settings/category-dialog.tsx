@@ -1,7 +1,7 @@
-
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useActionState, useEffect } from "react";
+import { useForm, type Resolver } from "react-hook-form";
 
 import { createClientCategory, updateClientCategory } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
@@ -25,13 +25,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
+import { toast } from "sonner";
 import * as z from "zod";
 
 const formSchema = z.object({
     name: z.string().min(1, "Name is required"),
     discountType: z.enum(["percentage", "fixed"]),
-    discountValue: z.coerce.number().min(0, "Value must be positive"),
+    discountValue: z.number().min(0, "Value must be positive"),
 });
+
+type CategoryValues = z.infer<typeof formSchema>;
 
 interface Category {
     id: string;
@@ -50,31 +53,57 @@ interface CategoryDialogProps {
 export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogProps) {
     const isEditing = !!category;
     
-    const form = useForm({
-        resolver: zodResolver(formSchema),
+    const action = isEditing && category 
+        ? updateClientCategory.bind(null, category.id) 
+        : createClientCategory;
+
+    const [state, formAction, isPending] = useActionState(action, null);
+
+    const form = useForm<CategoryValues>({
+        resolver: zodResolver(formSchema) as any,
         defaultValues: {
             name: category?.name || "",
             discountType: category?.discountType || "percentage",
             discountValue: category?.discountValue ? parseFloat(category.discountValue) : 0,
         },
     });
-    
-    const { isSubmitting } = form.formState;
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
-        try {
-            if (isEditing && category) {
-                await updateClientCategory(category.id, values);
-            } else {
-                await createClientCategory(values);
-            }
+    useEffect(() => {
+        if (state?.success) {
+            toast.success(isEditing ? "Category updated" : "Category created");
             onOpenChange(false);
             if (!isEditing) form.reset();
-        } catch (error) {
-            console.error(error);
-            alert("Failed to save category");
+        } else if (state?.error) {
+            toast.error(state.error);
         }
-    }
+    }, [state, isEditing, onOpenChange, form]);
+
+    useEffect(() => {
+        if (open) {
+            form.reset({
+                name: category?.name || "",
+                discountType: category?.discountType || "percentage",
+                discountValue: category?.discountValue ? parseFloat(category.discountValue) : 0,
+            });
+        }
+    }, [open, category, form]);
+
+    const handleSubmit = async (values: z.infer<typeof formSchema>) => {
+        // We pass the values to the formAction
+        // Since useActionState action expects (prevState, data), 
+        // we can call it in a transition or if it's already bound, just trigger it.
+        // Wait, formAction from useActionState expects FormData for native forms, 
+        // but can be any data if we call it manually.
+        // Actually, the recommended way with RHF is to use startTransition.
+        // However, we can also just use the action as a normal function.
+        // Let's use startTransition for the modernization feel.
+        // But for these simple objects, we can just pass the data if the action supports it.
+        // My actions are: createClientCategory(prevState, data: { name ... })
+        const { startTransition } = await import("react");
+        startTransition(() => {
+            formAction(values);
+        });
+    };
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,7 +113,7 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                 </DialogHeader>
                 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="name"
@@ -133,7 +162,7 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                                                 type="number" 
                                                 step="0.01" 
                                                 {...field} 
-                                                value={(field.value as number) || ""}
+                                                value={field.value ?? ""}
                                                 onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                                             />
                                         </FormControl>
@@ -147,8 +176,8 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                            <Button type="submit" disabled={isPending}>
+                                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 {isEditing ? "Save Changes" : "Create"}
                             </Button>
                         </DialogFooter>

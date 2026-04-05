@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { startTransition, useActionState } from "react";
 import { Controller,useForm } from "react-hook-form";
 
 import { setWorkingHours, WorkingHoursConfig } from "@/actions/settings";
@@ -50,7 +48,17 @@ export function ScheduleForm({
 }: {
 	initialData: WorkingHoursConfig | null;
 }) {
-	const [isSaving, setIsSaving] = useState(false);
+	const [, formAction, isPending] = useActionState(async (_: any, data: WorkingHoursConfig) => {
+        try {
+            await setWorkingHours(data);
+            toast.success("Schedule updated successfully.");
+            return { success: true };
+        } catch (error) {
+            console.error(error);
+            toast.error("Failed to update schedule.");
+            return { error: "Failed to update schedule." };
+        }
+    }, null);
 
 	const { control, handleSubmit, watch } = useForm<ScheduleFormValues>({
 		resolver: zodResolver(scheduleSchema),
@@ -58,16 +66,9 @@ export function ScheduleForm({
 	});
 
 	const onSubmit = async (data: ScheduleFormValues) => {
-		setIsSaving(true);
-		try {
-			await setWorkingHours(data);
-			toast.success("Schedule updated successfully.");
-		} catch (error) {
-			console.error(error);
-			toast.error("Failed to update schedule.");
-		} finally {
-			setIsSaving(false);
-		}
+        startTransition(() => {
+            formAction(data);
+        });
 	};
 
 	return (
@@ -132,8 +133,8 @@ export function ScheduleForm({
 			</Card>
 
 			<div className="flex justify-end">
-				<Button type="submit" disabled={isSaving}>
-					{isSaving ? (
+				<Button type="submit" disabled={isPending}>
+					{isPending ? (
 						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 					) : (
 						<Save className="mr-2 h-4 w-4" />

@@ -12,6 +12,7 @@ import {
 	clients,
 	clientWallets,
 	healthLogs,
+	membershipProducts,
 	NewHealthLog,
 } from "@/drizzle/schema";
 import { Gender } from "@/lib/types";
@@ -180,7 +181,7 @@ export async function createClientAction(
 				parsed.data.healthLogs.forEach((log) => {
 					logsToInsert.push({
 						clientId: newClientId,
-						category: log.category, // This is HEALTH category, not CLIENT category. Needs verification if healthLogs table uses enum or fk? Schema says healthCategoryEnum. So this is fine.
+						category: log.category,
 						severity: log.severity,
 						condition: log.condition,
 						treatment: log.treatment || null,
@@ -190,62 +191,37 @@ export async function createClientAction(
 				});
 			}
 
-			// 2. Fallback: Parse legacy intake fields ONLY if they are NOT covered by dynamic list?
-			// "Merge" logic: The user wants "Current Care" (wizard step) to BE active logs.
-			// "Medical History" (step 2 bottom) is static background.
-			// So we should iterate the OTHER fields from intakeData that are NOT "Physical" (since Physical is now the dynamic list).
-
-
 			if (logsToInsert.length > 0) {
 				await tx.insert(healthLogs).values(logsToInsert);
 			}
 
-			// --- Assign Initial Product ---
-			if (initialProductId) {
-				// Inline wallet assignment logic to reuse transaction
-				// Ideally calling logic from wallets.ts, but that func doesn't accept tx
-				// Duplicating small logic here for transaction safety is okay for now,
-				// OR we just run it after transaction. But better inside.
-				// Let's import the table refs and do it here.
-				// Need to fetch product credits
-				// tx.query.membershipProducts is available? Yes if using same db instance structure?
-				// `db.transaction(async (tx) => ...)` passes a transaction object.
-				// It should have query builder if using drizzle(client, { schema }).
-				// Since we need to query product first.
-				// Note: Actions usually don't share TX unless properly structured (e.g. services accepting TX).
-				// Let's just do it simple: insert wallet row if product exists.
-				// We assume product ID is valid (selected from UI list).
-				// We need the default credits.
-				// For simplified "Unification", let's trust the ID or fetch it.
-				// Fetching inside TX:
-				// We'll need to import membershipProducts schema at top level if not already.
-				// It is imported as `import { ..., membershipProducts } ...`. Wait, I need to check imports.
-				// Let's check imports in the file currently...
-				// `import { clients, healthLogs, clientWallets } from "@/drizzle/schema";`
-				// Need to add membershipProducts to imports.
-			}
+            // --- Assign Initial Product ---
+            if (initialProductId) {
+                const product = await tx.query.membershipProducts.findFirst({
+                    where: eq(membershipProducts.id, initialProductId),
+                });
+
+                if (product) {
+                    await tx.insert(clientWallets).values({
+                        clientId: newClientId,
+                        productId: initialProductId,
+                        remainingCredits: product.defaultCredits,
+                        status: "active",
+                        amountPaid: product.basePrice,
+                        activatedAt: new Date(),
+                    });
+                }
+            }
 		});
 
-		// If initialProductId was passed, and we didn't do it inside TX (due to complexity of fetching product inside Drizzle TX without configured query builder sometimes?),
-		// we can call the action? But calling action from action is weird.
-		// Better to update imports and do it inside TX.
-		// I will update imports in a separate step or same step.
-		// Let's finish the replacement content assuming imports are there,
-		// I will add the import in a prior/next step or use `db.select` if needed.
-		// Actually, let's defer the wallet part to a second `await` if strictly needed, but better inside.
-
-		// Re-implementing wallet assignment inside:
-		if (initialProductId) {
-			await assignWalletInternal(clientWithId[0].id, initialProductId);
-		}
+        revalidatePath("/clients");
+        return { success: true };
 	} catch (err: unknown) {
 		console.error("Error creating client:", err);
 		const message =
 			err instanceof Error ? err.message : "Failed to create client";
 		return { error: message };
 	}
-
-	redirect("/clients");
 }
 
 // Helper (or import if we refactor wallets.ts to export internal function)
@@ -689,7 +665,7 @@ export async function updateClientAction(
 			}
 		}
 
-		revalidatePath("/clients");
+	revalidatePath("/clients");
 		return { success: true };
 	} catch (error) {
 		console.error("Error updating client:", error);
