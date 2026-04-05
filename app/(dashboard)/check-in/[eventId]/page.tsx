@@ -25,8 +25,7 @@ export default async function CheckInPage({ params }: PageProps) {
     const { eventId } = await params;
 
     let accessToken: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let eventDetails: any = null;
+    let eventDetails: unknown = null;
     
     try {
         accessToken = await getValidAccessToken(user.id);
@@ -40,9 +39,15 @@ export default async function CheckInPage({ params }: PageProps) {
         notFound();
     }
 
-    const title = eventDetails.summary || "Unnamed Event";
-    const startTime = eventDetails.start?.dateTime || eventDetails.start?.date;
-    const type = (eventDetails.extendedProperties?.private?.jnaninEventType as JnaninEventType) || "group";
+    const details = eventDetails as { 
+        summary?: string; 
+        start?: { dateTime?: string; date?: string };
+        extendedProperties?: { private?: { jnaninEventType?: string } };
+    };
+
+    const title = details.summary || "Unnamed Event";
+    const startTime = details.start?.dateTime || details.start?.date;
+    const type = (details.extendedProperties?.private?.jnaninEventType as JnaninEventType) || "group";
     
     // Fetch currently checked-in clients
     const attendanceRecords = await getEventAttendanceAction(eventId);

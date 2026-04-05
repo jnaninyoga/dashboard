@@ -1,10 +1,8 @@
-"use client";
-
 import { startTransition, useActionState, useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-import { ScheduleEventInput, scheduleNewEventAction } from "@/actions/schedule";
+import { scheduleNewEventAction } from "@/actions/schedule";
 import { getB2BPricingTiers } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,62 +21,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { type B2BPricingTier } from "@/drizzle/schema";
+import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
+import { type SessionFormValues,sessionSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parse } from "date-fns";
 import { Refresh } from "iconsax-reactjs";
 import { toast } from "sonner";
-import * as z from "zod";
-
-const sessionSchema = z
-	.object({
-		title: z.string().min(1, "Title is required"),
-		dateStr: z.string().min(1, "Date is required"),
-		startTimeStr: z.string().min(1, "Start time is required"),
-		endTimeStr: z.string().min(1, "End time is required"),
-		type: z.enum(["group", "private", "outdoor", "b2b"]),
-		outdoorPrice: z.string().optional(),
-		b2bTierId: z.string().optional(),
-	})
-	.refine(
-		(data) => {
-			return data.startTimeStr < data.endTimeStr;
-		},
-		{
-			message: "End time must be after start time",
-			path: ["endTimeStr"],
-		},
-	)
-	.refine(
-		(data) => {
-			if (
-				data.type === "outdoor" &&
-				(!data.outdoorPrice || isNaN(Number(data.outdoorPrice)))
-			) {
-				return false;
-			}
-			return true;
-		},
-		{
-			message: "Valid price is required for outdoor sessions",
-			path: ["outdoorPrice"],
-		},
-	)
-	.refine(
-		(data) => {
-			if (data.type === "b2b" && !data.b2bTierId) {
-				return false;
-			}
-			return true;
-		},
-		{
-			message: "Pricing tier is required for B2B sessions",
-			path: ["b2bTierId"],
-		},
-	);
-
-type SessionFormValues = z.infer<typeof sessionSchema>;
 
 export function NewSessionDialog({
 	open,
@@ -87,11 +36,11 @@ export function NewSessionDialog({
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
-	const [tiers, setTiers] = useState<B2BPricingTier[]>([]);
+	const [tiers, setTiers] = useState<B2BTier[]>([]);
 	const router = useRouter();
 
 	const [state, formAction, isPending] = useActionState(
-		async (_: any, payload: ScheduleEventInput) => {
+		async (_: unknown, payload: ScheduleEventInput) => {
 			return await scheduleNewEventAction(payload);
 		},
 		null,
@@ -100,7 +49,6 @@ export function NewSessionDialog({
 	const {
 		control,
 		handleSubmit,
-		watch,
 		reset,
 		formState: { errors },
 	} = useForm<SessionFormValues>({
@@ -133,7 +81,7 @@ export function NewSessionDialog({
 		}
 	}, [state, reset, onOpenChange, router]);
 
-	const selectedType = watch("type");
+	const selectedType = useWatch({ control, name: "type" });
 
 	const onSubmit = async (data: SessionFormValues) => {
 		try {

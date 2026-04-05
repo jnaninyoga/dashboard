@@ -1,5 +1,3 @@
-"use client";
-
 import { UseFormReturn } from "react-hook-form";
 import { getCountries } from "react-phone-number-input";
 
@@ -42,11 +40,7 @@ import type { ClientFormValues } from "@/lib/validators";
 import { format, isValid } from "date-fns";
 import {
 	Calendar as CalendarIcon,
-	Call,
-	Sms,
-	TickCircle,
 	User,
-	Whatsapp,
 } from "iconsax-reactjs";
 
 interface StepPersonalDetailsProps {

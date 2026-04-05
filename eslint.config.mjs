@@ -74,6 +74,17 @@ const eslintConfig = defineConfig([
 			},
 		},
 	},
+	// Override rules for UI components (Shadcn)
+	{
+		files: ["components/ui/**"],
+		rules: {
+			"tailwindcss/classnames-order": "off",
+			"tailwindcss/enforces-negative-arbitrary-values": "off",
+			"tailwindcss/enforces-shorthand": "off",
+			"tailwindcss/no-custom-classname": "off",
+			"tailwindcss/no-contradicting-classname": "off",
+		},
+	},
 	// Override default ignores of eslint-config-next.
 	globalIgnores([
 		// Default ignores of eslint-config-next:

@@ -7,15 +7,17 @@ import { HEALTH_TEMPLATE } from "@/config/health";
 import { db } from "@/drizzle";
 import {
 	attendanceLedger,
-	Client,
 	clientCategories,
 	clients,
 	clientWallets,
 	healthLogs,
 	membershipProducts,
-	NewHealthLog,
 } from "@/drizzle/schema";
-import { Gender } from "@/lib/types";
+import {
+    type Client, 
+    Gender, 
+    type NewHealthLog 
+} from "@/lib/types";
 import { clientSchema } from "@/lib/validators";
 import { getTodayEvents } from "@/services/google-calendar";
 import {
@@ -27,7 +29,6 @@ import { createClient } from "@/supabase/server";
 
 import { and, desc, eq, gte,ilike, inArray, isNull, or } from "drizzle-orm";
 
-import { assignProductToClient } from "./wallets";
 
 export async function createClientAction(
 	_prevState: unknown,
@@ -224,12 +225,7 @@ export async function createClientAction(
 	}
 }
 
-// Helper (or import if we refactor wallets.ts to export internal function)
-// We can just call the action? "Server Actions can be called from other Server Actions".
-// Yes, Next.js allows this.
-async function assignWalletInternal(clientId: string, productId: string) {
-	await assignProductToClient(clientId, productId);
-}
+
 
 export async function getClientsAction(
 	page = 1,

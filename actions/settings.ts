@@ -18,7 +18,7 @@ export async function getAppSettings() {
     }, {} as Record<string, string>);
 }
 
-export type WorkingHoursConfig = Record<string, { isOpen: boolean; start: string; end: string }>;
+import { type WorkingHoursConfig } from "@/lib/types";
 
 export async function getWorkingHours(): Promise<WorkingHoursConfig | null> {
     const setting = await db.query.appSettings.findFirst({
@@ -55,7 +55,7 @@ export async function getClientCategories() {
 }
 
 export async function createClientCategory(
-    _prevState: any,
+    _prevState: unknown,
     data: {
         name: string;
         discountType: "percentage" | "fixed";
@@ -78,7 +78,7 @@ export async function createClientCategory(
 
 export async function updateClientCategory(
     id: string,
-    _prevState: any,
+    _prevState: unknown,
     data: {
         name: string;
         discountType: "percentage" | "fixed";
@@ -137,7 +137,7 @@ export async function getB2BPricingTiers() {
     });
 }
 
-export async function createB2BTierAction(_prevState: any, formData: FormData) {
+export async function createB2BTierAction(_prevState: unknown, formData: FormData) {
     const name = formData.get("name") as string;
     const price = parseInt(formData.get("price") as string);
 
@@ -158,7 +158,7 @@ export async function createB2BTierAction(_prevState: any, formData: FormData) {
     }
 }
 
-export async function updateB2BTierAction(id: string, _prevState: any, formData: FormData) {
+export async function updateB2BTierAction(id: string, _prevState: unknown, formData: FormData) {
     const name = formData.get("name") as string;
     const price = parseInt(formData.get("price") as string);
 
