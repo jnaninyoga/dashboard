@@ -19,14 +19,14 @@ export default function Error({
 	}, [error]);
 
 	return (
-		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
+		<div className="bg-background fixed inset-0 z-100 flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
 			{/* Blooming Blossoms Animation */}
 			<BloomingBlossoms />
 
 			{/* Ambient background blobs */}
 			<div className="bg-destructive/10 pointer-events-none absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full opacity-60 blur-3xl" />
 			<div className="bg-secondary/15 pointer-events-none absolute bottom-[-15%] left-[-10%] h-[400px] w-[400px] rounded-full blur-3xl" />
-			
+
 			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-8 text-center">
 				{/* Visual element */}
 				<div className="flex flex-col items-center">
@@ -40,17 +40,17 @@ export default function Error({
 
 				<div className="flex max-w-sm flex-col gap-3">
 					<h2 className="text-muted-foreground text-lg leading-relaxed font-medium">
-                        {error.message || "An unexpected error occurred."}
-                        {error.digest ? (
-                            <div className="mt-2 font-mono text-xs opacity-50">
-                                Digest: {error.digest}
-                            </div>
-                        ) : null}
+						{error.message || "An unexpected error occurred."}
+						{error.digest ? (
+							<div className="mt-2 font-mono text-xs opacity-50">
+								Digest: {error.digest}
+							</div>
+						) : null}
 					</h2>
 				</div>
 
 				{/* Return to Practice (Reset) Button */}
-				<button 
+				<button
 					onClick={() => reset()}
 					className="group bg-primary text-primary-foreground zen-glow-teal relative flex min-h-[56px] w-full max-w-xs items-center justify-center gap-3 rounded-2xl text-base font-semibold transition-all duration-200 ease-out hover:cursor-pointer hover:brightness-105 active:scale-[0.98]"
 				>

@@ -5,7 +5,6 @@ import { useState } from "react";
 import { assignProductToClient } from "@/actions/wallets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -23,6 +22,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { type ClientWallet, type MembershipProduct } from "@/drizzle/schema";
+import { cn } from "@/lib/utils";
 
 import { format } from "date-fns";
 import { Bag2 as ShoppingCart, Card as CreditCard, Tag } from "iconsax-reactjs";
@@ -65,51 +65,70 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 	};
 
 	return (
-		<div className="mx-auto max-w-3xl space-y-6">
-			{/* Status Card */}
-			<div className="grid gap-6 md:grid-cols-2">
-				<Card className="bg-primary/5 dark:bg-primary/10 border-primary/20">
-					<CardHeader className="pb-2">
-						<CardTitle className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
-							Remaining Credits
-						</CardTitle>
-					</CardHeader>
-					<CardContent>
-						<div className="flex items-baseline gap-2 text-4xl font-bold">
-							{totalCredits}
-							<span className="text-muted-foreground text-lg font-normal">
+		<div className="mx-auto max-w-3xl space-y-8">
+			{/* Overview Row */}
+			<div className="grid gap-6 sm:grid-cols-2">
+				{/* Total Credits Summary Bubble - Now with stronger background */}
+				<div className="group bg-secondary/30 border-foreground/10 hover:bg-secondary/50 hover:zen-glow-blush relative overflow-hidden rounded-3xl border p-6 shadow-sm transition-all">
+					<div className="relative z-10">
+						<h4 className="text-foreground text-xs font-bold tracking-wider uppercase opacity-40">
+							Total Available
+						</h4>
+						<div className="mt-2 flex items-baseline gap-2">
+							<span className="text-foreground text-5xl font-black">
+								{totalCredits}
+							</span>
+							<span className="text-foreground/60 text-lg font-bold">
 								credits
 							</span>
 						</div>
-					</CardContent>
-				</Card>
+					</div>
+					{/* Decorative ambient icon */}
+					<CreditCard
+						className="text-secondary-foreground group-hover:text-foreground absolute -right-4 -bottom-4 h-32 w-32 rotate-12 opacity-10 transition-all group-hover:scale-110 group-hover:rotate-6"
+						variant="Bulk"
+					/>
+				</div>
 
-				<Card className="bg-muted/30 flex flex-col items-center justify-center border-dashed p-6 shadow-none">
+				{/* Quick Sell Action Bubble - Now with stronger background */}
+				<div className="bg-sidebar border-secondary/30 hover:zen-glow-teal flex flex-col items-center justify-center rounded-3xl border p-6 shadow-sm transition-all hover:bg-white">
+					<div className="mb-4 text-center">
+						<h4 className="text-secondary-foreground text-xs font-bold tracking-wider uppercase opacity-60">
+							Top-up Wallet
+						</h4>
+						<p className="text-muted-foreground text-xs font-medium">
+							Add credits or membership
+						</p>
+					</div>
 					<Dialog open={isOpen} onOpenChange={setIsOpen}>
 						<DialogTrigger asChild>
-							<Button size="lg" className="w-full md:w-auto">
-								<ShoppingCart className="mr-2 h-5 w-5" />
+							<Button className="zen-glow-teal h-12 w-full rounded-2xl px-6 font-bold transition-all active:scale-95">
+								<ShoppingCart className="mr-2 size-5" variant="Bold" />
 								Sell Product
 							</Button>
 						</DialogTrigger>
-						<DialogContent>
+						<DialogContent className="rounded-3xl p-6">
 							<DialogHeader>
-								<DialogTitle>Sell Membership Product</DialogTitle>
+								<DialogTitle className="text-2xl font-bold">
+									Assign Product
+								</DialogTitle>
 							</DialogHeader>
-							<div className="space-y-4 py-4">
+							<div className="space-y-6 pt-4">
 								<div className="space-y-2">
-									<Label>Select Product</Label>
+									<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
+										Selected Product
+									</Label>
 									<Select
 										value={selectedProductId}
 										onValueChange={setSelectedProductId}
 									>
-										<SelectTrigger>
-											<SelectValue placeholder="Choose a product..." />
+										<SelectTrigger className="border-foreground/10 h-11 rounded-xl">
+											<SelectValue placeholder="Choose a membership..." />
 										</SelectTrigger>
 										<SelectContent>
 											{products.map((product) => (
 												<SelectItem key={product.id} value={product.id}>
-													{product.name} — {product.defaultCredits} Credits (
+													{product.name} — {product.defaultCredits} Cr (
 													{product.basePrice} MAD)
 												</SelectItem>
 											))}
@@ -117,74 +136,105 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 									</Select>
 								</div>
 							</div>
-							<DialogFooter>
+							<DialogFooter className="mt-6">
 								<Button
 									onClick={handleSellProduct}
 									disabled={isSubmitting || !selectedProductId}
+									className="h-12 w-full rounded-2xl font-bold"
 								>
-									{isSubmitting ? "Processing..." : "Confirm Sale"}
+									{isSubmitting ? "Processing Sale..." : "Confirm & Activate"}
 								</Button>
 							</DialogFooter>
 						</DialogContent>
 					</Dialog>
-				</Card>
+				</div>
 			</div>
 
-			<Card>
-				<CardHeader>
-					<CardTitle className="flex items-center gap-2 text-lg">
-						<CreditCard className="h-5 w-5" />
+			{/* Active Wallets Timeline */}
+			<div className="space-y-4">
+				<div className="mb-2 flex items-center gap-2 px-1">
+					<div className="bg-secondary-3 h-1 w-8 rounded-full" />
+					<h4 className="text-secondary-foreground text-xs font-bold tracking-wider uppercase opacity-40">
 						Active Wallets
-					</CardTitle>
-				</CardHeader>
-				<CardContent>
-					<div className="space-y-4">
-						{wallets.length === 0 ? (
+					</h4>
+				</div>
+
+				<div className="space-y-3">
+					{wallets.length === 0 ? (
+						<div className="bg-sidebar border-foreground/10 rounded-3xl border border-dashed py-8 text-center shadow-sm">
 							<p className="text-muted-foreground text-sm italic">
-								No active wallets.
+								No active products or credit packs.
 							</p>
-						) : (
-							wallets.map((wallet) => (
-								<div
-									key={wallet.id}
-									className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-								>
-									<div>
-										<h4 className="flex items-center gap-2 font-medium">
-											{wallet.product?.name || "Unknown Product"}
-											{wallet.status === "active" ? (
-												<Badge
-													variant="outline"
-													className="border-green-200 bg-green-50 text-xs text-green-700"
-												>
-													Active
-												</Badge>
-											) : (
-												<Badge variant="secondary" className="text-xs">
-													{wallet.status}
-												</Badge>
-											)}
-										</h4>
-										<div className="text-muted-foreground mt-1 flex items-center gap-4 text-sm">
-											<span className="flex items-center gap-1">
-												<Tag className="h-3 w-3" />
-												{wallet.remainingCredits} credits remaining
-											</span>
-											<span>
-												Activated:{" "}
-												{wallet.activatedAt
-													? format(new Date(wallet.activatedAt), "PPP")
-													: "N/A"}
-											</span>
-										</div>
+						</div>
+					) : (
+						wallets.map((wallet) => (
+							<div
+								key={wallet.id}
+								className="group border-foreground/5 hover:zen-glow-teal flex items-center justify-between gap-4 rounded-3xl border bg-white p-4 shadow-xs transition-all hover:shadow-md"
+							>
+								<div className="flex items-center gap-4">
+									<div
+										className={cn(
+											"flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm",
+											wallet.status === "active"
+												? "bg-green-100/50 text-green-600"
+												: "bg-secondary-3/10 text-secondary-3",
+										)}
+									>
+										<Tag className="h-6 w-6" variant="Bulk" />
 									</div>
-									{/* Actions like "Use Credit" are handled in check-in, not here directly? Or manual adjust? */}
+									<div className="flex flex-col gap-2">
+										<div className="flex items-center gap-2">
+											<span className="text-secondary-foreground text-lg leading-none font-bold">
+												{wallet.product?.name || "Member Pack"}
+											</span>
+											{wallet.status === "active" ? (
+												<div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+											) : null}
+										</div>
+										<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-40">
+											Activated{" "}
+											{wallet.activatedAt
+												? format(new Date(wallet.activatedAt), "MMMM d, yyyy")
+												: "Pending"}
+										</span>
+									</div>
 								</div>
-							))
-						)}
-					</div>
-				</CardContent>
-			</Card>
+
+								<div className="flex flex-col items-end">
+									<div className="flex items-baseline gap-1">
+										<span
+											className={cn(
+												"text-2xl font-black",
+												(wallet.remainingCredits || 0) <= 2
+													? "text-red-500"
+													: "text-primary",
+											)}
+										>
+											{wallet.remainingCredits}
+										</span>
+										<span className="text-[10px] font-bold tracking-wider uppercase opacity-60">
+											Credits
+										</span>
+									</div>
+									<Badge
+										variant={
+											wallet.status === "active" ? "outline" : "secondary"
+										}
+										className={cn(
+											"mt-1 px-1.5 py-0 text-[9px] font-bold tracking-tighter uppercase",
+											wallet.status === "active" &&
+												"border-green-200 bg-green-50 text-green-700",
+										)}
+									>
+										{wallet.status}
+									</Badge>
+								</div>
+							</div>
+						))
+					)}
+				</div>
+			</div>
 		</div>
 	);
 }
