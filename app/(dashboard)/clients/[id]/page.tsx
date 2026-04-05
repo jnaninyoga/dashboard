@@ -1,11 +1,10 @@
-
+import { Suspense } from "react";
+import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import {
-	getClientByIdAction,
-	getGoogleContactPhotoAction,
-} from "@/actions/clients";
+import { getGoogleContactPhotoAction } from "@/actions/clients/mutations";
+import { getClientByIdAction } from "@/actions/clients/queries";
 import { getMembershipProductsAction } from "@/actions/wallets";
 import { ClientActions } from "@/components/clients/client-actions";
 import { ClientProfileTabs } from "@/components/clients/client-profile-tabs";
@@ -13,21 +12,45 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
-    Briefcase,
+	Briefcase,
 	Card,
-    Edit2,
+	Edit2,
 	Tag,
 } from "iconsax-reactjs";
 
 // Next.js 15 params
 type Params = Promise<{ id: string }>;
 
+export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
+	const params = await props.params;
+	const { client } = await getClientByIdAction(params.id);
+	
+	return {
+		title: client ? `${client.fullName} | Client Profile` : "Client Profile",
+		robots: {
+			index: false,
+			follow: false,
+		},
+	};
+}
+
 export default async function ClientProfilePage(props: { params: Params }) {
 	const params = await props.params;
 	const { id } = params;
 
+	return (
+		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+			<Suspense fallback={<ProfileSkeleton />}>
+				<ProfileContent id={id} />
+			</Suspense>
+		</div>
+	);
+}
+
+async function ProfileContent({ id }: { id: string }) {
 	// Parallel data fetching
 	const clientPromise = getClientByIdAction(id);
 	const productsPromise = getMembershipProductsAction();
@@ -62,9 +85,8 @@ export default async function ClientProfilePage(props: { params: Params }) {
     const activeWallet = wallets.find(w => w.status === 'active'); // Just take first active for now
     const activeProductName = activeWallet?.product?.name;
 
-
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+		<>
 			{/* Header */}
 			<div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
 				<div className="flex items-center gap-4">
@@ -131,6 +153,32 @@ export default async function ClientProfilePage(props: { params: Params }) {
                 client={client} 
                 products={products || []} 
             />
+		</>
+	);
+}
+
+function ProfileSkeleton() {
+	return (
+		<div className="space-y-6">
+			<div className="flex items-center gap-4">
+				<Skeleton className="h-20 w-20 rounded-full" />
+				<div className="space-y-2">
+					<Skeleton className="h-8 w-64" />
+					<div className="flex gap-2">
+						<Skeleton className="h-5 w-24" />
+						<Skeleton className="h-5 w-24" />
+					</div>
+				</div>
+			</div>
+			<Separator />
+			<div className="space-y-4">
+				<div className="flex gap-4">
+					<Skeleton className="h-10 w-24" />
+					<Skeleton className="h-10 w-24" />
+					<Skeleton className="h-10 w-24" />
+				</div>
+				<Skeleton className="h-64 w-full rounded-xl" />
+			</div>
 		</div>
 	);
 }

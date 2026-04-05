@@ -1,8 +1,10 @@
+"use client";
+
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-import { createClientAction, updateClientAction } from "@/actions/clients";
+import { createClientAction, updateClientAction } from "@/actions/clients/mutations";
 import { StepConsultation } from "@/components/clients/forms/step-consultation";
 import { StepHealthWellness } from "@/components/clients/forms/step-health-wellness";
 import { StepMembership } from "@/components/clients/forms/step-membership";

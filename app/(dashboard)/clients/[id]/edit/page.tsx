@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 
-import { getClientByIdAction } from "@/actions/clients";
+import { getClientByIdAction } from "@/actions/clients/queries";
 import { getClientCategories } from "@/actions/settings";
 import { ClientForm } from "@/components/clients/client-form";
 import { Gender, HealthCategory, HealthSeverity, ReferralSource } from "@/lib/types";
