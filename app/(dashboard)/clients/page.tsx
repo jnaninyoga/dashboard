@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 
-import { ClientsTable } from "@/components/clients/clients-table";
-import { ClientsGrid } from "@/components/clients/clients-grid";
+import { getClientsAction } from "@/actions/clients";
+import { getClientCategories } from "@/actions/settings";
 import { ClientFilters } from "@/components/clients/client-filters";
 import { ClientViewToggle } from "@/components/clients/client-view-toggle";
-import { getClientsAction } from "@/actions/clients";
-import { ClientCategory, Gender, View } from "@/lib/types";
+import { ClientsGrid } from "@/components/clients/clients-grid";
+import { ClientsTable } from "@/components/clients/clients-table";
+import { Button } from "@/components/ui/button";
+import { Gender, View } from "@/lib/types";
 
-import { getClientCategories } from "@/actions/settings";
+import { Add } from "iconsax-reactjs";
 
 type SearchParams = Promise<{
 	view: View;
@@ -42,17 +42,17 @@ export default async function ClientsPage(props: {
 	}
 
 	return (
-		<main className="flex flex-col gap-6 p-6">
+		<>
 			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<div>
-					<h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-					<p className="text-muted-foreground">
+				<header className="space-y-1">
+					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Clients</h1>
+					<p className="text-md text-muted-foreground">
 						Manage your client base and view their progress.
 					</p>
-				</div>
+				</header>
 				<Link href="/clients/add">
 					<Button>
-						<Plus className="mr-2 h-4 w-4" />
+						<Add className="mr-2 h-4 w-4" variant="Outline" />
 						Add Client
 					</Button>
 				</Link>
@@ -68,6 +68,6 @@ export default async function ClientsPage(props: {
 			) : (
 				<ClientsTable clients={clients || []} />
 			)}
-		</main>
+		</>
 	);
 }

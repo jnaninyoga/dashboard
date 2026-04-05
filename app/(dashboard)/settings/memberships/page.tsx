@@ -1,3 +1,5 @@
+import { getMembershipProducts } from "@/actions/memberships";
+import { CreateMembershipDialog,MembershipActions } from "@/components/settings/membership-actions";
 import {
 	Table,
 	TableBody,
@@ -6,8 +8,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { getMembershipProducts } from "@/actions/memberships";
-import { MembershipActions, CreateMembershipDialog } from "@/components/settings/membership-actions";
 
 export default async function MembershipSettingsPage() {
 	const products = await getMembershipProducts();
@@ -16,16 +16,16 @@ export default async function MembershipSettingsPage() {
 		<div className="flex flex-col gap-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="text-2xl font-bold tracking-tight">Membership Products</h1>
-					<p className="text-muted-foreground">
+					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Membership Products</h1>
+					<p className="text-md text-muted-foreground">
 						Manage your class passes and membership types.
 					</p>
 				</div>
                 <CreateMembershipDialog />
 			</div>
 
-			<div className="border rounded-lg">
-				<Table>
+			<div className="rounded-lg border bg-white p-2">
+				<Table className="[&_tr]:border-secondary-foreground/10">
 					<TableHeader>
 						<TableRow>
 							<TableHead>Name</TableHead>
@@ -38,7 +38,7 @@ export default async function MembershipSettingsPage() {
 					<TableBody>
 						{products.length === 0 ? (
 							<TableRow>
-								<TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+								<TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
 									No active products found.
 								</TableCell>
 							</TableRow>

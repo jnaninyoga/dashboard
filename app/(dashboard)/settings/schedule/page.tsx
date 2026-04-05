@@ -5,15 +5,15 @@ export default async function ScheduleSettingsPage() {
     const workingHours = await getWorkingHours();
 
 	return (
-		<div className="flex flex-col gap-6">
-			<div>
-				<h1 className="text-2xl font-bold tracking-tight">Studio Schedule</h1>
-				<p className="text-muted-foreground">
+		<>
+			<header className="space-y-1">
+				<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Studio Schedule</h1>
+				<p className="text-md text-muted-foreground">
 					Define your baseline working hours. Event bookings outside these times will be blocked.
 				</p>
-			</div>
+			</header>
 
             <ScheduleForm initialData={workingHours} />
-		</div>
+		</>
 	);
 }

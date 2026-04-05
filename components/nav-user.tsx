@@ -1,7 +1,6 @@
 "use client";
 
-import { ChevronsUpDown, LogOut } from "lucide-react";
-
+import { signOut } from "@/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -17,7 +16,8 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
-import { signOut } from "@/actions/auth";
+
+import { ArrowSwapVertical, Logout } from "iconsax-reactjs";
 
 export function NavUser({
 	user,
@@ -47,7 +47,7 @@ export function NavUser({
 								<span className="truncate font-semibold">{user.name}</span>
 								<span className="truncate text-xs">{user.email}</span>
 							</div>
-							<ChevronsUpDown className="ml-auto size-4" />
+							<ArrowSwapVertical className="ml-auto size-4" variant="Outline" />
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent
@@ -70,7 +70,7 @@ export function NavUser({
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
 						<DropdownMenuItem onClick={() => signOut()}>
-							<LogOut />
+							<Logout variant="Outline" />
 							Log out
 						</DropdownMenuItem>
 					</DropdownMenuContent>

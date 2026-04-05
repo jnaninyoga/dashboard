@@ -1,9 +1,9 @@
 "use server";
 
-import { createClient } from "@/supabase/server";
-import { getValidAccessToken } from "@/services/google-tokens";
 import { getWorkingHours, WorkingHoursConfig } from "@/actions/settings";
 import { checkAvailability, createStudioEvent, JnaninEventType } from "@/services/google-calendar";
+import { getValidAccessToken } from "@/services/google-tokens";
+import { createClient } from "@/supabase/server";
 
 export interface ScheduleEventInput {
 	title: string;
@@ -60,7 +60,7 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 	let accessToken: string;
 	try {
 		accessToken = await getValidAccessToken(user.id);
-	} catch (error) {
+	} catch {
 		return { error: "Session expired or disconnected. Please relogin to sync with Google Calendar." };
 	}
 

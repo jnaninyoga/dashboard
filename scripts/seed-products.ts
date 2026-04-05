@@ -1,5 +1,6 @@
 
 import "dotenv/config";
+
 import { db } from "../drizzle";
 import { membershipProducts } from "../drizzle/schema";
 

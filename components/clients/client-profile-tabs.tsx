@@ -1,14 +1,15 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ProfileTab } from "./tabs/profile-tab";
+import { type Client, type ClientWallet, type MembershipProduct } from "@/drizzle/schema";
+
 import { HealthTab } from "./tabs/health-tab";
+import { ProfileTab } from "./tabs/profile-tab";
 import { WalletTab } from "./tabs/wallet-tab";
-import { User, Activity, Wallet } from "lucide-react";
 
 interface ClientProfileTabsProps {
-	client: any; // TODO: Strict typing
-	products: any[];
+	client: Client & { wallets?: ClientWallet[] };
+	products: MembershipProduct[];
 }
 
 export function ClientProfileTabs({
@@ -17,7 +18,7 @@ export function ClientProfileTabs({
 }: ClientProfileTabsProps) {
 	return (
 		<Tabs defaultValue="profile" className="w-full">
-			<TabsList className="grid w-full grid-cols-3 lg:w-[400px] mb-6">
+			<TabsList className="mb-6 grid w-full grid-cols-3 lg:w-[400px]">
 				<TabsTrigger value="profile">Profile</TabsTrigger>
 				<TabsTrigger value="health">Health</TabsTrigger>
 				<TabsTrigger value="wallet">Wallet</TabsTrigger>

@@ -1,23 +1,23 @@
 "use client";
 import * as React from "react";
-import { LifeBuoy } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
+import { NavUser } from "@/components/nav-user";
 import {
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
-	SidebarGroup,
-	SidebarGroupLabel,
-	SidebarGroupContent,
 } from "@/components/ui/sidebar";
-import { NavUser } from "@/components/nav-user";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { dashboardConfig } from "@/config/dashboard";
 
 interface UserProfile {
@@ -33,15 +33,15 @@ export function AppSidebar({
 	const pathname = usePathname();
 
 	return (
-		<Sidebar collapsible="icon" {...props}>
+		<Sidebar collapsible="icon" {...props} className="border-r-secondary-foreground/10">
 			<SidebarHeader>
-				<div className="flex items-center gap-2 p-2">
-					<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-						<LifeBuoy className="size-4" />
+				<div className="flex items-center gap-2 p-2 px-1">
+					<div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-transparent">
+						<Image src="/logo.png" alt="JnaninYoga Logo" width={40} height={40} className="h-full w-full object-contain drop-shadow-sm" />
 					</div>
-					<div className="grid flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-semibold">JnaninYoga</span>
-						<span className="truncate text-xs">Command Center</span>
+					<div className="ml-1 grid flex-1 text-left text-sm leading-tight">
+						<span className="text-foreground font-heading truncate text-2xl font-bold tracking-tight uppercase">Jnanin Yoga</span>
+						<span className="text-muted-foreground font-heading truncate text-xs leading-none font-semibold tracking-widest uppercase">Command Center</span>
 					</div>
 				</div>
 			</SidebarHeader>
@@ -50,16 +50,19 @@ export function AppSidebar({
 					<SidebarGroupLabel>Platform</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{dashboardConfig.navMain.map((item) => (
-								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton asChild isActive={pathname === item.url}>
-										<Link href={item.url}>
-											<item.icon />
-											<span>{item.title}</span>
-										</Link>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
+							{dashboardConfig.navMain.map((item) => {
+								const isActive = pathname === item.url;
+								return (
+									<SidebarMenuItem key={item.title}>
+										<SidebarMenuButton asChild isActive={isActive}>
+											<Link href={item.url}>
+												<item.icon size={20} variant={isActive ? "Bulk" : "Outline"} />
+												<span>{item.title}</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								);
+							})}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
@@ -68,16 +71,19 @@ export function AppSidebar({
 					<SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{dashboardConfig.actions.map((item) => (
-								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton asChild isActive={pathname === item.url}>
-										<Link href={item.url}>
-											<item.icon />
-											<span>{item.title}</span>
-										</Link>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
+							{dashboardConfig.actions.map((item) => {
+								const isActive = pathname === item.url;
+								return (
+									<SidebarMenuItem key={item.title}>
+										<SidebarMenuButton asChild isActive={isActive}>
+											<Link href={item.url}>
+												<item.icon size={20} variant={isActive ? "Bulk" : "TwoTone"} />
+												<span>{item.title}</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								);
+							})}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
@@ -86,16 +92,19 @@ export function AppSidebar({
 					<SidebarGroupLabel>Settings</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
-							{dashboardConfig.settings.map((item) => (
-								<SidebarMenuItem key={item.title}>
-									<SidebarMenuButton asChild isActive={pathname === item.url}>
-										<Link href={item.url}>
-											<item.icon />
-											<span>{item.title}</span>
-										</Link>
-									</SidebarMenuButton>
-								</SidebarMenuItem>
-							))}
+							{dashboardConfig.settings.map((item) => {
+								const isActive = pathname === item.url;
+								return (
+									<SidebarMenuItem key={item.title}>
+										<SidebarMenuButton asChild isActive={isActive}>
+											<Link href={item.url}>
+												<item.icon size={20} variant={isActive ? "Bulk" : "Outline"} />
+												<span>{item.title}</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								);
+							})}
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>

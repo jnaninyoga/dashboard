@@ -1,11 +1,13 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { db } from "@/drizzle";
 import { healthLogs } from "@/drizzle/schema";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import { createClient } from "@/supabase/server";
+
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
 
 export type HealthLogInput = {
 	category: HealthCategory;

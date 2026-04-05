@@ -1,10 +1,12 @@
 "use server";
 
-import { db } from "@/drizzle";
-import { clientWallets, membershipProducts, clients, appSettings } from "@/drizzle/schema";
-import { createClient } from "@/supabase/server";
-import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+
+import { db } from "@/drizzle";
+import {clients, clientWallets, membershipProducts } from "@/drizzle/schema";
+import { createClient } from "@/supabase/server";
+
+import {eq } from "drizzle-orm";
 
 export async function assignProductToClient(clientId: string, productId: string) {
 	const supabase = await createClient();

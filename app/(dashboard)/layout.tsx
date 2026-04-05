@@ -1,14 +1,13 @@
+import { redirect } from "next/navigation";
+
 import { AppSidebar } from "@/components/app-sidebar";
-import { Separator } from "@/components/ui/separator";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { createClient } from "@/supabase/server";
-import { redirect } from "next/navigation";
-
 import { getValidAccessToken } from "@/services/google-tokens";
+import { createClient } from "@/supabase/server";
 
 export default async function DashboardLayout({
 	children,
@@ -44,13 +43,12 @@ export default async function DashboardLayout({
 		<SidebarProvider>
 			<AppSidebar user={userData} />
 			<SidebarInset>
-				<header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b px-4">
+				<header className="bg-sidebar border-b-secondary-foreground/10 sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border px-6 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
 					<div className="flex items-center gap-2">
-						<SidebarTrigger className="-ml-1" />
-						<Separator orientation="vertical" className="mr-2 h-4" />
+						<SidebarTrigger className="-ml-1 min-h-[48px] min-w-[48px]" />
 					</div>
 				</header>
-				<main className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</main>
+				<div className="animate-slide-up mx-auto flex w-full max-w-5xl flex-1 flex-col">{children}</div>
 			</SidebarInset>
 		</SidebarProvider>
 	);
