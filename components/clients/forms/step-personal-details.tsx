@@ -3,6 +3,7 @@
 import { UseFormReturn } from "react-hook-form";
 import { getCountries } from "react-phone-number-input";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -39,15 +40,25 @@ import { cn } from "@/lib/utils";
 import type { ClientFormValues } from "@/lib/validators";
 
 import { format, isValid } from "date-fns";
-import { Calendar as CalendarIcon } from "iconsax-reactjs";
+import {
+	Calendar as CalendarIcon,
+	Call,
+	Sms,
+	TickCircle,
+	User,
+	Whatsapp,
+} from "iconsax-reactjs";
 
 interface StepPersonalDetailsProps {
 	form: UseFormReturn<ClientFormValues>;
-    categories: Category[];
+	categories: Category[];
 }
 
-export function StepPersonalDetails({ form, categories }: StepPersonalDetailsProps) {
-// ... (start of component unchanged until category field)
+export function StepPersonalDetails({
+	form,
+	categories,
+}: StepPersonalDetailsProps) {
+	// ... (start of component unchanged until category field)
 
 	return (
 		<div className="space-y-6">
@@ -161,8 +172,20 @@ export function StepPersonalDetails({ form, categories }: StepPersonalDetailsPro
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
-										<SelectItem value={Gender.MALE}>Male</SelectItem>
-										<SelectItem value={Gender.FEMALE}>Female</SelectItem>
+										<SelectItem
+											value={Gender.MALE}
+											className="focus:text-white focus:[&_svg]:text-blue-500"
+										>
+											<User className="size-3.5 text-blue-500" variant="Bulk" />
+											<span className="text-foreground capitalize">Male</span>
+										</SelectItem>
+										<SelectItem
+											value={Gender.FEMALE}
+											className="focus:text-white focus:[&_svg]:text-pink-500"
+										>
+											<User className="size-3.5 text-pink-500" variant="Bulk" />
+											<span className="text-foreground capitalize">Female</span>
+										</SelectItem>
 									</SelectContent>
 								</Select>
 								<FormMessage />
@@ -253,11 +276,20 @@ export function StepPersonalDetails({ form, categories }: StepPersonalDetailsPro
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
-                                        {categories.map((cat) => (
-                                            <SelectItem key={cat.id} value={cat.id}>
-                                                {cat.name}
-                                            </SelectItem>
-                                        ))}
+										{categories.map((cat) => (
+											<SelectItem key={cat.id} value={cat.id}>
+												<Badge className="bg-secondary text-secondary-foreground rounded-full border-0 px-2 py-0.5 text-[10px] font-semibold tracking-wide">
+													{cat.name}
+													{cat.discountValue &&
+													cat.discountValue !== "0" &&
+													cat.discountType === "percentage"
+														? ` (${cat.discountValue}%)`
+														: cat.discountValue && cat.discountValue !== "0"
+															? ` (${cat.discountValue} MAD)`
+															: ""}
+												</Badge>
+											</SelectItem>
+										))}
 									</SelectContent>
 								</Select>
 								<FormMessage />
