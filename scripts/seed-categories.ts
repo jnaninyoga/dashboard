@@ -1,6 +1,7 @@
 
 import { db } from "@/drizzle";
 import { clientCategories } from "@/drizzle/schema";
+
 import { eq } from "drizzle-orm";
 
 async function main() {

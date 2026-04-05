@@ -1,28 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { ShieldAlert, Users, User, MapPin, CheckCircle2 } from "lucide-react";
+
 import { checkInClientAction } from "@/actions/attendance";
+import { type AttendanceRecord } from "@/actions/attendance";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { type Client, type HealthLog } from "@/drizzle/schema";
+import { type JnaninEventType } from "@/services/google-calendar";
+
+import { Location, People, SecurityUser, TickCircle,User } from "iconsax-reactjs";
+import { toast } from "sonner";
+
 import { ClientSearch } from "./client-search";
 import { HealthGuardrailDialog } from "./health-guardrail-dialog";
-import { type JnaninEventType } from "@/services/google-calendar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+type ClientWithLogs = Client & { healthLogs?: HealthLog[] };
 
 interface CheckInManagerProps {
     eventId: string;
     eventType: JnaninEventType | string;
-    initialAttendance: any[];
+    initialAttendance: AttendanceRecord[];
 }
 
 export function CheckInManager({ eventId, eventType, initialAttendance }: CheckInManagerProps) {
-    const [attendance, setAttendance] = useState(initialAttendance);
-    const [selectedClient, setSelectedClient] = useState<any>(null);
+    const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance);
+    const [selectedClient, setSelectedClient] = useState<ClientWithLogs | null>(null);
     const [showGuardrail, setShowGuardrail] = useState(false);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
 
-    const onClientSelected = (client: any) => {
-        const hasAlerts = client.healthLogs?.some((log: any) => log.isAlert);
+    const onClientSelected = (client: ClientWithLogs) => {
+        const hasAlerts = client.healthLogs?.some((log) => log.isAlert);
         if (hasAlerts) {
             setSelectedClient(client);
             setShowGuardrail(true);
@@ -31,28 +38,29 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
         }
     };
 
-    const performCheckIn = async (clientId: string, clientData?: any) => {
+    const performCheckIn = async (clientId: string, clientData?: ClientWithLogs) => {
         setIsCheckingIn(true);
         try {
             const res = await checkInClientAction(clientId, eventId, eventType as JnaninEventType);
             if (res.success) {
                 toast.success(res.message);
                 
-                const newRecord = {
+                const newRecord: AttendanceRecord = {
                     id: Math.random().toString(), 
                     checkInTime: new Date().toISOString(),
-                    slotType: eventType,
+                    slotType: eventType as JnaninEventType,
                     client: {
                         id: clientId,
-                        fullName: clientData?.fullName || selectedClient?.fullName,
-                        photoUrl: clientData?.photoUrl || selectedClient?.photoUrl,
+                        fullName: clientData?.fullName || selectedClient?.fullName || "Unknown",
+                        photoUrl: clientData?.photoUrl || selectedClient?.photoUrl || null,
                         healthLogs: clientData?.healthLogs || selectedClient?.healthLogs 
                     }
                 };
                 setAttendance(prev => [newRecord, ...prev]);
             }
-        } catch (error: any) {
-            toast.error(error.message || "Failed to check-in client.");
+        } catch (error: unknown) {
+            const err = error as { message?: string };
+            toast.error(err.message || "Failed to check-in client.");
         } finally {
             setIsCheckingIn(false);
             setShowGuardrail(false);
@@ -64,42 +72,39 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
         const checkedInClient = attendance.length > 0 ? attendance[0].client : null;
 
         return (
-            <div className="flex flex-col gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
+            <div className="animate-slide-up flex w-full flex-col gap-6">
                 {!checkedInClient ? (
-                    <div className="bg-white/80 backdrop-blur-xl p-8 rounded-2xl shadow-xl ring-1 ring-black/5 flex flex-col items-center justify-center min-h-[50vh] gap-8 transition-all">
-                        <div className="bg-blue-50 p-6 rounded-full">
-                            <User className="w-16 h-16 text-blue-500" />
+                    <div className="bg-card zen-shadow-lg flex min-h-[50vh] flex-col items-center justify-center gap-8 rounded-3xl p-8 transition-all md:p-12">
+                        <div className="bg-primary/10 rounded-full p-6">
+                            <User className="text-primary h-16 w-16" variant="Outline" />
                         </div>
-                        <div className="text-center space-y-2">
-                            <h2 className="text-2xl font-bold text-gray-800">Private Session Ready</h2>
-                            <p className="text-gray-500">Scan or search for the single client attending.</p>
+                        <div className="flex flex-col gap-2 text-center">
+                            <h2 className="font-heading text-foreground text-2xl font-bold">Private Session Ready</h2>
+                            <p className="text-muted-foreground">Scan or search for the single client attending.</p>
                         </div>
-                        <div className="w-full max-w-md mt-4 relative group">
-                            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
-                            <div className="relative">
-                                <ClientSearch onSelectClient={onClientSelected} />
-                            </div>
+                        <div className="mt-4 w-full max-w-md">
+                            <ClientSearch onSelectClient={onClientSelected} />
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-white/90 backdrop-blur-xl p-6 md:p-10 rounded-2xl shadow-xl ring-1 ring-black/5 flex flex-col gap-8 transition-all relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
-                        <div className="flex flex-col items-center gap-5 border-b border-gray-100 pb-8">
+                    <div className="bg-card zen-shadow-lg relative flex flex-col gap-8 overflow-hidden rounded-3xl p-6 transition-all md:p-10">
+                        <div className="from-primary to-accent absolute top-0 left-0 h-1.5 w-full rounded-t-3xl bg-linear-to-r"></div>
+                        <div className="border-muted flex flex-col items-center gap-5 border-b pb-8">
                             <div className="relative">
-                                <Avatar className="w-32 h-32 shadow-2xl ring-4 ring-white">
+                                <Avatar className="zen-shadow-md ring-card size-32 ring-4">
                                     <AvatarImage src={checkedInClient.photoUrl || undefined} />
-                                    <AvatarFallback className="text-4xl bg-blue-100 text-blue-700 font-bold">{checkedInClient.fullName[0]}</AvatarFallback>
+                                    <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">{checkedInClient.fullName[0]}</AvatarFallback>
                                 </Avatar>
-                                <div className="absolute bottom-2 right-2 bg-white rounded-full p-1 shadow-md">
-                                    <CheckCircle2 className="w-8 h-8 text-green-500" />
+                                <div className="bg-card zen-shadow absolute right-2 bottom-2 rounded-full p-1">
+                                    <TickCircle className="h-8 w-8 text-emerald-500" variant="Bulk" />
                                 </div>
                             </div>
-                            <div className="text-center space-y-1">
-                                <h2 className="text-3xl font-extrabold text-gray-900">{checkedInClient.fullName}</h2>
-                                <span className="text-green-600 font-semibold flex items-center gap-1.5 justify-center tracking-wide uppercase text-sm mt-2 bg-green-50 px-3 py-1 rounded-full w-max mx-auto">
-                                    <span className="relative flex h-2.5 w-2.5">
-                                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                            <div className="flex flex-col gap-1 text-center">
+                                <h2 className="font-heading text-foreground text-3xl font-bold">{checkedInClient.fullName}</h2>
+                                <span className="mx-auto mt-2 flex w-max items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-semibold tracking-wide text-emerald-600 uppercase">
+                                    <span className="relative flex size-2.5">
+                                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+                                      <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500"></span>
                                     </span>
                                     Successfully Checked In
                                 </span>
@@ -107,30 +112,34 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                         </div>
 
                         <div className="flex flex-col gap-4">
-                            <h3 className="font-bold text-xl flex items-center gap-2 text-gray-800">
-                                <ShieldAlert className="w-6 h-6 text-amber-500" />
+                            <h3 className="font-heading text-foreground flex items-center gap-2 text-xl font-bold">
+                                <SecurityUser className="h-6 w-6 text-amber-500" variant="Outline" />
                                 Health Guardrails
                             </h3>
-                            <div className="bg-gray-50/80 rounded-xl p-5 md:p-6 shadow-inner max-h-[45vh] overflow-y-auto">
-                                {checkedInClient.healthLogs?.filter((l:any)=> l.isAlert).length > 0 ? (
+                            <div className="bg-muted max-h-[45vh] overflow-y-auto rounded-2xl p-5 md:p-6">
+                                {(checkedInClient.healthLogs || []).filter((l)=> l.isAlert).length > 0 ? (
                                     <ul className="grid gap-4 md:grid-cols-2">
-                                        {checkedInClient.healthLogs.filter((l:any)=> l.isAlert).map((log: any) => (
-                                            <li key={log.id} className="relative overflow-hidden bg-white p-4 rounded-xl shadow-sm border border-gray-200 border-l-4 border-l-amber-500 transition-all hover:shadow-md hover:-translate-y-0.5">
-                                                <div className="flex justify-between items-start">
-                                                    <strong className="block text-gray-900 capitalize font-bold text-lg">{log.category}</strong>
-                                                    <span className={`text-xs font-bold px-2 py-1 rounded-full uppercase ${
+                                        {(checkedInClient.healthLogs || []).filter((l)=> l.isAlert).map((log) => (
+                                            <li key={log.id} className="bg-card zen-shadow hover:zen-shadow-md relative overflow-hidden rounded-2xl border-l-4 border-l-amber-400 p-5 transition-all hover:-translate-y-0.5">
+                                                <div className="flex items-start justify-between">
+                                                    <strong className="text-foreground block text-lg font-bold capitalize">{log.category}</strong>
+                                                    <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
                                                         log.severity === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
                                                     }`}>{log.severity}</span>
                                                 </div>
-                                                <p className="text-gray-600 mt-2 font-medium">{log.condition}</p>
-                                                {log.treatment && <p className="text-sm text-gray-500 mt-2 pt-2 border-t border-gray-100">{log.treatment}</p>}
+                                                <p className="text-muted-foreground mt-2 font-medium">{log.condition}</p>
+                                                {log.treatment ? (
+                                                    <p className="text-muted-foreground border-muted mt-2 border-t pt-2 text-sm">
+                                                        {log.treatment}
+                                                    </p>
+                                                ) : null}
                                             </li>
                                         ))}
                                     </ul>
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                                        <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                                            <CheckCircle2 className="w-6 h-6 text-green-500" />
+                                    <div className="text-muted-foreground flex flex-col items-center justify-center py-8">
+                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-50">
+                                            <TickCircle className="h-6 w-6 text-emerald-500" variant="Bulk" />
                                         </div>
                                         <p className="font-medium">No active health alerts.</p>
                                     </div>
@@ -143,7 +152,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                 <HealthGuardrailDialog
                     isOpen={showGuardrail}
                     clientData={selectedClient}
-                    onAcknowledge={() => performCheckIn(selectedClient.id)}
+                    onAcknowledge={() => selectedClient && performCheckIn(selectedClient.id)}
                     onCancel={() => { setShowGuardrail(false); setSelectedClient(null); }}
                     isPending={isCheckingIn}
                 />
@@ -153,67 +162,62 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
 
     // Group / Outdoor View
     return (
-        <div className="flex flex-col gap-6 w-full animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out">
-            {/* Search Bar Block with Glassmorphism */}
-            <div className="bg-white/80 backdrop-blur-xl p-5 md:p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-black/5 sticky top-[90px] z-30 transition-all group">
-                <div className="relative">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-xl blur opacity-0 group-hover:opacity-100 transition duration-1000"></div>
-                    <div className="relative">
-                       <ClientSearch onSelectClient={onClientSelected} />
-                    </div>
-                </div>
+        <div className="animate-slide-up flex w-full flex-col gap-6">
+            {/* Search Bar Block — Zen Glass Surface */}
+            <div className="zen-glass zen-shadow-glow sticky top-[72px] z-30 rounded-3xl p-5 transition-all md:p-6">
+                <ClientSearch onSelectClient={onClientSelected} />
             </div>
 
             {/* Manifest List */}
-            <div className="bg-white/90 backdrop-blur-xl p-5 md:p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] ring-1 ring-black/5 flex-1 min-h-[50vh]">
-                <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
-                    <h2 className="text-xl md:text-2xl font-bold flex items-center gap-3 text-gray-800">
+            <div className="bg-card zen-shadow-lg min-h-[50vh] flex-1 rounded-3xl p-6 md:p-8">
+                <div className="border-muted mb-8 flex items-center justify-between border-b pb-4">
+                    <h2 className="font-heading text-foreground flex items-center gap-3 text-lg font-bold md:text-xl">
                         {eventType === "outdoor" ? (
-                            <div className="bg-green-100 p-2 rounded-lg"><MapPin className="w-6 h-6 text-green-600" /></div>
+                            <div className="rounded-2xl bg-emerald-50 p-2"><Location className="h-5 w-5 text-emerald-600" variant="Outline" /></div>
                         ) : (
-                            <div className="bg-blue-100 p-2 rounded-lg"><Users className="w-6 h-6 text-blue-600" /></div>
+                            <div className="bg-primary/10 rounded-2xl p-2"><People className="text-primary h-5 w-5" variant="Outline" /></div>
                         )}
                         Active Manifest
                     </h2>
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-500 font-medium hidden sm:block">Total Check-ins</span>
-                        <span className="bg-gray-900 text-white px-4 py-1.5 rounded-full font-bold text-lg shadow-sm">
+                        <span className="text-muted-foreground hidden text-sm font-medium sm:block">Total Check-ins</span>
+                        <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 font-bold">
                             {attendance.length}
                         </span>
                     </div>
                 </div>
 
                 {attendance.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-                        <Users className="w-20 h-20 mb-6 opacity-20" />
-                        <h3 className="text-xl font-semibold text-gray-500">The studio is empty</h3>
-                        <p className="text-gray-400 mt-2 text-center max-w-sm">Use the search bar above to begin checking clients into the session.</p>
+                    <div className="text-muted-foreground flex flex-col items-center justify-center py-20">
+                        <People className="mb-6 h-20 w-20 opacity-15" variant="Outline" />
+                        <h3 className="font-heading text-foreground/60 text-xl font-semibold">The studio is empty</h3>
+                        <p className="text-muted-foreground mt-2 max-w-sm text-center">Use the search bar above to begin checking clients into the session.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                         {attendance.map((record, index) => (
                             <div 
                                 key={record.id} 
-                                className="group flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-xl hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300 ease-out hover:-translate-y-1 animate-in fade-in zoom-in-95"
+                                className="group bg-card zen-shadow hover:zen-shadow-md animate-slide-up flex items-center gap-4 rounded-2xl p-4 transition-all duration-300 ease-out hover:-translate-y-0.5"
                                 style={{ animationFillMode: "both", animationDelay: `${index * 50}ms`, animationDuration: '400ms' }}
                             >
                                 <div className="relative">
-                                    <Avatar className="h-14 w-14 md:h-16 md:w-16 shadow-md ring-2 ring-white">
+                                    <Avatar className="zen-shadow ring-card size-14 ring-2 md:size-16">
                                         <AvatarImage src={record.client.photoUrl || undefined} />
-                                        <AvatarFallback className="text-lg bg-gray-100 text-gray-600 font-bold">{record.client.fullName[0]}</AvatarFallback>
+                                        <AvatarFallback className="bg-muted text-muted-foreground text-lg font-bold">{record.client.fullName[0]}</AvatarFallback>
                                     </Avatar>
-                                    <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-0.5 shadow-sm">
-                                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                                    <div className="bg-card absolute -right-1 -bottom-1 rounded-full p-0.5 shadow-sm">
+                                        <TickCircle className="h-5 w-5 text-emerald-500" variant="Bulk" />
                                     </div>
                                 </div>
-                                <div className="flex flex-col flex-1 min-w-0">
-                                    <span className="font-bold text-gray-900 text-lg truncate pr-2 group-hover:text-blue-700 transition-colors">{record.client.fullName}</span>
-                                    <span className="text-sm text-gray-500 font-medium mt-0.5">
+                                <div className="flex min-w-0 flex-1 flex-col">
+                                    <span className="text-foreground group-hover:text-primary truncate pr-2 text-lg font-bold transition-colors">{record.client.fullName}</span>
+                                    <span className="text-muted-foreground mt-0.5 text-sm font-medium">
                                         Checked in at {new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
-                                <div className="hidden sm:flex items-center bg-gray-50 px-3 py-2 rounded-lg border border-gray-100 ml-2 shadow-inner">
-                                    <span className="text-xs font-extrabold uppercase tracking-wider text-gray-400">Ready</span>
+                                <div className="bg-muted ml-2 hidden items-center rounded-full px-3 py-2 sm:flex">
+                                    <span className="text-muted-foreground text-xs font-extrabold tracking-wider uppercase">Ready</span>
                                 </div>
                             </div>
                         ))}
@@ -224,7 +228,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
             <HealthGuardrailDialog
                 isOpen={showGuardrail}
                 clientData={selectedClient}
-                onAcknowledge={() => performCheckIn(selectedClient.id)}
+                onAcknowledge={() => selectedClient && performCheckIn(selectedClient.id)}
                 onCancel={() => { setShowGuardrail(false); setSelectedClient(null); }}
                 isPending={isCheckingIn}
             />

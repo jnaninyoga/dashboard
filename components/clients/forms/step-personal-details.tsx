@@ -1,6 +1,10 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
+import { getCountries } from "react-phone-number-input";
+
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
 	Card,
 	CardContent,
@@ -17,8 +21,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { getCountries } from "react-phone-number-input";
-import { Textarea } from "@/components/ui/textarea";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
 import {
 	Select,
 	SelectContent,
@@ -26,18 +33,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-	Popover,
-	PopoverContent,
-	PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { type Category, Gender, ReferralSource } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { format, isValid } from "date-fns";
 import type { ClientFormValues } from "@/lib/validators";
-import { type Category, ClientCategory, Gender, ReferralSource } from "@/lib/types";
+
+import { format, isValid } from "date-fns";
+import { Calendar as CalendarIcon } from "iconsax-reactjs";
 
 interface StepPersonalDetailsProps {
 	form: UseFormReturn<ClientFormValues>;
@@ -102,7 +104,7 @@ export function StepPersonalDetails({ form, categories }: StepPersonalDetailsPro
 													!field.value && "text-muted-foreground",
 												)}
 											>
-												<CalendarIcon className="h-4 w-4" />
+												<CalendarIcon className="h-4 w-4" variant="Outline" />
 											</Button>
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="end">
@@ -217,7 +219,7 @@ export function StepPersonalDetails({ form, categories }: StepPersonalDetailsPro
 								<FormControl>
 									<Textarea
 										placeholder="e.g. 123 Yoga St."
-										className="resize-none min-h-[80px]"
+										className="min-h-[80px] resize-none"
 										{...field}
 										value={field.value ?? ""}
 									/>

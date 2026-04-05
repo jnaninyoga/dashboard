@@ -3,6 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
+
+import { getMembershipProductsAction } from "@/actions/wallets";
+import { Badge } from "@/components/ui/badge";
 import {
 	FormControl,
 	FormField,
@@ -10,11 +13,11 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ClientFormValues } from "@/lib/validators";
-import { getMembershipProductsAction } from "@/actions/wallets";
-import { Loader2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { type MembershipProduct } from "@/drizzle/schema";
 import { type Category } from "@/lib/types";
+import { ClientFormValues } from "@/lib/validators";
+
+import { Refresh } from "iconsax-reactjs";
 
 interface StepMembershipProps {
 	form: UseFormReturn<ClientFormValues>;
@@ -23,28 +26,16 @@ interface StepMembershipProps {
 }
 
 export function StepMembership({ form, categories, mode }: StepMembershipProps) {
-	if (mode === "edit") {
-		return (
-			<div className="flex flex-col items-center justify-center py-16 text-center space-y-2">
-				<h3 className="text-lg font-semibold">Membership is managed from the client profile</h3>
-				<p className="text-sm text-muted-foreground">
-					You can assign or change memberships directly on the client&apos;s profile page.
-				</p>
-			</div>
-		);
-	}
-
-	const [products, setProducts] = useState<any[]>([]);
-	const [isLoading, setIsLoading] = useState(true);
+	const [products, setProducts] = useState<MembershipProduct[]>([]);
+	const [isLoading, setIsLoading] = useState(mode !== "edit");
 
 	const categoryId = useWatch({
 		control: form.control,
 		name: "categoryId",
 	});
 
-	const selectedCategory = categories.find((c) => c.id === categoryId);
-
 	useEffect(() => {
+		if (mode === "edit") return;
 		const fetchProducts = async () => {
 			const result = await getMembershipProductsAction();
 			if (result.success && result.products) {
@@ -53,7 +44,20 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 			setIsLoading(false);
 		};
 		fetchProducts();
-	}, []);
+	}, [mode]);
+
+	if (mode === "edit") {
+		return (
+			<div className="flex flex-col items-center justify-center space-y-2 py-16 text-center">
+				<h3 className="text-lg font-semibold">Membership is managed from the client profile</h3>
+				<p className="text-muted-foreground text-sm">
+					You can assign or change memberships directly on the client&apos;s profile page.
+				</p>
+			</div>
+		);
+	}
+
+	const selectedCategory = categories.find((c) => c.id === categoryId);
 
 	const calculatePrice = (basePrice: string) => {
 		const price = parseFloat(basePrice);
@@ -77,28 +81,28 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 
 	return (
 		<div className="space-y-6">
-			<div className="text-center mb-8">
+			<div className="mb-8 text-center">
 				<h3 className="text-lg font-medium">Select a Starting Membership</h3>
-				<p className="text-sm text-muted-foreground">
+				<p className="text-muted-foreground text-sm">
 					Optional: Choose a product to assign immediately upon registration.
 				</p>
-				{selectedCategory && (
-					<Badge variant="outline" className="mt-2 text-primary">
+				{selectedCategory ? (
+					<Badge variant="outline" className="text-primary mt-2">
 						Applied Category: {selectedCategory.name}
-						{parseFloat(selectedCategory.discountValue) > 0 &&
-							` (${selectedCategory.discountType === "percentage" ? `-${selectedCategory.discountValue}%` : `-${selectedCategory.discountValue} MAD`})`}
+						{parseFloat(selectedCategory.discountValue) > 0 ? (
+							` (${selectedCategory.discountType === "percentage" ? `-${selectedCategory.discountValue}%` : `-${selectedCategory.discountValue} MAD`})`
+						) : null}
 					</Badge>
-				)}
+				) : null}
 			</div>
 
 			{isLoading ? (
 				<div className="flex justify-center py-12">
-					<Loader2 className="h-8 w-8 animate-spin text-primary" />
+					<Refresh className="text-primary h-8 w-8 animate-spin" variant="Outline" />
 				</div>
 			) : (
 				<FormField
 					control={form.control}
-					// @ts-ignore
 					name="initialProductId"
 					render={({ field }) => (
 						<FormItem className="space-y-3">
@@ -117,7 +121,7 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 										/>
 										<label
 											htmlFor="no-product"
-											className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary cursor-pointer"
+											className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary flex cursor-pointer flex-col items-center justify-center rounded-md border-2 p-4"
 										>
 											<span className="font-semibold">No Membership for Now</span>
 										</label>
@@ -136,22 +140,22 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 												/>
 												<label
 													htmlFor={product.id}
-													className="flex flex-col justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary cursor-pointer h-full"
+													className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary flex h-full cursor-pointer flex-col justify-between rounded-md border-2 p-4"
 												>
 													<div className="mb-2">
-														<div className="font-semibold text-lg">
+														<div className="text-lg font-semibold">
 															{product.name}
 														</div>
-														<div className="text-sm text-muted-foreground">
+														<div className="text-muted-foreground text-sm">
 															{product.defaultCredits} Credits
 														</div>
 													</div>
 													<div className="mt-auto flex flex-col items-end">
-														{isDiscounted && (
-															<span className="text-xs text-muted-foreground line-through">
+														{isDiscounted ? (
+															<span className="text-muted-foreground text-xs line-through">
 																{originalPrice} MAD
 															</span>
-														)}
+														) : null}
 														<Badge variant="secondary" className="w-fit">
 															{price} MAD
 														</Badge>

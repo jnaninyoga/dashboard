@@ -1,34 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { EventCard } from "@/components/dashboard/event-card";
 import { NewSessionDialog } from "@/components/dashboard/new-session-dialog";
+import { Button } from "@/components/ui/button";
+import { type CalendarEvent } from "@/lib/types/calendar";
 
-export function CockpitClient({ initialEvents, initialError }: { initialEvents: any[], initialError: string | null }) {
+import { Add } from "iconsax-reactjs";
+
+export function CockpitClient({ initialEvents, initialError }: { initialEvents: CalendarEvent[], initialError: string | null }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Today's Schedule</h2>
-                <Button onClick={() => setIsDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Nouveau Session
+        <div className="flex flex-col gap-5">
+            <div className="bg-card zen-shadow flex items-center justify-between rounded-3xl p-5">
+                <div className="flex flex-col gap-0.5">
+                    <h2 className="font-heading text-foreground text-lg font-semibold tracking-tight">Today&apos;s Agenda</h2>
+                    <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">{initialEvents.length} Sessions</span>
+                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="zen-glow-teal min-h-[48px] rounded-full px-6 font-semibold" variant="default">
+                    <Add className="h-5 w-5 text-white" variant="Outline" />
+                    New Session
                 </Button>
             </div>
 
-            {initialError && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-md border border-red-200">
+            {initialError ? (
+                <div className="zen-shadow rounded-2xl bg-red-50 p-5 font-medium text-red-700">
                     {initialError}
                 </div>
-            )}
+            ) : null}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-3">
                 {initialEvents.length === 0 && !initialError ? (
-                    <div className="col-span-full p-8 text-center bg-muted/30 rounded-lg border border-dashed">
-                        <p className="text-muted-foreground">No sessions scheduled for today. Have a relaxing day!</p>
+                    <div className="bg-card zen-shadow rounded-3xl p-12 text-center">
+                        <p className="text-muted-foreground text-base font-medium">The studio is quiet today.</p>
+                        <p className="text-muted-foreground mt-2 text-xs">Enjoy the peaceful downtime, or add a private session.</p>
                     </div>
                 ) : (
                     initialEvents.map((event) => (

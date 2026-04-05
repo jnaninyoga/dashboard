@@ -1,9 +1,11 @@
 "use client";
 
-import { LayoutGrid, List } from "lucide-react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useRouter, useSearchParams } from "next/navigation";
+
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { View } from "@/lib/types";
+
+import { Grid7 as Grid, RowVertical as List } from "iconsax-reactjs";
 
 export function ClientViewToggle() {
 	const router = useRouter();
@@ -22,13 +24,22 @@ export function ClientViewToggle() {
 			type="single"
 			value={view.toString()}
 			onValueChange={handleViewChange}
-			className="hidden md:inline-flex"
+			spacing={1}
+			className="hidden gap-1 rounded-2xl bg-white p-1 shadow-sm md:inline-flex"
 		>
-			<ToggleGroupItem value={View.LIST.toString()} aria-label="Table View">
-				<List className="h-4 w-4" />
+			<ToggleGroupItem
+				value={View.LIST.toString()}
+				aria-label="Table View"
+				className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background rounded-xl"
+			>
+				<List className="h-4 w-4" variant={view === View.LIST ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>
-			<ToggleGroupItem value={View.GRID.toString()} aria-label="Grid View">
-				<LayoutGrid className="h-4 w-4" />
+			<ToggleGroupItem
+				value={View.GRID.toString()}
+				aria-label="Grid View"
+				className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background rounded-xl"
+			>
+				<Grid className="h-4 w-4" variant={view === View.GRID ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>
 		</ToggleGroup>
 	);

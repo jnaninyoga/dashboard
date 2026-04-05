@@ -1,40 +1,41 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, Loader2, Search } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { getClientsAction } from "@/actions/clients";
-import { useDebounce } from "@/hooks/use-debounce";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any) => void }) {
-	const [open, setOpen] = React.useState(false);
+import { getClientsAction } from "@/actions/clients";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { type Client, type HealthLog } from "@/drizzle/schema";
+import { useDebounce } from "@/hooks/use-debounce";
+import { cn } from "@/lib/utils";
+
+import { CloseCircle,Refresh, SearchNormal1 } from "iconsax-reactjs";
+
+export function ClientSearch({ onSelectClient }: { onSelectClient: (client: Client & { healthLogs?: HealthLog[] }) => void }) {
 	const [searchQuery, setSearchQuery] = React.useState("");
 	const [isLoading, setIsLoading] = React.useState(false);
-	const [clients, setClients] = React.useState<any[]>([]);
+	const [clients, setClients] = React.useState<(Client & { healthLogs?: HealthLog[] })[]>([]);
+	const [isFocused, setIsFocused] = React.useState(false);
 	const debouncedQuery = useDebounce(searchQuery, 300);
+	const inputRef = React.useRef<HTMLInputElement>(null);
+	const containerRef = React.useRef<HTMLDivElement>(null);
+
+	// Close dropdown on outside click
+	React.useEffect(() => {
+		function handleClickOutside(e: MouseEvent) {
+			if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+				setIsFocused(false);
+			}
+		}
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
 
 	React.useEffect(() => {
 		let isMounted = true;
 		async function fetchClients() {
-			if (!debouncedQuery.trim() && !open) return; // Optional: don't fetch if not open
+			if (!debouncedQuery.trim() && !isFocused) return;
 			setIsLoading(true);
-            // Fetch categoryId="all" to get everyone
-			const res = await getClientsAction(1, 10, debouncedQuery, { categoryId: "all" } as any);
+			const res = await getClientsAction(1, 10, debouncedQuery, { categoryId: "all" });
 			if (isMounted && res.success && res.data) {
 				setClients(res.data);
 			}
@@ -43,65 +44,83 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: any)
 		
 		fetchClients();
 		return () => { isMounted = false; };
-	}, [debouncedQuery, open]);
+	}, [debouncedQuery, isFocused]);
+
+	const showDropdown = isFocused && (clients.length > 0 || isLoading || searchQuery.trim().length > 0);
 
 	return (
-		<Popover open={open} onOpenChange={setOpen}>
-			<PopoverTrigger asChild>
-				<Button
-					variant="outline"
-					role="combobox"
-					aria-expanded={open}
-					className="w-full h-14 justify-between text-lg md:text-md"
-				>
-					Select a client to check in...
-					<Search className="ml-2 h-5 w-5 shrink-0 opacity-50" />
-				</Button>
-			</PopoverTrigger>
-			<PopoverContent className="w-[calc(100vw-2rem)] md:w-[600px] p-0" align="start">
-				<Command shouldFilter={false}>
-					<CommandInput
-						placeholder="Search clients by name, email, or phone..."
-						value={searchQuery}
-						onValueChange={setSearchQuery}
-						className="h-12 text-md"
-					/>
-					<CommandList>
-						<CommandEmpty>
-							{isLoading ? "Searching..." : "No clients found."}
-						</CommandEmpty>
-						<CommandGroup>
+		<div ref={containerRef} className="relative w-full">
+			{/* Single search input — no double-click needed */}
+			<div className={cn(
+				"bg-card flex min-h-[56px] w-full items-center gap-3 rounded-2xl px-5 transition-all duration-200",
+				isFocused
+					? "zen-shadow-md ring-primary/20 ring-2"
+					: "zen-shadow-glow hover:zen-shadow-md"
+			)}>
+				<SearchNormal1 className="text-primary/60 size-5 shrink-0" variant="Outline" />
+				<input
+					ref={inputRef}
+					type="text"
+					placeholder="Search clients to check in..."
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
+					onFocus={() => setIsFocused(true)}
+					className="text-foreground placeholder:text-muted-foreground h-full flex-1 bg-transparent text-base outline-none"
+					autoComplete="off"
+				/>
+				{searchQuery ? (
+					<button
+						type="button"
+						onClick={() => { setSearchQuery(""); inputRef.current?.focus(); }}
+						className="hover:bg-muted flex size-8 items-center justify-center rounded-full transition-colors"
+					>
+						<CloseCircle className="text-muted-foreground size-5" variant="Outline" />
+					</button>
+				) : null}
+				{isLoading ? (
+					<Refresh className="text-primary size-5 shrink-0 animate-spin" variant="Outline" />
+				) : null}
+			</div>
+
+			{/* Results dropdown */}
+			{showDropdown ? (
+				<div className="bg-card zen-shadow-lg animate-slide-up absolute top-full right-0 left-0 z-50 mt-2 max-h-[60vh] overflow-hidden overflow-y-auto rounded-2xl">
+					{clients.length === 0 && !isLoading ? (
+						<div className="text-muted-foreground py-8 text-center text-sm">
+							No clients found.
+						</div>
+					) : (
+						<div className="flex flex-col gap-0.5 p-2">
 							{clients.map((client) => (
-								<CommandItem
+								<button
 									key={client.id}
-									value={client.id}
-									onSelect={() => {
+									type="button"
+									onClick={() => {
 										onSelectClient(client);
-										setOpen(false);
+										setSearchQuery("");
+										setIsFocused(false);
 									}}
-									className="py-3 px-4 cursor-pointer"
+									className="hover:bg-muted flex min-h-[56px] w-full cursor-pointer items-center gap-3 rounded-xl p-3.5 text-left transition-colors"
 								>
-									<div className="flex items-center gap-3 w-full">
-										<Avatar className="h-10 w-10">
-											<AvatarImage src={client.photoUrl || undefined} />
-											<AvatarFallback>{client.fullName[0]}</AvatarFallback>
-										</Avatar>
-										<div className="flex flex-col flex-1">
-											<span className="font-medium text-base">{client.fullName}</span>
-											<span className="text-sm text-muted-foreground">{client.phone} • {client.email}</span>
-										</div>
-                                        {client.healthLogs?.some((l: any) => l.isAlert) && (
-                                            <div className="px-2 py-1 bg-red-100 text-red-700 text-xs font-bold rounded">
-                                                Alerts
-                                            </div>
-                                        )}
+									<Avatar className="size-10">
+										<AvatarImage src={client.photoUrl || undefined} />
+										<AvatarFallback className="bg-primary/10 text-primary font-semibold">{client.fullName[0]}</AvatarFallback>
+									</Avatar>
+									<div className="flex min-w-0 flex-1 flex-col">
+										<span className="text-foreground truncate text-base font-semibold">{client.fullName}</span>
+										<span className="text-muted-foreground truncate text-sm">{client.phone} • {client.email}</span>
 									</div>
-								</CommandItem>
+									{(client.healthLogs || []).some((l) => l.isAlert) ? (
+										<div className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+											Alerts
+										</div>
+									) : null}
+								</button>
 							))}
-						</CommandGroup>
-					</CommandList>
-				</Command>
-			</PopoverContent>
-		</Popover>
+						</div>
+					)}
+				</div>
+			) : null}
+		</div>
 	);
 }

@@ -1,7 +1,10 @@
-import { createInsertSchema } from "drizzle-zod";
 import { clients } from "@/drizzle/schema";
+import { Gender, ReferralSource } from "@/lib/types";
+
+import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { ClientCategory, Gender, ReferralSource } from "@/lib/types";
+
+import { HealthCategory, HealthSeverity } from "./types/health";
 
 export const clientSchema = createInsertSchema(clients, {
 	email: z
@@ -57,9 +60,9 @@ export const clientSchema = createInsertSchema(clients, {
 		healthLogs: z
 			.array(
 				z.object({
-					category: z.string(),
+					category: z.nativeEnum(HealthCategory),
 					condition: z.string(),
-					severity: z.string(),
+					severity: z.nativeEnum(HealthSeverity),
 					isAlert: z.boolean(),
 					treatment: z.string().optional(),
 					startDate: z.string(),

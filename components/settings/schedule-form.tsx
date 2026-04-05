@@ -1,17 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Card, CardContent } from "@/components/ui/card";
+import { Controller,useForm } from "react-hook-form";
+
+import { setWorkingHours, WorkingHoursConfig } from "@/actions/settings";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { setWorkingHours, WorkingHoursConfig } from "@/actions/settings";
-import { Save, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Refresh as Loader2,TickCircle as Save } from "iconsax-reactjs";
+import { toast } from "sonner";
+import * as z from "zod";
 
 const daySchema = z.object({
 	isOpen: z.boolean(),
@@ -79,9 +81,9 @@ export function ScheduleForm({
 							return (
 								<div
 									key={day.key}
-									className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border bg-card"
+									className="bg-card flex flex-col justify-between gap-4 rounded-lg border p-4 sm:flex-row sm:items-center"
 								>
-									<div className="flex items-center gap-4 min-w-[140px]">
+									<div className="flex min-w-[140px] items-center gap-4">
 										<Controller
 											control={control}
 											name={`${day.key}.isOpen`}
