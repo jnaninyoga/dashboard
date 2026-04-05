@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -12,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 
 import {
 	Briefcase,
@@ -43,9 +41,7 @@ export default async function ClientProfilePage(props: { params: Params }) {
 
 	return (
 		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
-			<Suspense fallback={<ProfileSkeleton />}>
-				<ProfileContent id={id} />
-			</Suspense>
+			<ProfileContent id={id} />
 		</div>
 	);
 }
@@ -154,31 +150,5 @@ async function ProfileContent({ id }: { id: string }) {
                 products={products || []} 
             />
 		</>
-	);
-}
-
-function ProfileSkeleton() {
-	return (
-		<div className="space-y-6">
-			<div className="flex items-center gap-4">
-				<Skeleton className="h-20 w-20 rounded-full" />
-				<div className="space-y-2">
-					<Skeleton className="h-8 w-64" />
-					<div className="flex gap-2">
-						<Skeleton className="h-5 w-24" />
-						<Skeleton className="h-5 w-24" />
-					</div>
-				</div>
-			</div>
-			<Separator />
-			<div className="space-y-4">
-				<div className="flex gap-4">
-					<Skeleton className="h-10 w-24" />
-					<Skeleton className="h-10 w-24" />
-					<Skeleton className="h-10 w-24" />
-				</div>
-				<Skeleton className="h-64 w-full rounded-xl" />
-			</div>
-		</div>
 	);
 }

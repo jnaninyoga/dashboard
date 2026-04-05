@@ -1,7 +1,11 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { type Client, type ClientWallet, type MembershipProduct } from "@/drizzle/schema";
+import {
+	type Client,
+	type ClientWallet,
+	type MembershipProduct,
+} from "@/drizzle/schema";
 
 import { HealthTab } from "./tabs/health-tab";
 import { ProfileTab } from "./tabs/profile-tab";
@@ -18,7 +22,7 @@ export function ClientProfileTabs({
 }: ClientProfileTabsProps) {
 	return (
 		<Tabs defaultValue="profile" className="w-full">
-			<TabsList className="mb-6 grid w-full grid-cols-3 lg:w-[400px]">
+			<TabsList className="mb-6 grid w-full grid-cols-3 gap-2 lg:w-[400px]">
 				<TabsTrigger value="profile">Profile</TabsTrigger>
 				<TabsTrigger value="health">Health</TabsTrigger>
 				<TabsTrigger value="wallet">Wallet</TabsTrigger>

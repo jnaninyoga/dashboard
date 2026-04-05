@@ -6,7 +6,7 @@ import { Home2 } from "iconsax-reactjs";
 
 export default function NotFound() {
 	return (
-		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
+		<div className="bg-background fixed inset-0 z-100 flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
 			{/* Blooming Blossoms Animation */}
 			<BloomingBlossoms />
 

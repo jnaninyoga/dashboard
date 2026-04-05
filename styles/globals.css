@@ -6,204 +6,251 @@
 /* Secondary: Blush/Rose (#FCD0C7) — from lotus petals */
 
 @theme {
-  /* ─── Typography ─── */
-  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --font-heading: var(--font-philosopher), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-  --font-vibes: var(--font-great-vibes), cursive;
+	/* ─── Typography ─── */
+	--font-sans:
+		var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif,
+		"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	--font-heading:
+		var(--font-philosopher), ui-serif, Georgia, Cambria, "Times New Roman",
+		Times, serif;
+	--font-vibes: var(--font-great-vibes), cursive;
 
-  /* Light Mode — Warm Stone Base */
-  --color-background: #F5F1ED;    /* Deepened stone base for main page content */
-  --color-foreground: #1C1917;    /* Stone-900 — avoids harsh black */
+	/* Light Mode — Warm Stone Base */
+	--color-background: #f5f1ed; /* Deepened stone base for main page content */
+	--color-foreground: #1c1917; /* Stone-900 — avoids harsh black */
 
-  --color-primary: #54A5B3;       /* Deepened brand teal — better contrast for UI */
-  --color-primary-foreground: #FFFFFF;
+	--color-primary: #54a5b3; /* Deepened brand teal — better contrast for UI */
+	--color-primary-foreground: #ffffff;
 
-  --color-secondary: #FADCDB;     /* Light blush from lotus */
-  --color-secondary-foreground: #44403C; /* stone-700 */
+	--color-secondary: #fadcdb; /* Light blush from lotus */
+	--color-secondary-2: #edaba8; /* blush from lotus */
+	--color-secondary-3: #c97f7d; /* darker blush from lotus */
+	--color-secondary-foreground: #44403c; /* stone-700 */
 
-  --color-muted: #F5F0ED;         /* Stone-100 warm */
-  --color-muted-foreground: #78716C; /* Stone-500 */
+	--color-muted: #f5f0ed; /* Stone-100 warm */
+	--color-muted-foreground: #78716c; /* Stone-500 */
 
-  --color-accent: #8CC9D2;        /* Original brand teal for accents */
-  --color-accent-foreground: #1C1917;
+	--color-accent: #8cc9d2; /* Original brand teal for accents */
+	--color-accent-foreground: #1c1917;
 
-  --color-destructive: #DC2626;
-  --color-destructive-foreground: #FFFFFF;
+	--color-destructive: #dc2626;
+	--color-destructive-foreground: #ffffff;
 
-  --color-border: transparent;     /* Zen: no visible borders by default */
-  --color-input: #E7E5E4;         /* Stone-200 */
-  --color-ring: #54A5B3;
+	--color-border: transparent; /* Zen: no visible borders by default */
+	--color-input: #e7e5e4; /* Stone-200 */
+	--color-ring: #54a5b3;
 
-  --color-card: #FFFFFF;
-  --color-card-foreground: #1C1917;
+	--color-card: #ffffff;
+	--color-card-foreground: #1c1917;
 
-  --color-popover: #FFFFFF;
-  --color-popover-foreground: #1C1917;
+	--color-popover: #ffffff;
+	--color-popover-foreground: #1c1917;
 
-  /* Sidebar Branding */
-  --color-sidebar: #FAF8F6;
-  --color-sidebar-foreground: #1C1917;
-  --color-sidebar-primary: #54A5B3;
-  --color-sidebar-primary-foreground: #FFFFFF;
-  --color-sidebar-accent: #FADCDB;
-  --color-sidebar-accent-foreground: #1C1917;
-  --color-sidebar-border: transparent;
-  --color-sidebar-ring: #54A5B3;
+	/* Sidebar Branding */
+	--color-sidebar: #faf8f6;
+	--color-sidebar-foreground: #1c1917;
+	--color-sidebar-primary: #54a5b3;
+	--color-sidebar-primary-foreground: #ffffff;
+	--color-sidebar-accent: #fadcdb;
+	--color-sidebar-accent-foreground: #1c1917;
+	--color-sidebar-border: transparent;
+	--color-sidebar-ring: #54a5b3;
 
-  /* ─── Zen Radius Scale (Soft, Tactile, Pill-shaped) ─── */
-  --radius-sm: 0.5rem;        /* 8px */
-  --radius-md: 0.75rem;       /* 12px */
-  --radius-lg: 1rem;          /* 16px */
-  --radius-xl: 1.25rem;       /* 20px */
-  --radius-2xl: 1.5rem;       /* 24px */
-  --radius-3xl: 1.75rem;      /* 28px */
-  --radius-4xl: 2rem;         /* 32px */
+	/* ─── Zen Radius Scale (Soft, Tactile, Pill-shaped) ─── */
+	--radius-sm: 0.5rem; /* 8px */
+	--radius-md: 0.75rem; /* 12px */
+	--radius-lg: 1rem; /* 16px */
+	--radius-xl: 1.25rem; /* 20px */
+	--radius-2xl: 1.5rem; /* 24px */
+	--radius-3xl: 1.75rem; /* 28px */
+	--radius-4xl: 2rem; /* 32px */
 
-  /* ─── Zen Animations ─── */
-  --animate-float: float 6s ease-in-out infinite;
-  --animate-breathe: breathe 4s ease-in-out infinite;
-  --animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-drift: drift 20s linear infinite;
-  --animate-sway: sway 8s ease-in-out infinite;
+	/* ─── Zen Animations ─── */
+	--animate-float: float 6s ease-in-out infinite;
+	--animate-breathe: breathe 4s ease-in-out infinite;
+	--animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+	--animate-drift: drift 20s linear infinite;
+	--animate-sway: sway 8s ease-in-out infinite;
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+	0%,
+	100% {
+		transform: translateY(0);
+	}
+	50% {
+		transform: translateY(-6px);
+	}
 }
 
 @keyframes breathe {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+	0%,
+	100% {
+		opacity: 0.6;
+	}
+	50% {
+		opacity: 1;
+	}
 }
 
 @keyframes drift {
-  from { transform: translate(0, 0) rotate(0deg); }
-  to { transform: translate(150px, 150px) rotate(360deg); }
+	from {
+		transform: translate(0, 0) rotate(0deg);
+	}
+	to {
+		transform: translate(150px, 150px) rotate(360deg);
+	}
 }
 
 @keyframes fall {
-  0% { transform: translateY(-15vh); }
-  100% { transform: translateY(115vh); }
+	0% {
+		transform: translateY(-15vh);
+	}
+	100% {
+		transform: translateY(115vh);
+	}
 }
 
 @keyframes sway {
-  0%, 100% { transform: translateX(-35px) rotate(-12deg); }
-  50% { transform: translateX(35px) rotate(12deg); }
+	0%,
+	100% {
+		transform: translateX(-35px) rotate(-12deg);
+	}
+	50% {
+		transform: translateX(35px) rotate(12deg);
+	}
 }
 
 /* The blooming effect when the particle first enters the DOM */
 @keyframes lotus-bloom {
-  0% { transform: scale(0) translateY(20px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+	0% {
+		transform: scale(0) translateY(20px);
+		opacity: 0;
+	}
+	100% {
+		transform: scale(1) translateY(0);
+		opacity: 1;
+	}
 }
 
 @keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+	from {
+		opacity: 0;
+		transform: translateY(12px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 .dark {
-  --color-background: #080707;     /* Even deeper stone for dark mode pages */
-  --color-foreground: #FAFAF9;     /* Stone-50 */
+	--color-background: #080707; /* Even deeper stone for dark mode pages */
+	--color-foreground: #fafaf9; /* Stone-50 */
 
-  --color-primary: #8CC9D2;        /* Teal pops on dark */
-  --color-primary-foreground: #0C0A09;
+	--color-primary: #8cc9d2; /* Teal pops on dark */
+	--color-primary-foreground: #0c0a09;
 
-  --color-secondary: #FCD0C7;
-  --color-secondary-foreground: #0C0A09;
+	--color-secondary: #fcd0c7;
+	--color-secondary-foreground: #0c0a09;
 
-  --color-muted: #1C1917;          /* Stone-900 */
-  --color-muted-foreground: #A8A29E; /* Stone-400 */
+	--color-muted: #1c1917; /* Stone-900 */
+	--color-muted-foreground: #a8a29e; /* Stone-400 */
 
-  --color-accent: #8CC9D2;
-  --color-accent-foreground: #0C0A09;
+	--color-accent: #8cc9d2;
+	--color-accent-foreground: #0c0a09;
 
-  --color-destructive: #EF4444;
-  --color-destructive-foreground: #FFFFFF;
+	--color-destructive: #ef4444;
+	--color-destructive-foreground: #ffffff;
 
-  --color-border: transparent;
-  --color-input: #292524;           /* Stone-800 */
-  --color-ring: #8CC9D2;
+	--color-border: transparent;
+	--color-input: #292524; /* Stone-800 */
+	--color-ring: #8cc9d2;
 
-  --color-card: #1C1917;            /* Stone-900 */
-  --color-card-foreground: #FAFAF9;
+	--color-card: #1c1917; /* Stone-900 */
+	--color-card-foreground: #fafaf9;
 
-  --color-popover: #1C1917;
-  --color-popover-foreground: #FAFAF9;
+	--color-popover: #1c1917;
+	--color-popover-foreground: #fafaf9;
 
-  --color-sidebar: #0C0A09;
-  --color-sidebar-foreground: #FAFAF9;
-  --color-sidebar-primary: #8CC9D2;
-  --color-sidebar-primary-foreground: #0C0A09;
-  --color-sidebar-accent: #FCD0C7;
-  --color-sidebar-accent-foreground: #0C0A09;
-  --color-sidebar-border: transparent;
-  --color-sidebar-ring: #8CC9D2;
+	--color-sidebar: #0c0a09;
+	--color-sidebar-foreground: #fafaf9;
+	--color-sidebar-primary: #8cc9d2;
+	--color-sidebar-primary-foreground: #0c0a09;
+	--color-sidebar-accent: #fcd0c7;
+	--color-sidebar-accent-foreground: #0c0a09;
+	--color-sidebar-border: transparent;
+	--color-sidebar-ring: #8cc9d2;
 }
 
 /* ─── Base Layer ─── */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground antialiased;
-    /* Re-declare font mappings on body where Next.js font variables are available */
-    --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-    --font-heading: var(--font-philosopher), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
-    --font-vibes: var(--font-great-vibes), cursive;
-  }
+	* {
+		@apply border-border outline-ring/50;
+	}
+	body {
+		@apply bg-background text-foreground antialiased;
+		/* Re-declare font mappings on body where Next.js font variables are available */
+		--font-sans:
+			var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif,
+			"Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+			"Noto Color Emoji";
+		--font-heading:
+			var(--font-philosopher), ui-serif, Georgia, Cambria, "Times New Roman",
+			Times, serif;
+		--font-vibes: var(--font-great-vibes), cursive;
+	}
 
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-heading tracking-tight;
-  }
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-heading tracking-tight;
+	}
 }
 
 /* ─── Zen Utility Classes ─── */
 @layer utilities {
-  /* Soft depth shadows — replaces borders */
-  .zen-shadow {
-    box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
-  }
-  .zen-shadow-md {
-    box-shadow: 0 12px 40px rgb(0 0 0 / 0.06);
-  }
-  .zen-shadow-lg {
-    box-shadow: 0 20px 50px rgb(0 0 0 / 0.08);
-  }
-  .zen-shadow-glow {
-    box-shadow: 0 8px 30px rgb(0 0 0 / 0.04), 0 0 0 1px rgb(0 0 0 / 0.02);
-  }
+	/* Soft depth shadows — replaces borders */
+	.zen-shadow {
+		box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
+	}
+	.zen-shadow-md {
+		box-shadow: 0 12px 40px rgb(0 0 0 / 0.06);
+	}
+	.zen-shadow-lg {
+		box-shadow: 0 20px 50px rgb(0 0 0 / 0.08);
+	}
+	.zen-shadow-glow {
+		box-shadow:
+			0 8px 30px rgb(0 0 0 / 0.04),
+			0 0 0 1px rgb(0 0 0 / 0.02);
+	}
 
-  /* Glassmorphism surface */
-  .zen-glass {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-  }
+	/* Glassmorphism surface */
+	.zen-glass {
+		background: rgba(255, 255, 255, 0.75);
+		backdrop-filter: blur(20px) saturate(180%);
+		-webkit-backdrop-filter: blur(20px) saturate(180%);
+	}
 
-  /* Teal glow for primary CTAs */
-  .zen-glow-teal {
-    box-shadow: 0 4px 20px rgba(84, 165, 179, 0.25);
-  }
+	/* Teal glow for primary CTAs */
+	.zen-glow-teal {
+		box-shadow: 0 4px 20px rgba(84, 165, 179, 0.25);
+	}
 
-  .zen-glow-blush {
-    box-shadow: 0 4px 20px rgba(252, 208, 199, 0.35);
-  }
+	.zen-glow-blush {
+		box-shadow: 0 4px 20px rgba(252, 208, 199, 0.35);
+	}
 
-  /* Decorative Script utility */
-  .font-vibes {
-    font-family: var(--font-great-vibes), cursive !important;
-    font-weight: 400 !important;
-    text-transform: none !important;
-  }
+	/* Decorative Script utility */
+	.font-vibes {
+		font-family: var(--font-great-vibes), cursive !important;
+		font-weight: 400 !important;
+		text-transform: none !important;
+	}
 }
