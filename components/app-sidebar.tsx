@@ -51,7 +51,7 @@ export function AppSidebar({
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{dashboardConfig.navMain.map((item) => {
-								const isActive = pathname === item.url;
+								const isActive = item.url === "/" ? pathname === "/" : pathname === item.url || pathname.startsWith(`${item.url}/`);
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton asChild isActive={isActive}>
@@ -72,7 +72,7 @@ export function AppSidebar({
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{dashboardConfig.actions.map((item) => {
-								const isActive = pathname === item.url;
+								const isActive = item.url === "/" ? pathname === "/" : pathname === item.url || pathname.startsWith(`${item.url}/`);
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton asChild isActive={isActive}>
@@ -93,7 +93,7 @@ export function AppSidebar({
 					<SidebarGroupContent>
 						<SidebarMenu>
 							{dashboardConfig.settings.map((item) => {
-								const isActive = pathname === item.url;
+								const isActive = item.url === "/" ? pathname === "/" : pathname === item.url || pathname.startsWith(`${item.url}/`);
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton asChild isActive={isActive}>
