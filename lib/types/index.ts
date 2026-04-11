@@ -1,4 +1,5 @@
 export * from "./attendance";
+export * from "./b2b";
 export * from "./calendar";
 export * from "./client";
 export * from "./global";

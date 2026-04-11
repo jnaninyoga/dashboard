@@ -3,8 +3,10 @@ import {
 	Calendar, 
 	Card, 
 	Category2, 
+	DocumentText,
 	Home2, 
 	People, 
+	Receipt,
 	TickCircle, 
 	Timer1, 
 	UserAdd
@@ -38,6 +40,23 @@ export const dashboardConfig = {
 			title: "Add Client",
 			url: "/clients/add",
 			icon: UserAdd,
+		},
+	],
+	b2b: [
+		{
+			title: "Partners",
+			url: "/b2b/partners",
+			icon: Buildings,
+		},
+		{
+			title: "Quotes",
+			url: "/b2b/quotes",
+			icon: DocumentText,
+		},
+		{
+			title: "Invoices",
+			url: "/b2b/invoices",
+			icon: Receipt,
 		},
 	],
 	settings: [
