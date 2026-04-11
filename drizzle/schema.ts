@@ -51,6 +51,19 @@ export const discountTypeEnum = pgEnum("discount_type", [
 	"fixed",
 ]);
 
+export const b2bDocumentStatusEnum = pgEnum("b2b_document_status", [
+	"draft",
+	"sent",
+	"accepted",
+	"paid",
+	"cancelled",
+]);
+
+export const b2bDocumentTypeEnum = pgEnum("b2b_document_type", [
+	"quote",
+	"invoice",
+]);
+
 export const clients = pgTable("clients", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	googleContactResourceName: text("google_contact_resource_name"),
@@ -208,3 +221,119 @@ export const b2bPricingTiers = pgTable("b2b_pricing_tiers", {
 });
 export type B2BPricingTier = typeof b2bPricingTiers.$inferSelect;
 export type NewB2BPricingTier = typeof b2bPricingTiers.$inferInsert;
+
+export const b2bPartners = pgTable("b2b_partners", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	companyName: text("company_name").notNull(),
+	address: text("address"),
+	taxId: text("tax_id"), // 'ICE' in Morocco
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+export type B2BPartner = typeof b2bPartners.$inferSelect;
+export type NewB2BPartner = typeof b2bPartners.$inferInsert;
+
+export const b2bContacts = pgTable("b2b_contacts", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	partnerId: uuid("partner_id")
+		.references(() => b2bPartners.id, { onDelete: "cascade" })
+		.notNull(),
+	fullName: text("full_name").notNull(),
+	role: text("role"), // e.g., 'Front Desk', 'Manager'
+	email: text("email"),
+	phone: text("phone"),
+	isPrimary: boolean("is_primary").default(false).notNull(),
+	googleContactResourceName: text("google_contact_resource_name"),
+	googleEtag: text("google_etag"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+export type B2BContact = typeof b2bContacts.$inferSelect;
+export type NewB2BContact = typeof b2bContacts.$inferInsert;
+
+export const b2bDocuments = pgTable("b2b_documents", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	partnerId: uuid("partner_id")
+		.references(() => b2bPartners.id, { onDelete: "cascade" })
+		.notNull(),
+	contactId: uuid("contact_id").references(() => b2bContacts.id),
+	type: b2bDocumentTypeEnum("type").notNull(),
+	status: b2bDocumentStatusEnum("status").notNull().default("draft"),
+	documentNumber: text("document_number").notNull(),
+	issueDate: date("issue_date").notNull(),
+	dueDate: date("due_date"),
+	subtotal: decimal("subtotal", { precision: 10, scale: 2 })
+		.notNull()
+		.default("0"),
+	taxRate: decimal("tax_rate", { precision: 10, scale: 2 })
+		.notNull()
+		.default("0"),
+	totalAmount: decimal("total_amount", { precision: 10, scale: 2 })
+		.notNull()
+		.default("0"),
+	notes: text("notes"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+export type B2BDocument = typeof b2bDocuments.$inferSelect;
+export type NewB2BDocument = typeof b2bDocuments.$inferInsert;
+
+export const b2bDocumentLines = pgTable("b2b_document_lines", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	documentId: uuid("document_id")
+		.references(() => b2bDocuments.id, { onDelete: "cascade" })
+		.notNull(),
+	description: text("description").notNull(),
+	quantity: decimal("quantity", { precision: 10, scale: 2 })
+		.notNull()
+		.default("1"),
+	unitPrice: decimal("unit_price", { precision: 10, scale: 2 })
+		.notNull()
+		.default("0"),
+	totalPrice: decimal("total_price", { precision: 10, scale: 2 })
+		.notNull()
+		.default("0"),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+export type B2BDocumentLine = typeof b2bDocumentLines.$inferSelect;
+export type NewB2BDocumentLine = typeof b2bDocumentLines.$inferInsert;
+
+// Relations
+export const b2bPartnersRelations = relations(b2bPartners, ({ many }) => ({
+	contacts: many(b2bContacts),
+	documents: many(b2bDocuments),
+}));
+
+export const b2bContactsRelations = relations(b2bContacts, ({ one, many }) => ({
+	partner: one(b2bPartners, {
+		fields: [b2bContacts.partnerId],
+		references: [b2bPartners.id],
+	}),
+	documents: many(b2bDocuments),
+}));
+
+export const b2bDocumentsRelations = relations(
+	b2bDocuments,
+	({ one, many }) => ({
+		partner: one(b2bPartners, {
+			fields: [b2bDocuments.partnerId],
+			references: [b2bPartners.id],
+		}),
+		contact: one(b2bContacts, {
+			fields: [b2bDocuments.contactId],
+			references: [b2bContacts.id],
+		}),
+		lines: many(b2bDocumentLines),
+	}),
+);
+
+export const b2bDocumentLinesRelations = relations(
+	b2bDocumentLines,
+	({ one }) => ({
+		document: one(b2bDocuments, {
+			fields: [b2bDocumentLines.documentId],
+			references: [b2bDocuments.id],
+		}),
+	}),
+);

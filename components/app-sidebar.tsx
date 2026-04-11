@@ -68,6 +68,28 @@ export function AppSidebar({
 				</SidebarGroup>
 
 				<SidebarGroup>
+					<SidebarGroupLabel>B2B / Companies</SidebarGroupLabel>
+					<SidebarGroupContent>
+						<SidebarMenu>
+							{dashboardConfig.b2b.map((item) => {
+								const isActive = pathname === item.url || pathname.startsWith(`${item.url}/`);
+								return (
+									<SidebarMenuItem key={item.title}>
+										<SidebarMenuButton asChild isActive={isActive}>
+											<Link href={item.url}>
+												<item.icon size={20} variant={isActive ? "Bulk" : "Outline"} />
+												<span>{item.title}</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								);
+							})}
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
+
+
+				<SidebarGroup>
 					<SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
 					<SidebarGroupContent>
 						<SidebarMenu>
