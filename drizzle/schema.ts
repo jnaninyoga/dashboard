@@ -272,6 +272,7 @@ export const b2bDocuments = pgTable("b2b_documents", {
 		.notNull()
 		.default("0"),
 	notes: text("notes"),
+	parentDocumentId: uuid("parent_document_id").references(() => b2bDocuments.id),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -323,6 +324,14 @@ export const b2bDocumentsRelations = relations(
 		contact: one(b2bContacts, {
 			fields: [b2bDocuments.contactId],
 			references: [b2bContacts.id],
+		}),
+		parent: one(b2bDocuments, {
+			fields: [b2bDocuments.parentDocumentId],
+			references: [b2bDocuments.id],
+			relationName: "document_parent",
+		}),
+		children: many(b2bDocuments, {
+			relationName: "document_parent",
 		}),
 		lines: many(b2bDocumentLines),
 	}),

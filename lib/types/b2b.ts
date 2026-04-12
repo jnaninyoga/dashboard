@@ -34,6 +34,8 @@ export type DocumentWithRelations = Document & {
     partner?: Partner | null;
     contact?: Contact | null;
     lines?: DocumentLine[];
+    parent?: Document | null;
+    children?: Document[];
 };
 
 export type DocumentWithContact = Document & {
