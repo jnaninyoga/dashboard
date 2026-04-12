@@ -46,7 +46,7 @@ export function PartnerFilters() {
 		<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
 			<Input
 				placeholder="Search company, contact..."
-				className="border-foreground/10 bg-secondary/5 focus-visible:ring-primary/20 w-full font-medium transition-all sm:w-[300px]"
+				className="border-foreground/10 bg-white focus-visible:ring-primary/20 w-full font-medium transition-all sm:w-2xs"
 				defaultValue={searchParams.get("query")?.toString()}
 				onChange={(e) => handleSearch(e.target.value)}
 			/>
@@ -55,7 +55,7 @@ export function PartnerFilters() {
 					onValueChange={(v) => handleFilterChange("docType", v)}
 					defaultValue={searchParams.get("docType") || "all"}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 bg-secondary/5 w-full font-semibold transition-all sm:w-[180px]">
+					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 bg-white w-full font-semibold transition-all sm:w-48">
 						<SelectValue placeholder="Document Type" />
 					</SelectTrigger>
 					<SelectContent>
@@ -68,25 +68,52 @@ export function PartnerFilters() {
 					onValueChange={(v) => handleFilterChange("docStatus", v)}
 					defaultValue={searchParams.get("docStatus") || "all"}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 bg-secondary/5 w-full font-semibold transition-all sm:w-[180px]">
+					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 bg-white w-full font-semibold transition-all sm:w-48">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border-secondary/20 rounded-xl shadow-xl">
-						<SelectItem value="all" className="font-bold">All Statuses</SelectItem>
+						<SelectItem value="all" className="font-bold">
+							All Statuses
+						</SelectItem>
 						<SelectItem value="draft">
-							<Badge variant="muted" className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase">Draft</Badge>
+							<Badge
+								variant="muted"
+								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+							>
+								Draft
+							</Badge>
 						</SelectItem>
 						<SelectItem value="sent">
-							<Badge variant="info" className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase">Sent</Badge>
+							<Badge
+								variant="info"
+								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+							>
+								Sent
+							</Badge>
 						</SelectItem>
 						<SelectItem value="accepted">
-							<Badge variant="success" className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase">Accepted</Badge>
+							<Badge
+								variant="success"
+								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+							>
+								Accepted
+							</Badge>
 						</SelectItem>
 						<SelectItem value="paid">
-							<Badge variant="success" className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase">Paid</Badge>
+							<Badge
+								variant="success"
+								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+							>
+								Paid
+							</Badge>
 						</SelectItem>
 						<SelectItem value="cancelled">
-							<Badge variant="destructive" className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase">Cancelled</Badge>
+							<Badge
+								variant="destructive"
+								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+							>
+								Cancelled
+							</Badge>
 						</SelectItem>
 					</SelectContent>
 				</Select>
