@@ -1,16 +1,16 @@
-import { 
-	b2bContacts, 
-	b2bDocumentLines, 
-	b2bDocuments, 
-	b2bPartners, 
-	b2bPricingTiers, 
-	clients 
+import {
+	b2bContacts,
+	b2bDocumentLines,
+	b2bDocuments,
+	b2bPartners,
+	b2bPricingTiers,
+	clients,
 } from "@/drizzle/schema";
-import { 
-	Gender, 
-	HealthCategory, 
-	HealthSeverity, 
-	ReferralSource 
+import {
+	Gender,
+	HealthCategory,
+	HealthSeverity,
+	ReferralSource,
 } from "@/lib/types";
 
 import { createInsertSchema } from "drizzle-zod";
@@ -19,13 +19,14 @@ import { z } from "zod";
 // --- CLIENT SCHEMA ---
 export const clientSchema = createInsertSchema(clients, {
 	email: z
-		.string()
 		.email({ message: "Invalid email address" })
 		.nullable()
 		.optional()
 		.or(z.literal("")),
-	birthDate: (schema) =>
-		schema.refine((date) => !isNaN(Date.parse(date)), {
+	birthDate: (schema: {
+		refine: (arg0: (date: any) => boolean, arg1: { message: string }) => any;
+	}) =>
+		schema.refine((date: string) => !isNaN(Date.parse(date)), {
 			message: "Invalid date string",
 		}),
 	fullName: z.string().min(2, { message: "Name is required (min 2 chars)" }),
@@ -70,9 +71,17 @@ export const clientSchema = createInsertSchema(clients, {
 		healthLogs: z
 			.array(
 				z.object({
-					category: z.enum([HealthCategory.PHYSICAL, HealthCategory.MENTAL, HealthCategory.LIFESTYLE]),
+					category: z.enum([
+						HealthCategory.PHYSICAL,
+						HealthCategory.MENTAL,
+						HealthCategory.LIFESTYLE,
+					]),
 					condition: z.string(),
-					severity: z.enum([HealthSeverity.INFO, HealthSeverity.WARNING, HealthSeverity.CRITICAL]),
+					severity: z.enum([
+						HealthSeverity.INFO,
+						HealthSeverity.WARNING,
+						HealthSeverity.CRITICAL,
+					]),
 					isAlert: z.boolean(),
 					treatment: z.string().optional(),
 					startDate: z.string(),
@@ -110,7 +119,12 @@ export type PartnerFormValues = z.infer<typeof partnerSchema>;
 export const contactSchema = createInsertSchema(b2bContacts, {
 	fullName: z.string().min(1, "Full name is required"),
 	role: z.string().optional().nullable(),
-	email: z.string().email("Invalid email address").optional().nullable().or(z.literal("")),
+	email: z
+		.string()
+		.email("Invalid email address")
+		.optional()
+		.nullable()
+		.or(z.literal("")),
 	phone: z.string().optional().nullable().or(z.literal("")),
 	partnerId: z.string().uuid("Please select a partner"),
 }).omit({
@@ -158,7 +172,8 @@ export const documentSchema = createInsertSchema(b2bDocuments, {
 	subtotal: z.string().min(1),
 	taxRate: z.string().min(1),
 	totalAmount: z.string().min(1, "Total amount is required"),
-	partnerId: z.string().uuid("Please select a partner"),
+	partnerId: z.uuid("Please select a partner"),
+	parentDocumentId: z.uuid().optional().nullable(),
 }).omit({
 	id: true,
 	createdAt: true,
@@ -170,7 +185,9 @@ export type DocumentFormValues = z.infer<typeof documentSchema>;
 // --- COMPOSITE DOCUMENT + LINES SCHEMA ---
 export const createDocumentWithLinesSchema = z.object({
 	document: documentSchema,
-	lines: z.array(documentLineSchema).min(1, "At least one line item is required"),
+	lines: z
+		.array(documentLineSchema)
+		.min(1, "At least one line item is required"),
 });
 
 // --- MEMBERSHIP PRODUCT SCHEMA ---
@@ -181,7 +198,9 @@ export const membershipProductSchema = z.object({
 	defaultCredits: z.number().int().min(1, "Credits must be at least 1"),
 });
 
-export type MembershipProductFormValues = z.infer<typeof membershipProductSchema>;
+export type MembershipProductFormValues = z.infer<
+	typeof membershipProductSchema
+>;
 
 // --- SESSION SCHEMA (Booking flow) ---
 export const sessionSchema = z

@@ -2,20 +2,14 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getPartnerByIdAction } from "@/actions/b2b-partners";
-import { ContactDialog } from "@/components/b2b/contact-dialog";
-import { ContactList } from "@/components/b2b/contact-list";
 import { CopyableTaxId } from "@/components/b2b/copyable-tax-id";
-import { DocumentDialog } from "@/components/b2b/document-dialog";
-import { DocumentList } from "@/components/b2b/document-list";
-import { Button } from "@/components/ui/button";
+import { PartnerProfileTabs } from "@/components/b2b/partner-profile-tabs";
 import { Separator } from "@/components/ui/separator";
 
 import {
 	ArrowLeft,
 	Buildings,
-	Document,
 	Location,
-	UserAdd,
 } from "iconsax-reactjs";
 
 type Params = Promise<{ id: string }>;
@@ -101,57 +95,7 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 				</div>
 			</div>
 
-			{/* Main Content Grid */}
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-				{/* Contacts Column */}
-				<div className="animate-slide-left space-y-6 lg:col-span-1">
-					<div className="flex items-center justify-between px-2">
-						<h2 className="font-heading flex items-center gap-2 text-xl font-bold">
-							<UserAdd size={20} variant="Bulk" className="text-primary" />
-							Contacts
-						</h2>
-						<ContactDialog partnerId={partner.id}>
-							<Button
-								size="sm"
-								variant="outline"
-								className="hover:bg-primary hover:text-primary-foreground rounded-full shadow-xs transition-all"
-							>
-								<UserAdd className="mr-2 h-4 w-4" variant="Outline" />
-								New
-							</Button>
-						</ContactDialog>
-					</div>
-					<ContactList contacts={partner.contacts || []} />
-				</div>
-
-				{/* Documents Column */}
-				<div className="animate-slide-right space-y-6 lg:col-span-2">
-					<div className="flex items-center justify-between px-2">
-						<h2 className="font-heading flex items-center gap-2 text-xl font-bold">
-							<Document size={20} variant="Bulk" className="text-primary" />
-							Documents (Quotes & Invoices)
-						</h2>
-						<DocumentDialog
-							partnerId={partner.id}
-							contacts={partner.contacts || []}
-						>
-							<Button
-								size="sm"
-								variant="outline"
-								className="hover:bg-primary hover:text-primary-foreground rounded-full shadow-xs transition-all"
-							>
-								<Document size={16} className="mr-2" variant="Outline" />
-								New Document
-							</Button>
-						</DocumentDialog>
-					</div>
-					<DocumentList
-						documents={partner.documents || []}
-						partnerId={partner.id}
-						contacts={partner.contacts || []}
-					/>
-				</div>
-			</div>
+			<PartnerProfileTabs partner={partner} />
 		</div>
 	);
 }

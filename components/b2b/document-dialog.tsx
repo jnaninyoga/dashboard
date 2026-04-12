@@ -1,9 +1,18 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef, useState } from "react";
+import {
+	startTransition,
+	useActionState,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
-import { createDocumentAction } from "@/actions/b2b-documents";
+import {
+	createDocumentAction,
+	getNextDocumentNumber,
+} from "@/actions/b2b-documents";
 import { getB2BPricingTiers } from "@/actions/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,7 +68,13 @@ import { type B2BContact, type B2BPricingTier } from "@/lib/types";
 import { createDocumentWithLinesSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Add, DocumentText, MoneyRecive, Refresh, Trash } from "iconsax-reactjs";
+import {
+	Add,
+	DocumentText,
+	MoneyRecive,
+	Refresh,
+	Trash,
+} from "iconsax-reactjs";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -115,9 +130,9 @@ function DescriptionAutocomplete({
 						disabled={isPending}
 					/>
 				</PopoverAnchor>
-				<PopoverContent 
-					className="border-foreground/10 overflow-hidden rounded-xl p-0 shadow-2xl" 
-					style={{ width: 'var(--radix-popover-anchor-width)' }}
+				<PopoverContent
+					className="border-foreground/10 overflow-hidden rounded-xl p-0 shadow-2xl"
+					style={{ width: "var(--radix-popover-anchor-width)" }}
 					onOpenAutoFocus={(e) => e.preventDefault()}
 					onInteractOutside={(e) => {
 						// Keep open when clicking back on the input/wrapper
@@ -133,10 +148,16 @@ function DescriptionAutocomplete({
 							<CommandEmpty className="text-muted-foreground/60 py-4 text-center text-xs font-medium">
 								No pricing tiers found.
 							</CommandEmpty>
-							<CommandGroup heading={<span className="text-primary px-2 text-xs font-bold tracking-widest uppercase">Available Tiers</span>}>
+							<CommandGroup
+								heading={
+									<span className="text-primary px-2 text-xs font-bold tracking-widest uppercase">
+										Available Tiers
+									</span>
+								}
+							>
 								{pricingTiers
-									.filter((tier) => 
-										tier.name.toLowerCase().includes(value.toLowerCase())
+									.filter((tier) =>
+										tier.name.toLowerCase().includes(value.toLowerCase()),
 									)
 									.map((tier) => (
 										<CommandItem
@@ -149,9 +170,14 @@ function DescriptionAutocomplete({
 											className="hover:bg-primary/5 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary flex cursor-pointer items-center justify-between px-3 py-2 transition-colors"
 										>
 											<div className="flex flex-col">
-												<span className="text-xs font-bold tracking-tight">{tier.name}</span>
+												<span className="text-xs font-bold tracking-tight">
+													{tier.name}
+												</span>
 											</div>
-											<Badge variant="outline" className="bg-accent/20 text-primary border-primary/10 ml-2 font-mono text-[10px] font-black">
+											<Badge
+												variant="outline"
+												className="bg-accent/20 text-primary border-primary/10 ml-2 font-mono text-[10px] font-black"
+											>
 												{tier.price.toLocaleString()} MAD
 											</Badge>
 										</CommandItem>
@@ -165,7 +191,6 @@ function DescriptionAutocomplete({
 	);
 }
 
-
 export function DocumentDialog({
 	partnerId,
 	contacts,
@@ -178,7 +203,10 @@ export function DocumentDialog({
 	const [open, setOpen] = useState(false);
 	const [pricingTiers, setPricingTiers] = useState<B2BPricingTier[]>([]);
 
-	const [state, formAction, isPending] = useActionState(createDocumentAction, null);
+	const [state, formAction, isPending] = useActionState(
+		createDocumentAction,
+		null,
+	);
 
 	const [defaultValues] = useState(() => ({
 		document: {
@@ -186,9 +214,11 @@ export function DocumentDialog({
 			contactId: contacts.find((c) => c.isPrimary)?.id || contacts[0]?.id || "",
 			type: "quote" as const,
 			status: "draft" as const,
-			documentNumber: `QUO-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+			documentNumber: "", // Initialized in useEffect
 			issueDate: new Date().toISOString().split("T")[0],
-			dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+			dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+				.toISOString()
+				.split("T")[0],
 			subtotal: "0",
 			taxRate: "0",
 			totalAmount: "0",
@@ -225,35 +255,49 @@ export function DocumentDialog({
 			getB2BPricingTiers().then((tiers) => {
 				setPricingTiers(tiers as B2BPricingTier[]);
 			});
+
+			// Get next sequence number
+			getNextDocumentNumber(form.getValues("document.type")).then((num) => {
+				form.setValue("document.documentNumber", num);
+			});
 		}
-	}, [open]);
+	}, [open, form]);
 
 	/* ── Totals calculation ─── */
-	const linesWatcher = useWatch({ 
-		control: form.control, 
+	const linesWatcher = useWatch({
+		control: form.control,
 		name: "lines",
-		defaultValue: defaultValues.lines
+		defaultValue: defaultValues.lines,
 	});
-	const taxRateWatcher = useWatch({ 
-		control: form.control, 
+	const taxRateWatcher = useWatch({
+		control: form.control,
 		name: "document.taxRate",
-		defaultValue: defaultValues.document.taxRate
+		defaultValue: defaultValues.document.taxRate,
 	});
 
 	useEffect(() => {
-		const subtotal = linesWatcher.reduce((acc: number, line) => acc + line.unitPrice * line.quantity, 0);
-		const tax = subtotal * ((parseFloat(taxRateWatcher) / 100) || 0);
+		const subtotal = linesWatcher.reduce(
+			(acc: number, line: { unitPrice: number; quantity: number }) =>
+				acc + line.unitPrice * line.quantity,
+			0,
+		);
+		const tax = subtotal * (parseFloat(taxRateWatcher) / 100 || 0);
 		const total = subtotal + tax;
 
 		form.setValue("document.subtotal", subtotal.toString());
 		form.setValue("document.totalAmount", total.toString());
 
-		linesWatcher.forEach((line, index) => {
-			const lineTotal = line.unitPrice * line.quantity;
-			if (lineTotal !== line.totalPrice) {
-				form.setValue(`lines.${index}.totalPrice`, lineTotal);
-			}
-		});
+		linesWatcher.forEach(
+			(
+				line: { unitPrice: number; quantity: number; totalPrice: number },
+				index: any,
+			) => {
+				const lineTotal = line.unitPrice * line.quantity;
+				if (lineTotal !== line.totalPrice) {
+					form.setValue(`lines.${index}.totalPrice`, lineTotal);
+				}
+			},
+		);
 	}, [linesWatcher, taxRateWatcher, form]);
 
 	const onSubmit = (values: CreateDocumentValues) => {
@@ -262,9 +306,18 @@ export function DocumentDialog({
 
 	/* ── Derived display values ─── */
 	const docType = useWatch({ control: form.control, name: "document.type" });
-	const subtotalStr = useWatch({ control: form.control, name: "document.subtotal" });
-	const taxRateStr = useWatch({ control: form.control, name: "document.taxRate" });
-	const totalAmountStr = useWatch({ control: form.control, name: "document.totalAmount" });
+	const subtotalStr = useWatch({
+		control: form.control,
+		name: "document.subtotal",
+	});
+	const taxRateStr = useWatch({
+		control: form.control,
+		name: "document.taxRate",
+	});
+	const totalAmountStr = useWatch({
+		control: form.control,
+		name: "document.totalAmount",
+	});
 
 	const subtotal = parseFloat(subtotalStr || "0");
 	const taxRate = parseFloat(taxRateStr || "0");
@@ -287,7 +340,8 @@ export function DocumentDialog({
 								New Document
 							</DialogTitle>
 							<DialogDescription className="text-muted-foreground/70 mt-0.5 text-sm">
-								Create a quote or invoice for this partner with line items and totals.
+								Create a quote or invoice for this partner with line items and
+								totals.
 							</DialogDescription>
 						</div>
 					</div>
@@ -301,11 +355,9 @@ export function DocumentDialog({
 					>
 						<ScrollArea className="flex-1 px-4 py-5 sm:px-7 sm:py-6">
 							<div className="space-y-8">
-
 								<div className="flex w-full flex-col gap-4 sm:flex-row">
 									{/* ─── Section 1: Document Identity ───────────────────────────── */}
 									<div className="flex w-full flex-col gap-4">
-
 										<div className="flex gap-4">
 											{/* Type */}
 											<FormField
@@ -319,11 +371,9 @@ export function DocumentDialog({
 															disabled={isPending}
 															onValueChange={(val: "quote" | "invoice") => {
 																field.onChange(val);
-																const currentNo = form.getValues("document.documentNumber");
-																if (currentNo.startsWith("QUO-") || currentNo.startsWith("INV-")) {
-																	const prefix = val === "quote" ? "QUO-" : "INV-";
-																	form.setValue("document.documentNumber", currentNo.replace(/^(QUO-|INV-)/, prefix));
-																}
+																getNextDocumentNumber(val).then((num) => {
+																	form.setValue("document.documentNumber", num);
+																});
 															}}
 														>
 															<FormControl>
@@ -332,10 +382,16 @@ export function DocumentDialog({
 																</SelectTrigger>
 															</FormControl>
 															<SelectContent className="border-foreground/10 shadow-xl">
-																<SelectItem value="quote" className="font-semibold">
+																<SelectItem
+																	value="quote"
+																	className="font-semibold"
+																>
 																	Quote
 																</SelectItem>
-																<SelectItem value="invoice" className="font-semibold">
+																<SelectItem
+																	value="invoice"
+																	className="font-semibold"
+																>
 																	Invoice
 																</SelectItem>
 															</SelectContent>
@@ -384,7 +440,11 @@ export function DocumentDialog({
 														</FormControl>
 														<SelectContent className="border-foreground/10 w-full shadow-xl">
 															{contacts.map((contact) => (
-																<SelectItem key={contact.id} value={contact.id} className="font-semibold">
+																<SelectItem
+																	key={contact.id}
+																	value={contact.id}
+																	className="font-semibold"
+																>
 																	{contact.fullName}{" "}
 																	<span className="ml-1 font-normal opacity-40">
 																		({contact.role || "No role"})
@@ -450,7 +510,14 @@ export function DocumentDialog({
 											size="sm"
 											className="bg-primary text-primary-foreground zen-glow-teal h-8 cursor-pointer gap-1.5 rounded-xl px-3 text-xs font-bold shadow-sm transition-all hover:brightness-95 active:scale-95"
 											disabled={isPending}
-											onClick={() => append({ description: "", quantity: 1, unitPrice: 0, totalPrice: 0 })}
+											onClick={() =>
+												append({
+													description: "",
+													quantity: 1,
+													unitPrice: 0,
+													totalPrice: 0,
+												})
+											}
 										>
 											<Add size={15} variant="Bold" />
 											Add Item
@@ -460,121 +527,140 @@ export function DocumentDialog({
 									{/* Lines Table */}
 									<div className="border-foreground/10 bg-sidebar/45 overflow-hidden rounded-2xl border">
 										<div className="overflow-x-auto">
-										<Table>
-											<TableHeader className="bg-sidebar">
-												<TableRow className="border-foreground/10 border-b hover:bg-transparent">
-													<TableHead className="text-muted-foreground/70 h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
-														Description
-													</TableHead>
-													<TableHead className="text-muted-foreground/70 h-10 w-[72px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
-														Qty
-													</TableHead>
-													<TableHead className="text-muted-foreground/70 h-10 w-[104px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
-														Unit Price
-													</TableHead>
-													<TableHead className="text-muted-foreground/70 h-10 w-[80px] px-2 text-right text-[10px] font-bold tracking-widest uppercase">
-														Total
-													</TableHead>
-													<TableHead className="h-10 w-[40px] p-0" />
-												</TableRow>
-											</TableHeader>
-											<TableBody className="divide-secondary/15 divide-y">
-												{fields.map((field, index) => (
-													<TableRow
-														key={field.id}
-														className="hover:bg-secondary/5 border-none transition-colors"
-													>
-														{/* Description Autocomplete */}
-														<TableCell className="px-4 py-3 align-top">
-															<FormField
-																control={form.control}
-																name={`lines.${index}.description`}
-																render={({ field: f }) => (
-																	<FormItem className="space-y-1">
-																		<FormControl>
-																			<DescriptionAutocomplete
-																				value={f.value}
-																				onChange={f.onChange}
-																				onSelectTier={(tier) => {
-																					form.setValue(`lines.${index}.description`, tier.name);
-																					form.setValue(`lines.${index}.unitPrice`, tier.price);
-																				}}
-																				pricingTiers={pricingTiers}
-																				isPending={isPending}
-																			/>
-																		</FormControl>
-																		<FormMessage className="text-[10px]" />
-																	</FormItem>
-																)}
-															/>
-														</TableCell>
-
-														{/* Quantity */}
-														<TableCell className="px-2 py-3 align-top">
-															<FormField
-																control={form.control}
-																name={`lines.${index}.quantity`}
-																render={({ field: f }) => (
-																	<FormItem className="space-y-0">
-																		<FormControl>
-																			<Input
-																				type="number"
-																				{...f}
-																				className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
-																				disabled={isPending}
-																				onChange={(e) => f.onChange(parseFloat(e.target.value) || 0)}
-																			/>
-																		</FormControl>
-																	</FormItem>
-																)}
-															/>
-														</TableCell>
-
-														{/* Unit Price */}
-														<TableCell className="px-2 py-3 align-top">
-															<FormField
-																control={form.control}
-																name={`lines.${index}.unitPrice`}
-																render={({ field: f }) => (
-																	<FormItem className="space-y-0">
-																		<FormControl>
-																			<Input
-																				type="number"
-																				{...f}
-																				className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
-																				disabled={isPending}
-																				onChange={(e) => f.onChange(parseFloat(e.target.value) || 0)}
-																			/>
-																		</FormControl>
-																	</FormItem>
-																)}
-															/>
-														</TableCell>
-
-														{/* Line Total */}
-														<TableCell className="px-2 py-4 text-right align-top">
-															<span className="text-foreground font-mono text-sm font-black tabular-nums">
-																{(linesWatcher[index]?.quantity * linesWatcher[index]?.unitPrice || 0).toLocaleString()}
-																<span className="text-muted-foreground ml-1 text-xs font-normal">MAD</span>
-															</span>
-														</TableCell>
-
-														{/* Remove */}
-														<TableCell className="p-0 py-3 text-center align-top">
-															<Button
-																type="button"
-																variant="ghost"
-																size="icon"
-																className="text-destructive hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all active:scale-90"
-																disabled={fields.length === 1 || isPending}
-																onClick={() => remove(index)}
-															>
-																<Trash size={15} variant="Bold" />
-															</Button>
-														</TableCell>
+											<Table>
+												<TableHeader className="bg-sidebar">
+													<TableRow className="border-foreground/10 border-b hover:bg-transparent">
+														<TableHead className="text-muted-foreground/70 h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
+															Description
+														</TableHead>
+														<TableHead className="text-muted-foreground/70 h-10 w-[72px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
+															Qty
+														</TableHead>
+														<TableHead className="text-muted-foreground/70 h-10 w-[104px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
+															Unit Price
+														</TableHead>
+														<TableHead className="text-muted-foreground/70 h-10 w-[80px] px-2 text-right text-[10px] font-bold tracking-widest uppercase">
+															Total
+														</TableHead>
+														<TableHead className="h-10 w-[40px] p-0" />
 													</TableRow>
-												))}
-											</TableBody>
+												</TableHeader>
+												<TableBody className="divide-secondary/15 divide-y">
+													{fields.map((field, index) => (
+														<TableRow
+															key={field.id}
+															className="hover:bg-secondary/5 border-none transition-colors"
+														>
+															{/* Description Autocomplete */}
+															<TableCell className="px-4 py-3 align-top">
+																<FormField
+																	control={form.control}
+																	name={`lines.${index}.description`}
+																	render={({ field: f }) => (
+																		<FormItem className="space-y-1">
+																			<FormControl>
+																				<DescriptionAutocomplete
+																					value={f.value}
+																					onChange={f.onChange}
+																					onSelectTier={(tier) => {
+																						form.setValue(
+																							`lines.${index}.description`,
+																							tier.name,
+																						);
+																						form.setValue(
+																							`lines.${index}.unitPrice`,
+																							tier.price,
+																						);
+																					}}
+																					pricingTiers={pricingTiers}
+																					isPending={isPending}
+																				/>
+																			</FormControl>
+																			<FormMessage className="text-[10px]" />
+																		</FormItem>
+																	)}
+																/>
+															</TableCell>
+
+															{/* Quantity */}
+															<TableCell className="px-2 py-3 align-top">
+																<FormField
+																	control={form.control}
+																	name={`lines.${index}.quantity`}
+																	render={({ field: f }) => (
+																		<FormItem className="space-y-0">
+																			<FormControl>
+																				<Input
+																					type="number"
+																					{...f}
+																					className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
+																					disabled={isPending}
+																					onChange={(e) =>
+																						f.onChange(
+																							parseFloat(e.target.value) || 0,
+																						)
+																					}
+																				/>
+																			</FormControl>
+																		</FormItem>
+																	)}
+																/>
+															</TableCell>
+
+															{/* Unit Price */}
+															<TableCell className="px-2 py-3 align-top">
+																<FormField
+																	control={form.control}
+																	name={`lines.${index}.unitPrice`}
+																	render={({ field: f }) => (
+																		<FormItem className="space-y-0">
+																			<FormControl>
+																				<Input
+																					type="number"
+																					{...f}
+																					className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
+																					disabled={isPending}
+																					onChange={(e) =>
+																						f.onChange(
+																							parseFloat(e.target.value) || 0,
+																						)
+																					}
+																				/>
+																			</FormControl>
+																		</FormItem>
+																	)}
+																/>
+															</TableCell>
+
+															{/* Line Total */}
+															<TableCell className="px-2 py-4 text-right align-top">
+																<span className="text-foreground font-mono text-sm font-black tabular-nums">
+																	{(
+																		linesWatcher[index]?.quantity *
+																			linesWatcher[index]?.unitPrice || 0
+																	).toLocaleString()}
+																	<span className="text-muted-foreground ml-1 text-xs font-normal">
+																		MAD
+																	</span>
+																</span>
+															</TableCell>
+
+															{/* Remove */}
+															<TableCell className="p-0 py-3 text-center align-top">
+																<Button
+																	type="button"
+																	variant="ghost"
+																	size="icon"
+																	className="text-destructive hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all active:scale-90"
+																	disabled={fields.length === 1 || isPending}
+																	onClick={() => remove(index)}
+																>
+																	<Trash size={15} variant="Bold" />
+																</Button>
+															</TableCell>
+														</TableRow>
+													))}
+												</TableBody>
 											</Table>
 										</div>
 									</div>
@@ -606,13 +692,14 @@ export function DocumentDialog({
 
 									{/* Totals */}
 									<div className="border-foreground/10 bg-secondary/5 flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 sm:w-1/2">
-
 										{/* Subtotal Row */}
 										<div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-end sm:gap-16">
 											<SectionLabel>Subtotal</SectionLabel>
 											<span className="font-heading text-foreground text-lg font-bold tabular-nums">
 												{subtotal.toLocaleString()}
-												<span className="text-muted-foreground ml-1 text-xs font-normal">MAD</span>
+												<span className="text-muted-foreground ml-1 text-xs font-normal">
+													MAD
+												</span>
 											</span>
 										</div>
 
@@ -627,12 +714,19 @@ export function DocumentDialog({
 														className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
 														disabled={isPending}
 													/>
-													<span className="text-muted-foreground/60 text-[10px] font-bold">%</span>
+													<span className="text-muted-foreground/60 text-[10px] font-bold">
+														%
+													</span>
 												</div>
 											</div>
 											<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-												{taxAmount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
-												<span className="text-muted-foreground ml-1 text-xs font-normal">MAD</span>
+												{taxAmount.toLocaleString(undefined, {
+													minimumFractionDigits: 0,
+													maximumFractionDigits: 2,
+												})}
+												<span className="text-muted-foreground ml-1 text-xs font-normal">
+													MAD
+												</span>
 											</span>
 										</div>
 
@@ -645,14 +739,15 @@ export function DocumentDialog({
 											</span>
 											<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
 												{totalAmount.toLocaleString()}
-												<span className="text-primary ml-1.5 text-sm font-semibold">MAD</span>
+												<span className="text-primary ml-1.5 text-sm font-semibold">
+													MAD
+												</span>
 											</span>
 										</div>
 									</div>
 								</div>
 
 								{/* ─── Section 5: Notes ────────────────────────────────────────── */}
-
 							</div>
 						</ScrollArea>
 

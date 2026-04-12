@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { DocumentCard } from "@/components/b2b/document-card";
 import { DocumentDialog } from "@/components/b2b/document-dialog";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,7 @@ import {
 	CloseCircle,
 	DocumentDownload,
 	DocumentText as DocumentIcon,
+	DocumentText,
 	Edit2,
 	More,
 	ReceiptText,
@@ -119,81 +121,93 @@ export function DocumentList({
 
 			{/* Desktop Table View */}
 			<div className="border-foreground/10 shadow-secondary/5 hidden overflow-hidden rounded-3xl border shadow-sm md:block">
-				<Table containerClassName="overflow-x-hidden" className="bg-white">
-					<TableHeader className="hover:bg-sidebar border-b border-foreground/10">
-						<TableHead className="text-foreground font-heading px-6 py-5 text-xs font-bold tracking-widest uppercase">
-							Document
-						</TableHead>
-						<TableHead className="text-foreground font-heading py-5 text-xs font-bold tracking-widest uppercase">
-							Type
-						</TableHead>
-						<TableHead className="text-foreground font-heading py-5 text-xs font-bold tracking-widest uppercase">
-							Status
-						</TableHead>
-						<TableHead className="text-foreground font-heading py-5 text-xs font-bold tracking-widest uppercase">
-							Issued
-						</TableHead>
-						<TableHead className="text-foreground font-heading py-5 text-xs font-bold tracking-widest uppercase">
-							Amount
-						</TableHead>
-						<TableHead className="py-5 pr-6 text-right"></TableHead>
+				<Table containerClassName="overflow-x-hidden" className="bg-card">
+					<TableHeader className="bg-sidebar border-b border-foreground/10">
+						<TableRow className="border-foreground/10 border-b hover:bg-transparent">
+							<TableHead className="text-muted-foreground h-10 px-4 pl-6 text-[10px] font-bold tracking-widest uppercase">
+								Type
+							</TableHead>
+							<TableHead className="text-muted-foreground h-10 px-6 text-[10px] font-bold tracking-widest uppercase">
+								Document
+							</TableHead>
+							<TableHead className="text-muted-foreground h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
+								Status
+							</TableHead>
+							<TableHead className="text-muted-foreground h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
+								Issued
+							</TableHead>
+							<TableHead className="text-muted-foreground h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
+								Amount
+							</TableHead>
+							<TableHead className="h-10 pr-6 text-right" />
+						</TableRow>
 					</TableHeader>
-					<TableBody>
+					<TableBody className="divide-secondary/15 divide-y">
 						{documents.map((doc) => (
 							<TableRow
 								key={doc.id}
-								className="group border-foreground/10 hover:bg-accent/5 font-medium transition-colors"
+								className="hover:bg-primary/5 group border-none transition-colors"
 							>
-								<TableCell className="p-4">
-									<div className="flex items-center gap-3">
-										<div className="bg-secondary/40 text-secondary-3 group-hover:bg-primary/10 group-hover:text-primary flex h-10 w-10 items-center justify-center rounded-xl transition-all group-hover:scale-110 group-hover:zen-glow-teal">
-											<ReceiptText size={20} variant="Bulk" />
+								<TableCell className="px-4 py-3 pl-6">
+									<span className="text-[10px] font-bold tracking-wider uppercase opacity-40">
+										{doc.type}
+									</span>
+								</TableCell>
+								<TableCell className="px-4 py-3">
+									<Link
+										href={`/b2b/documents/${doc.id}`}
+										className="flex items-center gap-3"
+									>
+										<div className="bg-secondary/40 text-secondary-3 group-hover:bg-primary/10 group-hover:text-primary flex h-10 w-10 items-center justify-center rounded-xl transition-all group-hover:scale-110 group-hover:zen-glow-teal shadow-sm">
+											{doc.type === "invoice" ? (
+												<ReceiptText size={20} variant="Bulk" />
+											) : (
+												<DocumentText size={20} variant="Bulk" />
+											)}
 										</div>
 										<div className="flex flex-col">
-											<span className="text-foreground text-sm font-bold">
+											<span className="text-foreground text-sm font-bold tracking-tight">
 												{doc.documentNumber}
 											</span>
 											<span className="text-muted-foreground/60 text-[10px] leading-none font-medium">
 												{doc.contact?.fullName || "No contact linked"}
 											</span>
 										</div>
-									</div>
+									</Link>
 								</TableCell>
-								<TableCell>
-									<span className="text-xs font-bold tracking-wider uppercase">
-										{doc.type}
-									</span>
-								</TableCell>
-								<TableCell>
+								<TableCell className="px-4 py-3">
 									<Badge
 										variant={getStatusProps(doc.status).variant}
-										className="flex w-fit items-center gap-1.5 px-3 py-1 text-[10px] font-bold tracking-widest uppercase transition-all"
+										className="flex w-fit items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase transition-all"
 									>
 										{getStatusProps(doc.status).icon}
 										{getStatusProps(doc.status).label}
 									</Badge>
 								</TableCell>
-								<TableCell className="text-muted-foreground text-xs font-medium">
+								<TableCell className="text-muted-foreground px-4 py-3 text-[10px] font-bold tracking-widest uppercase opacity-70">
 									{doc.issueDate
 										? format(new Date(doc.issueDate), "MMM dd, yyyy")
 										: "N/A"}
 								</TableCell>
-								<TableCell className="text-primary text-sm font-bold">
+								<TableCell className="text-primary px-4 py-3 text-sm font-black tabular-nums">
 									{parseFloat(doc.totalAmount).toLocaleString("en-US", {
 										minimumFractionDigits: 2,
 										maximumFractionDigits: 2,
 									})}{" "}
 									MAD
 								</TableCell>
-								<TableCell className="text-right">
+								<TableCell className="px-4 py-3 pr-6 text-right">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
 											<Button
 												variant="ghost"
 												size="icon"
-												className="group-hover:bg-secondary/30 h-9 w-9 rounded-full transition-colors"
+												className="hover:bg-secondary/20 h-9 w-9 rounded-xl transition-colors"
 											>
-												<More size={18} className="rotate-90" />
+												<More
+													size={18}
+													className="rotate-90 text-muted-foreground"
+												/>
 											</Button>
 										</DropdownMenuTrigger>
 										<DropdownMenuContent
