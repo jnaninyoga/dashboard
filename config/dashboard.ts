@@ -1,15 +1,15 @@
-import { 
+import {
 	Buildings,
-	Calendar, 
-	Card, 
-	Category2, 
+	Calendar,
+	Card,
+	Category2,
 	DocumentText,
-	Home2, 
-	People, 
+	Home2,
+	People,
 	Receipt,
-	TickCircle, 
-	Timer1, 
-	UserAdd
+	TickCircle,
+	Timer1,
+	UserAdd,
 } from "iconsax-reactjs";
 
 export const dashboardConfig = {
@@ -49,14 +49,9 @@ export const dashboardConfig = {
 			icon: Buildings,
 		},
 		{
-			title: "Quotes",
-			url: "/b2b/quotes",
+			title: "Documents",
+			url: "/b2b/documents",
 			icon: DocumentText,
-		},
-		{
-			title: "Invoices",
-			url: "/b2b/invoices",
-			icon: Receipt,
 		},
 	],
 	settings: [

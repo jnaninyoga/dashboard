@@ -73,7 +73,10 @@ export function DocumentCard({ doc }: { doc: DocumentWithContact }) {
 						<DropdownMenuItem className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
 							<ArchiveBook size={16} variant="Bulk" /> Archive
 						</DropdownMenuItem>
-						<DropdownMenuItem className="text-destructive cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
+						<DropdownMenuItem
+							variant="destructive"
+							className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase"
+						>
 							<CloseCircle size={16} variant="Bulk" /> Cancel
 						</DropdownMenuItem>
 					</DropdownMenuContent>
@@ -100,9 +103,10 @@ export function DocumentCard({ doc }: { doc: DocumentWithContact }) {
 					<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-40">Amount</span>
 					<span className="text-foreground text-base font-black">
 						{parseFloat(doc.totalAmount).toLocaleString("en-US", {
-							style: "currency",
-							currency: "MAD",
-						})}
+							minimumFractionDigits: 2,
+							maximumFractionDigits: 2,
+						})}{" "}
+						MAD
 					</span>
 				</div>
 				<div className="text-right">

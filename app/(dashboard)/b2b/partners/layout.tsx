@@ -10,5 +10,5 @@ export default function PartnersLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	return <main className="flex flex-1 flex-col gap-6">{children}</main>;
+	return <main className="flex flex-1 flex-col gap-6 p-6">{children}</main>;
 }

@@ -23,7 +23,11 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { type Contact } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +43,9 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
 					</AvatarFallback>
 				</Avatar>
 				<h3 className="text-foreground font-heading font-bold">No contacts</h3>
-				<p className="text-muted-foreground/80 text-sm">Add a collaborator to manage this partner.</p>
+				<p className="text-muted-foreground/80 text-sm">
+					Add a collaborator to manage this partner.
+				</p>
 			</Card>
 		);
 	}
@@ -71,81 +77,105 @@ function ContactItem({ contact }: { contact: Contact }) {
 	return (
 		<>
 			<div
-				className="group bg-sidebar/50 hover:border-primary/10 hover:zen-glow-teal relative flex items-center justify-between gap-4 overflow-hidden rounded-3xl border border-transparent p-3 pr-4 transition-all hover:bg-white"
+				className={cn(
+					"group animate-slide-bottom bg-white border-foreground/10 relative flex items-center justify-between gap-4 rounded-3xl border p-3 pr-4 transition-all",
+					contact.isPrimary
+						? "hover:border-primary/50 hover:zen-glow-teal"
+						: "hover:border-secondary-3/50 hover:zen-glow-blush",
+				)}
 			>
-				{/* Section 1: Avatar */}
+				{contact.isPrimary ? (
+					<div className="absolute top-5 right-5 -z-10 opacity-0 group-hover:opacity-100 group-hover:-top-3.5 group-hover:z-10 transition-all">
+						<Badge
+							variant="outline"
+							className="border-foreground/10 bg-primary text-primary-foreground rounded-full px-2 py-0 text-[10px] font-bold tracking-widest uppercase shadow-none"
+						>
+							Primary
+						</Badge>
+					</div>
+				) : null}
+
 				<div className="flex shrink-0 items-center gap-4">
 					<Avatar
 						className={cn(
 							"h-12 w-12 rounded-full border transition-all",
 							contact.isPrimary
 								? "border-primary/20 bg-primary/10 text-primary"
-								: "bg-secondary/10 text-muted-foreground border-transparent"
+								: "bg-secondary/10 text-muted-foreground border-transparent",
 						)}
 					>
 						<AvatarFallback className="rounded-full bg-transparent">
-							{contact.isPrimary ? <Star size={20} variant="Bold" /> : <User size={20} variant="Bulk" />}
+							{contact.isPrimary ? (
+								<Star size={20} variant="Bold" />
+							) : (
+								<User size={20} variant="Bulk" />
+							)}
 						</AvatarFallback>
 					</Avatar>
 				</div>
 
-				{/* Section 2: Name in one line (no wrapping), profession underneath */}
 				<div className="flex min-w-0 flex-1 flex-col justify-center">
 					<div className="font-heading group-hover:text-primary text-foreground truncate text-base font-bold transition-colors">
 						{contact.fullName}
 					</div>
+
 					<div className="text-secondary-foreground truncate text-[10px] font-bold tracking-widest uppercase opacity-60">
 						{contact.role || "Contact"}
 					</div>
 				</div>
 
-				{/* Section 3: Absolute indicator + stack of buttons */}
 				<div className="flex shrink-0 items-center justify-end gap-1">
-					{contact.isPrimary ? (
-						<div className="mr-2">
-							<Badge
-								variant="outline"
-								className="border-primary/20 bg-primary/5 text-primary rounded-full px-2 py-0 text-[10px] font-bold tracking-widest uppercase shadow-none"
-							>
-								Primary
-							</Badge>
-						</div>
-					) : null}
-
 					<div className="text-muted-foreground flex items-center gap-1 transition-all">
 						{contact.phone ? (
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<a href={`tel:${contact.phone}`} className="hover:text-foreground hover:bg-secondary/50 flex h-8 w-8 items-center justify-center rounded-full transition-colors">
+									<a
+										href={`tel:${contact.phone}`}
+										className="bg-secondary/40 text-secondary-3 group-hover:bg-secondary/70 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+									>
 										<Call size={16} variant="Bulk" />
 									</a>
 								</TooltipTrigger>
-								<TooltipContent side="top">Call {contact.fullName}</TooltipContent>
+								<TooltipContent side="top">
+									Call {contact.fullName}
+								</TooltipContent>
 							</Tooltip>
 						) : null}
 						{contact.email ? (
 							<Tooltip>
 								<TooltipTrigger asChild>
-									<a href={`mailto:${contact.email}`} className="hover:text-foreground hover:bg-secondary/50 flex h-8 w-8 items-center justify-center rounded-full transition-colors">
+									<a
+										href={`mailto:${contact.email}`}
+										className="bg-secondary/40 text-secondary-3 group-hover:bg-secondary/70 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+									>
 										<Sms size={16} variant="Bulk" />
 									</a>
 								</TooltipTrigger>
-								<TooltipContent side="top">Email {contact.fullName}</TooltipContent>
+								<TooltipContent side="top">
+									Email {contact.fullName}
+								</TooltipContent>
 							</Tooltip>
 						) : null}
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="icon" className="hover:text-foreground hover:bg-secondary/50 text-muted-foreground h-8 w-8 rounded-full">
+								<Button
+									variant="ghost"
+									size="icon"
+									className="bg-sidebar text-secondary-foreground group-hover:bg-background flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+								>
 									<More size={16} className="rotate-90" />
 								</Button>
 							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end" className="border-secondary/10 w-44 rounded-xl shadow-xl">
+							<DropdownMenuContent
+								align="end"
+								className="border-foreground/10 rounded-xl w-44"
+							>
 								<DropdownMenuItem className="cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase">
 									Edit
 								</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={() => setShowDeleteDialog(true)}
-									className="text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase"
+									className="text-destructive focus:bg-destructive/5 focus:text-destructive cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase focus:[&_svg]:text-destructive"
 								>
 									<Trash className="mr-2 h-4 w-4" variant="Outline" />
 									Delete
@@ -159,9 +189,12 @@ function ContactItem({ contact }: { contact: Contact }) {
 			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent className="rounded-3xl border-0 shadow-2xl">
 					<AlertDialogHeader>
-						<AlertDialogTitle className="font-heading text-xl font-bold">Are you absolutely sure?</AlertDialogTitle>
+						<AlertDialogTitle className="font-heading text-xl font-bold">
+							Are you absolutely sure?
+						</AlertDialogTitle>
 						<AlertDialogDescription className="text-muted-foreground leading-relaxed">
-							This will permanently delete <strong>{contact.fullName}</strong> from this partner&apos;s contact list.
+							This will permanently delete <strong>{contact.fullName}</strong>{" "}
+							from this partner&apos;s contact list.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter className="gap-2">

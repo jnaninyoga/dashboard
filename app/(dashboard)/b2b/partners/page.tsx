@@ -40,7 +40,9 @@ export default async function PartnersPage(props: {
 		<>
 			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
 				<header className="space-y-1">
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">B2B Partners</h1>
+					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+						B2B Partners
+					</h1>
 					<p className="text-md text-muted-foreground">
 						Manage your relationships with Hotels, Riads, and companies.
 					</p>
