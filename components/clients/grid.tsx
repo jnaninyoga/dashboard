@@ -109,7 +109,7 @@ function ClientAvatar({
 export function ClientsGrid({ clients }: { clients: Client[] }) {
 	if (clients.length === 0) {
 		return (
-			<div className="flex h-64 items-center justify-center rounded-md border border-dashed">
+			<div className="animate-slide-up flex h-64 items-center justify-center rounded-md border border-dashed delay-150">
 				<p className="text-muted-foreground">No clients found.</p>
 			</div>
 		);
@@ -117,7 +117,7 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 
 	return (
 		<div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-			{clients.map((client) => {
+			{clients.map((client, index) => {
 				const activeWallet = client.wallets?.[0];
 
 				// Filter for actual alerts
@@ -128,9 +128,13 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 					<Card
 						key={client.id}
 						className={cn(
-							"group border-muted/60 hover:zen-shadow-md relative flex flex-col overflow-hidden rounded-3xl transition-all duration-300 ease-out",
+							"group animate-slide-up border-muted/60 hover:zen-shadow-md relative flex flex-col overflow-hidden rounded-3xl transition-all duration-300 ease-out",
 							isOnline && "border-green-500/50 ring-1 ring-green-500/50",
 						)}
+						style={{
+							animationDelay: `${index * 50}ms`,
+							animationFillMode: 'both'
+						}}
 					>
 						{/* Top Status Bar & Actions */}
 						<div className="absolute top-3 right-3 z-10 flex items-center gap-2">

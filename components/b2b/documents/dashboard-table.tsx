@@ -30,7 +30,7 @@ export function DocumentDashboardTable({
 	documents,
 }: DocumentDashboardTableProps) {
 	return (
-		<div className="border-foreground/10 shadow-secondary/5 hidden overflow-hidden rounded-3xl border shadow-sm md:block">
+		<div className="animate-slide-up border-foreground/10 shadow-secondary/5 hidden overflow-hidden rounded-3xl border shadow-sm delay-150 md:block">
 			<Table containerClassName="overflow-x-hidden" className="bg-white">
 				<TableHeader className="bg-sidebar border-foreground/10 border-b">
 					<TableRow className="border-foreground/10 border-b hover:bg-transparent">

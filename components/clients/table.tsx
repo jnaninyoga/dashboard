@@ -28,7 +28,15 @@ import {
     type MembershipProduct 
 } from "@/drizzle/schema";
 
-import { Card, Danger } from "iconsax-reactjs";
+import { 
+    Call as Phone, 
+    Card, 
+    Danger, 
+    Sms as Mail, 
+    TickCircle, 
+    User, 
+	Whatsapp
+} from "iconsax-reactjs";
 
 import { ClientActions } from "./actions";
 
@@ -60,31 +68,49 @@ function ClientAvatar({ client }: { client: ClientWithRelations }) {
 	return (
 		<Avatar className="h-9 w-9">
 			<AvatarImage src={photoUrl || undefined} alt={client.fullName} />
-			<AvatarFallback>{client.fullName.charAt(0)}</AvatarFallback>
+			<AvatarFallback className="bg-primary/10 text-primary font-bold">{client.fullName.charAt(0)}</AvatarFallback>
 		</Avatar>
 	);
 }
 
 export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 	return (
-		<div className="relative w-full overflow-x-auto rounded-md border bg-white p-2">
-			<Table className="[&_tr]:border-secondary-foreground/10">
-				<TableHeader>
-					<TableRow>
-						<TableHead className="w-[50px]"></TableHead>
-						<TableHead>Name</TableHead>
-						<TableHead>Membership</TableHead>
-						<TableHead className="w-[50px] text-center">Health</TableHead>
-						<TableHead>Category</TableHead>
-						<TableHead>Phone</TableHead>
-						<TableHead className="text-right">Actions</TableHead>
+		<div className="animate-slide-up border-foreground/10 bg-card overflow-hidden rounded-3xl border shadow-sm transition-all delay-150">
+			<Table containerClassName="overflow-x-auto" className="bg-white">
+				<TableHeader className="bg-sidebar border-foreground/10 border-b">
+					<TableRow className="border-foreground/10 border-b hover:bg-transparent">
+						<TableHead className="text-muted-foreground/70 h-10 px-6 text-[10px] font-bold tracking-widest uppercase">
+							Client
+						</TableHead>
+						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
+							Gender
+						</TableHead>
+						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
+							Category
+						</TableHead>
+						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
+							Membership
+						</TableHead>
+						<TableHead className="text-muted-foreground h-10 text-center text-[10px] font-bold tracking-widest uppercase">
+							Health
+						</TableHead>
+						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
+							Phone
+						</TableHead>
+						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
+							Email
+						</TableHead>
+						<TableHead className="h-10 pr-6 text-right"></TableHead>
 					</TableRow>
 				</TableHeader>
-				<TableBody>
+				<TableBody className="divide-secondary/15 divide-y">
 					{clients.length === 0 ? (
 						<TableRow>
-							<TableCell colSpan={7} className="h-24 text-center">
-								No clients found.
+							<TableCell colSpan={8} className="h-32 text-center">
+								<div className="flex flex-col items-center justify-center gap-1 opacity-40">
+									<p className="text-sm font-bold tracking-widest uppercase">No clients found</p>
+									<p className="text-xs">Adjust your filters or add a new client</p>
+								</div>
 							</TableCell>
 						</TableRow>
 					) : (
@@ -95,94 +121,184 @@ export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 							const hasAlerts = alerts.length > 0;
 
 							return (
-								<TableRow key={client.id}>
-									<TableCell>
-										<ClientAvatar client={client} />
-									</TableCell>
-									<TableCell className="align-top font-medium">
-										<div className="flex items-center gap-2">
+								<TableRow 
+									key={client.id}
+									className="hover:bg-primary/5 group border-none transition-colors"
+								>
+									{/* Avatar + Name Cell */}
+									<TableCell className="px-6 py-4">
+										<div className="flex items-center gap-4">
 											<Link
 												href={`/clients/${client.id}`}
-												className="hover:text-primary block hover:underline"
+												className="group/avatar relative shrink-0"
 											>
-												<span className="font-bold text-gray-900">{client.fullName}</span>
+												<ClientAvatar client={client} />
+												{client.activeSessionName ? (
+													<span className="absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 border-white bg-green-500 shadow-sm" />
+												) : null}
 											</Link>
-											{client.activeSessionName ? (
-												<TooltipProvider>
-													<Tooltip>
-														<TooltipTrigger asChild>
-															<div className="flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-green-700 shadow-sm">
-																<span className="relative flex h-1.5 w-1.5">
-																  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-																  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500"></span>
-																</span>
-																<span className="max-w-[100px] truncate text-[9px] font-bold tracking-wider uppercase">
-																	{client.activeSessionName}
-																</span>
-															</div>
-														</TooltipTrigger>
-														<TooltipContent>
-															<p className="text-xs font-semibold text-green-600">
-																Checked in today
-															</p>
-														</TooltipContent>
-													</Tooltip>
-												</TooltipProvider>
-											) : null}
-										</div>
-										<div className="text-muted-foreground mt-0.5 text-sm">
-											{client.email}
-										</div>
-									</TableCell>
-									<TableCell>
-										{activeWallet ? (
-											<div className="flex flex-col">
-												<span className="text-sm font-medium">
-													{activeWallet.product?.name}
-												</span>
-												<div className="text-muted-foreground flex items-center gap-1 text-xs">
-													<Card className="h-3 w-3" variant="Outline" />
-													<span>{activeWallet.remainingCredits} credits</span>
+											<div className="flex min-w-0 flex-col">
+												<div className="flex items-center gap-2">
+													<Link
+														href={`/clients/${client.id}`}
+														className="text-foreground group-hover:text-primary truncate text-sm font-bold tracking-tight transition-colors"
+													>
+														{client.fullName}
+													</Link>
+													{client.activeSessionName ? (
+														<TooltipProvider>
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<div className="flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-green-700 shadow-sm">
+																		<span className="relative flex h-1 w-1">
+																			<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+																			<span className="relative inline-flex h-1 w-1 rounded-full bg-green-500"></span>
+																		</span>
+																		<span className="max-w-[80px] truncate text-[8px] font-black tracking-widest uppercase">
+																			{client.activeSessionName}
+																		</span>
+																	</div>
+																</TooltipTrigger>
+																<TooltipContent>
+																	<p className="text-xs font-semibold text-green-600">
+																		Present in the club today
+																	</p>
+																</TooltipContent>
+															</Tooltip>
+														</TooltipProvider>
+													) : null}
 												</div>
 											</div>
+										</div>
+									</TableCell>
+
+									{/* Gender Cell */}
+									<TableCell className="py-4">
+										<div className="flex items-center gap-2 font-medium">
+											{client.gender === "male" ? (
+												<>
+													<User className="size-4 text-blue-500" variant="Bulk" />
+													<span className="text-foreground text-xs capitalize">Male</span>
+												</>
+											) : client.gender === "female" ? (
+												<>
+													<User className="size-4 text-pink-500" variant="Bulk" />
+													<span className="text-foreground text-xs capitalize">Female</span>
+												</>
+											) : (
+												<>
+													<User className="text-muted-foreground/40 size-4" variant="Outline" />
+													<span className="text-muted-foreground/60 text-xs">Unspecified</span>
+												</>
+											)}
+										</div>
+									</TableCell>
+
+									{/* Category Cell */}
+									<TableCell className="py-4">
+										<Badge variant="outline" className="text-primary border-primary/40 bg-primary/5 rounded-full px-2 py-0.5 text-[10px] font-black tracking-widest uppercase">
+											{client.category?.name || "None"}
+										</Badge>
+									</TableCell>
+
+									{/* Membership Cell */}
+									<TableCell className="py-4">
+										{activeWallet ? (
+											<Badge className="bg-primary/90 hover:bg-primary gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-black tracking-widest uppercase shadow-sm">
+												<Card size={10} variant="Bold" className="text-white opacity-80" />
+												{activeWallet.remainingCredits} / {activeWallet.product?.defaultCredits || 0}
+											</Badge>
 										) : (
-											<span className="text-muted-foreground text-sm">-</span>
+											<span className="text-muted-foreground/30 text-[10px] font-bold tracking-widest uppercase italic">No Pack</span>
 										)}
 									</TableCell>
-									<TableCell className="text-center">
+
+									{/* Health Cell */}
+									<TableCell className="py-4 text-center">
 										{hasAlerts ? (
 											<TooltipProvider>
 												<Tooltip>
 													<TooltipTrigger asChild>
-														<div className="bg-destructive/10 text-destructive inline-flex cursor-help items-center justify-center rounded-full p-1">
-															<Danger className="h-4 w-4" variant="Bulk" />
+														<div className="bg-destructive/10 text-destructive mx-auto flex h-8 w-8 cursor-help items-center justify-center rounded-xl transition-all hover:scale-110 active:scale-90">
+															<Danger size={18} variant="Bulk" />
 														</div>
 													</TooltipTrigger>
-													<TooltipContent>
-														<ul className="list-disc pl-4 text-xs">
-															{alerts.map((a, i) => (
-																<li key={i}>{a.condition}</li>
-															))}
-														</ul>
+													<TooltipContent side="top" align="center" className="border-foreground/10 max-w-xs rounded-xl bg-red-50 p-3 shadow-xl">
+														<div className="flex flex-col gap-2">
+															<p className="text-destructive border-destructive/10 flex items-center gap-1.5 border-b pb-1.5 text-[10px] font-black tracking-widest uppercase">
+																<Danger size={12} variant="Bulk" />
+																Health Alerts
+															</p>
+															<ul className="space-y-1">
+																{alerts.map((a, i) => (
+																	<li key={i} className="text-foreground flex items-center gap-2 text-[11px] font-medium">
+																		<span className="bg-destructive h-1.5 w-1.5 rounded-full" />
+																		{a.condition}
+																	</li>
+																))}
+															</ul>
+														</div>
 													</TooltipContent>
 												</Tooltip>
 											</TooltipProvider>
-										) : null}
+										) : (
+											<div className="flex items-center justify-center">
+												<TooltipProvider>
+													<Tooltip>
+														<TooltipTrigger asChild>
+															<div className="mx-auto flex h-8 w-8 cursor-help items-center justify-center rounded-xl bg-green-100 text-green-500 transition-all hover:scale-110 active:scale-90">
+																<TickCircle size={18} variant="Bulk" />
+															</div>
+														</TooltipTrigger>
+														<TooltipContent className="rounded-lg border-0 bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700">
+															No health alerts recorded
+														</TooltipContent>
+													</Tooltip>
+												</TooltipProvider>
+											</div>
+										)}
 									</TableCell>
-									<TableCell>
-										<div className="flex flex-col gap-1">
-											<Badge variant="secondary" className="w-fit capitalize">
-												{client.category?.name || "Uncategorized"}
-											</Badge>
-											{client.gender ? (
-												<span className="text-muted-foreground text-xs capitalize">
-													{client.gender}
-												</span>
-											) : null}
+
+									{/* Phone Cell */}
+									<TableCell className="min-w-[140px] py-4">
+										<div className="flex items-center gap-2">
+											<Phone size={14} variant="Bold" className="text-primary" />
+											<Link
+												href={`https://wa.me/${client.phone.replace(/[^0-9]/g, "")}`}
+												target="_blank"
+												className="group/wa flex size-6 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366] transition-all hover:scale-105 hover:bg-[#25D366] hover:text-white active:scale-95"
+											>
+												<Whatsapp className="size-4" variant="Bold" />
+											</Link>
+											<Link
+												href={`tel:${client.phone}`}
+												className="hover:text-primary text-foreground text-xs font-medium tracking-tight transition-colors"
+											>
+												{client.phone}
+											</Link>
 										</div>
 									</TableCell>
-									<TableCell className="text-sm">{client.phone}</TableCell>
-									<TableCell className="text-right">
+
+									{/* Email Cell */}
+									<TableCell className="min-w-[180px] py-4">
+										{client.email ? (
+											<div className="flex items-center gap-2">
+												<Mail size={14} variant="Bold" className="text-secondary-2" />
+												<Link
+													href={`mailto:${client.email}`}
+													className="hover:text-secondary-3 text-foreground truncate text-xs font-medium transition-colors"
+													title={client.email}
+												>
+													{client.email}
+												</Link>
+											</div>
+										) : (
+											<span className="text-muted-foreground/50 text-[10px] font-bold tracking-widest uppercase italic">No Email</span>
+										)}
+									</TableCell>
+
+									{/* Actions Cell */}
+									<TableCell className="py-4 pr-6 text-right">
 										<ClientActions client={client} />
 									</TableCell>
 								</TableRow>
