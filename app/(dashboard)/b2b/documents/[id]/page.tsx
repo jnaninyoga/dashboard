@@ -15,7 +15,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { type B2BDocument, type B2BDocumentLine } from "@/lib/types/b2b";
+import {
+	type B2BDocumentLine,
+	type DocumentWithRelations,
+} from "@/lib/types/b2b";
 
 import { format } from "date-fns";
 import {
@@ -26,7 +29,6 @@ import {
 	CloseCircle,
 	DocumentText,
 	Edit2,
-	Link1,
 	MoneyTime,
 	ReceiptText,
 	TickCircle,
@@ -36,7 +38,10 @@ type Params = Promise<{ id: string }>;
 
 export default async function DocumentDetailPage(props: { params: Params }) {
 	const { id } = await props.params;
-	const { document, error } = await getDocumentByIdAction(id);
+	const { document, error } = (await getDocumentByIdAction(id)) as {
+		document: DocumentWithRelations | null;
+		error?: string;
+	};
 
 	if (error || !document) {
 		return notFound();
@@ -197,51 +202,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				</div>
 			</div>
 
-			{/* Linked Documents Alert */}
-			{document.parent || document.children?.length > 0 ? (
-				<div className="animate-slide-up border-foreground/10 bg-card flex items-center gap-4 rounded-2xl border px-6 py-4 shadow-sm">
-					<div className="bg-primary/15 text-primary zen-teal-glow flex size-10 items-center justify-center rounded-full">
-						<Link1 size={20} variant="Bulk" />
-					</div>
-					<div className="flex flex-wrap gap-x-6 gap-y-2">
-						{document.parent ? (
-							<div className="flex flex-col">
-								<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-									Source Quote:
-								</span>
 
-								<Link href={`/b2b/documents/${document.parent.id}`}>
-									<Badge
-										variant="outline"
-										className="text-primary border-primary hover:bg-primary hover:text-primary-foreground border px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase transition-all duration-200"
-									>
-										{document.parent.documentNumber}
-									</Badge>
-								</Link>
-							</div>
-						) : null}
-						{document.children?.length > 0
-							? (document.children as B2BDocument[]).map((child) => (
-									<div key={child.id} className="flex flex-col">
-										<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-											Generated Invoice:
-										</span>
-										<div className="flex items-center gap-2">
-											<Link href={`/b2b/documents/${child.id}`}>
-												<Badge
-													variant="outline"
-													className="text-primary border-primary hover:bg-primary hover:text-primary-foreground border px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase transition-all duration-200"
-												>
-													{child.documentNumber}
-												</Badge>
-											</Link>
-										</div>
-									</div>
-								))
-							: null}
-					</div>
-				</div>
-			) : null}
 
 			{/* Actions Ribbon */}
 			<DocumentActionRibbon doc={document} />
@@ -250,7 +211,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			{document.status === "draft" ? (
 				<EditableDocumentLines
 					documentId={document.id}
-					initialLines={document.lines}
+					initialLines={document.lines || []}
 					initialTaxRate={document.taxRate}
 					status={document.status}
 				/>

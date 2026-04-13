@@ -5,6 +5,7 @@ import { getPartnerByIdAction } from "@/actions/b2b/partners";
 import { CopyableTaxId } from "@/components/b2b/copyable-tax-id";
 import { ProfileTabs } from "@/components/b2b/partners/profile-tabs";
 import { Separator } from "@/components/ui/separator";
+import { type PartnerWithRelations } from "@/lib/types/b2b";
 
 import {
 	ArrowLeft,
@@ -16,7 +17,10 @@ type Params = Promise<{ id: string }>;
 
 export default async function PartnerDetailPage(props: { params: Params }) {
 	const { id } = await props.params;
-	const { partner, error } = await getPartnerByIdAction(id);
+	const { partner, error } = (await getPartnerByIdAction(id)) as {
+		partner: PartnerWithRelations | null;
+		error?: string;
+	};
 
 	if (error || !partner) {
 		return notFound();
@@ -73,21 +77,21 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 				</div>
 
 				<div className="relative z-10 flex shrink-0 flex-col justify-center gap-3">
-					<div className="border-secondary-3/10 bg-secondary/60 flex items-center gap-4 rounded-2xl border px-6 py-4 shadow-xs backdrop-blur-sm">
+					<div className="border-secondary-3/20 bg-secondary/70 flex items-center gap-4 rounded-2xl border px-6 py-4 shadow-xs backdrop-blur-sm">
 						<div className="text-center">
-							<div className="text-foreground text-2xl font-bold">
+							<div className="text-secondary-3 text-2xl font-bold">
 								{partner.contacts?.length || 0}
 							</div>
-							<div className="text-secondary-foreground text-xs font-bold tracking-widest uppercase">
+							<div className="text-secondary-foreground/80 text-xs font-bold tracking-widest uppercase">
 								Contacts
 							</div>
 						</div>
-						<Separator orientation="vertical" className="mx-2 h-8" />
+						<Separator orientation="vertical" className="bg-secondary-3/20 mx-2 h-8" />
 						<div className="text-center">
-							<div className="text-foreground text-2xl font-bold">
+							<div className="text-secondary-3 text-2xl font-bold">
 								{partner.documents?.length || 0}
 							</div>
-							<div className="text-secondary-foreground text-xs font-bold tracking-widest uppercase">
+							<div className="text-secondary-foreground/80 text-xs font-bold tracking-widest uppercase">
 								Docs
 							</div>
 						</div>

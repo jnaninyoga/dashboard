@@ -31,7 +31,7 @@ import {
 import { type Contact } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-import { Call, More, Sms, Star, Trash, User } from "iconsax-reactjs";
+import { Call, Edit, More, Sms, Star, Trash, User } from "iconsax-reactjs";
 
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 	if (!contacts.length) {
@@ -171,13 +171,14 @@ function ContactItem({ contact }: { contact: Contact }) {
 								className="border-foreground/10 w-44 rounded-xl"
 							>
 								<DropdownMenuItem className="cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase">
+									<Edit className="mr-2 size-4" variant="Outline" />
 									Edit
 								</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={() => setShowDeleteDialog(true)}
 									className="text-destructive focus:bg-destructive/5 focus:text-destructive focus:[&_svg]:text-destructive cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase"
 								>
-									<Trash className="mr-2 h-4 w-4" variant="Outline" />
+									<Trash className="text-destructive mr-2 size-4" variant="Outline" />
 									Delete
 								</DropdownMenuItem>
 							</DropdownMenuContent>
