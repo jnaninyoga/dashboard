@@ -36,7 +36,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { type B2BDocumentStatus,type B2BPricingTier } from "@/lib/types";
+import { type B2BDocumentLine,type B2BDocumentStatus,type B2BPricingTier } from "@/lib/types";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Add, Refresh, Save2, Trash } from "iconsax-reactjs";
@@ -60,7 +60,7 @@ type LinesFormValues = z.infer<typeof linesFormSchema>;
 
 interface EditableDocumentLinesProps {
 	documentId: string;
-	initialLines: any[];
+	initialLines: B2BDocumentLine[];
 	initialTaxRate: string;
 	status: B2BDocumentStatus;
 }

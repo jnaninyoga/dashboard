@@ -23,9 +23,7 @@ export const clientSchema = createInsertSchema(clients, {
 		.nullable()
 		.optional()
 		.or(z.literal("")),
-	birthDate: (schema: {
-		refine: (arg0: (date: any) => boolean, arg1: { message: string }) => any;
-	}) =>
+	birthDate: (schema: z.ZodString) =>
 		schema.refine((date: string) => !isNaN(Date.parse(date)), {
 			message: "Invalid date string",
 		}),

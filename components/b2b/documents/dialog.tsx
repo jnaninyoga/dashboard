@@ -290,7 +290,7 @@ export function DocumentDialog({
 		linesWatcher.forEach(
 			(
 				line: { unitPrice: number; quantity: number; totalPrice: number },
-				index: any,
+				index: number,
 			) => {
 				const lineTotal = line.unitPrice * line.quantity;
 				if (lineTotal !== line.totalPrice) {
