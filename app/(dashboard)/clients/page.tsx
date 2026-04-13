@@ -43,7 +43,7 @@ export default async function ClientsPage(props: {
 
 	return (
 		<>
-			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
 				<header className="space-y-1">
 					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Clients</h1>
 					<p className="text-md text-muted-foreground">
@@ -58,7 +58,7 @@ export default async function ClientsPage(props: {
 				</Link>
 			</div>
 
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">
 				<ClientFilters categories={categories || []} />
 				<ClientViewToggle />
 			</div>

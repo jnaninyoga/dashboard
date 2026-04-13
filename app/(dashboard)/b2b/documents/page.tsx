@@ -29,7 +29,7 @@ export default async function DocumentsPage(props: {
 
 	return (
 		<>
-			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
 				<header className="space-y-1">
 					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
 						B2B Documents
@@ -40,7 +40,7 @@ export default async function DocumentsPage(props: {
 				</header>
 			</div>
 
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">
 				<DocumentFilters />
 			</div>
 

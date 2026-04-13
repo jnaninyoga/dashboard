@@ -38,10 +38,14 @@ export function PartnerGrid({
 
 	return (
 		<div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-			{partners.map((partner) => (
+			{partners.map((partner, index) => (
 				<Card
 					key={partner.id}
-					className="group border-secondary/20 hover:zen-shadow-md relative overflow-hidden rounded-3xl transition-all duration-300"
+					className="group animate-slide-up border-secondary/20 hover:zen-shadow-md relative overflow-hidden rounded-3xl transition-all duration-300"
+					style={{
+						animationDelay: `${index * 50}ms`,
+						animationFillMode: 'both'
+					}}
 				>
 					<div className="absolute top-4 right-4 z-10">
 						<DropdownMenu>

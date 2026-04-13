@@ -52,14 +52,14 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
 
 	return (
 		<div className="flex flex-col gap-4">
-			{contacts.map((contact) => (
-				<ContactItem key={contact.id} contact={contact} />
+			{contacts.map((contact, index) => (
+				<ContactItem key={contact.id} contact={contact} index={index} />
 			))}
 		</div>
 	);
 }
 
-function ContactItem({ contact }: { contact: Contact }) {
+function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 	const [isPending, startTransition] = useTransition();
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -78,11 +78,15 @@ function ContactItem({ contact }: { contact: Contact }) {
 		<>
 			<div
 				className={cn(
-					"group animate-slide-bottom border-foreground/10 relative flex items-center justify-between gap-4 rounded-3xl border bg-white p-3 pr-4 transition-all",
+					"group animate-slide-up border-foreground/10 relative flex items-center justify-between gap-4 rounded-3xl border bg-white p-3 pr-4 transition-all",
 					contact.isPrimary
 						? "hover:border-primary/50 hover:zen-glow-teal"
 						: "hover:border-secondary-3/50 hover:zen-glow-blush",
 				)}
+				style={{
+					animationDelay: `${index * 50}ms`,
+					animationFillMode: 'both'
+				}}
 			>
 				{contact.isPrimary ? (
 					<div className="absolute top-5 right-5 -z-10 opacity-0 transition-all group-hover:-top-3.5 group-hover:z-10 group-hover:opacity-100">
