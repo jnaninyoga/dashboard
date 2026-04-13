@@ -280,7 +280,7 @@ export async function updateDocumentNotesAction(id: string, notes: string): Prom
 
 export async function updateDocumentLinesAction(
 	id: string, 
-	data: { lines: DocumentLineFormValues[], subtotal: string, totalAmount: string }
+	data: { lines: DocumentLineFormValues[], subtotal: string, taxRate: string, totalAmount: string }
 ): Promise<ActionState> {
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
@@ -312,6 +312,7 @@ export async function updateDocumentLinesAction(
 				.update(b2bDocuments)
 				.set({
 					subtotal: data.subtotal,
+					taxRate: data.taxRate,
 					totalAmount: data.totalAmount,
 					updatedAt: new Date(),
 				})

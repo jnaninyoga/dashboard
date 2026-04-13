@@ -221,7 +221,18 @@ export function NewSessionDialog({
 								control={control}
 								name="outdoorPrice"
 								render={({ field }) => (
-									<Input type="number" placeholder="150" {...field} />
+									<Input 
+										inputMode="decimal"
+										placeholder="150" 
+										{...field} 
+										value={field.value ?? ""}
+										onChange={(e) => {
+											const val = e.target.value.replace(/[^0-9.]/g, "");
+											const parts = val.split(".");
+											const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+											field.onChange(sanitized);
+										}}
+									/>
 								)}
 							/>
 							{errors.outdoorPrice ? (

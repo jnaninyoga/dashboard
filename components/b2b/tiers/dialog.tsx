@@ -106,11 +106,16 @@ export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) 
                                     <FormLabel>Price (MAD)</FormLabel>
                                     <FormControl>
                                         <Input 
-                                            type="number" 
+                                            inputMode="decimal"
                                             {...field} 
                                             name="price"
                                             value={field.value ?? ""}
-                                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/[^0-9.]/g, "");
+                                                const parts = val.split(".");
+                                                const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+                                                field.onChange(sanitized);
+                                            }}
                                         />
                                     </FormControl>
                                     <FormMessage />
