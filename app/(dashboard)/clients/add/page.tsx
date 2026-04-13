@@ -1,5 +1,5 @@
 import { getClientCategories } from "@/actions/settings";
-import { ClientForm } from "@/components/clients/client-form";
+import { ClientForm } from "@/components/clients/form";
 
 export default async function AddClientPage() {
     const categories = await getClientCategories();

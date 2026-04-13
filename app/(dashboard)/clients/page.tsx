@@ -2,10 +2,10 @@ import Link from "next/link";
 
 import { getClientsAction } from "@/actions/clients/queries";
 import { getClientCategories } from "@/actions/settings";
-import { ClientFilters } from "@/components/clients/client-filters";
-import { ClientViewToggle } from "@/components/clients/client-view-toggle";
-import { ClientsGrid } from "@/components/clients/clients-grid";
-import { ClientsTable } from "@/components/clients/clients-table";
+import { ClientFilters } from "@/components/clients/filters";
+import { ClientsGrid } from "@/components/clients/grid";
+import { ClientsTable } from "@/components/clients/table";
+import { ClientViewToggle } from "@/components/clients/view-toggle";
 import { Button } from "@/components/ui/button";
 import { Gender, View } from "@/lib/types";
 

@@ -1,9 +1,9 @@
-import { getPartnersAction } from "@/actions/b2b-partners";
-import { PartnerDialog } from "@/components/b2b/partner-dialog";
-import { PartnerFilters } from "@/components/b2b/partner-filters";
-import { PartnerGrid } from "@/components/b2b/partner-grid";
-import { PartnerTable } from "@/components/b2b/partner-table";
-import { PartnerViewToggle } from "@/components/b2b/partner-view-toggle";
+import { getPartnersAction } from "@/actions/b2b/partners";
+import { PartnerDialog } from "@/components/b2b/partners/dialog";
+import { PartnerFilters } from "@/components/b2b/partners/filters";
+import { PartnerGrid } from "@/components/b2b/partners/grid";
+import { PartnerTable } from "@/components/b2b/partners/table";
+import { PartnerViewToggle } from "@/components/b2b/partners/view-toggle";
 import { Button } from "@/components/ui/button";
 import { View } from "@/lib/types";
 import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";

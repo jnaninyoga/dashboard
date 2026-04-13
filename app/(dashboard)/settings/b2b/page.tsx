@@ -1,6 +1,6 @@
 import { getB2BPricingTiers } from "@/actions/settings";
-import { B2BTierList } from "@/components/settings/b2b-tier-list";
-import { CreateB2BTierButton } from "@/components/settings/create-b2b-tier-button";
+import { CreateB2BTierButton } from "@/components/b2b/tiers/create-button";
+import { B2BTierList } from "@/components/b2b/tiers/list";
 
 export default async function B2BSettingsPage() {
 	const tiers = await getB2BPricingTiers();

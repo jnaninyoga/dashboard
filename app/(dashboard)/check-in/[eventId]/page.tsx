@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { getEventAttendanceAction } from "@/actions/attendance";
-import { CheckInManager } from "@/components/check-in/check-in-manager";
+import { getEventAttendanceAction } from "@/actions/schedule/attendance";
+import { CheckInManager } from "@/components/schedule/check-in";
 import { getEventById, type JnaninEventType } from "@/services/google-calendar";
 import { getValidAccessToken } from "@/services/google-tokens";
 import { createClient } from "@/supabase/server";

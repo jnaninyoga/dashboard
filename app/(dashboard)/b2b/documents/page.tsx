@@ -1,6 +1,6 @@
-import { getDocumentsAction } from "@/actions/b2b-documents";
-import { DocumentDashboardTable } from "@/components/b2b/document-dashboard-table";
-import { DocumentFilters } from "@/components/b2b/document-filters";
+import { getDocumentsAction } from "@/actions/b2b/documents";
+import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
+import { DocumentFilters } from "@/components/b2b/documents/filters";
 import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
 
 type SearchParams = Promise<{
@@ -49,7 +49,7 @@ export default async function DocumentsPage(props: {
 			{!documents?.length && (
 				<div className="flex flex-col items-center justify-center py-20 text-center">
 					<div className="bg-muted mb-4 rounded-full p-6">
-						<span className="text-4xl text-muted-foreground/30">📄</span>
+						<span className="text-muted-foreground/30 text-4xl">📄</span>
 					</div>
 					<h3 className="text-lg font-bold">No documents found</h3>
 					<p className="text-muted-foreground text-sm">
