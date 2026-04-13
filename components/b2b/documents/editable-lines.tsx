@@ -256,22 +256,27 @@ export function EditableDocumentLines({
 												control={form.control}
 												name={`lines.${index}.unitPrice`}
 												render={({ field: f }) => (
-													<Input
-														inputMode="decimal"
-														{...f}
-														className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
-														disabled={isPending}
-														onChange={(e) => {
-															const val = e.target.value.replace(/[^0-9.]/g, "");
-															const parts = val.split(".");
-															const sanitized =
-																parts[0] +
-																(parts.length > 1
-																	? "." + parts.slice(1).join("")
-																	: "");
-															f.onChange(sanitized);
-														}}
-													/>
+													<div className="relative">
+														<Input
+															inputMode="decimal"
+															{...f}
+															className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white pr-8 text-center font-mono text-sm font-bold"
+															disabled={isPending}
+															onChange={(e) => {
+																const val = e.target.value.replace(/[^0-9.]/g, "");
+																const parts = val.split(".");
+																const sanitized =
+																	parts[0] +
+																	(parts.length > 1
+																		? "." + parts.slice(1).join("")
+																		: "");
+																f.onChange(sanitized);
+															}}
+														/>
+														<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">
+															MAD
+														</span>
+													</div>
 												)}
 											/>
 										</TableCell>
@@ -304,7 +309,7 @@ export function EditableDocumentLines({
 					</div>
 				</div>
 
-				<div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
+				<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
 					<div className="border-foreground/10 bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 						<div className="flex w-full items-center justify-between gap-4">
 							<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">

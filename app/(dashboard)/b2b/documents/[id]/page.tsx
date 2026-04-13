@@ -251,17 +251,23 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 										</TableCell>
 										<TableCell className="text-right font-mono text-sm leading-none tabular-nums">
 											{parseFloat(line.unitPrice).toLocaleString()}
+											<span className="text-muted-foreground ml-1 text-[10px] font-normal">
+												MAD
+											</span>
 										</TableCell>
 										<TableCell className="pr-8 text-right font-mono text-sm font-black tabular-nums">
 											{parseFloat(line.totalPrice).toLocaleString()}
+											<span className="text-muted-foreground ml-1 text-[10px] font-normal">
+												MAD
+											</span>
 										</TableCell>
 									</TableRow>
 								))}
 							</TableBody>
-						</Table>
+						</Table>	
 					</div>
 
-					<div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
+					<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
 						<div className="border-foreground/10 bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
