@@ -1,5 +1,5 @@
-import { getMembershipProducts } from "@/actions/memberships";
-import { CreateMembershipDialog,MembershipActions } from "@/components/settings/membership-actions";
+import { getMembershipProducts } from "@/actions/clients/memberships";
+import { CreateMembershipDialog,MembershipActions } from "@/components/clients/memberships/actions";
 import {
 	Table,
 	TableBody,

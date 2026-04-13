@@ -1,9 +1,8 @@
+import { ScheduleClient } from "@/components/schedule/client";
 import { CalendarEvent } from "@/lib/types";
 import { getUpcomingEvents } from "@/services/google-calendar";
 import { getValidAccessToken } from "@/services/google-tokens";
 import { createClient } from "@/supabase/server";
-
-import { ScheduleClient } from "./schedule-client";
 
 export default async function SchedulePage() {
     const supabase = await createClient();

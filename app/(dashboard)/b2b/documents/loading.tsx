@@ -21,19 +21,19 @@ export default function Loading() {
 			{/* Content Skeleton (Table Mimic) */}
 			<div className="border-secondary/10 bg-card overflow-hidden rounded-3xl border shadow-sm">
 				<div className="bg-muted-foreground/5 h-16 w-full border-b" />
-				<div className="space-y-0 divide-y divide-secondary/10">
+				<div className="divide-secondary/10 space-y-0 divide-y">
 					{Array.from({ length: 6 }).map((_, i) => (
 						<div key={i} className="flex items-center justify-between p-6">
 							<div className="flex items-center gap-4">
-								<Skeleton className="h-10 w-10 rounded-xl" />
+								<Skeleton className="bg-muted-foreground/10 h-10 w-10 rounded-xl" />
 								<div className="space-y-2">
-									<Skeleton className="h-4 w-32" />
-									<Skeleton className="h-3 w-24" />
+									<Skeleton className="bg-muted-foreground/10 h-4 w-32" />
+									<Skeleton className="bg-muted-foreground/10 h-3 w-24" />
 								</div>
 							</div>
-							<Skeleton className="h-4 w-40" />
-							<Skeleton className="h-6 w-24 rounded-full" />
-							<Skeleton className="h-6 w-24" />
+							<Skeleton className="bg-muted-foreground/10 h-4 w-40" />
+							<Skeleton className="bg-muted-foreground/10 h-6 w-24 rounded-full" />
+							<Skeleton className="bg-muted-foreground/10 h-6 w-24" />
 						</div>
 					))}
 				</div>

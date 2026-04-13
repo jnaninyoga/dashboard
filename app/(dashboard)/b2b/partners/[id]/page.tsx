@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getPartnerByIdAction } from "@/actions/b2b-partners";
+import { getPartnerByIdAction } from "@/actions/b2b/partners";
 import { CopyableTaxId } from "@/components/b2b/copyable-tax-id";
-import { PartnerProfileTabs } from "@/components/b2b/partner-profile-tabs";
+import { ProfileTabs } from "@/components/b2b/partners/profile-tabs";
 import { Separator } from "@/components/ui/separator";
 
 import {
@@ -95,7 +95,7 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 				</div>
 			</div>
 
-			<PartnerProfileTabs partner={partner} />
+			<ProfileTabs partner={partner} />
 		</div>
 	);
 }

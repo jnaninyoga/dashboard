@@ -1,5 +1,5 @@
 import { getWorkingHours } from "@/actions/settings";
-import { ScheduleForm } from "@/components/settings/schedule-form";
+import { ScheduleForm } from "@/components/schedule/settings/form";
 
 export default async function ScheduleSettingsPage() {
     const workingHours = await getWorkingHours();

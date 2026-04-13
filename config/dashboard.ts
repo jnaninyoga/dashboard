@@ -6,7 +6,6 @@ import {
 	DocumentText,
 	Home2,
 	People,
-	Receipt,
 	TickCircle,
 	Timer1,
 	UserAdd,

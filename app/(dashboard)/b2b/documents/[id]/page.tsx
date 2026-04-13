@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getDocumentByIdAction } from "@/actions/b2b-documents";
-import { DocumentActionRibbon } from "@/components/b2b/document-action-ribbon";
-import { EditableDocumentLines } from "@/components/b2b/editable-document-lines";
+import { getDocumentByIdAction } from "@/actions/b2b/documents";
+import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
+import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -23,12 +23,10 @@ import {
 	Calendar,
 	Clock,
 	CloseCircle,
-	Coin,
 	DocumentText,
 	Edit2,
 	Link1,
 	MoneyTime,
-	More,
 	ReceiptText,
 	TickCircle,
 } from "iconsax-reactjs";
@@ -201,7 +199,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			{/* Linked Documents Alert */}
 			{document.parent || document.children?.length > 0 ? (
 				<div className="animate-slide-up border-foreground/10 bg-card flex items-center gap-4 rounded-2xl border px-6 py-4 shadow-sm">
-					<div className="bg-primary/15 text-primary flex size-10 items-center justify-center rounded-full zen-teal-glow">
+					<div className="bg-primary/15 text-primary zen-teal-glow flex size-10 items-center justify-center rounded-full">
 						<Link1 size={20} variant="Bulk" />
 					</div>
 					<div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -214,7 +212,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 								<Link href={`/b2b/documents/${document.parent.id}`}>
 									<Badge
 										variant="outline"
-										className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase text-primary border border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+										className="text-primary border-primary hover:bg-primary hover:text-primary-foreground border px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase transition-all duration-200"
 									>
 										{document.parent.documentNumber}
 									</Badge>
@@ -231,7 +229,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 											<Link href={`/b2b/documents/${child.id}`}>
 												<Badge
 													variant="outline"
-													className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase text-primary border border-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+													className="text-primary border-primary hover:bg-primary hover:text-primary-foreground border px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase transition-all duration-200"
 												>
 													{child.documentNumber}
 												</Badge>
@@ -257,7 +255,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				/>
 			) : (
 				<>
-					<div className="animate-slide-up delay-100 border-foreground/10 bg-card overflow-hidden rounded-2xl border shadow-sm">
+					<div className="animate-slide-up border-foreground/10 bg-card overflow-hidden rounded-2xl border shadow-sm delay-100">
 						<Table>
 							<TableHeader className="bg-sidebar">
 								<TableRow className="border-foreground/10 border-b hover:bg-transparent">
@@ -302,7 +300,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					</div>
 
 					<div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
-						<div className="border-foreground/10 bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 sm:max-w-xs shadow-sm">
+						<div className="border-foreground/10 bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
 									Subtotal
