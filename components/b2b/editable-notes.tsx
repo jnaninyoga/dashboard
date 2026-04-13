@@ -40,7 +40,7 @@ export function EditableNotes({ documentId, initialNotes }: EditableNotesProps) 
 						Notes & Remarks
 					</h3>
 				</div>
-				{hasChanged && (
+				{hasChanged ? (
 					<Button
 						onClick={handleSave}
 						disabled={isPending}
@@ -50,7 +50,7 @@ export function EditableNotes({ documentId, initialNotes }: EditableNotesProps) 
 						<Save2 size={14} variant="Bold" />
 						Save Changes
 					</Button>
-				)}
+				) : null}
 			</div>
 			<Textarea
 				value={notes}

@@ -15,6 +15,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { type B2BDocument, type B2BDocumentLine } from "@/lib/types/b2b";
 
 import { format } from "date-fns";
 import {
@@ -164,7 +165,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 							</div>
 						</div>
 
-						{document.dueDate && (
+						{document.dueDate ? (
 							<div className="flex items-center gap-3">
 								<div className="bg-secondary/40 text-secondary-3 flex size-10 items-center justify-center rounded-xl">
 									<MoneyTime size={20} variant="Bulk" />
@@ -178,7 +179,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 									</span>
 								</div>
 							</div>
-						)}
+						) : null}
 					</div>
 				</div>
 
@@ -220,7 +221,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 							</div>
 						) : null}
 						{document.children?.length > 0
-							? document.children.map((child: any) => (
+							? (document.children as B2BDocument[]).map((child) => (
 									<div key={child.id} className="flex flex-col">
 										<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
 											Generated Invoice:
@@ -274,7 +275,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 								</TableRow>
 							</TableHeader>
 							<TableBody className="divide-secondary/15 divide-y">
-								{document.lines?.map((line: any) => (
+								{document.lines?.map((line: B2BDocumentLine) => (
 									<TableRow
 										key={line.id}
 										className="hover:bg-primary/5 border-none transition-colors"

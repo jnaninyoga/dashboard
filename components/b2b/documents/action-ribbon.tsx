@@ -8,7 +8,7 @@ import {
 	updateDocumentStatusAction,
 } from "@/actions/b2b/documents";
 import { Button } from "@/components/ui/button";
-import { DocumentWithRelations } from "@/lib/types/b2b";
+import { B2BDocumentStatus, DocumentWithRelations } from "@/lib/types/b2b";
 
 import {
 	ArrowRight,
@@ -24,7 +24,7 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 
-	const handleStatusUpdate = (status: any) => {
+	const handleStatusUpdate = (status: B2BDocumentStatus) => {
 		startTransition(async () => {
 			const res = await updateDocumentStatusAction(
 				doc.id,
@@ -58,7 +58,7 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 	return (
 		<div className="border-foreground/10 bg-card flex flex-wrap items-center gap-3 rounded-2xl border p-4 backdrop-blur-sm">
 			{/* Draft -> Sent */}
-			{doc.status === "draft" && (
+			{doc.status === "draft" ? (
 				<Button
 					onClick={() => handleStatusUpdate("sent")}
 					disabled={isPending}
@@ -67,10 +67,10 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 					<Send size={18} variant="Bold" />
 					Mark as Sent
 				</Button>
-			)}
+			) : null}
 
 			{/* Quote Specific: Sent -> Accepted */}
-			{isQuote && doc.status === "sent" && (
+			{isQuote && doc.status === "sent" ? (
 				<Button
 					onClick={() => handleStatusUpdate("accepted")}
 					disabled={isPending}
@@ -79,10 +79,10 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 					<TickCircle size={18} variant="Bold" />
 					Accept Quote
 				</Button>
-			)}
+			) : null}
 
 			{/* Quote Specific: Accepted -> Convert to Invoice */}
-			{isQuote && doc.status === "accepted" && doc.children?.length === 0 && (
+			{isQuote && doc.status === "accepted" && doc.children?.length === 0 ? (
 				<Button
 					onClick={handleConvert}
 					disabled={isPending}
@@ -92,10 +92,10 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 					Convert to Invoice
 					<ArrowRight size={16} />
 				</Button>
-			)}
+			) : null}
 
 			{/* Invoice Specific: Sent -> Paid */}
-			{isInvoice && doc.status === "sent" && (
+			{isInvoice && doc.status === "sent" ? (
 				<Button
 					onClick={() => handleStatusUpdate("paid")}
 					disabled={isPending}
@@ -104,10 +104,10 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 					<MoneySend size={18} variant="Bold" />
 					Mark as Paid
 				</Button>
-			)}
+			) : null}
 
 			{/* Invoice Specific: Paid -> Unpaid (Sent) */}
-			{isInvoice && doc.status === "paid" && (
+			{isInvoice && doc.status === "paid" ? (
 				<Button
 					onClick={() => handleStatusUpdate("sent")}
 					disabled={isPending}
@@ -117,12 +117,12 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 					<CloseCircle size={18} variant="Outline" />
 					Mark as Unpaid
 				</Button>
-			)}
+			) : null}
 
 			<div className="flex-1" />
 
 			{/* Cancel Action */}
-			{doc.status !== "cancelled" && doc.status !== "paid" && (
+			{doc.status !== "cancelled" && doc.status !== "paid" ? (
 				<Button
 					onClick={() => handleStatusUpdate("cancelled")}
 					disabled={isPending}
@@ -132,7 +132,7 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 					<CloseCircle size={18} />
 					Cancel Document
 				</Button>
-			)}
+			) : null}
 		</div>
 	);
 }

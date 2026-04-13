@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/drizzle";
 import { b2bDocumentLines, b2bDocuments } from "@/drizzle/schema";
-import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
-import { createDocumentWithLinesSchema } from "@/lib/validators";
+import { B2BDocumentLine, B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
+import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
 
 import { and, desc, eq, ilike, or } from "drizzle-orm";
 
@@ -88,7 +88,7 @@ export async function createDocumentAction(
 
 		revalidatePath(`/b2b/partners/${document.partnerId}`);
 		revalidatePath("/b2b/documents");
-		// @ts-ignore - newId is assigned in transaction
+		// @ts-expect-error - newId is assigned in transaction
 		return { success: true, id: newId };
 	} catch (error) {
 		console.error("Error creating B2B document:", error);
@@ -222,7 +222,7 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 			newId = invoice.id;
 
 			// 2. Copy Lines
-			const linesToInsert = quote.lines.map((line) => ({
+			const linesToInsert = quote.lines.map((line: B2BDocumentLine) => ({
 				documentId: invoice.id,
 				description: line.description,
 				quantity: line.quantity,
@@ -243,7 +243,7 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 
 		revalidatePath("/b2b/documents");
 		revalidatePath(`/b2b/partners/${quote.partnerId}`);
-		// @ts-ignore
+		// @ts-expect-error - newId is assigned in transaction
 		return { success: true, id: newId };
 	} catch (error) {
 		console.error("Error converting quote to invoice:", error);
@@ -280,7 +280,7 @@ export async function updateDocumentNotesAction(id: string, notes: string): Prom
 
 export async function updateDocumentLinesAction(
 	id: string, 
-	data: { lines: any[], subtotal: string, totalAmount: string }
+	data: { lines: DocumentLineFormValues[], subtotal: string, totalAmount: string }
 ): Promise<ActionState> {
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
