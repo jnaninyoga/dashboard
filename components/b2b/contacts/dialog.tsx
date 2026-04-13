@@ -105,14 +105,14 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 							className="h-10"
 						/>
 					</div>
-					<div className="border-secondary-3/20 bg-secondary/40 hover:bg-secondary/60 flex items-center space-x-3 rounded-2xl border p-4 shadow-xs transition-colors">
+					<div className="border-primary/40 bg-primary/5 hover:bg-primary/10 flex items-center space-x-3 rounded-2xl border p-4 shadow-xs transition-colors">
 						<Checkbox
 							id="isPrimary"
 							name="isPrimary"
-							className="border-secondary-3/40 data-[state=checked]:border-secondary-3 data-[state=checked]:bg-secondary-3"
+							className="border-primary/80 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
 						/>
 						<div className="grid gap-1 leading-none">
-							<Label htmlFor="isPrimary" className="cursor-pointer text-sm font-bold">
+							<Label htmlFor="isPrimary" className="text-primary cursor-pointer text-sm font-bold">
 								Primary Contact
 							</Label>
 							<p className="text-secondary-foreground text-[11px] leading-tight font-medium">

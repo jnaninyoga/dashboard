@@ -102,10 +102,10 @@ export function PartnerGrid({
 							</Link>
 
 							<div className="mb-6 grid grid-cols-2 gap-3">
-								<div className="group bg-secondary/40 hover:bg-secondary/60 hover:border-secondary-3/20 flex flex-col gap-1 rounded-2xl border p-3 transition-all">
+								<div className="group bg-primary/15 border-primary/20 flex flex-col gap-1 rounded-2xl border p-3 transition-all">
 									<div className="flex items-center gap-2">
-										<User className="text-secondary-3 h-4 w-4" variant="Bold" />
-										<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-60">
+										<User className="text-primary h-4 w-4" variant="Bold" />
+										<span className="text-primary text-[10px] font-bold tracking-wider uppercase opacity-60">
 											Contacts
 										</span>
 									</div>
@@ -114,13 +114,13 @@ export function PartnerGrid({
 									</span>
 								</div>
 
-								<div className="group bg-secondary/40 hover:bg-secondary/60 hover:border-secondary-3/20 flex flex-col gap-1 rounded-2xl border p-3 transition-all">
+								<div className="group bg-primary/15 border-primary/20 flex flex-col gap-1 rounded-2xl border p-3 transition-all">
 									<div className="flex items-center gap-2">
 										<Document
-											className="text-secondary-3 h-4 w-4"
+											className="text-primary h-4 w-4"
 											variant="Bold"
 										/>
-										<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-60">
+										<span className="text-primary text-[10px] font-bold tracking-wider uppercase opacity-60">
 											Documents
 										</span>
 									</div>

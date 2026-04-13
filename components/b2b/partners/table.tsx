@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { CopyableTaxId } from "@/components/b2b/copyable-tax-id";
 import { Button } from "@/components/ui/button";
 import { 
 	DropdownMenu, 
@@ -23,6 +24,7 @@ import {
 	Buildings, 
 	Document,
 	More,
+	Trash,
 	User} from "iconsax-reactjs";
 
 export function PartnerTable({ partners }: { partners: PartnerWithRelations[] }) {
@@ -39,10 +41,10 @@ export function PartnerTable({ partners }: { partners: PartnerWithRelations[] })
 	}
 
 	return (
-		<div className="border-secondary/20 bg-card overflow-hidden rounded-2xl border shadow-sm">
+		<div className="border-foreground/10 bg-card overflow-hidden rounded-2xl border shadow-sm">
 			<Table>
-				<TableHeader className="bg-secondary/10">
-					<TableRow className="border-secondary/10 hover:bg-transparent">
+				<TableHeader className="bg-sidebar">
+					<TableRow className="border-foreground/10 hover:bg-transparent">
 						<TableHead className="font-heading py-4 font-semibold">Company</TableHead>
 						<TableHead className="font-heading font-semibold">ICE (Tax ID)</TableHead>
 						<TableHead className="font-heading font-semibold">Contacts</TableHead>
@@ -65,19 +67,23 @@ export function PartnerTable({ partners }: { partners: PartnerWithRelations[] })
 								</Link>
 							</TableCell>
 							<TableCell>
-								<span className="bg-secondary/20 border-secondary/30 text-secondary-foreground rounded border px-2 py-1 font-mono text-xs font-medium">
-                                    {partner.taxId || "N/A"}
-                                </span>
+								{partner.taxId ? (
+									<CopyableTaxId taxId={partner.taxId} />
+								) : (
+									<span className="bg-secondary/20 border-secondary/30 text-secondary-foreground rounded border px-2 py-1 font-mono text-xs font-medium">
+										N/A
+									</span>
+								)}
 							</TableCell>
 							<TableCell>
-								<div className="bg-background border-secondary/20 text-foreground/80 hover:border-primary/30 flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium shadow-xs transition-colors">
-									<User size={14} className="text-primary" variant="Bold" />
+								<div className="bg-secondary/40 text-secondary-foreground/60 border-secondary-3/20 flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium shadow-xs transition-colors">
+									<User size={14} className="text-secondary-3" variant="Bold" />
 									{partner.contacts?.length || 0}
 								</div>
 							</TableCell>
 							<TableCell>
-								<div className="bg-background border-secondary/20 text-foreground/80 hover:border-primary/30 flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium shadow-xs transition-colors">
-									<Document size={14} className="text-primary" variant="Bold" />
+								<div className="bg-secondary/40 text-secondary-foreground/60 border-secondary-3/20 flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium shadow-xs transition-colors">
+									<Document size={14} className="text-secondary-3" variant="Bold" />
 									{partner.documents?.length || 0}
 								</div>
 							</TableCell>
@@ -95,8 +101,8 @@ export function PartnerTable({ partners }: { partners: PartnerWithRelations[] })
                                                 View Profile
                                             </Link>
 										</DropdownMenuItem>
-										<DropdownMenuItem className="text-destructive flex cursor-pointer items-center gap-2 p-3 text-xs font-bold tracking-wide uppercase">
-                                            <More size={16} className="rotate-90" />
+										<DropdownMenuItem className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive focus:[&>svg]:text-destructive flex cursor-pointer items-center gap-2 p-3 text-xs font-bold tracking-wide uppercase">
+                                            <Trash size={16} variant="Bulk" className="text-destructive" />
                                             Delete
                                         </DropdownMenuItem>
 									</DropdownMenuContent>
