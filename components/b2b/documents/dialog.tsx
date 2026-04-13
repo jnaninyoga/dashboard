@@ -591,15 +591,16 @@ export function DocumentDialog({
 																		<FormItem className="space-y-0">
 																			<FormControl>
 																				<Input
-																					type="number"
+																					inputMode="decimal"
 																					{...f}
 																					className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
 																					disabled={isPending}
-																					onChange={(e) =>
-																						f.onChange(
-																							parseFloat(e.target.value) || 0,
-																						)
-																					}
+																					onChange={(e) => {
+																						const val = e.target.value.replace(/[^0-9.]/g, "");
+																						const parts = val.split(".");
+																						const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+																						f.onChange(sanitized);
+																					}}
 																				/>
 																			</FormControl>
 																		</FormItem>
@@ -616,15 +617,16 @@ export function DocumentDialog({
 																		<FormItem className="space-y-0">
 																			<FormControl>
 																				<Input
-																					type="number"
+																					inputMode="decimal"
 																					{...f}
 																					className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
 																					disabled={isPending}
-																					onChange={(e) =>
-																						f.onChange(
-																							parseFloat(e.target.value) || 0,
-																						)
-																					}
+																					onChange={(e) => {
+																						const val = e.target.value.replace(/[^0-9.]/g, "");
+																						const parts = val.split(".");
+																						const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+																						f.onChange(sanitized);
+																					}}
 																				/>
 																			</FormControl>
 																		</FormItem>
@@ -708,11 +710,23 @@ export function DocumentDialog({
 											<div className="flex items-center gap-2.5">
 												<SectionLabel>Tax Rate</SectionLabel>
 												<div className="border-foreground/10 flex items-center rounded-xl border bg-white px-2 py-1">
-													<Input
-														type="number"
-														{...form.register("document.taxRate")}
-														className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
-														disabled={isPending}
+													<FormField
+														control={form.control}
+														name="document.taxRate"
+														render={({ field: f }) => (
+															<Input
+																inputMode="decimal"
+																{...f}
+																className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
+																disabled={isPending}
+																onChange={(e) => {
+																	const val = e.target.value.replace(/[^0-9.]/g, "");
+																	const parts = val.split(".");
+																	const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+																	f.onChange(sanitized);
+																}}
+															/>
+														)}
 													/>
 													<span className="text-muted-foreground/60 text-[10px] font-bold">
 														%

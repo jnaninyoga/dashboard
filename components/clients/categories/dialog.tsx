@@ -136,11 +136,15 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                                         <FormLabel>Value</FormLabel>
                                         <FormControl>
                                             <Input 
-                                                type="number" 
-                                                step="0.01" 
+                                                inputMode="decimal"
                                                 {...field} 
                                                 value={field.value ?? ""}
-                                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                                                onChange={(e) => {
+                                                    const val = e.target.value.replace(/[^0-9.]/g, "");
+                                                    const parts = val.split(".");
+                                                    const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+                                                    field.onChange(sanitized);
+                                                }}
                                             />
                                         </FormControl>
                                         <FormMessage />

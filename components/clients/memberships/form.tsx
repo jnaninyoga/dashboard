@@ -87,11 +87,15 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 								<FormLabel>Price (MAD)</FormLabel>
 								<FormControl>
 									<Input 
-										type="number" 
-										step="0.01" 
+										inputMode="decimal"
 										{...field} 
 										value={field.value ?? ""} 
-										onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+										onChange={(e) => {
+											const val = e.target.value.replace(/[^0-9.]/g, "");
+											const parts = val.split(".");
+											const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+											field.onChange(sanitized);
+										}}
 									/>
 								</FormControl>
 								<FormMessage />
@@ -106,14 +110,13 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 								<FormLabel>Duration (Months)</FormLabel>
 								<FormControl>
 									<Input 
-                                        type="number" 
+                                        inputMode="numeric"
                                         {...field} 
                                         value={field.value ?? ""}
                                         onChange={(e) => {
-                                            const months = parseInt(e.target.value) || 0;
+                                            const val = e.target.value.replace(/[^0-9]/g, "");
+                                            const months = parseInt(val) || 0;
                                             field.onChange(months);
-                                            // Auto-calc logic: Months * 10 (or whatever the logic was)
-                                            // Previous logic: months * 12
                                             if (months > 0) {
                                                 form.setValue("defaultCredits", months * 12);
                                             }
@@ -134,10 +137,13 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 							<FormLabel>Credits (Classes)</FormLabel>
 							<FormControl>
 								<Input 
-									type="number" 
+									inputMode="numeric"
 									{...field} 
 									value={field.value ?? ""} 
-									onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+									onChange={(e) => {
+										const val = e.target.value.replace(/[^0-9]/g, "");
+										field.onChange(parseInt(val) || 0);
+									}}
 								/>
 							</FormControl>
                             {initialData ? (
