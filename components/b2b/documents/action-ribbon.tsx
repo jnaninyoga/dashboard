@@ -67,7 +67,7 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 			{/* Linked Documents / Relations (Left Side) */}
 			{doc.parent || doc.children?.length ? (
 				<div className="lg:border-foreground/5 flex flex-wrap items-center gap-4 lg:mr-2 lg:border-r lg:pr-5">
-					<div className="bg-primary/10 text-primary zen-teal-glow flex size-9 shrink-0 items-center justify-center rounded-full">
+					<div className="bg-primary/15 text-primary border-primary/20 zen-teal-glow flex size-9 shrink-0 items-center justify-center rounded-full border">
 						<Link1 size={18} variant="Bulk" />
 					</div>
 					<div className="flex flex-wrap gap-x-5 gap-y-2">
