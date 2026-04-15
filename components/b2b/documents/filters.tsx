@@ -83,26 +83,17 @@ export function DocumentFilters() {
 					onValueChange={handleTypeChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-[140px] bg-white text-[10px] font-bold tracking-widest uppercase transition-all">
+					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white transition-all sm:w-48">
 						<SelectValue placeholder="Type" />
 					</SelectTrigger>
 					<SelectContent className="border-foreground/10 shadow-xl">
-						<SelectItem
-							value="all"
-							className="text-[10px] font-bold tracking-widest uppercase"
-						>
+						<SelectItem value="all">
 							All Types
 						</SelectItem>
-						<SelectItem
-							value="quote"
-							className="text-[10px] font-bold tracking-widest uppercase"
-						>
+						<SelectItem value="quote">
 							Quotes
 						</SelectItem>
-						<SelectItem
-							value="invoice"
-							className="text-[10px] font-bold tracking-widest uppercase"
-						>
+						<SelectItem value="invoice">
 							Invoices
 						</SelectItem>
 					</SelectContent>
@@ -113,14 +104,11 @@ export function DocumentFilters() {
 					onValueChange={handleStatusChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-[140px] bg-white text-[10px] font-bold tracking-widest uppercase transition-all">
+					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white transition-all sm:w-48">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border-foreground/10 shadow-xl">
-						<SelectItem
-							value="all"
-							className="text-[10px] font-bold tracking-widest uppercase"
-						>
+						<SelectItem value="all">
 							All Status
 						</SelectItem>
 						<SelectItem value="draft">

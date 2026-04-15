@@ -55,7 +55,7 @@ export function PartnerFilters() {
 					onValueChange={(v) => handleFilterChange("docType", v)}
 					defaultValue={searchParams.get("docType") || "all"}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white font-semibold transition-all sm:w-48">
+					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white transition-all sm:w-48">
 						<SelectValue placeholder="Document Type" />
 					</SelectTrigger>
 					<SelectContent>
@@ -68,7 +68,7 @@ export function PartnerFilters() {
 					onValueChange={(v) => handleFilterChange("docStatus", v)}
 					defaultValue={searchParams.get("docStatus") || "all"}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white font-semibold transition-all sm:w-48">
+					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white transition-all sm:w-48">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border-secondary/20 rounded-xl shadow-xl">

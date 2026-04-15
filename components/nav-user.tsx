@@ -69,8 +69,8 @@ export function NavUser({
 							</div>
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => signOut()}>
-							<Logout variant="Outline" />
+						<DropdownMenuItem onClick={() => signOut()} className="text-destructive bg-destructive/5 hover:bg-destructive/10 focus:bg-destructive/10 cursor-pointer transition-colors">
+							<Logout variant="Outline" className="text-destructive" />
 							Log out
 						</DropdownMenuItem>
 					</DropdownMenuContent>
