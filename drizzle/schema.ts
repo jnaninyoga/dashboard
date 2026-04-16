@@ -1,3 +1,5 @@
+import { type StandardLegalLabel } from "@/lib/types/b2b";
+
 import { relations } from "drizzle-orm";
 import {
 	boolean,
@@ -346,3 +348,20 @@ export const b2bDocumentLinesRelations = relations(
 		}),
 	}),
 );
+
+// --- Business Profile ---
+
+export const businessProfiles = pgTable("business_profiles", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	companyName: text("company_name").notNull(),
+	email: text("email"),
+	phone: text("phone"),
+	address: text("address"),
+	bankDetails: text("bank_details"), // Markdown string
+	showBankDetails: boolean("show_bank_details").default(true).notNull(),
+	legalDetails: jsonb("legal_details").$type<{ label: StandardLegalLabel; value: string }[]>(),
+	logoBase64: text("logo_base64"),
+	signatureBase64: text("signature_base64"),
+	documentFooterText: text("document_footer_text"), // Markdown string
+	updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

@@ -10,11 +10,8 @@ import {
 } from "@/actions/b2b/documents";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	B2BDocument,
-	B2BDocumentStatus,
-	DocumentWithRelations,
-} from "@/lib/types/b2b";
+import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
+import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
 
 import {
 	ArrowRight,
@@ -27,7 +24,9 @@ import {
 } from "iconsax-reactjs";
 import { toast } from "sonner";
 
-export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
+import { PDFDownloadBtn } from "./download-btn";
+
+export function DocumentActionRibbon({ doc, profile }: { doc: DocumentWithRelations, profile: BusinessProfile | null }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 
@@ -111,6 +110,8 @@ export function DocumentActionRibbon({ doc }: { doc: DocumentWithRelations }) {
 
 			{/* Actions (Right Side - Stable CTA) */}
 			<div className="flex flex-wrap items-center gap-3">
+                <PDFDownloadBtn doc={doc} profile={profile} />
+
 				{/* Draft -> Sent */}
 				{doc.status === "draft" ? (
 					<Button

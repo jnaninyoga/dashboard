@@ -55,6 +55,11 @@ export const dashboardConfig = {
 	],
 	settings: [
 		{
+			title: "Company Profile",
+			url: "/settings/company",
+			icon: Home2,
+		},
+		{
 			title: "Memberships",
 			url: "/settings/memberships",
 			icon: Card,
