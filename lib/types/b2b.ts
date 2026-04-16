@@ -29,7 +29,6 @@ export type ContactWithPartner = Contact & {
     partner?: Partner | null;
     documents?: Document[];
 };
-
 export type DocumentWithRelations = Document & {
     partner?: Partner | null;
     contact?: Contact | null;
@@ -40,4 +39,27 @@ export type DocumentWithRelations = Document & {
 
 export type DocumentWithContact = Document & {
     contact: Contact | null;
+};
+
+// --- Business Profile ---
+
+export type StandardLegalLabel = "ICE" | "IF" | "RC" | "Patente" | (string & {});
+
+export type BusinessProfile = {
+	id: string;
+	companyName: string;
+	email: string | null;
+	phone: string | null;
+	address: string | null;
+	bankDetails: string | null;
+	showBankDetails: boolean;
+	legalDetails: { label: StandardLegalLabel; value: string }[] | null;
+	logoBase64: string | null;
+	signatureBase64: string | null;
+	documentFooterText: string | null;
+	updatedAt: Date;
+};
+
+export type NewBusinessProfile = Partial<BusinessProfile> & {
+    companyName: string;
 };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getDocumentByIdAction } from "@/actions/b2b/documents";
+import { getBusinessProfileAction } from "@/actions/business-profile";
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { EditableNotes } from "@/components/b2b/editable-notes";
@@ -46,6 +47,8 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 	if (error || !document) {
 		return notFound();
 	}
+
+    const profile = await getBusinessProfileAction();
 
 	const getStatusProps = (status: string) => {
 		const s = status.toLowerCase();
@@ -205,7 +208,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 
 			{/* Actions Ribbon */}
-			<DocumentActionRibbon doc={document} />
+			<DocumentActionRibbon doc={document} profile={profile} />
 
 			{/* Line Items Section */}
 			{document.status === "draft" ? (
