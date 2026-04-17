@@ -23,7 +23,7 @@ export function PartnerGrid({
 }) {
 	if (!partners.length) {
 		return (
-			<div className="border-secondary-foreground/10 bg-sidebar text-secondary-foreground flex h-64 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center">
+			<div className="border-secondary-foreground/10 bg-muted text-secondary-foreground flex h-64 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center">
 				<Buildings className="text-primary/40 size-16" variant="Bulk" />
 				<h3 className="font-heading text-foreground text-xl font-semibold">
 					No partners

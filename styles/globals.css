@@ -16,24 +16,24 @@
 	--font-vibes: var(--font-great-vibes), cursive;
 
 	/* Light Mode — Warm Stone Base */
-	--color-background: #f5f1ed; /* Deepened stone base for main page content */
-	--color-foreground: #1c1917; /* Stone-900 — avoids harsh black */
+	--color-background: #f8f4f0;
+	--color-foreground: #1c1917;
 
-	--color-primary: #54a5b3; /* Deepened brand teal — better contrast for UI */
+	--color-primary: #1d7e8e; /* Deepened teal — AA 4.7:1 on white */
 	--color-primary-foreground: #ffffff;
 
-	--color-secondary: #fadcdb; /* Light blush from lotus */
-	--color-secondary-2: #edaba8; /* blush from lotus */
-	--color-secondary-3: #c97f7d; /* darker blush from lotus */
-	--color-secondary-foreground: #44403c; /* stone-700 */
+	--color-secondary: #fde9e7;
+	--color-secondary-foreground: #7c3130;
+	--color-secondary-2: #f5c0bc;
+	--color-secondary-3: #d67f7d;
 
-	--color-muted: #f5f0ed; /* Stone-100 warm */
-	--color-muted-foreground: #78716c; /* Stone-500 */
+	--color-muted: #ede8e3;
+	--color-muted-foreground: #78716c;
 
-	--color-accent: #8cc9d2; /* Original brand teal for accents */
-	--color-accent-foreground: #1c1917;
+	--color-accent: #cce9ee;
+	--color-accent-foreground: #1a5560;
 
-	--color-destructive: #dc2626;
+	--color-destructive: #c94040;
 	--color-destructive-foreground: #ffffff;
 
 	--color-success: #10b981;
@@ -45,9 +45,9 @@
 	--color-warning: #f59e0b;
 	--color-warning-foreground: #ffffff;
 
-	--color-border: transparent; /* Zen: no visible borders by default */
-	--color-input: #e7e5e4; /* Stone-200 */
-	--color-ring: #54a5b3;
+	--color-border: #ddd8d2;
+	--color-input: #e8e3de;
+	--color-ring: #1d7e8e;
 
 	--color-card: #ffffff;
 	--color-card-foreground: #1c1917;
@@ -56,14 +56,14 @@
 	--color-popover-foreground: #1c1917;
 
 	/* Sidebar Branding */
-	--color-sidebar: #faf8f6;
+	--color-sidebar: #fdf9f6;
 	--color-sidebar-foreground: #1c1917;
-	--color-sidebar-primary: #54a5b3;
+	--color-sidebar-primary: #1d7e8e;
 	--color-sidebar-primary-foreground: #ffffff;
-	--color-sidebar-accent: #fadcdb;
-	--color-sidebar-accent-foreground: #1c1917;
-	--color-sidebar-border: transparent;
-	--color-sidebar-ring: #54a5b3;
+	--color-sidebar-accent: #fde9e7;
+	--color-sidebar-accent-foreground: #7c3130;
+	--color-sidebar-border: #ddd8d2;
+	--color-sidebar-ring: #1d7e8e;
 
 	/* ─── Zen Radius Scale (Soft, Tactile, Pill-shaped) ─── */
 	--radius-sm: 0.5rem; /* 8px */
@@ -189,50 +189,41 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 .dark {
-	--color-background: #080707; /* Even deeper stone for dark mode pages */
-	--color-foreground: #fafaf9; /* Stone-50 */
+	--color-background: #0d0b0a;
+	--color-foreground: #f7f3f0;
+	--color-card: #1a1614;
+	--color-card-foreground: #f7f3f0;
+	--color-popover: #1a1614;
+	--color-popover-foreground: #f7f3f0;
 
-	--color-primary: #8cc9d2; /* Teal pops on dark */
-	--color-primary-foreground: #0c0a09;
+	--color-primary: #8cc9d2;
+	--color-primary-foreground: #0a2026;
 
-	--color-secondary: #fcd0c7;
-	--color-secondary-foreground: #0c0a09;
+	--color-secondary: #2d1a19;
+	--color-secondary-foreground: #fcd0c7;
+	--color-secondary-2: #4a2322;
+	--color-secondary-3: #7a3d3c;
 
-	--color-muted: #1c1917; /* Stone-900 */
-	--color-muted-foreground: #a8a29e; /* Stone-400 */
+	--color-muted: #201c1a;
+	--color-muted-foreground: #a8a29e;
 
-	--color-accent: #8cc9d2;
-	--color-accent-foreground: #0c0a09;
+	--color-accent: #1d5c6a;
+	--color-accent-foreground: #cee8ec;
 
 	--color-destructive: #ef4444;
 	--color-destructive-foreground: #ffffff;
 
-	--color-success: #059669;
-	--color-success-foreground: #ffffff;
-
-	--color-info: #2563eb;
-	--color-info-foreground: #ffffff;
-
-	--color-warning: #d97706;
-	--color-warning-foreground: #ffffff;
-
-	--color-border: transparent;
-	--color-input: #292524; /* Stone-800 */
+	--color-border: #2e2925;
+	--color-input: #2e2925;
 	--color-ring: #8cc9d2;
 
-	--color-card: #1c1917; /* Stone-900 */
-	--color-card-foreground: #fafaf9;
-
-	--color-popover: #1c1917;
-	--color-popover-foreground: #fafaf9;
-
 	--color-sidebar: #0c0a09;
-	--color-sidebar-foreground: #fafaf9;
+	--color-sidebar-foreground: #f7f3f0;
 	--color-sidebar-primary: #8cc9d2;
-	--color-sidebar-primary-foreground: #0c0a09;
-	--color-sidebar-accent: #fcd0c7;
-	--color-sidebar-accent-foreground: #0c0a09;
-	--color-sidebar-border: transparent;
+	--color-sidebar-primary-foreground: #0a2026;
+	--color-sidebar-accent: #2d1a19;
+	--color-sidebar-accent-foreground: #fcd0c7;
+	--color-sidebar-border: #2e2925;
 	--color-sidebar-ring: #8cc9d2;
 }
 

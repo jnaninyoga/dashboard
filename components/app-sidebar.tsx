@@ -33,7 +33,7 @@ export function AppSidebar({
 	const pathname = usePathname();
 
 	return (
-		<Sidebar collapsible="icon" {...props} className="border-r-secondary-foreground/10">
+		<Sidebar collapsible="icon" {...props} className="border-r">
 			<SidebarHeader>
 				<div className="flex items-center gap-2 p-2 px-1">
 					<div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-transparent">

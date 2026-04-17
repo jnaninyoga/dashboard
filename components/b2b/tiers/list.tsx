@@ -54,8 +54,8 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 
     return (
         <div className="space-y-8">
-            <div className="rounded-md border bg-white p-2">
-                <Table className="[&_tr]:border-secondary-foreground/10">
+            <div>
+                <Table>
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
@@ -110,8 +110,8 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
             {archivedTiers.length > 0 ? (
                 <div className="opacity-70">
                     <h3 className="text-muted-foreground mb-2 text-sm font-medium">Archived Tiers</h3>
-                    <div className="rounded-md border bg-white p-2">
-                        <Table className="[&_tr]:border-secondary-foreground/10">
+                    <div>
+                        <Table>
                             <TableBody>
                                 {archivedTiers.map((tier) => (
                                     <TableRow key={tier.id} className="bg-muted/50">

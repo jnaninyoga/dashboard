@@ -48,7 +48,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 		return notFound();
 	}
 
-    const profile = await getBusinessProfileAction();
+	const profile = await getBusinessProfileAction();
 
 	const getStatusProps = (status: string) => {
 		const s = status.toLowerCase();
@@ -205,8 +205,6 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				</div>
 			</div>
 
-
-
 			{/* Actions Ribbon */}
 			<DocumentActionRibbon doc={document} profile={profile} />
 
@@ -220,58 +218,52 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				/>
 			) : (
 				<>
-					<div className="animate-slide-up border-foreground/10 bg-card overflow-hidden rounded-2xl border shadow-sm delay-100">
-						<Table>
-							<TableHeader className="bg-sidebar">
-								<TableRow className="border-foreground/10 border-b hover:bg-transparent">
-									<TableHead className="text-muted-foreground h-10 px-6 text-[10px] font-bold tracking-widest uppercase">
-										Description
-									</TableHead>
-									<TableHead className="text-muted-foreground h-10 w-24 px-2 text-center text-[10px] font-bold tracking-widest uppercase">
-										Qty
-									</TableHead>
-									<TableHead className="text-muted-foreground h-10 w-32 px-2 text-right text-[10px] font-bold tracking-widest uppercase">
-										Unit Price
-									</TableHead>
-									<TableHead className="text-muted-foreground h-10 w-40 px-2 pr-8 text-right text-[10px] font-bold tracking-widest uppercase">
-										Total
-									</TableHead>
+					<Table className="animate-slide-up delay-100">
+						<TableHeader>
+							<TableRow className="border-b transition-colors hover:bg-transparent">
+								<TableHead className="px-6">Description</TableHead>
+								<TableHead className="w-24 px-2 text-center">Qty</TableHead>
+								<TableHead className="w-32 px-2 text-right">
+									Unit Price
+								</TableHead>
+								<TableHead className="w-40 px-2 pr-8 text-right">
+									Total
+								</TableHead>
+							</TableRow>
+						</TableHeader>
+						<TableBody className="divide-secondary/15 divide-y">
+							{document.lines?.map((line: B2BDocumentLine) => (
+								<TableRow
+									key={line.id}
+									className="hover:bg-primary/5 border-none transition-colors"
+								>
+									<TableCell className="px-6 py-4">
+										<p className="text-foreground text-sm font-bold">
+											{line.description}
+										</p>
+									</TableCell>
+									<TableCell className="text-center font-mono text-sm leading-none tabular-nums">
+										{line.quantity}
+									</TableCell>
+									<TableCell className="text-right font-mono text-sm leading-none tabular-nums">
+										{parseFloat(line.unitPrice).toLocaleString()}
+										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
+											MAD
+										</span>
+									</TableCell>
+									<TableCell className="pr-8 text-right font-mono text-sm font-black tabular-nums">
+										{parseFloat(line.totalPrice).toLocaleString()}
+										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
+											MAD
+										</span>
+									</TableCell>
 								</TableRow>
-							</TableHeader>
-							<TableBody className="divide-secondary/15 divide-y">
-								{document.lines?.map((line: B2BDocumentLine) => (
-									<TableRow
-										key={line.id}
-										className="hover:bg-primary/5 border-none transition-colors"
-									>
-										<TableCell className="px-6 py-4">
-											<p className="text-foreground text-sm font-bold">
-												{line.description}
-											</p>
-										</TableCell>
-										<TableCell className="text-center font-mono text-sm leading-none tabular-nums">
-											{line.quantity}
-										</TableCell>
-										<TableCell className="text-right font-mono text-sm leading-none tabular-nums">
-											{parseFloat(line.unitPrice).toLocaleString()}
-											<span className="text-muted-foreground ml-1 text-[10px] font-normal">
-												MAD
-											</span>
-										</TableCell>
-										<TableCell className="pr-8 text-right font-mono text-sm font-black tabular-nums">
-											{parseFloat(line.totalPrice).toLocaleString()}
-											<span className="text-muted-foreground ml-1 text-[10px] font-normal">
-												MAD
-											</span>
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>	
-					</div>
+							))}
+						</TableBody>
+					</Table>
 
 					<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
-						<div className="border-foreground/10 bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
+						<div className="border bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl p-4 shadow-sm sm:max-w-xs">
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
 									Subtotal

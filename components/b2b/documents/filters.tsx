@@ -71,7 +71,7 @@ export function DocumentFilters() {
 				/>
 				<Input
 					placeholder="Search documents..."
-					className="border-foreground/10 focus-visible:ring-primary/20 h-10 bg-white pl-10 font-medium transition-all"
+					className="border focus-visible:ring-primary/20 h-10 bg-card pl-10 font-medium transition-all"
 					defaultValue={searchParams.get("query")?.toString()}
 					onChange={(e) => handleSearch(e.target.value)}
 					disabled={isPending}
@@ -83,10 +83,10 @@ export function DocumentFilters() {
 					onValueChange={handleTypeChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white transition-all sm:w-48">
+					<SelectTrigger className="border focus:ring-primary/20 w-full bg-card transition-all sm:w-48">
 						<SelectValue placeholder="Type" />
 					</SelectTrigger>
-					<SelectContent className="border-foreground/10 shadow-xl">
+					<SelectContent className="border shadow-xl">
 						<SelectItem value="all">
 							All Types
 						</SelectItem>
@@ -104,10 +104,10 @@ export function DocumentFilters() {
 					onValueChange={handleStatusChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white transition-all sm:w-48">
+					<SelectTrigger className="border focus:ring-primary/20 w-full bg-card transition-all sm:w-48">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
-					<SelectContent className="border-foreground/10 shadow-xl">
+					<SelectContent className="border shadow-xl">
 						<SelectItem value="all">
 							All Status
 						</SelectItem>

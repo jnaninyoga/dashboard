@@ -32,7 +32,7 @@ export function EditableNotes({ documentId, initialNotes }: EditableNotesProps) 
 	const hasChanged = notes !== (initialNotes || "");
 
 	return (
-		<div className="animate-slide-up border-foreground/10 bg-card rounded-3xl border p-6 shadow-sm delay-200">
+		<div className="animate-slide-up border bg-card rounded-3xl border p-6 shadow-sm delay-200">
 			<div className="mb-4 flex items-center justify-between">
 				<div className="flex items-center gap-2">
 					<NoteText size={18} className="text-muted-foreground" />
@@ -56,7 +56,7 @@ export function EditableNotes({ documentId, initialNotes }: EditableNotesProps) 
 				value={notes}
 				onChange={(e) => setNotes(e.target.value)}
 				placeholder="Add terms, bank details, or internal remarks..."
-				className="border-foreground/5 focus:ring-primary/20 min-h-[120px] bg-transparent leading-relaxed font-medium transition-all"
+				className="border/50 focus:ring-primary/20 min-h-[120px] bg-transparent leading-relaxed font-medium transition-all"
 				disabled={isPending}
 			/>
 		</div>

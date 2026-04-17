@@ -30,26 +30,16 @@ export function DocumentDashboardTable({
 	documents,
 }: DocumentDashboardTableProps) {
 	return (
-		<div className="animate-slide-up border-foreground/10 shadow-secondary/5 hidden overflow-hidden rounded-3xl border shadow-sm delay-150 md:block">
-			<Table containerClassName="overflow-x-hidden" className="bg-white">
-				<TableHeader className="bg-sidebar border-foreground/10 border-b">
-					<TableRow className="border-foreground/10 border-b hover:bg-transparent">
-						<TableHead className="text-muted-foreground/70 h-10 pl-6 text-[10px] font-bold tracking-widest uppercase">
-							Type
-						</TableHead>
-						<TableHead className="text-muted-foreground/70 h-10 px-6 text-[10px] font-bold tracking-widest uppercase">
-							Document
-						</TableHead>
-						<TableHead className="text-muted-foreground/70 h-10 text-[10px] font-bold tracking-widest uppercase">
-							Partner
-						</TableHead>
-						<TableHead className="text-muted-foreground/70 h-10 text-[10px] font-bold tracking-widest uppercase">
-							Status
-						</TableHead>
-						<TableHead className="text-muted-foreground/70 h-10 text-right text-[10px] font-bold tracking-widest uppercase">
-							Amount
-						</TableHead>
-						<TableHead className="h-10 pr-6 text-right"></TableHead>
+		<div className="animate-slide-up hidden delay-150 md:block">
+			<Table containerClassName="overflow-x-hidden">
+				<TableHeader>
+					<TableRow className="border-b transition-colors hover:bg-transparent">
+						<TableHead className="pl-6">Type</TableHead>
+						<TableHead className="px-6">Document</TableHead>
+						<TableHead>Partner</TableHead>
+						<TableHead>Status</TableHead>
+						<TableHead className="text-right">Amount</TableHead>
+						<TableHead className="pr-6 text-right" />
 					</TableRow>
 				</TableHeader>
 				<TableBody className="divide-secondary/15 divide-y">

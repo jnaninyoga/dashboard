@@ -45,8 +45,6 @@ export function DocumentList({
 	partnerId,
 	contacts,
 }: DocumentListProps) {
-
-
 	if (!documents.length) {
 		return (
 			<div className="group border-secondary/10 bg-secondary/5 hover:bg-secondary/10 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
@@ -84,26 +82,16 @@ export function DocumentList({
 			</div>
 
 			{/* Desktop Table View */}
-			<div className="border-foreground/10 shadow-secondary/5 hidden overflow-hidden rounded-3xl border shadow-sm md:block">
-				<Table containerClassName="overflow-x-hidden" className="bg-card">
-					<TableHeader className="bg-sidebar border-foreground/10 border-b">
-						<TableRow className="border-foreground/10 border-b hover:bg-transparent">
-							<TableHead className="text-muted-foreground h-10 px-4 pl-6 text-[10px] font-bold tracking-widest uppercase">
-								Type
-							</TableHead>
-							<TableHead className="text-muted-foreground h-10 px-6 text-[10px] font-bold tracking-widest uppercase">
-								Document
-							</TableHead>
-							<TableHead className="text-muted-foreground h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
-								Status
-							</TableHead>
-							<TableHead className="text-muted-foreground h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
-								Issued
-							</TableHead>
-							<TableHead className="text-muted-foreground h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
-								Amount
-							</TableHead>
-							<TableHead className="h-10 pr-6 text-right" />
+			<div className="hidden md:block">
+				<Table containerClassName="overflow-x-hidden">
+					<TableHeader>
+						<TableRow className="border-b transition-colors hover:bg-transparent">
+							<TableHead className="pl-6">Type</TableHead>
+							<TableHead className="px-6">Document</TableHead>
+							<TableHead>Status</TableHead>
+							<TableHead>Issued</TableHead>
+							<TableHead>Amount</TableHead>
+							<TableHead className="pr-6 text-right" />
 						</TableRow>
 					</TableHeader>
 					<TableBody className="divide-secondary/15 divide-y">

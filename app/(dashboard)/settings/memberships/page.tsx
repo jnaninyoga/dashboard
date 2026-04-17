@@ -24,7 +24,7 @@ export default async function MembershipSettingsPage() {
                 <CreateMembershipDialog />
 			</div>
 
-			<div className="rounded-lg border bg-white p-2">
+			<div className="rounded-lg border bg-card p-2">
 				<Table className="[&_tr]:border-secondary-foreground/10">
 					<TableHeader>
 						<TableRow>

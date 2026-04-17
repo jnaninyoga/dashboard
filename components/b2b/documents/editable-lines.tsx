@@ -174,24 +174,16 @@ export function EditableDocumentLines({
 					</div>
 				</div>
 
-				<div className="border-foreground/10 bg-card overflow-hidden rounded-2xl border shadow-sm">
+				<div className="border bg-card overflow-hidden rounded-2xl border shadow-sm">
 					<div className="overflow-x-auto">
 						<Table>
-							<TableHeader className="bg-sidebar">
-								<TableRow className="border-foreground/10 border-b hover:bg-transparent">
-									<TableHead className="text-muted-foreground h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
-										Description
-									</TableHead>
-									<TableHead className="text-muted-foreground h-10 w-[72px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
-										Qty
-									</TableHead>
-									<TableHead className="text-muted-foreground h-10 w-[104px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
-										Unit Price
-									</TableHead>
-									<TableHead className="text-muted-foreground h-10 w-[80px] px-2 text-right text-[10px] font-bold tracking-widest uppercase">
-										Total
-									</TableHead>
-									<TableHead className="h-10 w-[40px] p-0" />
+							<TableHeader>
+								<TableRow className="border-b transition-colors hover:bg-transparent">
+									<TableHead className="px-4">Description</TableHead>
+									<TableHead className="w-[72px] px-2 text-center">Qty</TableHead>
+									<TableHead className="w-[104px] px-2 text-center">Unit Price</TableHead>
+									<TableHead className="w-[80px] px-2 text-right">Total</TableHead>
+									<TableHead className="w-[40px] p-0" />
 								</TableRow>
 							</TableHeader>
 							<TableBody className="divide-secondary/15 divide-y">
@@ -235,7 +227,7 @@ export function EditableDocumentLines({
 													<Input
 														inputMode="decimal"
 														{...f}
-														className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
+														className="border focus-visible:ring-primary/20 h-8 w-full bg-card text-center font-mono text-sm font-bold"
 														disabled={isPending}
 														onChange={(e) => {
 															const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -260,7 +252,7 @@ export function EditableDocumentLines({
 														<Input
 															inputMode="decimal"
 															{...f}
-															className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white pr-8 text-center font-mono text-sm font-bold"
+															className="border focus-visible:ring-primary/20 h-8 w-full bg-card pr-8 text-center font-mono text-sm font-bold"
 															disabled={isPending}
 															onChange={(e) => {
 																const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -310,7 +302,7 @@ export function EditableDocumentLines({
 				</div>
 
 				<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
-					<div className="border-foreground/10 bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
+					<div className="border bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 						<div className="flex w-full items-center justify-between gap-4">
 							<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
 								Subtotal
@@ -327,7 +319,7 @@ export function EditableDocumentLines({
 								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
 									Tax Rate
 								</span>
-								<div className="border-foreground/10 flex items-center rounded-xl border bg-white px-2 py-1">
+								<div className="border flex items-center rounded-xl border bg-card px-2 py-1">
 									<FormField
 										control={form.control}
 										name="taxRate"
@@ -406,16 +398,16 @@ function DescriptionAutocomplete({
 							onChange(e.target.value);
 							if (!open && e.target.value) setOpen(true);
 						}}
-						className="border-foreground/10 h-8 bg-white text-sm font-medium"
+						className="border h-8 bg-card text-sm font-medium"
 						placeholder="Description..."
 					/>
 				</PopoverAnchor>
 				<PopoverContent
-					className="border-foreground/10 p-0"
+					className="border p-0"
 					style={{ width: "var(--radix-popover-anchor-width)" }}
 					onOpenAutoFocus={(e) => e.preventDefault()}
 				>
-					<Command className="bg-white">
+					<Command className="bg-card">
 						<CommandList className="max-h-48">
 							<CommandEmpty>No results.</CommandEmpty>
 							<CommandGroup>
