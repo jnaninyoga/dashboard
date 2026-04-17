@@ -17,8 +17,8 @@ const PDFDownloadLink = dynamic(
 		loading: () => (
 			<Button
 				disabled
-				variant="outline"
-				className="bg-card gap-2 rounded-xl font-medium shadow-sm"
+				variant="secondary"
+				className="gap-2 rounded-xl font-medium shadow-sm"
 			>
 				<DocumentDownload size={18} /> Loading PDF...
 			</Button>
@@ -48,8 +48,8 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 			{({ loading }) => (
 				<Button
 					disabled={loading}
-					variant="outline"
-					className="bg-card text-primary border-primary/20 hover:bg-primary/5 hover:text-primary gap-2 rounded-xl font-medium shadow-sm"
+					variant="secondary"
+					className="gap-2 rounded-xl font-medium shadow-sm border hover:zen-glow-blush transition-all"
 				>
 					<DocumentDownload size={18} />
 					{loading ? "Preparing PDF..." : "Download PDF"}

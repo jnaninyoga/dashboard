@@ -8,27 +8,70 @@ import { format } from "date-fns";
 
 // --- Font Registration ---
 Font.register({
-    family: "Philosopher",
-    fonts: [
-        { src: "https://fonts.gstatic.com/s/philosopher/v21/vEFV2_5QCwIS4_Dhez5jcWBuT0g.ttf", fontWeight: 400 },
-        { src: "https://fonts.gstatic.com/s/philosopher/v21/vEFI2_5QCwIS4_Dhez5jcWjValgb8tI.ttf", fontWeight: 700 },
-    ],
+	family: "Philosopher",
+	fonts: [
+		{
+			src: "https://fonts.gstatic.com/s/philosopher/v21/vEFV2_5QCwIS4_Dhez5jcVBp.ttf",
+			fontWeight: 400,
+		},
+		{
+			src: "https://fonts.gstatic.com/s/philosopher/v21/vEFX2_5QCwIS4_Dhez5jcWBrT0g.ttf",
+			fontWeight: 400,
+			fontStyle: "italic",
+		},
+		{
+			src: "https://fonts.gstatic.com/s/philosopher/v21/vEFI2_5QCwIS4_Dhez5jcWjVamgc.ttf",
+			fontWeight: 700,
+		},
+		{
+			src: "https://fonts.gstatic.com/s/philosopher/v21/vEFK2_5QCwIS4_Dhez5jcWBrd_QZ8tI.ttf",
+			fontWeight: 700,
+			fontStyle: "italic",
+		},
+	],
 });
 
 Font.register({
-    family: "Plus Jakarta Sans",
-    fonts: [
-        { src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_qU79TR_Q.ttf", fontWeight: 400 },
-        { src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_d0n9TR_Q.ttf", fontWeight: 600 },
-        { src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_Tkn9TR_Q.ttf", fontWeight: 700 },
-    ],
+	family: "Plus Jakarta Sans",
+	fonts: [
+		{
+			src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_qU7NSg.ttf",
+			fontWeight: 400,
+		},
+		{
+			src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIZaomQNQcsA88c7O9yZ4KMCoOg4KozySKCdSNG9OcqYQ0lCR_Q.ttf",
+			fontWeight: 400,
+			fontStyle: "italic",
+		},
+		{
+			src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_d0nNSg.ttf",
+			fontWeight: 600,
+		},
+		{
+			src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIZaomQNQcsA88c7O9yZ4KMCoOg4KozySKCdSNG9OcqYQ37Dh_Q.ttf",
+			fontWeight: 600,
+			fontStyle: "italic",
+		},
+		{
+			src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIbaomQNQcsA88c7O9yZ4KMCoOg4IA6-91aHEjcWuA_TknNSg.ttf",
+			fontWeight: 700,
+		},
+		{
+			src: "https://fonts.gstatic.com/s/plusjakartasans/v12/LDIZaomQNQcsA88c7O9yZ4KMCoOg4KozySKCdSNG9OcqYQ3CDh_Q.ttf",
+			fontWeight: 700,
+			fontStyle: "italic",
+		},
+	],
 });
 
 Font.register({
-    family: "Great Vibes",
-    fonts: [
-        { src: "https://fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN9XFiaE.ttf" },
-    ],
+	family: "Great Vibes",
+	fonts: [
+		{
+			src: "https://fonts.gstatic.com/s/greatvibes/v21/RWmMoKWR9v4ksMfaWd_JN-XC.ttf",
+			fontWeight: 400,
+		},
+	],
 });
 
 // --- Theme Colors ---
