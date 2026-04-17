@@ -238,7 +238,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 					{mode === "create" ? "Add New Client" : "Edit Client"}
 				</h2>
 				<div className="flex items-center space-x-2">
-					<Button variant="outline" className="bg-white" onClick={() => router.push("/clients")}>
+					<Button variant="outline" className="bg-card" onClick={() => router.push("/clients")}>
 						Cancel
 					</Button>
 				</div>

@@ -125,13 +125,13 @@ function DescriptionAutocomplete({
 						onFocus={() => {
 							if (pricingTiers.length > 0) setOpen(true);
 						}}
-						className="placeholder:text-muted-foreground/50 border-foreground/10 focus-visible:ring-primary/20 h-8 bg-white text-sm font-medium transition-all"
+						className="placeholder:text-muted-foreground/50 border focus-visible:ring-primary/20 h-8 bg-card text-sm font-medium transition-all"
 						placeholder="Service or product description…"
 						disabled={isPending}
 					/>
 				</PopoverAnchor>
 				<PopoverContent
-					className="border-foreground/10 overflow-hidden rounded-xl p-0 shadow-2xl"
+					className="border overflow-hidden rounded-xl p-0 shadow-2xl"
 					style={{ width: "var(--radix-popover-anchor-width)" }}
 					onOpenAutoFocus={(e) => e.preventDefault()}
 					onInteractOutside={(e) => {
@@ -143,7 +143,7 @@ function DescriptionAutocomplete({
 					align="start"
 					sideOffset={4}
 				>
-					<Command className="bg-white" loop>
+					<Command className="bg-card" loop>
 						<CommandList className="max-h-56">
 							<CommandEmpty className="text-muted-foreground/60 py-4 text-center text-xs font-medium">
 								No pricing tiers found.
@@ -330,7 +330,7 @@ export function DocumentDialog({
 
 			<DialogContent className="bg-card zen-shadow-lg flex max-h-dvh w-full flex-col gap-0 overflow-hidden rounded-t-3xl rounded-b-none border-0 p-0 shadow-2xl sm:max-h-[95vh] sm:min-w-[680px] sm:rounded-3xl md:min-w-[760px]">
 				{/* ── Header ── */}
-				<DialogHeader className="border-foreground/10 shrink-0 border-b px-4 pt-5 pb-4 sm:px-7 sm:pt-7 sm:pb-5">
+				<DialogHeader className="border shrink-0 border-b px-4 pt-5 pb-4 sm:px-7 sm:pt-7 sm:pb-5">
 					<div className="flex items-start gap-4">
 						<div className="border-primary/15 bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm">
 							<DocumentText size={22} variant="Bulk" />
@@ -377,11 +377,11 @@ export function DocumentDialog({
 															}}
 														>
 															<FormControl>
-																<SelectTrigger className="border-foreground/10 focus:ring-primary/20 bg-white font-semibold transition-all">
+																<SelectTrigger className="border focus:ring-primary/20 bg-card font-semibold transition-all">
 																	<SelectValue placeholder="Select type" />
 																</SelectTrigger>
 															</FormControl>
-															<SelectContent className="border-foreground/10 shadow-xl">
+															<SelectContent className="border shadow-xl">
 																<SelectItem
 																	value="quote"
 																	className="font-semibold"
@@ -411,7 +411,7 @@ export function DocumentDialog({
 														<FormControl>
 															<Input
 																{...field}
-																className="border-foreground/10 focus-visible:ring-primary/20 bg-white font-mono font-bold tracking-wider transition-all"
+																className="border focus-visible:ring-primary/20 bg-card font-mono font-bold tracking-wider transition-all"
 																disabled={isPending}
 															/>
 														</FormControl>
@@ -434,11 +434,11 @@ export function DocumentDialog({
 														onValueChange={field.onChange}
 													>
 														<FormControl>
-															<SelectTrigger className="border-foreground/10 focus:ring-primary/20 w-full bg-white font-semibold transition-all">
+															<SelectTrigger className="border focus:ring-primary/20 w-full bg-card font-semibold transition-all">
 																<SelectValue placeholder="Select contact" />
 															</SelectTrigger>
 														</FormControl>
-														<SelectContent className="border-foreground/10 w-full shadow-xl">
+														<SelectContent className="border w-full shadow-xl">
 															{contacts.map((contact) => (
 																<SelectItem
 																	key={contact.id}
@@ -471,7 +471,7 @@ export function DocumentDialog({
 														<Input
 															type="date"
 															{...field}
-															className="border-foreground/10 focus:ring-primary/20 bg-white font-medium transition-all"
+															className="border focus:ring-primary/20 bg-card font-medium transition-all"
 															disabled={isPending}
 														/>
 													</FormControl>
@@ -490,7 +490,7 @@ export function DocumentDialog({
 															type="date"
 															{...field}
 															value={field.value || ""}
-															className="border-foreground/10 focus:ring-primary/20 bg-white font-medium transition-all"
+															className="border focus:ring-primary/20 bg-card font-medium transition-all"
 															disabled={isPending}
 														/>
 													</FormControl>
@@ -525,24 +525,16 @@ export function DocumentDialog({
 									</div>
 
 									{/* Lines Table */}
-									<div className="border-foreground/10 bg-sidebar/45 overflow-hidden rounded-2xl border">
+									<div className="border overflow-hidden rounded-2xl border">
 										<div className="overflow-x-auto">
 											<Table>
-												<TableHeader className="bg-sidebar">
-													<TableRow className="border-foreground/10 border-b hover:bg-transparent">
-														<TableHead className="text-muted-foreground/70 h-10 px-4 text-[10px] font-bold tracking-widest uppercase">
-															Description
-														</TableHead>
-														<TableHead className="text-muted-foreground/70 h-10 w-[72px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
-															Qty
-														</TableHead>
-														<TableHead className="text-muted-foreground/70 h-10 w-[104px] px-2 text-center text-[10px] font-bold tracking-widest uppercase">
-															Unit Price
-														</TableHead>
-														<TableHead className="text-muted-foreground/70 h-10 w-[80px] px-2 text-right text-[10px] font-bold tracking-widest uppercase">
-															Total
-														</TableHead>
-														<TableHead className="h-10 w-[40px] p-0" />
+												<TableHeader>
+													<TableRow className="border-b transition-colors hover:bg-transparent">
+														<TableHead className="px-4">Description</TableHead>
+														<TableHead className="w-[72px] px-2 text-center">Qty</TableHead>
+														<TableHead className="w-[104px] px-2 text-center">Unit Price</TableHead>
+														<TableHead className="w-[80px] px-2 text-right">Total</TableHead>
+														<TableHead className="w-[40px] p-0" />
 													</TableRow>
 												</TableHeader>
 												<TableBody className="divide-secondary/15 divide-y">
@@ -593,7 +585,7 @@ export function DocumentDialog({
 																				<Input
 																					inputMode="decimal"
 																					{...f}
-																					className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
+																					className="border focus-visible:ring-primary/20 h-8 w-full bg-card text-center font-mono text-sm font-bold"
 																					disabled={isPending}
 																					onChange={(e) => {
 																						const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -619,7 +611,7 @@ export function DocumentDialog({
 																				<Input
 																					inputMode="decimal"
 																					{...f}
-																					className="border-foreground/10 focus-visible:ring-primary/20 h-8 w-full bg-white text-center font-mono text-sm font-bold"
+																					className="border focus-visible:ring-primary/20 h-8 w-full bg-card text-center font-mono text-sm font-bold"
 																					disabled={isPending}
 																					onChange={(e) => {
 																						const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -680,7 +672,7 @@ export function DocumentDialog({
 													<FormControl>
 														<Textarea
 															{...field}
-															className="border-foreground/10 focus-visible:ring-primary/20 min-h-32 resize-none rounded-2xl bg-white px-4 py-3 font-medium transition-all"
+															className="border focus-visible:ring-primary/20 min-h-32 resize-none rounded-2xl bg-card px-4 py-3 font-medium transition-all"
 															placeholder="Optional notes (will appear on the document)…"
 															disabled={isPending}
 															value={field.value || ""}
@@ -693,7 +685,7 @@ export function DocumentDialog({
 									</div>
 
 									{/* Totals */}
-									<div className="border-foreground/10 bg-secondary/5 flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 sm:w-1/2">
+									<div className="border bg-secondary/5 flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 sm:w-1/2">
 										{/* Subtotal Row */}
 										<div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-end sm:gap-16">
 											<SectionLabel>Subtotal</SectionLabel>
@@ -709,7 +701,7 @@ export function DocumentDialog({
 										<div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-end sm:gap-16">
 											<div className="flex items-center gap-2.5">
 												<SectionLabel>Tax Rate</SectionLabel>
-												<div className="border-foreground/10 flex items-center rounded-xl border bg-white px-2 py-1">
+												<div className="border flex items-center rounded-xl border bg-card px-2 py-1">
 													<FormField
 														control={form.control}
 														name="document.taxRate"
@@ -766,7 +758,7 @@ export function DocumentDialog({
 						</ScrollArea>
 
 						{/* ── Footer ── */}
-						<DialogFooter className="border-foreground/10 bg-card shrink-0 flex-col-reverse gap-2 border-t px-4 py-4 sm:flex-row sm:gap-0 sm:px-7">
+						<DialogFooter className="border bg-card shrink-0 flex-col-reverse gap-2 border-t px-4 py-4 sm:flex-row sm:gap-0 sm:px-7">
 							<Button
 								type="button"
 								variant="ghost"

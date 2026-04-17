@@ -1,7 +1,7 @@
 import { getDocumentsAction } from "@/actions/b2b/documents";
 import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
 import { DocumentFilters } from "@/components/b2b/documents/filters";
-import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
+import { B2BDocumentStatus, B2BDocumentType, DocumentWithRelations } from "@/lib/types/b2b";
 
 type SearchParams = Promise<{
 	query?: string;
@@ -44,7 +44,7 @@ export default async function DocumentsPage(props: {
 				<DocumentFilters />
 			</div>
 
-			<DocumentDashboardTable documents={documents || []} />
+			<DocumentDashboardTable documents={(documents as DocumentWithRelations[]) || []} />
 
 			{!documents?.length && (
 				<div className="flex flex-col items-center justify-center py-20 text-center">

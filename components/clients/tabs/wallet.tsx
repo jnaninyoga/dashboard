@@ -69,7 +69,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 			{/* Overview Row */}
 			<div className="grid gap-6 sm:grid-cols-2">
 				{/* Total Credits Summary Bubble - Now with stronger background */}
-				<div className="group bg-secondary/30 border-foreground/10 hover:bg-secondary/50 hover:zen-glow-blush relative overflow-hidden rounded-3xl border p-6 shadow-sm transition-all">
+				<div className="group bg-secondary/30 border hover:bg-secondary/50 hover:zen-glow-blush relative overflow-hidden rounded-3xl border p-6 shadow-sm transition-all">
 					<div className="relative z-10">
 						<h4 className="text-foreground text-xs font-bold tracking-wider uppercase opacity-40">
 							Total Available
@@ -91,7 +91,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 				</div>
 
 				{/* Quick Sell Action Bubble - Now with stronger background */}
-				<div className="bg-sidebar border-secondary/30 hover:zen-glow-teal flex flex-col items-center justify-center rounded-3xl border p-6 shadow-sm transition-all hover:bg-white">
+				<div className="bg-muted border-secondary/30 hover:zen-glow-teal flex flex-col items-center justify-center rounded-3xl border p-6 shadow-sm transition-all hover:bg-card">
 					<div className="mb-4 text-center">
 						<h4 className="text-secondary-foreground text-xs font-bold tracking-wider uppercase opacity-60">
 							Top-up Wallet
@@ -122,7 +122,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 										value={selectedProductId}
 										onValueChange={setSelectedProductId}
 									>
-										<SelectTrigger className="border-foreground/10 h-11 rounded-xl">
+										<SelectTrigger className="border h-11 rounded-xl">
 											<SelectValue placeholder="Choose a membership..." />
 										</SelectTrigger>
 										<SelectContent>
@@ -161,7 +161,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 
 				<div className="space-y-3">
 					{wallets.length === 0 ? (
-						<div className="bg-sidebar border-foreground/10 rounded-3xl border border-dashed py-8 text-center shadow-sm">
+						<div className="bg-muted border rounded-3xl border border-dashed py-8 text-center shadow-sm">
 							<p className="text-muted-foreground text-sm italic">
 								No active products or credit packs.
 							</p>
@@ -170,7 +170,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 						wallets.map((wallet) => (
 							<div
 								key={wallet.id}
-								className="group border-foreground/5 hover:zen-glow-teal flex items-center justify-between gap-4 rounded-3xl border bg-white p-4 shadow-xs transition-all hover:shadow-md"
+								className="group border/50 hover:zen-glow-teal flex items-center justify-between gap-4 rounded-3xl border bg-card p-4 shadow-xs transition-all hover:shadow-md"
 							>
 								<div className="flex items-center gap-4">
 									<div

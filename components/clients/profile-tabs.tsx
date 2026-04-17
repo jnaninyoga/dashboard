@@ -22,7 +22,7 @@ export function ClientProfileTabs({
 }: ClientProfileTabsProps) {
 	return (
 		<Tabs defaultValue="profile" className="w-full">
-			<TabsList className="bg-card border-foreground/10 mb-6 grid w-full grid-cols-3 gap-2 rounded-2xl border p-1 lg:w-96">
+			<TabsList className="bg-card border mb-6 grid w-full grid-cols-3 gap-2 rounded-2xl border p-1 lg:w-96">
 				<TabsTrigger
 					value="profile"
 					className="bg-background data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:zen-glow-blush rounded-xl px-4 py-2 text-xs font-bold tracking-widest uppercase transition-all"

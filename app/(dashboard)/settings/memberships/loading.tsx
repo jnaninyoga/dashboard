@@ -13,7 +13,7 @@ export default function Loading() {
 			</div>
 
 			{/* Table Skeleton */}
-			<div className="space-y-0 rounded-lg bg-white p-2">
+			<div className="space-y-0 rounded-lg bg-card p-2">
 				{/* Header Row */}
 				<div className="border-secondary-foreground/10 flex items-center gap-6 border-b px-4 py-3">
 					<Skeleton className="bg-muted-foreground/10 h-4 w-28" />

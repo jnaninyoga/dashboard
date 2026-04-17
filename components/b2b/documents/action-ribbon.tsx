@@ -62,10 +62,10 @@ export function DocumentActionRibbon({ doc, profile }: { doc: DocumentWithRelati
 	const isInvoice = doc.type === "invoice";
 
 	return (
-		<div className="animate-slide-up border-foreground/10 bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
+		<div className="animate-slide-up border bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
 			{/* Linked Documents / Relations (Left Side) */}
 			{doc.parent || doc.children?.length ? (
-				<div className="lg:border-foreground/5 flex flex-wrap items-center gap-4 lg:mr-2 lg:border-r lg:pr-5">
+				<div className="lg:border/50 flex flex-wrap items-center gap-4 lg:mr-2 lg:border-r lg:pr-5">
 					<div className="bg-primary/15 text-primary border-primary/20 zen-teal-glow flex size-9 shrink-0 items-center justify-center rounded-full border">
 						<Link1 size={18} variant="Bulk" />
 					</div>

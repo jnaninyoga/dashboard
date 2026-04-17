@@ -75,32 +75,18 @@ function ClientAvatar({ client }: { client: ClientWithRelations }) {
 
 export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 	return (
-		<div className="animate-slide-up border-foreground/10 bg-card overflow-hidden rounded-3xl border shadow-sm transition-all delay-150">
-			<Table containerClassName="overflow-x-auto" className="bg-white">
-				<TableHeader className="bg-sidebar border-foreground/10 border-b">
-					<TableRow className="border-foreground/10 border-b hover:bg-transparent">
-						<TableHead className="text-muted-foreground/70 h-10 px-6 text-[10px] font-bold tracking-widest uppercase">
-							Client
-						</TableHead>
-						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
-							Gender
-						</TableHead>
-						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
-							Category
-						</TableHead>
-						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
-							Membership
-						</TableHead>
-						<TableHead className="text-muted-foreground h-10 text-center text-[10px] font-bold tracking-widest uppercase">
-							Health
-						</TableHead>
-						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
-							Phone
-						</TableHead>
-						<TableHead className="text-muted-foreground h-10 text-[10px] font-bold tracking-widest uppercase">
-							Email
-						</TableHead>
-						<TableHead className="h-10 pr-6 text-right"></TableHead>
+		<div className="animate-slide-up transition-all delay-150">
+			<Table containerClassName="overflow-x-auto">
+				<TableHeader>
+					<TableRow className="border-b transition-colors hover:bg-transparent">
+						<TableHead className="px-6">Client</TableHead>
+						<TableHead>Gender</TableHead>
+						<TableHead>Category</TableHead>
+						<TableHead>Membership</TableHead>
+						<TableHead className="text-center">Health</TableHead>
+						<TableHead>Phone</TableHead>
+						<TableHead>Email</TableHead>
+						<TableHead className="pr-6 text-right"></TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody className="divide-secondary/15 divide-y">
@@ -223,7 +209,7 @@ export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 															<Danger size={18} variant="Bulk" />
 														</div>
 													</TooltipTrigger>
-													<TooltipContent side="top" align="center" className="border-foreground/10 max-w-xs rounded-xl bg-red-50 p-3 shadow-xl">
+													<TooltipContent side="top" align="center" className="border max-w-xs rounded-xl bg-red-50 p-3 shadow-xl">
 														<div className="flex flex-col gap-2">
 															<p className="text-destructive border-destructive/10 flex items-center gap-1.5 border-b pb-1.5 text-[10px] font-black tracking-widest uppercase">
 																<Danger size={12} variant="Bulk" />

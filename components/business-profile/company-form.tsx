@@ -115,8 +115,8 @@ export function CompanyProfileForm({ initialData }: Props) {
 			{/* Section 1: Studio Identity & Branding */}
 			<div className="grid gap-8 lg:grid-cols-3">
                 <div className="animate-slide-up space-y-6 lg:col-span-2" style={{ animationDelay: "100ms" }}>
-                    <Card className="border-foreground/10 bg-card overflow-hidden rounded-3xl shadow-sm backdrop-blur-sm">
-                        <CardHeader className="border-foreground/10">
+                    <Card className="border bg-card overflow-hidden rounded-3xl shadow-sm backdrop-blur-sm">
+                        <CardHeader className="border">
                             <div className="flex items-center gap-3">
                                 <div className="bg-primary/10 text-primary rounded-2xl p-2.5">
                                     <Personalcard size={24} variant="Bulk" />
@@ -167,7 +167,7 @@ export function CompanyProfileForm({ initialData }: Props) {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-foreground/10 bg-card animate-slide-up overflow-hidden rounded-3xl shadow-sm backdrop-blur-sm" style={{ animationDelay: "200ms" }}>
+                    <Card className="border bg-card animate-slide-up overflow-hidden rounded-3xl shadow-sm backdrop-blur-sm" style={{ animationDelay: "200ms" }}>
                         <CardHeader>
                             <div className="flex items-center gap-3">
                                 <div className="bg-primary/10 text-primary rounded-2xl p-2.5">
@@ -235,7 +235,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 
                 {/* Sidebar: Assets */}
                 <div className="animate-slide-up space-y-6" style={{ animationDelay: "300ms" }}>
-                    <Card className="border-foreground/10 bg-card overflow-hidden rounded-3xl shadow-sm backdrop-blur-sm">
+                    <Card className="border bg-card overflow-hidden rounded-3xl shadow-sm backdrop-blur-sm">
                         <CardHeader className="border-secondary/10 bg-muted/20 flex items-center gap-2 border-b px-8 py-6">
                             <CardTitle className="font-heading text-xl font-black tracking-tight">Studio Assets</CardTitle>
 							<Tooltip>
@@ -464,11 +464,11 @@ function LegalLabelAutocomplete({
 					/>
 				</PopoverAnchor>
 				<PopoverContent
-					className="border-foreground/10 p-0"
+					className="border p-0"
 					style={{ width: "var(--radix-popover-anchor-width)" }}
 					onOpenAutoFocus={(e) => e.preventDefault()}
 				>
-					<Command className="bg-white">
+					<Command className="bg-card">
 						<CommandList className="max-h-48">
 							<CommandEmpty>Custom Label: &quot;{value}&quot;</CommandEmpty>
 							<CommandGroup>
