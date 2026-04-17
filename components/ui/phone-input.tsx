@@ -22,7 +22,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-import { ArrowSwapVertical,TickCircle } from "iconsax-reactjs";
+import { ArrowSwapVertical, TickCircle } from "iconsax-reactjs";
 
 type PhoneInputProps = Omit<
 	React.ComponentProps<"input">,
@@ -30,11 +30,23 @@ type PhoneInputProps = Omit<
 > &
 	Omit<RPNInput.Props<typeof RPNInput.default>, "onChange"> & {
 		onChange?: (value: RPNInput.Value) => void;
+		inputClassName?: string;
+		countrySelectClassName?: string;
 	};
 
 const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
 	React.forwardRef<React.ElementRef<typeof RPNInput.default>, PhoneInputProps>(
-		({ className, onChange, value, ...props }, ref) => {
+		(
+			{
+				className,
+				inputClassName,
+				countrySelectClassName,
+				onChange,
+				value,
+				...props
+			},
+			ref,
+		) => {
 			return (
 				<RPNInput.default
 					ref={ref}
@@ -44,16 +56,13 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> =
 					inputComponent={InputComponent}
 					smartCaret={false}
 					value={value as RPNInput.Value}
-					/**
-					 * Handles the onChange event.
-					 *
-					 * react-phone-number-input might trigger the onChange event as undefined
-					 * when a valid phone number is not entered. To prevent this,
-					 * the value is coerced to an empty string.
-					 *
-					 * @param {E164Number | undefined} value - The entered value
-					 */
 					onChange={(value) => onChange?.(value || ("" as RPNInput.Value))}
+					numberInputProps={{
+						className: inputClassName,
+					}}
+					countrySelectProps={{
+						className: countrySelectClassName,
+					}}
 					{...props}
 				/>
 			);
@@ -66,7 +75,7 @@ const InputComponent = React.forwardRef<
 	React.ComponentProps<"input">
 >(({ className, ...props }, ref) => (
 	<Input
-		className={cn("rounded-s-none rounded-e-lg", className)}
+		className={cn("rounded-s-none rounded-e-2xl", className)}
 		{...props}
 		ref={ref}
 	/>
@@ -79,6 +88,7 @@ type CountrySelectProps = {
 	disabled?: boolean;
 	value: RPNInput.Country;
 	options: CountryEntry[];
+	className?: string;
 	onChange: (country: RPNInput.Country) => void;
 };
 
@@ -87,6 +97,7 @@ const CountrySelect = ({
 	value: selectedCountry,
 	options: countryList,
 	onChange,
+	className,
 }: CountrySelectProps) => {
 	const scrollAreaRef = React.useRef<HTMLDivElement>(null);
 
@@ -106,7 +117,10 @@ const CountrySelect = ({
 				<Button
 					type="button"
 					variant="outline"
-					className="flex gap-1 rounded-s-lg rounded-e-none border-r-0 px-3 focus:z-10"
+					className={cn(
+						"flex gap-1 rounded-s-2xl rounded-e-none border-secondary/20 border-r-0 px-3 transition-colors focus:z-10 focus:border-primary/50",
+						className,
+					)}
 					disabled={disabled}
 				>
 					<FlagComponent
