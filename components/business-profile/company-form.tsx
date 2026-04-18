@@ -24,9 +24,13 @@ import { cn } from "@/lib/utils";
 
 import {
 	Add,
+	Briefcase,
 	Buildings,
 	Call,
+	Civic,
+	DocumentText1,
 	Global,
+	Hashtag,
 	Image as ImageIcon,
 	InfoCircle,
 	Location,
@@ -101,11 +105,6 @@ export function CompanyProfileForm({ initialData }: Props) {
 
 	return (
 		<form action={formAction} className="relative space-y-10 pb-20">
-			{/* Background Decorative Element */}
-			<div className="pointer-events-none absolute -top-40 -right-20 rotate-12 opacity-[0.02]">
-				<Buildings size={400} variant="Bulk" />
-			</div>
-
 			{initialData?.id ? (
 				<input type="hidden" name="id" value={initialData.id} />
 			) : null}
@@ -128,8 +127,8 @@ export function CompanyProfileForm({ initialData }: Props) {
 					className="animate-slide-up space-y-8 lg:col-span-2"
 					style={{ animationDelay: "100ms" }}
 				>
-					<Card className="border-secondary/10 bg-card rounded-3xl  overflow-hidden">
-						<CardHeader className="bg-secondary/5 border-secondary/10 border-b">
+					<Card className="overflow-hidden">
+						<CardHeader>
 							<div className="flex items-center gap-4">
 								<div className="bg-primary/10 text-primary rounded-2xl p-2.5">
 									<Personalcard size={24} variant="Bulk" />
@@ -144,7 +143,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 								</div>
 							</div>
 						</CardHeader>
-						<CardContent className="grid gap-8 p-8">
+						<CardContent className="grid gap-8">
 							<div className="grid gap-6 md:grid-cols-2">
 								<FormInput
 									label="Company Name"
@@ -177,8 +176,8 @@ export function CompanyProfileForm({ initialData }: Props) {
 											(country) => country !== "IL" && country !== "EH",
 										)}
 										className="h-14"
-										inputClassName="rounded-e-2xl"
-										countrySelectClassName="bg-primary/5 border border-r-0 border-primary/10"
+										inputClassName="rounded-e-md"
+										countrySelectClassName="bg-primary/5 border border-r-0 border-primary/15 rounded-s-md text-primary"
 									/>
 								</div>
 								<FormInput
@@ -194,13 +193,13 @@ export function CompanyProfileForm({ initialData }: Props) {
 					</Card>
 
 					<Card
-						className="border-secondary/10 bg-card animate-slide-up rounded-3xl  overflow-hidden"
+						className="overflow-hidden"
 						style={{ animationDelay: "200ms" }}
 					>
-						<CardHeader className="bg-secondary/5 border-secondary/10 border-b">
+						<CardHeader>
 							<div className="flex items-center gap-4">
 								<div className="bg-primary/10 text-primary rounded-2xl p-2.5">
-									<SecuritySafe size={24} variant="Bulk" />
+									<Briefcase size={24} variant="Bulk" />
 								</div>
 								<div>
 									<CardTitle className="font-heading text-xl font-bold tracking-tight">
@@ -212,7 +211,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 								</div>
 							</div>
 						</CardHeader>
-						<CardContent className="space-y-6 p-8">
+						<CardContent className="space-y-6">
 							<div className="space-y-4">
 								{legalDetails.map((detail, idx) => (
 									<div
@@ -231,22 +230,24 @@ export function CompanyProfileForm({ initialData }: Props) {
 											/>
 										</div>
 										<div className="flex-2">
-											<Input
+											<FormInput
+												id={`legalValue-${idx}`}
+												name={`legalValue-${idx}`}
 												placeholder="Legal Value"
 												value={detail.value}
-												className="h-12 rounded-xl transition-all"
-												onChange={(e) => {
-													const newArr = [...legalDetails];
+												onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+													const newArr: typeof legalDetails = [...legalDetails];
 													newArr[idx].value = e.target.value;
 													setLegalDetails(newArr);
 												}}
+												icon={<Hashtag size={18} variant="Bulk"/>}
 											/>
 										</div>
 										<Button
 											type="button"
 											variant="ghost"
 											size="icon"
-											className="text-destructive/40 bg-destructive/5 hover:text-destructive hover:bg-destructive/10 size-10 rounded-xl transition-all"
+											className="bg-destructive/5 text-destructive/80 opacity-0 transition-all hover:text-destructive hover:bg-destructive/10 group-hover:opacity-100 group-focus-within:opacity-100"
 											onClick={() => {
 												setLegalDetails(
 													legalDetails.filter((_, i) => i !== idx),
@@ -278,11 +279,11 @@ export function CompanyProfileForm({ initialData }: Props) {
 
 				{/* Sidebar: Assets */}
 				<div
-					className="animate-slide-up space-y-6"
+					className="animate-slide-left space-y-6"
 					style={{ animationDelay: "300ms" }}
 				>
-					<Card className="border-secondary/10 bg-card rounded-3xl  overflow-hidden">
-						<CardHeader className="bg-secondary/5 border-secondary/10 flex flex-row items-center justify-between border-b px-8 py-6">
+					<Card className="overflow-hidden">
+						<CardHeader className="flex flex-row items-center justify-between">
 							<div>
 								<CardTitle className="font-heading text-xl font-bold tracking-tight">
 									Studio Assets
@@ -313,7 +314,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 								</TooltipContent>
 							</Tooltip>
 						</CardHeader>
-						<CardContent className="space-y-8 p-8">
+						<CardContent className="space-y-6">
 							{/* Logo Upload */}
 							<div className="space-y-3">
 								<Label className="text-muted-foreground ml-1 text-xs font-bold tracking-widest uppercase">
@@ -351,11 +352,11 @@ export function CompanyProfileForm({ initialData }: Props) {
 
 			{/* Section 2: Document Configuration */}
 			<section className="animate-slide-up" style={{ animationDelay: "400ms" }}>
-				<Card className="border-secondary/10 bg-card rounded-3xl  overflow-hidden">
-					<CardHeader className="bg-secondary/5 border-secondary/10 flex flex-row items-center justify-between border-b px-8 py-6">
+				<Card className="overflow-hidden">
+					<CardHeader className="flex flex-row items-center justify-between">
 						<div className="flex items-center gap-4">
 							<div className="bg-primary/10 text-primary rounded-2xl p-2.5">
-								<SecuritySafe size={24} variant="Bulk" />
+								<DocumentText1 size={24} variant="Bulk" />
 							</div>
 							<div>
 								<CardTitle className="font-heading text-xl font-bold tracking-tight">
@@ -377,7 +378,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 							/>
 						</div>
 					</CardHeader>
-					<CardContent className="grid gap-10 p-8 md:grid-cols-2">
+					<CardContent className="grid gap-10 md:grid-cols-2">
 						<div className="space-y-4">
 							<Label className="text-secondary-3 ml-1 text-xs font-black tracking-widest uppercase">
 								Bank Account Information
@@ -429,8 +430,13 @@ export function CompanyProfileForm({ initialData }: Props) {
 	);
 }
 
-function FormInput({ label, icon, ...props }: any) {
-	return (
+type FormInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+	label?: string;
+	icon?: React.ReactNode;
+};
+
+function FormInput({ label, icon, ...props }: FormInputProps) {
+	return label ? (
 		<div className="space-y-2.5">
 			<Label
 				htmlFor={props.id}
@@ -447,6 +453,15 @@ function FormInput({ label, icon, ...props }: any) {
 				<Input {...props} className={cn(icon && "pl-12")} />
 			</div>
 		</div>
+		) : (			
+		<div className="group relative">
+			{icon ? (
+				<div className="text-primary/40 group-focus-within:text-primary absolute top-1/2 left-4 -translate-y-1/2 transition-colors">
+					{icon}
+				</div>
+			) : null}
+			<Input {...props} className={cn(icon && "pl-12")} />
+		</div>
 	);
 }
 
@@ -460,7 +475,7 @@ function AssetUploader({
 	return (
 		<div
 			className={cn(
-				"group border-primary/10 bg-secondary/5 hover:bg-primary/5 hover:border-primary/20 relative flex items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed transition-all",
+				"group border-secondary-2/40 bg-secondary/20 hover:bg-secondary/40 hover:border-secondary-2/60 relative flex items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed transition-all",
 				aspect === "square" ? "aspect-square" : "aspect-video",
 			)}
 		>
@@ -503,11 +518,11 @@ function AssetUploader({
 				</div>
 			) : (
 				<div className="relative flex cursor-pointer flex-col items-center gap-3 p-6 text-center">
-					<div className="bg-primary/10 text-primary rounded-2xl p-4 transition-transform group-hover:scale-110">
+					<div className="bg-secondary text-secondary-foreground rounded-2xl p-4 transition-transform group-hover:scale-110">
 						<ImageIcon size={32} variant="Bulk" />
 					</div>
 					<div>
-						<p className="text-primary mb-1 text-[10px] font-black tracking-widest uppercase">
+						<p className="text-secondary-foreground mb-1 text-[10px] font-black tracking-widest uppercase">
 							Upload {label}
 						</p>
 						<p className="text-muted-foreground text-[9px] leading-tight font-medium">
@@ -529,9 +544,11 @@ function AssetUploader({
 function LegalLabelAutocomplete({
 	value,
 	onChange,
+	formInputProps,
 }: {
 	value: string;
 	onChange: (val: string) => void;
+	formInputProps?: Omit<FormInputProps, 'value' | 'onChange'>;
 }) {
 	const [open, setOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -540,15 +557,17 @@ function LegalLabelAutocomplete({
 		<div ref={containerRef} className="relative w-full">
 			<Popover open={open} onOpenChange={setOpen}>
 				<PopoverAnchor asChild>
-					<Input
+					<FormInput
+						{...formInputProps}
 						value={value}
 						onChange={(e) => {
 							onChange(e.target.value);
 							if (!open) setOpen(true);
 						}}
 						onFocus={() => setOpen(true)}
-						className="h-12 rounded-xl font-bold transition-all placeholder:font-normal"
+						className={cn("font-bold transition-all placeholder:font-normal", formInputProps?.className)}
 						placeholder="Label (e.g. ICE)"
+						icon={<Civic size={18} variant="Bulk"/>}
 					/>
 				</PopoverAnchor>
 				<PopoverContent
