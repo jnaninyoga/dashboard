@@ -61,7 +61,10 @@ interface Props {
 
 const DEFAULT_LEGAL_LABELS = ["ICE", "IF", "RC", "Patente"];
 
-export function CompanyProfileForm({ initialData }: Props) {
+export function CompanyProfileForm({
+	initialData,
+	children,
+}: Props & { children?: React.ReactNode }) {
 	const [state, formAction, isPending] = useActionState(
 		upsertBusinessProfileAction,
 		null,
@@ -78,6 +81,9 @@ export function CompanyProfileForm({ initialData }: Props) {
 		initialData?.signatureBase64 || null,
 	);
 	const [phone, setPhone] = useState(initialData?.phone || "");
+	const [showBankDetails, setShowBankDetails] = useState(
+		initialData?.showBankDetails !== false,
+	);
 
 	useEffect(() => {
 		if (state?.success) {
@@ -105,6 +111,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 
 	return (
 		<form action={formAction} className="relative space-y-10 pb-20">
+			{children}
 			{initialData?.id ? (
 				<input type="hidden" name="id" value={initialData.id} />
 			) : null}
@@ -192,10 +199,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 						</CardContent>
 					</Card>
 
-					<Card
-						className="overflow-hidden"
-						style={{ animationDelay: "200ms" }}
-					>
+					<Card className="overflow-hidden" style={{ animationDelay: "200ms" }}>
 						<CardHeader>
 							<div className="flex items-center gap-4">
 								<div className="bg-primary/10 text-primary rounded-2xl p-2.5">
@@ -240,7 +244,7 @@ export function CompanyProfileForm({ initialData }: Props) {
 													newArr[idx].value = e.target.value;
 													setLegalDetails(newArr);
 												}}
-												icon={<Hashtag size={18} variant="Bulk"/>}
+												icon={<Hashtag size={18} variant="Bulk" />}
 											/>
 										</div>
 										<Button
@@ -367,22 +371,47 @@ export function CompanyProfileForm({ initialData }: Props) {
 								</CardDescription>
 							</div>
 						</div>
-						<div className="flex flex-col items-end gap-1.5 pt-1">
-							<Label className="text-muted-foreground text-[10px] font-black tracking-widest uppercase opacity-60">
-								Show Bank Details
-							</Label>
-							<Switch
-								name="showBankDetails"
-								className="data-[state=checked]:bg-primary"
-								defaultChecked={initialData?.showBankDetails !== false}
-							/>
-						</div>
 					</CardHeader>
-					<CardContent className="grid gap-10 md:grid-cols-2">
-						<div className="space-y-4">
-							<Label className="text-secondary-3 ml-1 text-xs font-black tracking-widest uppercase">
-								Bank Account Information
-							</Label>
+					<CardContent className="space-y-6">
+						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-secondary/10 pb-6">
+							<div className="space-y-1">
+								<Label className="text-muted-foreground ml-1 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
+									<SecuritySafe
+										size={16}
+										variant="Bulk"
+										className="text-primary"
+									/>
+									Bank Account Information
+								</Label>
+								<p className="text-muted-foreground/60 ml-1 text-[10px] uppercase font-black tracking-widest leading-none">
+									Toggle to include banking details on quotes and invoices
+								</p>
+							</div>
+							<div className="flex items-center gap-3 bg-secondary/50 rounded-2xl px-4 py-2 border border-secondary-2/40 transition-all hover:bg-secondary/80 hover:text-secondary-foreground group">
+								<Label
+									htmlFor="showBankDetails"
+									className="text-[10px] font-black tracking-widest uppercase opacity-60 cursor-pointer transition-opacity group-hover:opacity-100"
+								>
+									{showBankDetails ? "Visible" : "Hidden"}
+								</Label>
+								<Switch
+									id="showBankDetails"
+									name="showBankDetails"
+									checked={showBankDetails}
+									onCheckedChange={setShowBankDetails}
+									className="data-[state=checked]:bg-primary"
+								/>
+							</div>
+						</div>
+
+						<div
+							className={cn(
+								"overflow-hidden p-1 transition-all duration-500 ease-in-out",
+								showBankDetails
+									? "max-h-[500px] opacity-100 translate-y-0 mt-2"
+									: "max-h-0 opacity-0 -translate-y-4 pointer-events-none mt-0",
+							)}
+						>
 							<MarkdownEditor
 								id="bankDetails"
 								name="bankDetails"
@@ -391,41 +420,9 @@ export function CompanyProfileForm({ initialData }: Props) {
 								placeholder={`**Bank:** CREDIT DU MAROC\n**Agency:** MARRAKECH GUELIZ\n**Account:** 021.450.0000.03.700.13.95366.50`}
 							/>
 						</div>
-						<div className="space-y-4">
-							<Label className="text-secondary-3 ml-1 text-xs font-black tracking-widest uppercase">
-								Global Document Footer
-							</Label>
-							<MarkdownEditor
-								id="documentFooterText"
-								name="documentFooterText"
-								className="rounded-3xl border-secondary/10 shadow-sm"
-								defaultValue={initialData?.documentFooterText || ""}
-								placeholder={`Imm. 24, Angle Bd Allal El Fassi et Yacoub El Mansour\nTel : +212 661 286 464 - Mail : contact@jnaninyoga.com`}
-							/>
-						</div>
 					</CardContent>
 				</Card>
 			</section>
-
-			{/* Sticky Actions Bar */}
-			<div
-				className="animate-slide-up fixed right-6 bottom-8 left-6 z-50 flex justify-end"
-				style={{ animationDelay: "500ms" }}
-			>
-				<div className="zen-glass border-secondary/20 flex items-center gap-6 rounded-3xl border p-4 shadow-2xl">
-					<p className="text-muted-foreground hidden px-4 text-xs font-medium md:block">
-						Changes are reflected instantly on generated documents.
-					</p>
-					<Button
-						type="submit"
-						disabled={isPending}
-						size="lg"
-						className="zen-glow-teal h-14 rounded-2xl px-12 font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
-					>
-						{isPending ? "Persisting Changes..." : "Save Business Profile"}
-					</Button>
-				</div>
-			</div>
 		</form>
 	);
 }
@@ -453,7 +450,7 @@ function FormInput({ label, icon, ...props }: FormInputProps) {
 				<Input {...props} className={cn(icon && "pl-12")} />
 			</div>
 		</div>
-		) : (			
+	) : (
 		<div className="group relative">
 			{icon ? (
 				<div className="text-primary/40 group-focus-within:text-primary absolute top-1/2 left-4 -translate-y-1/2 transition-colors">
@@ -548,7 +545,7 @@ function LegalLabelAutocomplete({
 }: {
 	value: string;
 	onChange: (val: string) => void;
-	formInputProps?: Omit<FormInputProps, 'value' | 'onChange'>;
+	formInputProps?: Omit<FormInputProps, "value" | "onChange">;
 }) {
 	const [open, setOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -565,9 +562,12 @@ function LegalLabelAutocomplete({
 							if (!open) setOpen(true);
 						}}
 						onFocus={() => setOpen(true)}
-						className={cn("font-bold transition-all placeholder:font-normal", formInputProps?.className)}
+						className={cn(
+							"font-bold transition-all placeholder:font-normal",
+							formInputProps?.className,
+						)}
 						placeholder="Label (e.g. ICE)"
-						icon={<Civic size={18} variant="Bulk"/>}
+						icon={<Civic size={18} variant="Bulk" />}
 					/>
 				</PopoverAnchor>
 				<PopoverContent
