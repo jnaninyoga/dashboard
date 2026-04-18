@@ -27,23 +27,25 @@ const scheduleSchema = z.record(z.string(), daySchema);
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
-
 export function ScheduleForm({
 	initialData,
 }: {
 	initialData: WorkingHoursConfig | null;
 }) {
-	const [, formAction, isPending] = useActionState(async (_: unknown, data: WorkingHoursConfig) => {
-        try {
-            await setWorkingHours(data);
-            toast.success("Schedule updated successfully.");
-            return { success: true };
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to update schedule.");
-            return { error: "Failed to update schedule." };
-        }
-    }, null);
+	const [, formAction, isPending] = useActionState(
+		async (_: unknown, data: WorkingHoursConfig) => {
+			try {
+				await setWorkingHours(data);
+				toast.success("Schedule updated successfully.");
+				return { success: true };
+			} catch (error) {
+				console.error(error);
+				toast.error("Failed to update schedule.");
+				return { error: "Failed to update schedule." };
+			}
+		},
+		null,
+	);
 
 	const { control, handleSubmit } = useForm<ScheduleFormValues>({
 		resolver: zodResolver(scheduleSchema),
@@ -53,9 +55,9 @@ export function ScheduleForm({
 	const formValues = useWatch({ control });
 
 	const onSubmit = async (data: ScheduleFormValues) => {
-        startTransition(() => {
-            formAction(data as WorkingHoursConfig);
-        });
+		startTransition(() => {
+			formAction(data as WorkingHoursConfig);
+		});
 	};
 
 	return (
@@ -120,7 +122,11 @@ export function ScheduleForm({
 			</Card>
 
 			<div className="flex justify-end">
-				<Button type="submit" disabled={isPending}>
+				<Button
+					type="submit"
+					disabled={isPending}
+					className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all"
+				>
 					{isPending ? (
 						<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 					) : (
