@@ -44,7 +44,7 @@ export function PartnerGrid({
 					className="group animate-slide-up border-secondary/20 hover:zen-shadow-md relative overflow-hidden rounded-3xl transition-all duration-300"
 					style={{
 						animationDelay: `${index * 50}ms`,
-						animationFillMode: 'both'
+						animationFillMode: "both",
 					}}
 				>
 					<div className="absolute top-4 right-4 z-10">
@@ -106,10 +106,10 @@ export function PartnerGrid({
 							</Link>
 
 							<div className="mb-6 grid grid-cols-2 gap-3">
-								<div className="group bg-primary/15 border-primary/20 flex flex-col gap-1 rounded-2xl border p-3 transition-all">
+								<div className="group bg-secondary/60 text-secondary-foreground shadow-secondary/10 flex flex-col gap-1 rounded-xl border border-secondary-3/20 p-3 transition-all">
 									<div className="flex items-center gap-2">
-										<User className="text-primary h-4 w-4" variant="Bold" />
-										<span className="text-primary text-[10px] font-bold tracking-wider uppercase opacity-60">
+										<User className="size-4 text-secondary-3" variant="Bold" />
+										<span className="text-[10px] font-bold tracking-wider uppercase opacity-60">
 											Contacts
 										</span>
 									</div>
@@ -118,13 +118,13 @@ export function PartnerGrid({
 									</span>
 								</div>
 
-								<div className="group bg-primary/15 border-primary/20 flex flex-col gap-1 rounded-2xl border p-3 transition-all">
+								<div className="group bg-secondary/60 text-secondary-foreground shadow-secondary/10 flex flex-col gap-1 rounded-xl border border-secondary-3/20 p-3 transition-all">
 									<div className="flex items-center gap-2">
 										<Document
-											className="text-primary h-4 w-4"
+											className="size-4 text-secondary-3"
 											variant="Bold"
 										/>
-										<span className="text-primary text-[10px] font-bold tracking-wider uppercase opacity-60">
+										<span className="text-[10px] font-bold tracking-wider uppercase opacity-60">
 											Documents
 										</span>
 									</div>

@@ -1,5 +1,8 @@
 import { getMembershipProducts } from "@/actions/clients/memberships";
-import { CreateMembershipDialog,MembershipActions } from "@/components/clients/memberships/actions";
+import {
+	CreateMembershipDialog,
+	MembershipActions,
+} from "@/components/clients/memberships/actions";
 import {
 	Table,
 	TableBody,
@@ -16,48 +19,53 @@ export default async function MembershipSettingsPage() {
 		<div className="flex flex-col gap-6">
 			<div className="flex items-center justify-between">
 				<div>
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Membership Products</h1>
+					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+						Membership Products
+					</h1>
 					<p className="text-md text-muted-foreground">
 						Manage your class passes and membership types.
 					</p>
 				</div>
-                <CreateMembershipDialog />
+				<CreateMembershipDialog />
 			</div>
 
-			<div className="rounded-lg border bg-card p-2">
-				<Table className="[&_tr]:border-secondary-foreground/10">
-					<TableHeader>
+			<Table>
+				<TableHeader>
+					<TableRow>
+						<TableHead className="pl-6">Name</TableHead>
+						<TableHead>Price</TableHead>
+						<TableHead>Duration</TableHead>
+						<TableHead>Credits</TableHead>
+						<TableHead className="w-[70px]"></TableHead>
+					</TableRow>
+				</TableHeader>
+				<TableBody>
+					{products.length === 0 ? (
 						<TableRow>
-							<TableHead>Name</TableHead>
-							<TableHead>Price</TableHead>
-							<TableHead>Duration</TableHead>
-							<TableHead>Credits</TableHead>
-							<TableHead className="w-[70px]"></TableHead>
+							<TableCell
+								colSpan={5}
+								className="text-muted-foreground h-24 text-center"
+							>
+								No active products found.
+							</TableCell>
 						</TableRow>
-					</TableHeader>
-					<TableBody>
-						{products.length === 0 ? (
-							<TableRow>
-								<TableCell colSpan={5} className="text-muted-foreground h-24 text-center">
-									No active products found.
+					) : (
+						products.map((product) => (
+							<TableRow key={product.id}>
+								<TableCell className="font-medium pl-6">
+									{product.name}
+								</TableCell>
+								<TableCell>{product.basePrice} MAD</TableCell>
+								<TableCell>{product.durationMonths} Months</TableCell>
+								<TableCell>{product.defaultCredits}</TableCell>
+								<TableCell>
+									<MembershipActions product={product} />
 								</TableCell>
 							</TableRow>
-						) : (
-							products.map((product) => (
-								<TableRow key={product.id}>
-									<TableCell className="font-medium">{product.name}</TableCell>
-									<TableCell>{product.basePrice} MAD</TableCell>
-									<TableCell>{product.durationMonths} Months</TableCell>
-									<TableCell>{product.defaultCredits}</TableCell>
-									<TableCell>
-                                        <MembershipActions product={product} />
-									</TableCell>
-								</TableRow>
-							))
-						)}
-					</TableBody>
-				</Table>
-			</div>
+						))
+					)}
+				</TableBody>
+			</Table>
 		</div>
 	);
 }
