@@ -54,15 +54,18 @@ import {
 	PopoverAnchor,
 	PopoverContent,
 } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
 	initialData: BusinessProfile | null;
+	currentUserName?: string;
 }
 
 const DEFAULT_LEGAL_LABELS = ["ICE", "IF", "RC", "Patente"];
 
 export function CompanyProfileForm({
 	initialData,
+	currentUserName,
 	children,
 }: Props & { children?: React.ReactNode }) {
 	const [state, formAction, isPending] = useActionState(
@@ -150,8 +153,8 @@ export function CompanyProfileForm({
 								</div>
 							</div>
 						</CardHeader>
-						<CardContent className="grid gap-8">
-							<div className="grid gap-6 md:grid-cols-2">
+						<CardContent className="grid gap-6">
+							<div className="grid gap-2 grid-cols-1 grid-rows-4 md:grid-cols-2 md:grid-rows-2">
 								<FormInput
 									label="Company Name"
 									id="companyName"
@@ -160,6 +163,14 @@ export function CompanyProfileForm({
 									placeholder="JnaninYoga Studio"
 									required
 									icon={<Buildings size={18} variant="Bulk" />}
+								/>
+								<FormInput
+									label="Operator Name"
+									id="operator"
+									name="operator"
+									defaultValue={initialData?.operator || currentUserName || ""}
+									placeholder="Representative Name"
+									icon={<Personalcard size={18} variant="Bulk" />}
 								/>
 								<FormInput
 									label="Email Address"
@@ -187,14 +198,23 @@ export function CompanyProfileForm({
 										countrySelectClassName="bg-primary/5 border border-r-0 border-primary/15 rounded-s-md text-primary"
 									/>
 								</div>
-								<FormInput
-									label="Studio Address"
-									id="address"
-									name="address"
-									defaultValue={initialData?.address || ""}
-									placeholder="Marrakech, Morocco"
-									icon={<Location size={18} variant="Bulk" />}
-								/>
+								<div className="space-y-2.5 md:col-span-2">
+									<Label className="text-muted-foreground/60 ml-1 text-[10px] font-black tracking-widest uppercase">
+										Studio Address
+									</Label>
+									<div className="group relative">
+										<div className="text-primary/40 group-focus-within:text-primary absolute top-5 left-4 -translate-y-1/2 transition-colors">
+											<Location size={18} variant="Bulk" />
+										</div>
+										<Textarea
+											id="address"
+											name="address"
+											defaultValue={initialData?.address || ""}
+											placeholder="Marrakech, Morocco"
+											className="min-h-14 max-h-20 ps-12"
+										/>
+									</div>
+								</div>
 							</div>
 						</CardContent>
 					</Card>
@@ -286,7 +306,7 @@ export function CompanyProfileForm({
 					className="animate-slide-left space-y-6"
 					style={{ animationDelay: "300ms" }}
 				>
-					<Card className="overflow-hidden">
+					<Card className="overflow-hidden h-full">
 						<CardHeader className="flex flex-row items-center justify-between">
 							<div>
 								<CardTitle className="font-heading text-xl font-bold tracking-tight">
