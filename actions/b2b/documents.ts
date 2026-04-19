@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/drizzle";
 import { b2bDocumentLines, b2bDocuments } from "@/drizzle/schema";
-import { B2BDocumentLine, B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
+import { B2BDocumentLine, B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
 import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
 
 import { and, desc, eq, ilike, or } from "drizzle-orm";
@@ -122,11 +122,11 @@ export async function getDocumentsAction(filters?: {
 	query?: string;
 	type?: B2BDocumentType | "all";
 	status?: B2BDocumentStatus | "all";
-}) {
+}): Promise<{ documents?: DocumentWithRelations[]; error?: string }> {
 	const { query, type, status } = filters || {};
 
 	try {
-		const documents = await db.query.b2bDocuments.findMany({
+		const documents = (await db.query.b2bDocuments.findMany({
 			where: (docs) => {
 				const conditions = [];
 
@@ -134,8 +134,8 @@ export async function getDocumentsAction(filters?: {
 					conditions.push(
 						or(
 							ilike(docs.documentNumber, `%${query}%`),
-							ilike(docs.notes ?? "", `%${query}%`)
-						)
+							ilike(docs.notes ?? "", `%${query}%`),
+						),
 					);
 				}
 
@@ -154,17 +154,19 @@ export async function getDocumentsAction(filters?: {
 				contact: true,
 			},
 			orderBy: [desc(b2bDocuments.issueDate), desc(b2bDocuments.createdAt)],
-		});
+		})) as DocumentWithRelations[];
+
 		return { documents };
+
 	} catch (error) {
 		console.error("Error fetching documents:", error);
 		return { error: "Failed to fetch documents" };
 	}
 }
 
-export async function getDocumentByIdAction(id: string) {
+export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; error?: string }> {
 	try {
-		const document = await db.query.b2bDocuments.findFirst({
+		const document = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
 			with: {
 				partner: true,
@@ -175,8 +177,10 @@ export async function getDocumentByIdAction(id: string) {
 				parent: true,
 				children: true,
 			},
-		});
-		return { document };
+		})) as DocumentWithRelations | null;
+
+		return { document: document ?? undefined };
+
 	} catch (error) {
 		console.error("Error fetching document:", error);
 		return { error: "Failed to fetch document" };

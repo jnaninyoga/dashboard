@@ -39,7 +39,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="border rounded-3xl shadow-2xl sm:max-w-lg">
+			<DialogContent className="rounded-3xl border shadow-2xl sm:max-w-lg">
 				<DialogHeader>
 					<div className="mb-4 flex items-center gap-4">
 						<Avatar className="border-primary/20 bg-primary/10 text-primary h-14 w-14 rounded-2xl border shadow-inner">
@@ -64,7 +64,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 							name="fullName"
 							placeholder="ex: Jean Dupont"
 							required
-							className="border bg-secondary/5 focus-visible:ring-primary/20"
+							className="bg-secondary/5 focus-visible:ring-primary/20 border"
 						/>
 					</div>
 					<div className="grid gap-2">
@@ -75,7 +75,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 							id="role"
 							name="role"
 							placeholder="ex: Manager, Front Desk"
-							className="border bg-secondary/5 focus-visible:ring-primary/20"
+							className="bg-secondary/5 focus-visible:ring-primary/20 border"
 						/>
 					</div>
 					<div className="grid gap-2">
@@ -87,7 +87,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 							name="email"
 							type="email"
 							placeholder="email@exemple.com"
-							className="border bg-secondary/5 focus-visible:ring-primary/20"
+							className="bg-secondary/5 focus-visible:ring-primary/20 border"
 						/>
 					</div>
 					<div className="grid gap-2">

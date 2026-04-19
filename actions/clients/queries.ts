@@ -7,7 +7,7 @@ import {
 	clientWallets,
 	healthLogs,
 } from "@/drizzle/schema";
-import { type Client, Gender } from "@/lib/types";
+import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
 import { getTodayEvents } from "@/services/google-calendar";
 import { getValidAccessToken } from "@/services/google-tokens";
 import { createClient } from "@/supabase/server";
@@ -62,7 +62,7 @@ export async function getClientsAction(
 		const whereClause =
 			whereConditions.length > 0 ? and(...whereConditions) : undefined;
 
-		const data = await db.query.clients.findMany({
+		const data = (await db.query.clients.findMany({
 			where: whereClause,
 			limit: pageSize,
 			offset: offset,
@@ -89,7 +89,8 @@ export async function getClientsAction(
 					),
 				},
 			},
-		});
+		})) as ClientWithRelations[];
+
 
         // 2. Add Live Session Info if checked in today
         const startOfToday = new Date();
@@ -146,7 +147,7 @@ export async function getClientByIdAction(id: string) {
 	if (!user) return { error: "Not authenticated" };
 
 	try {
-		const client = await db.query.clients.findFirst({
+		const client = (await db.query.clients.findFirst({
 			where: eq(clients.id, id),
 			with: {
 				category: true,
@@ -161,12 +162,14 @@ export async function getClientByIdAction(id: string) {
 					orderBy: desc(clientWallets.activatedAt),
 				},
 			},
-		});
+		})) as ClientWithRelations | null;
+
 
 		if (!client) return { error: "Client not found" };
 
 		// Filter for active wallet to pre-fill form
-		const activeWallet = client.wallets.find((w) => w.status === "active");
+		const activeWallet = client.wallets?.find((w) => w.status === "active");
+
 
 		return {
 			success: true,

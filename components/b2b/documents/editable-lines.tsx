@@ -15,12 +15,7 @@ import {
 	CommandItem,
 	CommandList,
 } from "@/components/ui/command";
-import {
-	Form,
-	FormControl,
-	FormField,
-	FormItem,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
 	Popover,
@@ -36,27 +31,27 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { type B2BDocumentLine,type B2BDocumentStatus,type B2BPricingTier } from "@/lib/types";
+import {
+	type B2BDocumentLine,
+	type B2BDocumentStatus,
+	type B2BPricingTier,
+} from "@/lib/types/b2b";
+import {
+	documentLineSchema,
+} from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Add, Refresh, Save2, Trash } from "iconsax-reactjs";
 import { toast } from "sonner";
 import { z } from "zod";
 
-const lineSchema = z.object({
-	id: z.string().optional(),
-	description: z.string().min(1, "Required"),
-	quantity: z.number().min(0.01),
-	unitPrice: z.number().min(0),
-	totalPrice: z.number().min(0),
-});
-
 const linesFormSchema = z.object({
-	lines: z.array(lineSchema).min(1),
+	lines: z.array(documentLineSchema).min(1),
 	taxRate: z.string(),
 });
 
 type LinesFormValues = z.infer<typeof linesFormSchema>;
+
 
 interface EditableDocumentLinesProps {
 	documentId: string;
@@ -79,11 +74,10 @@ export function EditableDocumentLines({
 		resolver: zodResolver(linesFormSchema),
 		defaultValues: {
 			lines: initialLines.map((l) => ({
-				id: l.id,
 				description: l.description,
-				quantity: parseFloat(l.quantity),
-				unitPrice: parseFloat(l.unitPrice),
-				totalPrice: parseFloat(l.totalPrice),
+				quantity: String(l.quantity),
+				unitPrice: String(l.unitPrice),
+				totalPrice: String(l.totalPrice),
 			})),
 			taxRate: initialTaxRate,
 		},
@@ -106,20 +100,27 @@ export function EditableDocumentLines({
 	const taxRateWatcher = useWatch({ control: form.control, name: "taxRate" });
 
 	const subtotal = linesWatcher.reduce(
-		(acc, line) => acc + (line.unitPrice * line.quantity || 0),
+		(acc, line) =>
+			acc + (Number(line.unitPrice) * Number(line.quantity) || 0),
 		0,
 	);
 	const taxAmount = subtotal * (parseFloat(taxRateWatcher) / 100 || 0);
 	const totalAmount = subtotal + taxAmount;
 
+
 	const handleSave = (values: LinesFormValues) => {
+
 		startTransition(async () => {
 			const res = await updateDocumentLinesAction(documentId, {
-				lines: values.lines,
+				lines: values.lines.map((l) => ({
+					...l,
+					totalPrice: (Number(l.quantity) * Number(l.unitPrice)).toString(),
+				})),
 				subtotal: subtotal.toString(),
 				taxRate: values.taxRate,
 				totalAmount: totalAmount.toString(),
 			});
+
 			if (res.success) {
 				toast.success("Line items updated");
 			} else {
@@ -149,10 +150,11 @@ export function EditableDocumentLines({
 							onClick={() =>
 								append({
 									description: "",
-									quantity: 1,
-									unitPrice: 0,
-									totalPrice: 0,
+									quantity: "1",
+									unitPrice: "0",
+									totalPrice: "0",
 								})
+
 							}
 						>
 							<Add size={16} variant="Bold" />
@@ -174,63 +176,97 @@ export function EditableDocumentLines({
 					</div>
 				</div>
 
-				<div className="border bg-card overflow-hidden rounded-2xl border shadow-sm">
-					<div className="overflow-x-auto">
-						<Table>
-							<TableHeader>
-								<TableRow className="border-b transition-colors hover:bg-transparent">
-									<TableHead className="px-4">Description</TableHead>
-									<TableHead className="w-[72px] px-2 text-center">Qty</TableHead>
-									<TableHead className="w-[104px] px-2 text-center">Unit Price</TableHead>
-									<TableHead className="w-[80px] px-2 text-right">Total</TableHead>
-									<TableHead className="w-[40px] p-0" />
-								</TableRow>
-							</TableHeader>
-							<TableBody className="divide-secondary/15 divide-y">
-								{fields.map((field, index) => (
-									<TableRow
-										key={field.id}
-										className="hover:bg-primary/5 border-none transition-colors"
-									>
-										<TableCell className="px-4 py-3 align-top">
-											<FormField
-												control={form.control}
-												name={`lines.${index}.description`}
-												render={({ field: f }) => (
-													<FormItem className="space-y-0">
-														<FormControl>
-															<DescriptionAutocomplete
-																value={f.value}
-																onChange={f.onChange}
-																onSelectTier={(tier) => {
-																	form.setValue(
-																		`lines.${index}.description`,
-																		tier.name,
-																	);
-																	form.setValue(
-																		`lines.${index}.unitPrice`,
-																		tier.price,
-																	);
-																}}
-																pricingTiers={pricingTiers}
-															/>
-														</FormControl>
-													</FormItem>
-												)}
-											/>
-										</TableCell>
-										<TableCell className="px-2 py-3 align-top">
-											<FormField
-												control={form.control}
-												name={`lines.${index}.quantity`}
-												render={({ field: f }) => (
+				<div className="overflow-x-auto">
+					<Table>
+						<TableHeader>
+							<TableRow className="border-b transition-colors hover:bg-transparent">
+								<TableHead className="px-4">Description</TableHead>
+								<TableHead className="w-[72px] px-2 text-center">Qty</TableHead>
+								<TableHead className="w-[104px] px-2 text-center">
+									Unit Price
+								</TableHead>
+								<TableHead className="w-[80px] px-2 text-right">
+									Total
+								</TableHead>
+								<TableHead className="w-[40px] p-0" />
+							</TableRow>
+						</TableHeader>
+						<TableBody className="divide-secondary/15 divide-y">
+							{fields.map((field, index) => (
+								<TableRow
+									key={field.id}
+									className="hover:bg-primary/5 border-none transition-colors"
+								>
+									<TableCell className="px-4 py-3 align-top">
+										<FormField
+											control={form.control}
+											name={`lines.${index}.description`}
+											render={({ field: f }) => (
+												<FormItem className="space-y-0">
+													<FormControl>
+														<DescriptionAutocomplete
+															value={f.value}
+															onChange={f.onChange}
+															onSelectTier={(tier) => {
+																form.setValue(
+																	`lines.${index}.description`,
+																	tier.name,
+																);
+																form.setValue(
+																	`lines.${index}.unitPrice`,
+																	tier.price.toString(),
+																);
+
+															}}
+															pricingTiers={pricingTiers}
+														/>
+													</FormControl>
+												</FormItem>
+											)}
+										/>
+									</TableCell>
+									<TableCell className="px-2 py-3 align-top">
+										<FormField
+											control={form.control}
+											name={`lines.${index}.quantity`}
+											render={({ field: f }) => (
+												<Input
+													inputMode="decimal"
+													{...f}
+													value={f.value ?? ""}
+													className="focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold"
+													disabled={isPending}
+													onChange={(e) => {
+														const val = e.target.value.replace(/[^0-9.]/g, "");
+														const parts = val.split(".");
+														const sanitized =
+															parts[0] +
+															(parts.length > 1
+																? "." + parts.slice(1).join("")
+																: "");
+														f.onChange(sanitized);
+													}}
+												/>
+											)}
+										/>
+									</TableCell>
+									<TableCell className="px-2 py-3 align-top">
+										<FormField
+											control={form.control}
+											name={`lines.${index}.unitPrice`}
+											render={({ field: f }) => (
+												<div className="relative">
 													<Input
 														inputMode="decimal"
 														{...f}
-														className="border focus-visible:ring-primary/20 h-8 w-full bg-card text-center font-mono text-sm font-bold"
+														value={f.value ?? ""}
+														className="focus-visible:ring-primary/20 bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold"
 														disabled={isPending}
 														onChange={(e) => {
-															const val = e.target.value.replace(/[^0-9.]/g, "");
+															const val = e.target.value.replace(
+																/[^0-9.]/g,
+																"",
+															);
 															const parts = val.split(".");
 															const sanitized =
 																parts[0] +
@@ -240,69 +276,46 @@ export function EditableDocumentLines({
 															f.onChange(sanitized);
 														}}
 													/>
-												)}
-											/>
-										</TableCell>
-										<TableCell className="px-2 py-3 align-top">
-											<FormField
-												control={form.control}
-												name={`lines.${index}.unitPrice`}
-												render={({ field: f }) => (
-													<div className="relative">
-														<Input
-															inputMode="decimal"
-															{...f}
-															className="border focus-visible:ring-primary/20 h-8 w-full bg-card pr-8 text-center font-mono text-sm font-bold"
-															disabled={isPending}
-															onChange={(e) => {
-																const val = e.target.value.replace(/[^0-9.]/g, "");
-																const parts = val.split(".");
-																const sanitized =
-																	parts[0] +
-																	(parts.length > 1
-																		? "." + parts.slice(1).join("")
-																		: "");
-																f.onChange(sanitized);
-															}}
-														/>
-														<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">
-															MAD
-														</span>
-													</div>
-												)}
-											/>
-										</TableCell>
-										<TableCell className="px-2 py-4 text-right align-top">
-											<span className="text-foreground font-mono text-sm font-black tabular-nums">
-												{(
-													(linesWatcher[index]?.quantity || 0) *
-													(linesWatcher[index]?.unitPrice || 0)
-												).toLocaleString()}
-												<span className="text-foreground ml-1 text-xs font-normal">
-													MAD
-												</span>
+													<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">
+														MAD
+													</span>
+												</div>
+											)}
+										/>
+									</TableCell>
+									<TableCell className="px-2 py-4 text-right align-top">
+										<span className="text-foreground font-mono text-sm font-black tabular-nums">
+											{(
+												(Number(linesWatcher[index]?.quantity) || 0) *
+												(Number(linesWatcher[index]?.unitPrice) || 0)
+											).toLocaleString()}
+											<span className="text-foreground ml-1 text-xs font-normal">
+												MAD
 											</span>
-										</TableCell>
-										<TableCell className="py-3 text-center align-top">
-											<Button
-												type="button"
-												size="icon"
-												className="text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90"
-												onClick={() => remove(index)}
-												disabled={fields.length === 1 || isPending}
-											>
-												<Trash size={15} variant="Bold" />
-											</Button>
-										</TableCell>
-									</TableRow>
-								))}
-							</TableBody>
-						</Table>
-					</div>
+										</span>
+									</TableCell>
+
+
+
+									<TableCell className="py-3 text-center align-top">
+										<Button
+											type="button"
+											size="icon"
+											className="text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90"
+											onClick={() => remove(index)}
+											disabled={fields.length === 1 || isPending}
+										>
+											<Trash size={15} variant="Bold" />
+										</Button>
+									</TableCell>
+								</TableRow>
+							))}
+						</TableBody>
+					</Table>
 				</div>
 
 				<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
-					<div className="border bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
+					<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 						<div className="flex w-full items-center justify-between gap-4">
 							<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
 								Subtotal
@@ -319,7 +332,7 @@ export function EditableDocumentLines({
 								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
 									Tax Rate
 								</span>
-								<div className="border flex items-center rounded-xl border bg-card px-2 py-1">
+								<div className="bg-card flex items-center rounded-xl border px-2 py-1">
 									<FormField
 										control={form.control}
 										name="taxRate"
@@ -334,7 +347,9 @@ export function EditableDocumentLines({
 													const parts = val.split(".");
 													const sanitized =
 														parts[0] +
-														(parts.length > 1 ? "." + parts.slice(1).join("") : "");
+														(parts.length > 1
+															? "." + parts.slice(1).join("")
+															: "");
 													f.onChange(sanitized);
 												}}
 											/>
@@ -398,7 +413,7 @@ function DescriptionAutocomplete({
 							onChange(e.target.value);
 							if (!open && e.target.value) setOpen(true);
 						}}
-						className="border h-8 bg-card text-sm font-medium"
+						className="bg-card h-8 border text-sm font-medium"
 						placeholder="Description..."
 					/>
 				</PopoverAnchor>

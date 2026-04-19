@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { View } from "@/lib/types";
 import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
 
-import { Add, AddCircle } from "iconsax-reactjs";
+import { AddCircle } from "iconsax-reactjs";
 
 type SearchParams = Promise<{
 	view: View;
@@ -48,7 +48,7 @@ export default async function PartnersPage(props: {
 					</p>
 				</header>
 				<PartnerDialog>
-					<Button className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all">
+					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
 						<AddCircle className="mr-2 size-4" variant="Bold" />
 						New Partner
 					</Button>

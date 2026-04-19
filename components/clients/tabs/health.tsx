@@ -186,7 +186,7 @@ export function HealthTab({ client }: HealthTabProps) {
 												onCheckedChange={() =>
 													handleToggleAlert(log.id, log.isAlert)
 												}
-												className="size-8 rounded-xl border-2 border-green-600/20 bg-card transition-all hover:border-green-600 active:scale-90 data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600"
+												className="bg-card size-8 rounded-xl border-2 border-green-600/20 transition-all hover:border-green-600 active:scale-90 data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600"
 												title="Mark as Resolved"
 											/>
 										</div>
@@ -225,7 +225,7 @@ export function HealthTab({ client }: HealthTabProps) {
 										return (
 											<div
 												key={field.key}
-												className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all hover:bg-card sm:col-span-1"
+												className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all sm:col-span-1"
 											>
 												<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-60">
 													{field.label}
@@ -242,7 +242,7 @@ export function HealthTab({ client }: HealthTabProps) {
 					})}
 
 					{Object.keys(intakeData).length === 0 ? (
-						<div className="bg-muted/20 border rounded-3xl border border-dashed py-8 text-center">
+						<div className="bg-muted/20 rounded-3xl border border-dashed py-8 text-center">
 							<p className="text-muted-foreground text-sm italic">
 								No foundational health data recorded yet.
 							</p>
@@ -275,7 +275,7 @@ export function HealthTab({ client }: HealthTabProps) {
 										value={category}
 										onValueChange={(v) => setCategory(v as HealthCategory)}
 									>
-										<SelectTrigger className="border h-11 rounded-xl">
+										<SelectTrigger className="h-11 rounded-xl border">
 											<SelectValue />
 										</SelectTrigger>
 										<SelectContent>
@@ -300,7 +300,7 @@ export function HealthTab({ client }: HealthTabProps) {
 										value={severity}
 										onValueChange={(v) => setSeverity(v as HealthSeverity)}
 									>
-										<SelectTrigger className="border h-11 rounded-xl">
+										<SelectTrigger className="h-11 rounded-xl border">
 											<SelectValue />
 										</SelectTrigger>
 										<SelectContent>
@@ -327,7 +327,7 @@ export function HealthTab({ client }: HealthTabProps) {
 									value={condition}
 									onChange={(e) => setCondition(e.target.value)}
 									required
-									className="border h-11 rounded-xl"
+									className="h-11 rounded-xl border"
 								/>
 							</div>
 
@@ -340,7 +340,7 @@ export function HealthTab({ client }: HealthTabProps) {
 									value={startDate}
 									onChange={(e) => setStartDate(e.target.value)}
 									required
-									className="border h-11 rounded-xl"
+									className="h-11 rounded-xl border"
 								/>
 							</div>
 
@@ -380,7 +380,7 @@ export function HealthTab({ client }: HealthTabProps) {
 							healthLogs.map((log) => (
 								<div
 									key={log.id}
-									className="group bg-muted/20 hover:border-primary/10 hover:zen-glow-teal flex items-start justify-between gap-4 rounded-2xl border border-transparent p-4 transition-all hover:bg-card"
+									className="group bg-muted/20 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-start justify-between gap-4 rounded-2xl border border-transparent p-4 transition-all"
 								>
 									<div className="flex items-start gap-4">
 										<div className="mt-1">

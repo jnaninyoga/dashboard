@@ -52,7 +52,7 @@ export default async function MembershipSettingsPage() {
 					) : (
 						products.map((product) => (
 							<TableRow key={product.id}>
-								<TableCell className="font-medium pl-6">
+								<TableCell className="pl-6 font-medium">
 									{product.name}
 								</TableCell>
 								<TableCell>{product.basePrice} MAD</TableCell>

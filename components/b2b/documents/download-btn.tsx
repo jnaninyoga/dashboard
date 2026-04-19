@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
+
 import { DocumentDownload } from "iconsax-reactjs";
-import { B2BDocumentPDF } from "./document-pdf";
 import { toast } from "sonner"; // Assuming you use sonner based on your action ribbon
+
+import { B2BDocumentPDF } from "./document-pdf";
 
 interface PDFDownloadBtnProps {
 	doc: DocumentWithRelations;
@@ -59,7 +62,7 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 			onClick={handleDownload}
 			disabled={isGenerating}
 			variant="secondary"
-			className="gap-2 rounded-xl font-medium shadow-sm border border-secondary-2 hover:zen-glow-blush transition-all"
+			className="border-secondary-2 hover:zen-glow-blush gap-2 rounded-xl border font-medium shadow-sm transition-all"
 		>
 			<DocumentDownload size={18} />
 			{isGenerating ? "Preparing PDF..." : "Download PDF"}

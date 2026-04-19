@@ -52,7 +52,7 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 		<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
 			<Input
 				placeholder="Search clients..."
-				className="w-full bg-card sm:w-[300px]"
+				className="bg-card w-full sm:w-[300px]"
 				defaultValue={searchParams.get("query")?.toString()}
 				onChange={(e) => handleSearch(e.target.value)}
 			/>
@@ -61,7 +61,7 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 					onValueChange={(v) => handleFilterChange("categoryId", v)}
 					defaultValue={searchParams.get("categoryId") || "all"}
 				>
-					<SelectTrigger className="w-full bg-card sm:w-[180px]">
+					<SelectTrigger className="bg-card w-full sm:w-[180px]">
 						<SelectValue placeholder="Category" />
 					</SelectTrigger>
 					<SelectContent>
@@ -77,7 +77,7 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 					onValueChange={(v) => handleFilterChange("gender", v)}
 					defaultValue={searchParams.get("gender") || Gender.ALL}
 				>
-					<SelectTrigger className="w-full bg-card sm:w-[180px]">
+					<SelectTrigger className="bg-card w-full sm:w-[180px]">
 						<SelectValue placeholder="Gender" />
 					</SelectTrigger>
 					<SelectContent>

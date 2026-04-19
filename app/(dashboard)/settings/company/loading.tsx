@@ -17,7 +17,7 @@ export default function Loading() {
 				<div className="animate-slide-up space-y-8 lg:col-span-2">
 					{/* Studio Identity Card Skeleton */}
 					<div className="border-secondary/20 bg-card overflow-hidden rounded-3xl border shadow-sm">
-						<div className="border-b border-secondary/10 p-6">
+						<div className="border-secondary/10 border-b p-6">
 							<div className="flex items-center gap-4">
 								<Skeleton className="bg-muted-foreground/10 h-12 w-12 rounded-2xl" />
 								<div className="space-y-2">
@@ -38,7 +38,7 @@ export default function Loading() {
 
 					{/* Legal Identifiers Card Skeleton */}
 					<div className="border-secondary/20 bg-card overflow-hidden rounded-3xl border shadow-sm">
-						<div className="border-b border-secondary/10 p-6">
+						<div className="border-secondary/10 border-b p-6">
 							<div className="flex items-center gap-4">
 								<Skeleton className="bg-muted-foreground/10 h-12 w-12 rounded-2xl" />
 								<div className="space-y-2">
@@ -89,7 +89,7 @@ export default function Loading() {
 			{/* Document Configuration Skeleton */}
 			<section className="animate-slide-up">
 				<div className="border-secondary/20 bg-card overflow-hidden rounded-3xl border shadow-sm">
-					<div className="border-b border-secondary/10 p-6">
+					<div className="border-secondary/10 border-b p-6">
 						<div className="flex items-center gap-4">
 							<Skeleton className="bg-muted-foreground/10 h-12 w-12 rounded-2xl" />
 							<div className="space-y-2">
@@ -99,7 +99,7 @@ export default function Loading() {
 						</div>
 					</div>
 					<div className="space-y-6 p-6">
-						<div className="flex flex-col justify-between gap-4 border-b border-secondary/10 pb-6 md:flex-row md:items-center">
+						<div className="border-secondary/10 flex flex-col justify-between gap-4 border-b pb-6 md:flex-row md:items-center">
 							<div className="space-y-1">
 								<Skeleton className="bg-muted-foreground/10 h-4 w-44 rounded-md" />
 								<Skeleton className="bg-muted-foreground/10 h-3 w-64 rounded-md" />

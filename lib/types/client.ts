@@ -18,7 +18,8 @@ export type ClientWithRelations = Client & {
         product: MembershipProduct | null;
     })[];
     healthLogs?: HealthLog[];
-    activeSessionName?: string | null;
+    activeSessionName?: string;
+
 };
 
 export enum ClientCategoryFilter {

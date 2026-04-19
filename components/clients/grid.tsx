@@ -286,7 +286,7 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 							<div className="text-muted-foreground bg-secondary/30 mt-auto flex items-stretch overflow-hidden rounded-md py-2 text-xs">
 								<TooltipProvider delayDuration={150}>
 									{/* Left Section: Social Icons */}
-									<div className="border flex flex-1 items-center justify-center gap-4 border-r px-3 sm:justify-start">
+									<div className="flex flex-1 items-center justify-center gap-4 border px-3 sm:justify-start">
 										<Tooltip>
 											<TooltipTrigger asChild>
 												{client.email ? (

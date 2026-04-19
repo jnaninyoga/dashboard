@@ -209,7 +209,7 @@ export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 															<Danger size={18} variant="Bulk" />
 														</div>
 													</TooltipTrigger>
-													<TooltipContent side="top" align="center" className="border max-w-xs rounded-xl bg-red-50 p-3 shadow-xl">
+													<TooltipContent side="top" align="center" className="max-w-xs rounded-xl border bg-red-50 p-3 shadow-xl">
 														<div className="flex flex-col gap-2">
 															<p className="text-destructive border-destructive/10 flex items-center gap-1.5 border-b pb-1.5 text-[10px] font-black tracking-widest uppercase">
 																<Danger size={12} variant="Bulk" />

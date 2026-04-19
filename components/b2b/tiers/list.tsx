@@ -68,7 +68,7 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 					<TableRow>
 						<TableHead className="pl-6">Name</TableHead>
 						<TableHead>Price (MAD)</TableHead>
-						<TableHead className="text-right pr-6">Actions</TableHead>
+						<TableHead className="pr-6 text-right">Actions</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>

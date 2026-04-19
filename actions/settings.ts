@@ -142,7 +142,7 @@ import { b2bTierSchema } from "@/lib/validators";
 export async function createB2BTierAction(_prevState: unknown, formData: FormData) {
     const rawData = {
         name: formData.get("name") as string,
-        price: Number(formData.get("price")),
+        price: formData.get("price") as string,
     };
 
     const parsed = b2bTierSchema.safeParse(rawData);
@@ -152,7 +152,10 @@ export async function createB2BTierAction(_prevState: unknown, formData: FormDat
     }
 
     try {
-        await db.insert(b2bPricingTiers).values(parsed.data);
+        await db.insert(b2bPricingTiers).values({
+            name: parsed.data.name,
+            price: Number(parsed.data.price),
+        });
         revalidatePath("/settings/b2b");
         return { success: true };
     } catch (error) {
@@ -164,7 +167,7 @@ export async function createB2BTierAction(_prevState: unknown, formData: FormDat
 export async function updateB2BTierAction(id: string, _prevState: unknown, formData: FormData) {
     const rawData = {
         name: formData.get("name") as string,
-        price: Number(formData.get("price")),
+        price: formData.get("price") as string,
     };
 
     const parsed = b2bTierSchema.safeParse(rawData);
@@ -175,7 +178,10 @@ export async function updateB2BTierAction(id: string, _prevState: unknown, formD
 
     try {
         await db.update(b2bPricingTiers)
-            .set(parsed.data)
+            .set({
+                name: parsed.data.name,
+                price: Number(parsed.data.price),
+            })
             .where(eq(b2bPricingTiers.id, id));
         revalidatePath("/settings/b2b");
         return { success: true };

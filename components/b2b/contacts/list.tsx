@@ -36,7 +36,7 @@ import { Call, Edit, More, Sms, Star, Trash, User } from "iconsax-reactjs";
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 	if (!contacts.length) {
 		return (
-			<Card className="border group flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center shadow-none">
+			<Card className="group flex flex-col items-center justify-center rounded-3xl border border-2 border-dashed p-20 text-center shadow-none">
 				<Avatar className="bg-secondary/45 border-secondary-3/30 h-16 w-16 border shadow-xs">
 					<AvatarFallback className="bg-transparent">
 						<User className="text-secondary-3/60 h-8 w-8" variant="Outline" />
@@ -78,7 +78,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 		<>
 			<div
 				className={cn(
-					"group animate-slide-up border relative flex items-center justify-between gap-4 rounded-3xl border bg-card p-3 pr-4 transition-all",
+					"group animate-slide-up bg-card relative flex items-center justify-between gap-4 rounded-3xl border p-3 pr-4 transition-all",
 					contact.isPrimary
 						? "hover:border-primary/50 hover:zen-glow-teal"
 						: "hover:border-secondary-3/50 hover:zen-glow-blush",
@@ -92,7 +92,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 					<div className="absolute top-5 right-5 -z-10 opacity-0 transition-all group-hover:-top-3.5 group-hover:z-10 group-hover:opacity-100">
 						<Badge
 							variant="outline"
-							className="border bg-primary text-primary-foreground rounded-full px-2 py-0 text-[10px] font-bold tracking-widest uppercase shadow-none"
+							className="bg-primary text-primary-foreground rounded-full border px-2 py-0 text-[10px] font-bold tracking-widest uppercase shadow-none"
 						>
 							Primary
 						</Badge>
@@ -172,7 +172,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
 								align="end"
-								className="border w-44 rounded-xl"
+								className="w-44 rounded-xl border"
 							>
 								<DropdownMenuItem className="cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase">
 									<Edit className="mr-2 size-4" variant="Outline" />

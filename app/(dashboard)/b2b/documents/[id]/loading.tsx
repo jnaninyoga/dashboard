@@ -56,7 +56,7 @@ export default function Loading() {
 			</div>
 
 			{/* Line Items Section Mimic */}
-			<div className="border bg-card overflow-hidden rounded-2xl border shadow-sm">
+			<div className="bg-card overflow-hidden rounded-2xl border shadow-sm">
 				<div className="bg-muted-foreground/5 h-10 w-full border-b" />
 				<div className="divide-secondary/15 space-y-0 divide-y">
 					{Array.from({ length: 4 }).map((_, i) => (
@@ -71,7 +71,7 @@ export default function Loading() {
 			</div>
 			
 			<div className="flex flex-col gap-4 sm:flex-row sm:justify-end">
-				<div className="border bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
+				<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 				    <Skeleton className="bg-muted-foreground/10 h-5 w-48" />
 				    <Skeleton className="bg-muted-foreground/10 h-5 w-48" />
 				    <Skeleton className="bg-muted-foreground/10 mt-2 h-8 w-64" />

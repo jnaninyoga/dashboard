@@ -14,7 +14,7 @@ export function CreateCategoryButton() {
 	return (
 		<>
 			<Button
-				className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all"
+				className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all"
 				onClick={() => setIsOpen(true)}
 			>
 				<AddCircle className="mr-2 size-4" variant="Bold" />

@@ -25,7 +25,7 @@ export function ClientViewToggle() {
 			value={view.toString()}
 			onValueChange={handleViewChange}
 			spacing={1}
-			className="hidden gap-1 rounded-2xl bg-card p-1 shadow-sm md:inline-flex"
+			className="bg-card hidden gap-1 rounded-2xl p-1 shadow-sm md:inline-flex"
 		>
 			<ToggleGroupItem
 				value={View.LIST.toString()}

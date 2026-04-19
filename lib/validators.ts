@@ -1,9 +1,6 @@
 import {
 	b2bContacts,
-	b2bDocumentLines,
-	b2bDocuments,
 	b2bPartners,
-	b2bPricingTiers,
 	clients,
 } from "@/drizzle/schema";
 import {
@@ -135,48 +132,55 @@ export const contactSchema = createInsertSchema(b2bContacts, {
 
 export type ContactFormValues = z.infer<typeof contactSchema>;
 
-// --- B2B TIER SCHEMA ---
-export const b2bTierSchema = createInsertSchema(b2bPricingTiers, {
+// --- HELPERS ---
+/**
+ * String-based numeric validators for form fields.
+ * HTML inputs produce strings — we validate them as strings here,
+ * and convert to numbers in the server action at save time.
+ */
+export const numericStr = (min = 0, msg?: string) =>
+	z.string()
+		.min(1, msg || "Required")
+		.refine((v) => !isNaN(Number(v)) && Number(v) >= min, {
+			message: msg || `Must be ≥ ${min}`,
+		});
+
+export const b2bTierSchema = z.object({
 	name: z.string().min(1, "Name is required"),
-	price: z.number().min(0, "Price must be positive"),
-}).omit({
-	id: true,
-	createdAt: true,
-	isArchived: true,
+	price: numericStr(0, "Price must be positive"),
 });
 
 export type B2BTierFormValues = z.infer<typeof b2bTierSchema>;
 
-// --- B2B DOCUMENT LINE SCHEMA ---
-export const documentLineSchema = createInsertSchema(b2bDocumentLines, {
+
+
+export const documentLineSchema = z.object({
 	description: z.string().min(1, "Description is required"),
-	quantity: z.number().min(0.01, "Quantity must be at least 0.01"),
-	unitPrice: z.number().min(0, "Unit price must be positive"),
-	totalPrice: z.number().min(0),
-}).omit({
-	id: true,
-	documentId: true,
-	createdAt: true,
-	updatedAt: true,
+	quantity: numericStr(0.01, "Min 0.01"),
+	unitPrice: numericStr(0, "Min 0"),
+	totalPrice: numericStr(0),
 });
+
 
 export type DocumentLineFormValues = z.infer<typeof documentLineSchema>;
 
+
 // --- B2B DOCUMENT SCHEMA ---
-export const documentSchema = createInsertSchema(b2bDocuments, {
+export const documentSchema = z.object({
+	partnerId: z.string().uuid("Please select a partner"),
+	contactId: z.string().uuid().optional().nullable(),
+	type: z.enum(["quote", "invoice"]),
+	status: z.enum(["draft", "sent", "accepted", "cancelled", "paid"]),
 	documentNumber: z.string().min(1, "Document number is required"),
 	issueDate: z.string().min(1, "Issue date is required"),
 	dueDate: z.string().optional().nullable(),
 	subtotal: z.string().min(1),
 	taxRate: z.string().min(1),
 	totalAmount: z.string().min(1, "Total amount is required"),
-	partnerId: z.uuid("Please select a partner"),
-	parentDocumentId: z.uuid().optional().nullable(),
-}).omit({
-	id: true,
-	createdAt: true,
-	updatedAt: true,
+	notes: z.string().optional().nullable(),
+	parentDocumentId: z.string().uuid().optional().nullable(),
 });
+
 
 export type DocumentFormValues = z.infer<typeof documentSchema>;
 

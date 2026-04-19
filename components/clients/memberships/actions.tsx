@@ -137,7 +137,7 @@ export function CreateMembershipDialog() {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>
-				<Button className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all">
+				<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
 					<AddCircle variant="Bold" className="mr-2 size-4" />
 					New Product
 				</Button>

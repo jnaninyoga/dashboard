@@ -26,7 +26,7 @@ export default function Loading() {
 				{Array.from({ length: 8 }).map((_, i) => (
 					<div
 						key={i}
-						className="border-border/50 flex flex-col space-y-3 rounded-xl border bg-card p-4 shadow-sm"
+						className="border-border/50 bg-card flex flex-col space-y-3 rounded-xl border p-4 shadow-sm"
 					>
 						<div className="flex items-center gap-4">
 							<Skeleton className="bg-muted-foreground/10 h-12 w-12 rounded-full" />

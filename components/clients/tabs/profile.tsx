@@ -32,7 +32,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 				</CardHeader>
 				<CardContent className="grid gap-4">
 					{/* Phone & WhatsApp Row */}
-					<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex items-center justify-between gap-4 rounded-2xl border border-transparent p-3 transition-all hover:bg-card">
+					<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-center justify-between gap-4 rounded-2xl border border-transparent p-3 transition-all">
 						<div className="flex items-center gap-3">
 							<div className="bg-primary/10 text-primary group-hover:bg-primary/20 flex h-10 w-10 items-center justify-center rounded-xl transition-colors">
 								<Phone className="h-5 w-5" variant="Bold" />
@@ -62,7 +62,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 					{client.email ? (
 						<Link
 							href={`mailto:${client.email}`}
-							className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-all hover:bg-card"
+							className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-all"
 						>
 							<div className="bg-secondary/40 text-secondary-3 group-hover:bg-secondary/70 flex h-10 w-10 items-center justify-center rounded-xl transition-colors">
 								<Mail className="h-5 w-5" variant="Bold" />
@@ -80,7 +80,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 
 					{/* Address Row */}
 					{client.address ? (
-						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex items-start gap-4 rounded-2xl border border-transparent p-3 transition-all hover:bg-card">
+						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-start gap-4 rounded-2xl border border-transparent p-3 transition-all">
 							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100">
 								<MapPin className="h-5 w-5" variant="Bold" />
 							</div>
@@ -107,7 +107,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 				</CardHeader>
 				<CardContent className="grid gap-4">
 					{/* Birth Date Row */}
-					<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-all hover:bg-card">
+					<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-all">
 						<div className="bg-primary/10 text-primary group-hover:bg-primary/20 flex h-10 w-10 items-center justify-center rounded-xl transition-colors">
 							<Calendar className="h-5 w-5" variant="Bold" />
 						</div>
@@ -123,7 +123,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 
 					{/* Profession Row */}
 					{client.profession ? (
-						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-all hover:bg-card">
+						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-center gap-4 rounded-2xl border border-transparent p-3 transition-all">
 							<div className="bg-secondary/40 text-secondary-3 group-hover:bg-secondary/70 flex h-10 w-10 items-center justify-center rounded-xl transition-colors">
 								<Briefcase className="h-5 w-5" variant="Bold" />
 							</div>
@@ -140,7 +140,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 
 					{/* Referral & Date Grid */}
 					<div className="grid grid-cols-2 gap-4">
-						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all hover:bg-card">
+						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all">
 							<div className="flex items-center gap-2">
 								<Profile2User
 									className="text-secondary-2 h-4 w-4"
@@ -154,7 +154,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 								{client.referralSource?.replace("_", " ") || "N/A"}
 							</span>
 						</div>
-						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all hover:bg-card">
+						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all">
 							<div className="flex items-center gap-2">
 								<Calendar className="text-accent h-4 w-4" variant="Bold" />
 								<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-60">

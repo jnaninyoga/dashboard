@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,6 +28,7 @@ import {
 	TextBold,
 	TextItalic,
 } from "iconsax-reactjs";
+import remarkGfm from "remark-gfm";
 
 interface MarkdownEditorProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
 	label?: string;

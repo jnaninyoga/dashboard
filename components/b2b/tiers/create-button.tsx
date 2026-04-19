@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
-import { Add, AddCircle } from "iconsax-reactjs";
+import { AddCircle } from "iconsax-reactjs";
 
 import { B2BTierDialog } from "./dialog";
 
@@ -15,7 +15,7 @@ export function CreateB2BTierButton() {
 		<>
 			<Button
 				onClick={() => setIsOpen(true)}
-				className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all"
+				className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all"
 			>
 				<AddCircle className="mr-2 h-4 w-4" variant="Bold" />
 				New B2B Tier

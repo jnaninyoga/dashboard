@@ -25,7 +25,7 @@ export function PartnerViewToggle() {
 			value={view.toString()}
 			onValueChange={handleViewChange}
 			spacing={1}
-			className="inline-flex gap-1 rounded-2xl bg-card p-1 shadow-sm"
+			className="bg-card inline-flex gap-1 rounded-2xl p-1 shadow-sm"
 		>
 			<ToggleGroupItem
 				value={View.LIST.toString()}

@@ -35,7 +35,7 @@ export default function Loading() {
 
 				<div className="grid gap-6 md:grid-cols-2">
 					{/* Mock Field Bubbles */}
-					<div className="border-border/10 space-y-6 rounded-3xl border bg-card/50 p-6 shadow-sm">
+					<div className="border-border/10 bg-card/50 space-y-6 rounded-3xl border p-6 shadow-sm">
 						<Skeleton className="bg-muted-foreground/10 h-6 w-40" />
 						<div className="space-y-4">
 							<div className="bg-muted/30 flex items-center gap-4 rounded-2xl p-3">
@@ -55,7 +55,7 @@ export default function Loading() {
 						</div>
 					</div>
 
-					<div className="border-border/10 space-y-6 rounded-3xl border bg-card/50 p-6 shadow-sm">
+					<div className="border-border/10 bg-card/50 space-y-6 rounded-3xl border p-6 shadow-sm">
 						<Skeleton className="bg-muted-foreground/10 h-6 w-32" />
 						<div className="space-y-4">
 							<div className="bg-muted/30 flex items-center gap-4 rounded-2xl p-3">

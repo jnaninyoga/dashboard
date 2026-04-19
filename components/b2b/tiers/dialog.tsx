@@ -45,7 +45,7 @@ export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) 
         resolver: zodResolver(b2bTierSchema),
         defaultValues: {
             name: tier?.name ?? "",
-            price: tier?.price ?? 0,
+            price: tier?.price?.toString() ?? "0",
         },
     });
 
@@ -63,7 +63,7 @@ export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) 
         if (open) {
             form.reset({
                 name: tier?.name || "",
-                price: tier?.price || 0,
+                price: tier?.price?.toString() || "0",
             });
         }
     }, [open, tier, form]);

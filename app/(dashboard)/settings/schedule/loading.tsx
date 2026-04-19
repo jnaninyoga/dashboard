@@ -10,7 +10,7 @@ export default function Loading() {
 			</div>
 
 			{/* Schedule Form Skeleton */}
-			<div className="space-y-6 rounded-2xl bg-card p-6">
+			<div className="bg-card space-y-6 rounded-2xl p-6">
 				{Array.from({ length: 5 }).map((_, i) => (
 					<div
 						key={i}

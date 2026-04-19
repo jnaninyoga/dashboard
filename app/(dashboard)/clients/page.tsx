@@ -53,7 +53,7 @@ export default async function ClientsPage(props: {
 					</p>
 				</header>
 				<Link href="/clients/add">
-					<Button className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all">
+					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
 						<Add className="mr-2 h-4 w-4" variant="Outline" />
 						Add Client
 					</Button>

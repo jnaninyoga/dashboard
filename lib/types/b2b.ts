@@ -27,8 +27,9 @@ export type DocumentLine = B2BDocumentLine;
 
 export type PartnerWithRelations = Partner & {
 	contacts?: Contact[];
-	documents?: Document[];
+	documents?: DocumentWithContact[];
 };
+
 
 export type ContactWithPartner = Contact & {
 	partner?: Partner | null;

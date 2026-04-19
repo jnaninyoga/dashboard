@@ -1,9 +1,11 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
+
 import { Button } from "@/components/ui/button";
-import { TickCircle, Refresh } from "iconsax-reactjs";
 import { cn } from "@/lib/utils";
+
+import { Refresh,TickCircle } from "iconsax-reactjs";
 
 interface SaveProfileButtonProps {
 	className?: string;

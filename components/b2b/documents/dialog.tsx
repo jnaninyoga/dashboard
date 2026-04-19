@@ -78,7 +78,7 @@ import {
 import { toast } from "sonner";
 import { z } from "zod";
 
-type CreateDocumentValues = z.infer<typeof createDocumentWithLinesSchema>;
+type CreateDocumentValues = z.input<typeof createDocumentWithLinesSchema>;
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
 	return (
@@ -125,13 +125,13 @@ function DescriptionAutocomplete({
 						onFocus={() => {
 							if (pricingTiers.length > 0) setOpen(true);
 						}}
-						className="placeholder:text-muted-foreground/50 border focus-visible:ring-primary/20 h-8 bg-card text-sm font-medium transition-all"
+						className="placeholder:text-muted-foreground/50 focus-visible:ring-primary/20 bg-card h-8 border text-sm font-medium transition-all"
 						placeholder="Service or product description…"
 						disabled={isPending}
 					/>
 				</PopoverAnchor>
 				<PopoverContent
-					className="border overflow-hidden rounded-xl p-0 shadow-2xl"
+					className="overflow-hidden rounded-xl border p-0 shadow-2xl"
 					style={{ width: "var(--radix-popover-anchor-width)" }}
 					onOpenAutoFocus={(e) => e.preventDefault()}
 					onInteractOutside={(e) => {
@@ -208,28 +208,25 @@ export function DocumentDialog({
 		null,
 	);
 
-	const [defaultValues] = useState(() => ({
-		document: {
-			partnerId,
-			contactId: contacts.find((c) => c.isPrimary)?.id || contacts[0]?.id || "",
-			type: "quote" as const,
-			status: "draft" as const,
-			documentNumber: "", // Initialized in useEffect
-			issueDate: new Date().toISOString().split("T")[0],
-			dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-				.toISOString()
-				.split("T")[0],
-			subtotal: "0",
-			taxRate: "0",
-			totalAmount: "0",
-			notes: "",
-		},
-		lines: [{ description: "", quantity: 1, unitPrice: 0, totalPrice: 0 }],
-	}));
-
 	const form = useForm<CreateDocumentValues>({
 		resolver: zodResolver(createDocumentWithLinesSchema),
-		defaultValues,
+		defaultValues: {
+			document: {
+				partnerId,
+				contactId:
+					contacts.find((c) => c.isPrimary)?.id || contacts[0]?.id || "",
+				type: "quote" as const,
+				status: "draft" as const,
+				documentNumber: "", // Initialized in useEffect
+				issueDate: new Date().toISOString().split("T")[0],
+				dueDate: "", // Initialized in useEffect along with documentNumber
+				subtotal: "0",
+				taxRate: "0",
+				totalAmount: "0",
+				notes: "",
+			},
+			lines: [{ description: "", quantity: "1", unitPrice: "0", totalPrice: "0" }],
+		},
 	});
 
 	const { fields, append, remove } = useFieldArray({
@@ -260,45 +257,47 @@ export function DocumentDialog({
 			getNextDocumentNumber(form.getValues("document.type")).then((num) => {
 				form.setValue("document.documentNumber", num);
 			});
+
+			// Set due date to 7 days from now
+			const dueDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+				.toISOString()
+				.split("T")[0];
+			form.setValue("document.dueDate", dueDate);
 		}
+
 	}, [open, form]);
 
 	/* ── Totals calculation ─── */
 	const linesWatcher = useWatch({
 		control: form.control,
 		name: "lines",
-		defaultValue: defaultValues.lines,
 	});
 	const taxRateWatcher = useWatch({
 		control: form.control,
 		name: "document.taxRate",
-		defaultValue: defaultValues.document.taxRate,
 	});
 
 	useEffect(() => {
 		const subtotal = linesWatcher.reduce(
-			(acc: number, line: { unitPrice: number; quantity: number }) =>
-				acc + line.unitPrice * line.quantity,
+			(acc: number, line) =>
+				acc + (Number(line.unitPrice) * Number(line.quantity) || 0),
 			0,
 		);
-		const tax = subtotal * (parseFloat(taxRateWatcher) / 100 || 0);
+		const tax = subtotal * (Number(taxRateWatcher) / 100 || 0);
+
 		const total = subtotal + tax;
 
 		form.setValue("document.subtotal", subtotal.toString());
 		form.setValue("document.totalAmount", total.toString());
 
-		linesWatcher.forEach(
-			(
-				line: { unitPrice: number; quantity: number; totalPrice: number },
-				index: number,
-			) => {
-				const lineTotal = line.unitPrice * line.quantity;
-				if (lineTotal !== line.totalPrice) {
-					form.setValue(`lines.${index}.totalPrice`, lineTotal);
-				}
-			},
-		);
+		linesWatcher.forEach((line, index) => {
+			const lineTotal = Number(line.quantity) * Number(line.unitPrice) || 0;
+			if (lineTotal !== Number(line.totalPrice)) {
+				form.setValue(`lines.${index}.totalPrice`, lineTotal.toString());
+			}
+		});
 	}, [linesWatcher, taxRateWatcher, form]);
+
 
 	const onSubmit = (values: CreateDocumentValues) => {
 		formAction(values);
@@ -319,10 +318,10 @@ export function DocumentDialog({
 		name: "document.totalAmount",
 	});
 
-	const subtotal = parseFloat(subtotalStr || "0");
-	const taxRate = parseFloat(taxRateStr || "0");
+	const subtotal = Number(subtotalStr || "0");
+	const taxRate = Number(taxRateStr || "0");
 	const taxAmount = subtotal * ((taxRate || 0) / 100);
-	const totalAmount = parseFloat(totalAmountStr || "0");
+	const totalAmount = Number(totalAmountStr || "0");
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
@@ -330,7 +329,7 @@ export function DocumentDialog({
 
 			<DialogContent className="bg-card zen-shadow-lg flex max-h-dvh w-full flex-col gap-0 overflow-hidden rounded-t-3xl rounded-b-none border-0 p-0 shadow-2xl sm:max-h-[95vh] sm:min-w-[680px] sm:rounded-3xl md:min-w-[760px]">
 				{/* ── Header ── */}
-				<DialogHeader className="border shrink-0 border-b px-4 pt-5 pb-4 sm:px-7 sm:pt-7 sm:pb-5">
+				<DialogHeader className="shrink-0 border px-4 pt-5 pb-4 sm:px-7 sm:pt-7 sm:pb-5">
 					<div className="flex items-start gap-4">
 						<div className="border-primary/15 bg-primary/10 text-primary flex size-11 shrink-0 items-center justify-center rounded-2xl border shadow-sm">
 							<DocumentText size={22} variant="Bulk" />
@@ -377,7 +376,7 @@ export function DocumentDialog({
 															}}
 														>
 															<FormControl>
-																<SelectTrigger className="border focus:ring-primary/20 bg-card font-semibold transition-all">
+																<SelectTrigger className="focus:ring-primary/20 bg-card border font-semibold transition-all">
 																	<SelectValue placeholder="Select type" />
 																</SelectTrigger>
 															</FormControl>
@@ -411,7 +410,7 @@ export function DocumentDialog({
 														<FormControl>
 															<Input
 																{...field}
-																className="border focus-visible:ring-primary/20 bg-card font-mono font-bold tracking-wider transition-all"
+																className="focus-visible:ring-primary/20 bg-card border font-mono font-bold tracking-wider transition-all"
 																disabled={isPending}
 															/>
 														</FormControl>
@@ -434,11 +433,11 @@ export function DocumentDialog({
 														onValueChange={field.onChange}
 													>
 														<FormControl>
-															<SelectTrigger className="border focus:ring-primary/20 w-full bg-card font-semibold transition-all">
+															<SelectTrigger className="focus:ring-primary/20 bg-card w-full border font-semibold transition-all">
 																<SelectValue placeholder="Select contact" />
 															</SelectTrigger>
 														</FormControl>
-														<SelectContent className="border w-full shadow-xl">
+														<SelectContent className="w-full border shadow-xl">
 															{contacts.map((contact) => (
 																<SelectItem
 																	key={contact.id}
@@ -471,7 +470,7 @@ export function DocumentDialog({
 														<Input
 															type="date"
 															{...field}
-															className="border focus:ring-primary/20 bg-card font-medium transition-all"
+															className="focus:ring-primary/20 bg-card border font-medium transition-all"
 															disabled={isPending}
 														/>
 													</FormControl>
@@ -490,7 +489,7 @@ export function DocumentDialog({
 															type="date"
 															{...field}
 															value={field.value || ""}
-															className="border focus:ring-primary/20 bg-card font-medium transition-all"
+															className="focus:ring-primary/20 bg-card border font-medium transition-all"
 															disabled={isPending}
 														/>
 													</FormControl>
@@ -513,9 +512,9 @@ export function DocumentDialog({
 											onClick={() =>
 												append({
 													description: "",
-													quantity: 1,
-													unitPrice: 0,
-													totalPrice: 0,
+													quantity: "1",
+													unitPrice: "0",
+													totalPrice: "0",
 												})
 											}
 										>
@@ -525,7 +524,7 @@ export function DocumentDialog({
 									</div>
 
 									{/* Lines Table */}
-									<div className="border overflow-hidden rounded-2xl border">
+									<div className="overflow-hidden rounded-2xl border">
 										<div className="overflow-x-auto">
 											<Table>
 												<TableHeader>
@@ -561,7 +560,7 @@ export function DocumentDialog({
 																						);
 																						form.setValue(
 																							`lines.${index}.unitPrice`,
-																							tier.price,
+																							tier.price.toString(),
 																						);
 																					}}
 																					pricingTiers={pricingTiers}
@@ -585,7 +584,8 @@ export function DocumentDialog({
 																				<Input
 																					inputMode="decimal"
 																					{...f}
-																					className="border focus-visible:ring-primary/20 h-8 w-full bg-card text-center font-mono text-sm font-bold"
+																					value={f.value ?? ""}
+																					className="focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold"
 																					disabled={isPending}
 																					onChange={(e) => {
 																						const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -611,7 +611,8 @@ export function DocumentDialog({
 																				<Input
 																					inputMode="decimal"
 																					{...f}
-																					className="border focus-visible:ring-primary/20 h-8 w-full bg-card text-center font-mono text-sm font-bold"
+																					value={f.value ?? ""}
+																					className="focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold"
 																					disabled={isPending}
 																					onChange={(e) => {
 																						const val = e.target.value.replace(/[^0-9.]/g, "");
@@ -626,12 +627,12 @@ export function DocumentDialog({
 																/>
 															</TableCell>
 
-															{/* Line Total */}
 															<TableCell className="px-2 py-4 text-right align-top">
 																<span className="text-foreground font-mono text-sm font-black tabular-nums">
 																	{(
-																		linesWatcher[index]?.quantity *
-																			linesWatcher[index]?.unitPrice || 0
+																		(Number(linesWatcher[index]?.quantity) || 0) *
+																			(Number(linesWatcher[index]?.unitPrice) ||
+																				0) || 0
 																	).toLocaleString()}
 																	<span className="text-muted-foreground ml-1 text-xs font-normal">
 																		MAD
@@ -672,7 +673,7 @@ export function DocumentDialog({
 													<FormControl>
 														<Textarea
 															{...field}
-															className="border focus-visible:ring-primary/20 min-h-32 resize-none rounded-2xl bg-card px-4 py-3 font-medium transition-all"
+															className="focus-visible:ring-primary/20 bg-card min-h-32 resize-none rounded-2xl border px-4 py-3 font-medium transition-all"
 															placeholder="Optional notes (will appear on the document)…"
 															disabled={isPending}
 															value={field.value || ""}
@@ -685,7 +686,7 @@ export function DocumentDialog({
 									</div>
 
 									{/* Totals */}
-									<div className="border bg-secondary/5 flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 sm:w-1/2">
+									<div className="bg-secondary/5 flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 sm:w-1/2">
 										{/* Subtotal Row */}
 										<div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-end sm:gap-16">
 											<SectionLabel>Subtotal</SectionLabel>
@@ -701,7 +702,7 @@ export function DocumentDialog({
 										<div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-end sm:gap-16">
 											<div className="flex items-center gap-2.5">
 												<SectionLabel>Tax Rate</SectionLabel>
-												<div className="border flex items-center rounded-xl border bg-card px-2 py-1">
+												<div className="bg-card flex items-center rounded-xl border px-2 py-1">
 													<FormField
 														control={form.control}
 														name="document.taxRate"
@@ -758,7 +759,7 @@ export function DocumentDialog({
 						</ScrollArea>
 
 						{/* ── Footer ── */}
-						<DialogFooter className="border bg-card shrink-0 flex-col-reverse gap-2 border-t px-4 py-4 sm:flex-row sm:gap-0 sm:px-7">
+						<DialogFooter className="bg-card shrink-0 flex-col-reverse gap-2 border px-4 py-4 sm:flex-row sm:gap-0 sm:px-7">
 							<Button
 								type="button"
 								variant="ghost"

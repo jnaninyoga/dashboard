@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useActionState, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import { createClientAction, updateClientAction } from "@/actions/clients/mutations";
@@ -64,7 +64,28 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
         }
     }, null);
 
-	const [currentStep, setCurrentStep] = useState(0);
+	// Load saved progress safely for initial state
+	const getSavedProgress = () => {
+		if (typeof window === "undefined") return null;
+		const saved = localStorage.getItem(STORAGE_KEY);
+		if (!saved) return null;
+		try {
+			return JSON.parse(saved);
+		} catch (e) {
+			console.error("Failed to parse saved form progress:", e);
+			return null;
+		}
+	};
+
+	const savedProgress = getSavedProgress();
+
+	const [currentStep, setCurrentStep] = useState(() => {
+		if (savedProgress && typeof savedProgress.step === "number" && mode === "create") {
+			return savedProgress.step;
+		}
+		return 0;
+	});
+
 	const [isStepPending, setIsStepPending] = useState(false);
 
 	const form = useForm<ClientFormValues>({
@@ -81,48 +102,38 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			consultationReason: "",
 			intakeData: {},
 			...initialData,
+			// Apply saved values if any
+			...(savedProgress?.values || {}),
 			// Ensure enums are set or undefined, not null
-			gender: initialData?.gender || undefined,
-			referralSource: initialData?.referralSource || undefined,
+			gender: initialData?.gender || savedProgress?.values?.gender || undefined,
+			referralSource:
+				initialData?.referralSource ||
+				savedProgress?.values?.referralSource ||
+				undefined,
 			// Map active product to initialProductId for Edit mode display
-			initialProductId: initialData?.activeProductId || undefined,
+			initialProductId:
+				initialData?.activeProductId ||
+				savedProgress?.values?.initialProductId ||
+				undefined,
 			// Map existing healthLogs if any (for Edit mode)
-			healthLogs: initialData?.healthLogs || [],
+			healthLogs: initialData?.healthLogs || savedProgress?.values?.healthLogs || [],
 		},
 	});
 
-	// Load saved progress on mount
-	useEffect(() => {
-		const saved = localStorage.getItem(STORAGE_KEY);
-		if (saved) {
-			try {
-				const { values, step } = JSON.parse(saved);
-				if (values) {
-					form.reset({ ...form.getValues(), ...values });
-				}
-				if (typeof step === "number" && mode === "create") {
-					setCurrentStep(step);
-				}
-			} catch (e) {
-				console.error("Failed to load saved form progress:", e);
-			}
-		}
-	}, [form, mode, STORAGE_KEY]);
+
+	const watchedValues = useWatch({ control: form.control });
 
 	// Save progress
 	useEffect(() => {
-		const subscription = form.watch((values) => {
-			localStorage.setItem(
-				STORAGE_KEY,
-				JSON.stringify({
-					values,
-					step: currentStep,
-				}),
-			);
-		});
+		localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({
+				values: watchedValues,
+				step: currentStep,
+			}),
+		);
+	}, [watchedValues, currentStep, STORAGE_KEY]);
 
-		return () => subscription.unsubscribe();
-	}, [form, currentStep, mode, STORAGE_KEY]);
 
     // Handle server state
     useEffect(() => {
@@ -174,8 +185,9 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 				}
 			}
 			if (currentStep < WIZARD_STEPS.length - 1) {
-				setCurrentStep((prev) => prev + 1);
+				setCurrentStep((prev: number) => prev + 1);
 			}
+
 		} finally {
 			setIsStepPending(false);
 		}
@@ -183,9 +195,10 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 
 	const handleBack = () => {
 		if (currentStep > 0) {
-			setCurrentStep((prev) => prev - 1);
+			setCurrentStep((prev: number) => prev - 1);
 		}
 	};
+
 
 	function onSubmit(values: ClientFormValues) {
 		if (currentStep !== WIZARD_STEPS.length - 1) {

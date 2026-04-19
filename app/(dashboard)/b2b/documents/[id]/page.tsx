@@ -263,7 +263,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					</Table>
 
 					<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
-						<div className="border bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl p-4 shadow-sm sm:max-w-xs">
+						<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
 									Subtotal

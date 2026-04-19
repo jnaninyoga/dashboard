@@ -125,7 +125,7 @@ export function ScheduleForm({
 				<Button
 					type="submit"
 					disabled={isPending}
-					className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all"
+					className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all"
 				>
 					{isPending ? (
 						<Loader2 className="mr-2 h-4 w-4 animate-spin" />

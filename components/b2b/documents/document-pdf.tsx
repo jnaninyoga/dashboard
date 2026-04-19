@@ -1,9 +1,8 @@
 import React, { memo } from "react";
+import ReactMarkdown from "react-markdown";
 
 import { formatCurrencyAmountToWords } from "@/lib/currency";
-import type { BusinessProfile, DocumentWithRelations, StandardLegalLabel } from "@/lib/types/b2b";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import type { BusinessProfile, DocumentLine, DocumentWithRelations } from "@/lib/types/b2b";
 
 import {
 	Document,
@@ -18,6 +17,7 @@ import {
 	View,
 } from "@react-pdf/renderer";
 import { format } from "date-fns";
+import remarkGfm from "remark-gfm";
 
 // ─── Font Registration ────────────────────────────────────────────────────────
 
@@ -116,6 +116,8 @@ const IconEditBulk = memo(({ size = 14, color = C.primary }: { size?: number; co
 		/>
 	</Svg>
 ));
+IconEditBulk.displayName = "IconEditBulk";
+
 
 const IconBankBulk = memo(({ size = 14, color = C.primary }: { size?: number; color?: string }) => (
 	<Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -123,8 +125,13 @@ const IconBankBulk = memo(({ size = 14, color = C.primary }: { size?: number; co
 		<Path d="M2 22h20v-2H2v2zM12 2L2 7v2h20V7L12 2z" fill={color} />
 	</Svg>
 ));
+IconBankBulk.displayName = "IconBankBulk";
 
-const LotusCustomSvg = memo(({ style }: { style?: any }) => (
+
+const LotusCustomSvg = memo(({ style }: { style?: React.ComponentProps<typeof Svg>["style"] }) => (
+
+
+
 	<Svg viewBox="42.5 105.5 340.2 213.6" style={style}>
 		{/* Dark Blush Petals */}
 		<Path
@@ -171,6 +178,8 @@ const LotusCustomSvg = memo(({ style }: { style?: any }) => (
 		/>
 	</Svg>
 ));
+LotusCustomSvg.displayName = "LotusCustomSvg";
+
 
 // ─── Markdown Parser ──────────────────────────────────────────────────────────
 
@@ -213,6 +222,8 @@ const PDFMarkdown = memo(({ children }: { children: string | null | undefined })
 		</ReactMarkdown>
 	);
 });
+PDFMarkdown.displayName = "PDFMarkdown";
+
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
@@ -600,9 +611,10 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 					{/* ── Header ── */}
 					<View style={S.headerRow}>
 						<View style={S.headerLeft}>
-							{profile?.logoBase64 && (
+							{profile?.logoBase64 ? (
 								<PdfImage src={profile.logoBase64} style={S.logo} />
-							)}
+							) : null}
+
 							<View>
 								<Text style={S.operatorName}>
 									{profile?.operator || "Ouarda El Fahli"}
@@ -639,28 +651,30 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 						<View>
 							<Text style={S.issuedToTitle}>ADRESSÉ À :</Text>
 							<Text style={S.clientText}>{doc.partner?.companyName}</Text>
-							{doc.contact && (
+							{doc.contact ? (
 								<Text style={S.clientText}>{doc.contact.fullName}</Text>
-							)}
-							{doc.partner?.taxId && (
+							) : null}
+							{doc.partner?.taxId ? (
 								<Text style={S.clientText}>ICE: {doc.partner.taxId}</Text>
-							)}
-							{doc.partner?.address && (
+							) : null}
+							{doc.partner?.address ? (
 								<Text style={S.clientText}>{doc.partner.address}</Text>
-							)}
+							) : null}
+
 						</View>
 						<View style={S.datesBox}>
 							<View style={S.dateLine}>
 								<Text style={S.dateLabel}>DATE :</Text>
 								<Text style={S.dateValue}>{issueDate}</Text>
 							</View>
-							{dueDate && (
+							{dueDate ? (
 								<View style={S.dateLine}>
 									<Text style={S.dateLabel}>ÉCHÉANCE :</Text>
 									<Text style={S.dateValue}>{dueDate}</Text>
 								</View>
-							)}
+							) : null}
 						</View>
+
 					</View>
 
 					{/* ── Table ── */}
@@ -672,7 +686,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 							<Text style={[S.th, S.colTotal]}>TOTAL</Text>
 						</View>
 
-						{doc.lines?.map((line, i) => (
+						{doc.lines?.map((line: DocumentLine, i: number) => (
 							<View key={i} style={S.tableRow} wrap={false}>
 								<Text style={[S.td, S.colDesc]}>{line.description}</Text>
 								<Text style={[S.td, S.colPrice]}>
@@ -690,7 +704,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 					<View style={S.bottomRow}>
 						{/* Notes */}
 						<View style={S.bottomLeft}>
-							{doc.notes && (
+							{doc.notes ? (
 								<View>
 									<View style={S.sectionTitleBox}>
 										<IconEditBulk size={16} />
@@ -698,8 +712,9 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 									</View>
 									<Text style={S.noteText}>{doc.notes}</Text>
 								</View>
-							)}
+							) : null}
 						</View>
+
 
 						{/* Totals */}
 						<View style={S.bottomRight}>
@@ -707,12 +722,13 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 								<Text style={S.totalsLabel}>SOUS-TOTAL</Text>
 								<Text style={S.totalsValue}>{formatNum(subtotal)} MAD</Text>
 							</View>
-							{hasTax && (
+							{hasTax ? (
 								<View style={S.totalsRow}>
 									<Text style={S.totalsLabel}>TVA ({taxRate}%)</Text>
 									<Text style={S.totalsValue}>{formatNum(taxAmount)} MAD</Text>
 								</View>
-							)}
+							) : null}
+
 
 							<View style={S.grandTotalPill}>
 								<Text style={S.grandTotalLabel}>TOTAL</Text>
@@ -726,10 +742,10 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 					</View>
 
 					{/* ── Sign-off Row (Bank + Signature) ── */}
-					{(hasBankDetails || hasSignature) && (
+					{hasBankDetails || hasSignature ? (
 						<View style={S.signOffRow} wrap={false}>
 							<View style={S.bankDetailsBox}>
-								{hasBankDetails && (
+								{hasBankDetails ? (
 									<>
 										<View style={S.sectionTitleBox}>
 											<IconBankBulk size={16} />
@@ -739,44 +755,48 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 											<PDFMarkdown>{profile.bankDetails}</PDFMarkdown>
 										</View>
 									</>
-								)}
+								) : null}
 							</View>
 
 							<View style={S.signOffBox}>
-								{hasSignature && (
+								{hasSignature ? (
 									<>
 										<Text style={S.thankYou}>Merci</Text>
 										<PdfImage src={profile.signatureBase64!} style={S.signatureImg} />
 									</>
-								)}
+								) : null}
 							</View>
 						</View>
-					)}
+					) : null}
+
 				</View>
 
 				{/* ── Footer ── */}
 				<View style={S.footer} fixed>
-					{profile?.address && <Text style={S.footerText}>{profile.address}</Text>}
+					{profile?.address ? <Text style={S.footerText}>{profile.address}</Text> : null}
 
-					{profile?.phone && (
+					{profile?.phone ? (
 						<>
 							<Text style={S.footerDot}>•</Text>
 							<Link src={`tel:${profile.phone.replace(/\s+/g, "")}`} style={{ textDecoration: "none" }}>
 								<Text style={S.footerText}>{profile.phone}</Text>
 							</Link>
 						</>
-					)}
+					) : null}
 
-					{profile?.email && (
+					{profile?.email ? (
 						<>
 							<Text style={S.footerDot}>•</Text>
 							<Link src={`mailto:${profile.email}`} style={{ textDecoration: "none" }}>
 								<Text style={S.footerText}>{profile.email}</Text>
 							</Link>
 						</>
-					)}
+					) : null}
 				</View>
+
 			</Page>
 		</Document>
 	);
 });
+B2BDocumentPDF.displayName = "B2BDocumentPDF";
+

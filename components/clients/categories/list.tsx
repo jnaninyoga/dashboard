@@ -78,7 +78,7 @@ export function CategoryList({
 						<TableHead className="pl-6">Name</TableHead>
 						<TableHead>Discount Type</TableHead>
 						<TableHead>Value</TableHead>
-						<TableHead className="text-right pr-6">Actions</TableHead>
+						<TableHead className="pr-6 text-right">Actions</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -102,7 +102,7 @@ export function CategoryList({
 										? `${category.discountValue}%`
 										: `${category.discountValue} MAD`}
 								</TableCell>
-								<TableCell className="text-right pr-6">
+								<TableCell className="pr-6 text-right">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
 											<Button variant="ghost" className="h-8 w-8 p-0">

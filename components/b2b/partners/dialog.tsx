@@ -34,7 +34,7 @@ export function PartnerDialog({ children }: { children: React.ReactNode }) {
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>
 			<DialogTrigger asChild>{children}</DialogTrigger>
-			<DialogContent className="border rounded-3xl shadow-2xl sm:max-w-lg">
+			<DialogContent className="rounded-3xl border shadow-2xl sm:max-w-lg">
 				<DialogHeader>
 					<div className="mb-4 flex items-center gap-4">
 						<Avatar className="border-primary/20 bg-primary/10 text-primary h-14 w-14 rounded-2xl border shadow-inner">
@@ -60,7 +60,7 @@ export function PartnerDialog({ children }: { children: React.ReactNode }) {
 							name="companyName"
 							placeholder="ex: Hotel Villa Taj"
 							required
-							className="border bg-secondary/5 focus-visible:ring-primary/20"
+							className="bg-secondary/5 focus-visible:ring-primary/20 border"
 						/>
 					</div>
 					<div className="grid gap-2">
@@ -71,7 +71,7 @@ export function PartnerDialog({ children }: { children: React.ReactNode }) {
 							id="taxId"
 							name="taxId"
 							placeholder="ex: 0015243..."
-							className="border bg-secondary/5 focus-visible:ring-primary/20"
+							className="bg-secondary/5 focus-visible:ring-primary/20 border"
 						/>
 					</div>
 					<div className="grid gap-2">
@@ -82,7 +82,7 @@ export function PartnerDialog({ children }: { children: React.ReactNode }) {
 							id="address"
 							name="address"
 							placeholder="Marrakech, Morocco"
-							className="border bg-secondary/5 focus-visible:ring-primary/20"
+							className="bg-secondary/5 focus-visible:ring-primary/20 border"
 						/>
 					</div>
 					{state?.error ? (

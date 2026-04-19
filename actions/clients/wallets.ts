@@ -47,8 +47,9 @@ export async function assignProductToClient(clientId: string, productId: string)
 		let finalPrice = parseFloat(product.basePrice);
 
 		// Apply Dynamic Category Discount
-		if (clientCategory) {
-			const discountValue = parseFloat(clientCategory.discountValue);
+		if (clientCategory && !Array.isArray(clientCategory)) {
+
+			const discountValue = parseFloat(clientCategory.discountValue || "0");
 			if (discountValue > 0) {
 				if (clientCategory.discountType === "percentage") {
 					const discountAmount = (finalPrice * discountValue) / 100;

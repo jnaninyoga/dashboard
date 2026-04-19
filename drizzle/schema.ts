@@ -2,6 +2,7 @@ import { type StandardLegalLabel } from "@/lib/types/b2b";
 
 import { relations } from "drizzle-orm";
 import {
+	type AnyPgColumn,
 	boolean,
 	date,
 	decimal,
@@ -204,6 +205,11 @@ export const attendanceLedgerRelations = relations(
 	}),
 );
 
+export const clientCategoriesRelations = relations(clientCategories, ({ many }) => ({
+	clients: many(clients),
+}));
+
+
 // Store Google OAuth tokens for persistent access
 export const userTokens = pgTable("user_tokens", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -275,7 +281,7 @@ export const b2bDocuments = pgTable("b2b_documents", {
 		.default("0"),
 	notes: text("notes"),
 	parentDocumentId: uuid("parent_document_id").references(
-		() => b2bDocuments.id,
+		(): AnyPgColumn => b2bDocuments.id,
 	),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),

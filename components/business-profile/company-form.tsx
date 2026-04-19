@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useActionState, useEffect, useState, useRef } from "react";
+import { useActionState, useEffect, useRef,useState } from "react";
 import { getCountries } from "react-phone-number-input";
 import Image from "next/image";
 
@@ -14,11 +14,24 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import {
+	Command,
+	CommandEmpty,
+	CommandGroup,
+	CommandItem,
+	CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { PhoneInput } from "@/components/ui/phone-input";
+import {
+	Popover,
+	PopoverAnchor,
+	PopoverContent,
+} from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import type { BusinessProfile } from "@/lib/types/b2b";
 import { cn } from "@/lib/utils";
 
@@ -26,7 +39,6 @@ import {
 	Add,
 	Briefcase,
 	Buildings,
-	Call,
 	Civic,
 	DocumentText1,
 	Global,
@@ -42,19 +54,6 @@ import {
 import { toast } from "sonner";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandItem,
-	CommandList,
-} from "@/components/ui/command";
-import {
-	Popover,
-	PopoverAnchor,
-	PopoverContent,
-} from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Props {
 	initialData: BusinessProfile | null;
@@ -68,10 +67,11 @@ export function CompanyProfileForm({
 	currentUserName,
 	children,
 }: Props & { children?: React.ReactNode }) {
-	const [state, formAction, isPending] = useActionState(
+	const [state, formAction, _isPending] = useActionState(
 		upsertBusinessProfileAction,
 		null,
 	);
+
 
 	const [legalDetails, setLegalDetails] = useState<
 		{ label: string; value: string }[]
@@ -154,7 +154,7 @@ export function CompanyProfileForm({
 							</div>
 						</CardHeader>
 						<CardContent className="grid gap-6">
-							<div className="grid gap-2 grid-cols-1 grid-rows-4 md:grid-cols-2 md:grid-rows-2">
+							<div className="grid grid-cols-1 grid-rows-4 gap-2 md:grid-cols-2 md:grid-rows-2">
 								<FormInput
 									label="Company Name"
 									id="companyName"
@@ -188,8 +188,9 @@ export function CompanyProfileForm({
 									<PhoneInput
 										placeholder="+212 6 12 34 56 78"
 										defaultCountry="MA"
-										value={phone as any}
+										value={phone}
 										onChange={(val) => setPhone(val || "")}
+
 										countries={getCountries().filter(
 											(country) => country !== "IL" && country !== "EH",
 										)}
@@ -211,7 +212,7 @@ export function CompanyProfileForm({
 											name="address"
 											defaultValue={initialData?.address || ""}
 											placeholder="Marrakech, Morocco"
-											className="min-h-14 max-h-20 ps-12"
+											className="max-h-20 min-h-14 ps-12"
 										/>
 									</div>
 								</div>
@@ -271,7 +272,7 @@ export function CompanyProfileForm({
 											type="button"
 											variant="ghost"
 											size="icon"
-											className="bg-destructive/5 text-destructive/80 opacity-0 transition-all hover:text-destructive hover:bg-destructive/10 group-hover:opacity-100 group-focus-within:opacity-100"
+											className="bg-destructive/5 text-destructive/80 hover:text-destructive hover:bg-destructive/10 opacity-0 transition-all group-focus-within:opacity-100 group-hover:opacity-100"
 											onClick={() => {
 												setLegalDetails(
 													legalDetails.filter((_, i) => i !== idx),
@@ -306,7 +307,7 @@ export function CompanyProfileForm({
 					className="animate-slide-left space-y-6"
 					style={{ animationDelay: "300ms" }}
 				>
-					<Card className="overflow-hidden h-full">
+					<Card className="h-full overflow-hidden">
 						<CardHeader className="flex flex-row items-center justify-between">
 							<div>
 								<CardTitle className="font-heading text-xl font-bold tracking-tight">
@@ -393,9 +394,9 @@ export function CompanyProfileForm({
 						</div>
 					</CardHeader>
 					<CardContent className="space-y-6">
-						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-secondary/10 pb-6">
+						<div className="border-secondary/10 flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
 							<div className="space-y-1">
-								<Label className="text-muted-foreground ml-1 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
+								<Label className="text-muted-foreground ml-1 flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
 									<SecuritySafe
 										size={16}
 										variant="Bulk"
@@ -403,14 +404,14 @@ export function CompanyProfileForm({
 									/>
 									Bank Account Information
 								</Label>
-								<p className="text-muted-foreground/60 ml-1 text-[10px] uppercase font-black tracking-widest leading-none">
+								<p className="text-muted-foreground/60 ml-1 text-[10px] leading-none font-black tracking-widest uppercase">
 									Toggle to include banking details on quotes and invoices
 								</p>
 							</div>
-							<div className="flex items-center gap-3 bg-secondary/50 rounded-2xl px-4 py-2 border border-secondary-2/40 transition-all hover:bg-secondary/80 hover:text-secondary-foreground group">
+							<div className="bg-secondary/50 border-secondary-2/40 hover:bg-secondary/80 hover:text-secondary-foreground group flex items-center gap-3 rounded-2xl border px-4 py-2 transition-all">
 								<Label
 									htmlFor="showBankDetails"
-									className="text-[10px] font-black tracking-widest uppercase opacity-60 cursor-pointer transition-opacity group-hover:opacity-100"
+									className="cursor-pointer text-[10px] font-black tracking-widest uppercase opacity-60 transition-opacity group-hover:opacity-100"
 								>
 									{showBankDetails ? "Visible" : "Hidden"}
 								</Label>
@@ -428,14 +429,14 @@ export function CompanyProfileForm({
 							className={cn(
 								"overflow-hidden p-1 transition-all duration-500 ease-in-out",
 								showBankDetails
-									? "max-h-[500px] opacity-100 translate-y-0 mt-2"
-									: "max-h-0 opacity-0 -translate-y-4 pointer-events-none mt-0",
+									? "mt-2 max-h-[500px] translate-y-0 opacity-100"
+									: "pointer-events-none mt-0 max-h-0 -translate-y-4 opacity-0",
 							)}
 						>
 							<MarkdownEditor
 								id="bankDetails"
 								name="bankDetails"
-								className="rounded-3xl border-secondary/10 shadow-sm"
+								className="border-secondary/10 rounded-3xl shadow-sm"
 								defaultValue={initialData?.bankDetails || ""}
 								placeholder={`**Bank:** CREDIT DU MAROC\n**Agency:** MARRAKECH GUELIZ\n**Account:** 021.450.0000.03.700.13.95366.50`}
 							/>
@@ -482,13 +483,22 @@ function FormInput({ label, icon, ...props }: FormInputProps) {
 	);
 }
 
+interface AssetUploaderProps {
+	preview: string | null;
+	onUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+	onClear: () => void;
+	label: string;
+	aspect?: "square" | "video";
+}
+
 function AssetUploader({
 	preview,
 	onUpload,
 	onClear,
 	label,
 	aspect = "square",
-}: any) {
+}: AssetUploaderProps) {
+
 	return (
 		<div
 			className={cn(
@@ -609,7 +619,7 @@ function LegalLabelAutocomplete({
 											onChange(lbl);
 											setOpen(false);
 										}}
-										className="hover:bg-primary/5 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary flex cursor-pointer items-center justify-between px-3 py-2 transition-colors font-bold"
+										className="hover:bg-primary/5 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary flex cursor-pointer items-center justify-between px-3 py-2 font-bold transition-colors"
 									>
 										<span className="text-xs">{lbl}</span>
 									</CommandItem>

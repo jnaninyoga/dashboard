@@ -35,11 +35,11 @@ export function EditableNotes({
 	const hasChanged = notes !== (initialNotes || "");
 
 	return (
-		<div className="animate-slide-up bg-card delay-200 rounded-3xl border p-6 shadow-sm">
-			<div className="mb-4 h-10 flex items-center justify-between">
+		<div className="animate-slide-up bg-card rounded-3xl border p-6 shadow-sm delay-200">
+			<div className="mb-4 flex h-10 items-center justify-between">
 				<div className="flex items-center gap-2">
 					<NoteText size={20} className="text-primary" variant="Bulk" />
-					<h3 className="text-primary text-sm font-bold uppercase tracking-widest">
+					<h3 className="text-primary text-sm font-bold tracking-widest uppercase">
 						Notes
 					</h3>
 				</div>

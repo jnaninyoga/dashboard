@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/drizzle";
 import { b2bContacts, b2bDocuments, b2bPartners } from "@/drizzle/schema";
-import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
+import { B2BDocumentStatus, B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
 import { contactSchema, partnerSchema } from "@/lib/validators";
 import { syncPartnerContactToGoogle } from "@/services/google-contacts";
 import { getValidAccessToken } from "@/services/google-tokens";
@@ -159,11 +159,12 @@ export async function getPartnersAction(filters?: {
 	query?: string;
 	docType?: B2BDocumentType | "all";
 	docStatus?: B2BDocumentStatus | "all";
-}) {
+}): Promise<{ partners?: PartnerWithRelations[]; error?: string }> {
+
 	const { query, docType, docStatus } = filters || {};
 
 	try {
-		const partners = await db.query.b2bPartners.findMany({
+		const partners = (await db.query.b2bPartners.findMany({
 			where: (partners) => {
 				const conditions = [];
 
@@ -227,7 +228,8 @@ export async function getPartnersAction(filters?: {
 				documents: true,
 			},
 			orderBy: (partners, { desc }) => [desc(partners.createdAt)],
-		});
+		})) as PartnerWithRelations[];
+
 		return { partners };
 	} catch (error) {
 		console.error("Error fetching partners:", error);
@@ -237,7 +239,7 @@ export async function getPartnersAction(filters?: {
 
 export async function getPartnerByIdAction(id: string) {
 	try {
-		const partner = await db.query.b2bPartners.findFirst({
+		const partner = (await db.query.b2bPartners.findFirst({
 			where: eq(b2bPartners.id, id),
 			with: {
 				contacts: {
@@ -250,8 +252,9 @@ export async function getPartnerByIdAction(id: string) {
 					orderBy: (docs, { desc }) => [desc(docs.issueDate)],
 				},
 			},
-		});
+		})) as PartnerWithRelations | null;
 		return { partner };
+
 	} catch (error) {
 		console.error("Error fetching partner:", error);
 		return { error: "Failed to fetch partner" };

@@ -25,7 +25,7 @@ export default function Loading() {
 				{Array.from({ length: 3 }).map((_, i) => (
 					<div
 						key={i}
-						className="flex items-center justify-between rounded-2xl bg-card p-4"
+						className="bg-card flex items-center justify-between rounded-2xl p-4"
 					>
 						<div className="flex items-center gap-4">
 							<div className="space-y-2">
