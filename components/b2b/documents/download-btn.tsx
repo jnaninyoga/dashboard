@@ -1,30 +1,11 @@
 "use client";
 
-import dynamic from "next/dynamic";
-
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
-
 import { DocumentDownload } from "iconsax-reactjs";
-
 import { B2BDocumentPDF } from "./document-pdf";
-
-// Dynamically import PDFDownloadLink to prevent SSR issues
-const PDFDownloadLink = dynamic(
-	() => import("@react-pdf/renderer").then((mod) => mod.PDFDownloadLink),
-	{
-		ssr: false,
-		loading: () => (
-			<Button
-				disabled
-				variant="secondary"
-				className="gap-2 rounded-xl font-medium shadow-sm"
-			>
-				<DocumentDownload size={18} /> Loading PDF...
-			</Button>
-		),
-	},
-);
+import { toast } from "sonner"; // Assuming you use sonner based on your action ribbon
 
 interface PDFDownloadBtnProps {
 	doc: DocumentWithRelations;
@@ -32,6 +13,8 @@ interface PDFDownloadBtnProps {
 }
 
 export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
+	const [isGenerating, setIsGenerating] = useState(false);
+
 	const isQuote = doc.type === "quote";
 	const prefix = isQuote ? "Quote" : "Invoice";
 
@@ -40,21 +23,46 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 		doc.partner?.companyName?.replace(/[^a-z0-9]/gi, "_") || "Partner";
 	const docName = `${prefix}_${partnerName}_${doc.documentNumber}.pdf`;
 
+	const handleDownload = async () => {
+		try {
+			setIsGenerating(true);
+
+			// 1. Dynamically import the pdf builder to ensure no SSR issues
+			const { pdf } = await import("@react-pdf/renderer");
+
+			// 2. Generate the PDF Blob on the fly
+			const blob = await pdf(
+				<B2BDocumentPDF doc={doc} profile={profile} />,
+			).toBlob();
+
+			// 3. Create a temporary URL and trigger the browser download
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = docName;
+			document.body.appendChild(link);
+			link.click();
+
+			// 4. Cleanup
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+		} catch (error) {
+			console.error("Error generating PDF:", error);
+			toast.error("Failed to generate PDF. Please try again.");
+		} finally {
+			setIsGenerating(false);
+		}
+	};
+
 	return (
-		<PDFDownloadLink
-			document={<B2BDocumentPDF doc={doc} profile={profile} />}
-			fileName={docName}
+		<Button
+			onClick={handleDownload}
+			disabled={isGenerating}
+			variant="secondary"
+			className="gap-2 rounded-xl font-medium shadow-sm border border-secondary-2 hover:zen-glow-blush transition-all"
 		>
-			{({ loading }) => (
-				<Button
-					disabled={loading}
-					variant="secondary"
-					className="gap-2 rounded-xl font-medium shadow-sm border hover:zen-glow-blush transition-all"
-				>
-					<DocumentDownload size={18} />
-					{loading ? "Preparing PDF..." : "Download PDF"}
-				</Button>
-			)}
-		</PDFDownloadLink>
+			<DocumentDownload size={18} />
+			{isGenerating ? "Preparing PDF..." : "Download PDF"}
+		</Button>
 	);
 }
