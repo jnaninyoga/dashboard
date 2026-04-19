@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 
 import { updateDocumentNotesAction } from "@/actions/b2b/documents";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 
 import { NoteText, Save2 } from "iconsax-reactjs";
 import { toast } from "sonner";
@@ -14,7 +14,10 @@ interface EditableNotesProps {
 	initialNotes: string | null;
 }
 
-export function EditableNotes({ documentId, initialNotes }: EditableNotesProps) {
+export function EditableNotes({
+	documentId,
+	initialNotes,
+}: EditableNotesProps) {
 	const [notes, setNotes] = useState(initialNotes || "");
 	const [isPending, startTransition] = useTransition();
 
@@ -32,12 +35,12 @@ export function EditableNotes({ documentId, initialNotes }: EditableNotesProps) 
 	const hasChanged = notes !== (initialNotes || "");
 
 	return (
-		<div className="animate-slide-up border bg-card rounded-3xl border p-6 shadow-sm delay-200">
-			<div className="mb-4 flex items-center justify-between">
+		<div className="animate-slide-up bg-card delay-200 rounded-3xl border p-6 shadow-sm">
+			<div className="mb-4 h-10 flex items-center justify-between">
 				<div className="flex items-center gap-2">
-					<NoteText size={18} className="text-muted-foreground" />
-					<h3 className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
-						Notes & Remarks
+					<NoteText size={20} className="text-primary" variant="Bulk" />
+					<h3 className="text-primary text-sm font-bold uppercase tracking-widest">
+						Notes
 					</h3>
 				</div>
 				{hasChanged ? (
@@ -52,12 +55,13 @@ export function EditableNotes({ documentId, initialNotes }: EditableNotesProps) 
 					</Button>
 				) : null}
 			</div>
-			<Textarea
+
+			<MarkdownEditor
 				value={notes}
 				onChange={(e) => setNotes(e.target.value)}
 				placeholder="Add terms, bank details, or internal remarks..."
-				className="border/50 focus:ring-primary/20 min-h-[120px] bg-transparent leading-relaxed font-medium transition-all"
 				disabled={isPending}
+				className="border-secondary/10"
 			/>
 		</div>
 	);
