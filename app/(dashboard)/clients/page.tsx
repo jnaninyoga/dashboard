@@ -2,10 +2,10 @@ import Link from "next/link";
 
 import { getClientsAction } from "@/actions/clients/queries";
 import { getClientCategories } from "@/actions/settings";
-import { ClientFilters } from "@/components/clients/client-filters";
-import { ClientViewToggle } from "@/components/clients/client-view-toggle";
-import { ClientsGrid } from "@/components/clients/clients-grid";
-import { ClientsTable } from "@/components/clients/clients-table";
+import { ClientFilters } from "@/components/clients/filters";
+import { ClientsGrid } from "@/components/clients/grid";
+import { ClientsTable } from "@/components/clients/table";
+import { ClientViewToggle } from "@/components/clients/view-toggle";
 import { Button } from "@/components/ui/button";
 import { Gender, View } from "@/lib/types";
 
@@ -43,22 +43,24 @@ export default async function ClientsPage(props: {
 
 	return (
 		<>
-			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
 				<header className="space-y-1">
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Clients</h1>
+					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+						Clients
+					</h1>
 					<p className="text-md text-muted-foreground">
 						Manage your client base and view their progress.
 					</p>
 				</header>
 				<Link href="/clients/add">
-					<Button>
+					<Button className="shadow-sm zen-glow-teal h-11 px-8 font-bold transition-all">
 						<Add className="mr-2 h-4 w-4" variant="Outline" />
 						Add Client
 					</Button>
 				</Link>
 			</div>
 
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">
 				<ClientFilters categories={categories || []} />
 				<ClientViewToggle />
 			</div>

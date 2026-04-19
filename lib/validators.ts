@@ -1,9 +1,16 @@
-import { clients } from "@/drizzle/schema";
-import { 
-	Gender, 
-	HealthCategory, 
-	HealthSeverity, 
-	ReferralSource 
+import {
+	b2bContacts,
+	b2bDocumentLines,
+	b2bDocuments,
+	b2bPartners,
+	b2bPricingTiers,
+	clients,
+} from "@/drizzle/schema";
+import {
+	Gender,
+	HealthCategory,
+	HealthSeverity,
+	ReferralSource,
 } from "@/lib/types";
 
 import { createInsertSchema } from "drizzle-zod";
@@ -12,13 +19,12 @@ import { z } from "zod";
 // --- CLIENT SCHEMA ---
 export const clientSchema = createInsertSchema(clients, {
 	email: z
-		.string()
 		.email({ message: "Invalid email address" })
 		.nullable()
 		.optional()
 		.or(z.literal("")),
-	birthDate: (schema) =>
-		schema.refine((date) => !isNaN(Date.parse(date)), {
+	birthDate: (schema: z.ZodString) =>
+		schema.refine((date: string) => !isNaN(Date.parse(date)), {
 			message: "Invalid date string",
 		}),
 	fullName: z.string().min(2, { message: "Name is required (min 2 chars)" }),
@@ -63,9 +69,17 @@ export const clientSchema = createInsertSchema(clients, {
 		healthLogs: z
 			.array(
 				z.object({
-					category: z.enum([HealthCategory.PHYSICAL, HealthCategory.MENTAL, HealthCategory.LIFESTYLE]),
+					category: z.enum([
+						HealthCategory.PHYSICAL,
+						HealthCategory.MENTAL,
+						HealthCategory.LIFESTYLE,
+					]),
 					condition: z.string(),
-					severity: z.enum([HealthSeverity.INFO, HealthSeverity.WARNING, HealthSeverity.CRITICAL]),
+					severity: z.enum([
+						HealthSeverity.INFO,
+						HealthSeverity.WARNING,
+						HealthSeverity.CRITICAL,
+					]),
 					isAlert: z.boolean(),
 					treatment: z.string().optional(),
 					startDate: z.string(),
@@ -86,13 +100,93 @@ export const categorySchema = z.object({
 
 export type CategoryFormValues = z.infer<typeof categorySchema>;
 
+// --- B2B PARTNER SCHEMA ---
+export const partnerSchema = createInsertSchema(b2bPartners, {
+	companyName: z.string().min(1, "Company name is required"),
+	address: z.string().optional().nullable(),
+	taxId: z.string().optional().nullable(),
+}).omit({
+	id: true,
+	createdAt: true,
+	updatedAt: true,
+});
+
+export type PartnerFormValues = z.infer<typeof partnerSchema>;
+
+// --- B2B CONTACT SCHEMA ---
+export const contactSchema = createInsertSchema(b2bContacts, {
+	fullName: z.string().min(1, "Full name is required"),
+	role: z.string().optional().nullable(),
+	email: z
+		.string()
+		.email("Invalid email address")
+		.optional()
+		.nullable()
+		.or(z.literal("")),
+	phone: z.string().optional().nullable().or(z.literal("")),
+	partnerId: z.string().uuid("Please select a partner"),
+}).omit({
+	id: true,
+	createdAt: true,
+	updatedAt: true,
+	googleContactResourceName: true,
+	googleEtag: true,
+});
+
+export type ContactFormValues = z.infer<typeof contactSchema>;
+
 // --- B2B TIER SCHEMA ---
-export const b2bTierSchema = z.object({
+export const b2bTierSchema = createInsertSchema(b2bPricingTiers, {
 	name: z.string().min(1, "Name is required"),
 	price: z.number().min(0, "Price must be positive"),
+}).omit({
+	id: true,
+	createdAt: true,
+	isArchived: true,
 });
 
 export type B2BTierFormValues = z.infer<typeof b2bTierSchema>;
+
+// --- B2B DOCUMENT LINE SCHEMA ---
+export const documentLineSchema = createInsertSchema(b2bDocumentLines, {
+	description: z.string().min(1, "Description is required"),
+	quantity: z.number().min(0.01, "Quantity must be at least 0.01"),
+	unitPrice: z.number().min(0, "Unit price must be positive"),
+	totalPrice: z.number().min(0),
+}).omit({
+	id: true,
+	documentId: true,
+	createdAt: true,
+	updatedAt: true,
+});
+
+export type DocumentLineFormValues = z.infer<typeof documentLineSchema>;
+
+// --- B2B DOCUMENT SCHEMA ---
+export const documentSchema = createInsertSchema(b2bDocuments, {
+	documentNumber: z.string().min(1, "Document number is required"),
+	issueDate: z.string().min(1, "Issue date is required"),
+	dueDate: z.string().optional().nullable(),
+	subtotal: z.string().min(1),
+	taxRate: z.string().min(1),
+	totalAmount: z.string().min(1, "Total amount is required"),
+	partnerId: z.uuid("Please select a partner"),
+	parentDocumentId: z.uuid().optional().nullable(),
+}).omit({
+	id: true,
+	createdAt: true,
+	updatedAt: true,
+});
+
+export type DocumentFormValues = z.infer<typeof documentSchema>;
+
+// --- COMPOSITE DOCUMENT + LINES SCHEMA ---
+export const createDocumentWithLinesSchema = z.object({
+	document: documentSchema,
+	lines: z
+		.array(documentLineSchema)
+		.min(1, "At least one line item is required"),
+});
 
 // --- MEMBERSHIP PRODUCT SCHEMA ---
 export const membershipProductSchema = z.object({
@@ -102,7 +196,9 @@ export const membershipProductSchema = z.object({
 	defaultCredits: z.number().int().min(1, "Credits must be at least 1"),
 });
 
-export type MembershipProductFormValues = z.infer<typeof membershipProductSchema>;
+export type MembershipProductFormValues = z.infer<
+	typeof membershipProductSchema
+>;
 
 // --- SESSION SCHEMA (Booking flow) ---
 export const sessionSchema = z

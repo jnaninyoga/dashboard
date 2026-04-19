@@ -33,7 +33,7 @@ export function AppSidebar({
 	const pathname = usePathname();
 
 	return (
-		<Sidebar collapsible="icon" {...props} className="border-r-secondary-foreground/10">
+		<Sidebar collapsible="icon" {...props} className="border-r">
 			<SidebarHeader>
 				<div className="flex items-center gap-2 p-2 px-1">
 					<div className="flex aspect-square size-10 items-center justify-center rounded-lg bg-transparent">
@@ -66,6 +66,28 @@ export function AppSidebar({
 						</SidebarMenu>
 					</SidebarGroupContent>
 				</SidebarGroup>
+
+				<SidebarGroup>
+					<SidebarGroupLabel>B2B / Companies</SidebarGroupLabel>
+					<SidebarGroupContent>
+						<SidebarMenu>
+							{dashboardConfig.b2b.map((item) => {
+								const isActive = pathname === item.url || pathname.startsWith(`${item.url}/`);
+								return (
+									<SidebarMenuItem key={item.title}>
+										<SidebarMenuButton asChild isActive={isActive}>
+											<Link href={item.url}>
+												<item.icon size={20} variant={isActive ? "Bulk" : "Outline"} />
+												<span>{item.title}</span>
+											</Link>
+										</SidebarMenuButton>
+									</SidebarMenuItem>
+								);
+							})}
+						</SidebarMenu>
+					</SidebarGroupContent>
+				</SidebarGroup>
+
 
 				<SidebarGroup>
 					<SidebarGroupLabel>Quick Actions</SidebarGroupLabel>

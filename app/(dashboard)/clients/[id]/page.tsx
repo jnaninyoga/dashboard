@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 
 import { getGoogleContactPhotoAction } from "@/actions/clients/mutations";
 import { getClientByIdAction } from "@/actions/clients/queries";
-import { getMembershipProductsAction } from "@/actions/wallets";
-import { ClientActions } from "@/components/clients/client-actions";
-import { ClientProfileTabs } from "@/components/clients/client-profile-tabs";
+import { getMembershipProductsAction } from "@/actions/clients/wallets";
+import { ClientActions } from "@/components/clients/actions";
+import { ClientProfileTabs } from "@/components/clients/profile-tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

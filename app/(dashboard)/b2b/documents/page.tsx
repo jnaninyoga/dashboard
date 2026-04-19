@@ -1,0 +1,62 @@
+import { getDocumentsAction } from "@/actions/b2b/documents";
+import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
+import { DocumentFilters } from "@/components/b2b/documents/filters";
+import { B2BDocumentStatus, B2BDocumentType, DocumentWithRelations } from "@/lib/types/b2b";
+
+type SearchParams = Promise<{
+	query?: string;
+	type?: B2BDocumentType;
+	status?: B2BDocumentStatus;
+}>;
+
+export default async function DocumentsPage(props: {
+	searchParams: SearchParams;
+}) {
+	const searchParams = await props.searchParams;
+	const query = searchParams.query || "";
+	const type = searchParams.type || "all";
+	const status = searchParams.status || "all";
+
+	const { documents, error } = await getDocumentsAction({
+		query,
+		type,
+		status,
+	});
+
+	if (error) {
+		throw new Error(error);
+	}
+
+	return (
+		<>
+			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
+				<header className="space-y-1">
+					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+						B2B Documents
+					</h1>
+					<p className="text-md text-muted-foreground">
+						Unified management of all Quotations and Invoices.
+					</p>
+				</header>
+			</div>
+
+			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">
+				<DocumentFilters />
+			</div>
+
+			<DocumentDashboardTable documents={(documents as DocumentWithRelations[]) || []} />
+
+			{!documents?.length && (
+				<div className="flex flex-col items-center justify-center py-20 text-center">
+					<div className="bg-muted mb-4 rounded-full p-6">
+						<span className="text-muted-foreground/30 text-4xl">📄</span>
+					</div>
+					<h3 className="text-lg font-bold">No documents found</h3>
+					<p className="text-muted-foreground text-sm">
+						Try adjusting your filters or search query.
+					</p>
+				</div>
+			)}
+		</>
+	);
+}

@@ -35,17 +35,17 @@ export default function Loading() {
 
 				<div className="grid gap-6 md:grid-cols-2">
 					{/* Mock Field Bubbles */}
-					<div className="border-border/10 space-y-6 rounded-3xl border bg-white/50 p-6 shadow-sm">
+					<div className="border-border/10 space-y-6 rounded-3xl border bg-card/50 p-6 shadow-sm">
 						<Skeleton className="bg-muted-foreground/10 h-6 w-40" />
 						<div className="space-y-4">
-							<div className="bg-sidebar/50 flex items-center gap-4 rounded-2xl p-3">
+							<div className="bg-muted/30 flex items-center gap-4 rounded-2xl p-3">
 								<Skeleton className="bg-muted-foreground/10 h-10 w-10 rounded-xl" />
 								<div className="flex-1 space-y-2">
 									<Skeleton className="bg-muted-foreground/10 h-3 w-20" />
 									<Skeleton className="bg-muted-foreground/10 h-4 w-full" />
 								</div>
 							</div>
-							<div className="bg-sidebar/50 flex items-center gap-4 rounded-2xl p-3">
+							<div className="bg-muted/30 flex items-center gap-4 rounded-2xl p-3">
 								<Skeleton className="bg-muted-foreground/10 h-10 w-10 rounded-xl" />
 								<div className="flex-1 space-y-2">
 									<Skeleton className="bg-muted-foreground/10 h-3 w-20" />
@@ -55,17 +55,17 @@ export default function Loading() {
 						</div>
 					</div>
 
-					<div className="border-border/10 space-y-6 rounded-3xl border bg-white/50 p-6 shadow-sm">
+					<div className="border-border/10 space-y-6 rounded-3xl border bg-card/50 p-6 shadow-sm">
 						<Skeleton className="bg-muted-foreground/10 h-6 w-32" />
 						<div className="space-y-4">
-							<div className="bg-sidebar/50 flex items-center gap-4 rounded-2xl p-3">
+							<div className="bg-muted/30 flex items-center gap-4 rounded-2xl p-3">
 								<Skeleton className="bg-muted-foreground/10 h-10 w-10 rounded-xl" />
 								<div className="flex-1 space-y-2">
 									<Skeleton className="bg-muted-foreground/10 h-3 w-16" />
 									<Skeleton className="bg-muted-foreground/10 h-4 w-full" />
 								</div>
 							</div>
-							<div className="bg-sidebar/50 flex items-center gap-4 rounded-2xl p-3">
+							<div className="bg-muted/30 flex items-center gap-4 rounded-2xl p-3">
 								<Skeleton className="bg-muted-foreground/10 h-10 w-10 rounded-xl" />
 								<div className="flex-1 space-y-2">
 									<Skeleton className="bg-muted-foreground/10 h-3 w-16" />

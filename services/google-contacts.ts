@@ -21,6 +21,7 @@ interface SyncResult {
 }
 
 const CONTACTS_LABEL = "JnaninYoga Clients";
+const B2B_PARTNERS_LABEL = "JnaninYoga Partners";
 
 export async function syncClientToGoogleContacts(
 	accessToken: string,
@@ -264,6 +265,78 @@ export async function getContactPhoto(
 	}
 
 	return { photoUrl: null };
+}
+
+export async function syncPartnerContactToGoogle(
+	accessToken: string,
+	data: {
+		fullName: string;
+		phone?: string | null;
+		email?: string | null;
+		role?: string | null;
+	},
+	companyName: string,
+): Promise<{ resourceName: string; etag: string }> {
+	const google = getGoogleClient(accessToken);
+	let labelResourceName = null;
+
+	// 1. Label Logic (Get or Create)
+	try {
+		const groupsRes = await google.people.contactGroups.list();
+		const existingGroup = groupsRes.data.contactGroups?.find(
+			(g) =>
+				g.name === B2B_PARTNERS_LABEL || g.formattedName === B2B_PARTNERS_LABEL,
+		);
+
+		if (existingGroup?.resourceName) {
+			labelResourceName = existingGroup.resourceName;
+		} else {
+			const newGroup = await google.people.contactGroups.create({
+				requestBody: { contactGroup: { name: B2B_PARTNERS_LABEL } },
+			});
+			labelResourceName = newGroup.data.resourceName;
+		}
+	} catch (e) {
+		console.error("Failed to manage B2B contact groups:", e);
+	}
+
+	// 2. Create Contact with Organization Fields
+	const contactRes = await google.people.people.createContact({
+		requestBody: {
+			names: [
+				{
+					givenName: data.fullName,
+					displayName: data.fullName,
+				},
+			],
+			phoneNumbers: data.phone ? [{ value: data.phone }] : undefined,
+			emailAddresses: data.email ? [{ value: data.email }] : undefined,
+			organizations: [
+				{
+					name: companyName,
+					title: data.role || undefined,
+					type: "work",
+				},
+			],
+			memberships: labelResourceName
+				? [
+						{
+							contactGroupMembership: {
+								contactGroupResourceName: labelResourceName,
+							},
+						},
+					]
+				: undefined,
+		},
+	});
+
+	const { resourceName, etag } = contactRes.data;
+
+	if (!resourceName || !etag) {
+		throw new Error("Failed to create B2B contact in Google Contacts");
+	}
+
+	return { resourceName, etag };
 }
 
 export async function deleteContact(

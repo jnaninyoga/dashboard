@@ -1,13 +1,14 @@
-import { 
+import {
 	Buildings,
-	Calendar, 
-	Card, 
-	Category2, 
-	Home2, 
-	People, 
-	TickCircle, 
-	Timer1, 
-	UserAdd
+	Calendar,
+	Card,
+	Category2,
+	DocumentText,
+	Home2,
+	People,
+	TickCircle,
+	Timer1,
+	UserAdd,
 } from "iconsax-reactjs";
 
 export const dashboardConfig = {
@@ -40,7 +41,24 @@ export const dashboardConfig = {
 			icon: UserAdd,
 		},
 	],
+	b2b: [
+		{
+			title: "Partners",
+			url: "/b2b/partners",
+			icon: Buildings,
+		},
+		{
+			title: "Documents",
+			url: "/b2b/documents",
+			icon: DocumentText,
+		},
+	],
 	settings: [
+		{
+			title: "Company Profile",
+			url: "/settings/company",
+			icon: Home2,
+		},
 		{
 			title: "Memberships",
 			url: "/settings/memberships",

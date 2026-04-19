@@ -15,6 +15,20 @@
       "when": 1775388624450,
       "tag": "0001_secret_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1776013921576,
+      "tag": "0002_last_inhumans",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1776590600747,
+      "tag": "0003_long_franklin_richards",
+      "breakpoints": true
     }
   ]
 }
