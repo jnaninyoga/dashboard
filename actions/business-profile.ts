@@ -16,7 +16,7 @@ export async function upsertBusinessProfileAction(
 	formData: FormData,
 ) {
 	try {
-        const id = formData.get("id") as string | null;
+		const id = formData.get("id") as string | null;
 		const companyName = formData.get("companyName") as string;
 		const email = formData.get("email") as string;
 		const phone = formData.get("phone") as string;
@@ -25,8 +25,8 @@ export async function upsertBusinessProfileAction(
 		const showBankDetails = formData.get("showBankDetails") === "on";
 		const logoBase64 = formData.get("logoBase64") as string | null;
 		const signatureBase64 = formData.get("signatureBase64") as string | null;
-		const documentFooterText = formData.get("documentFooterText") as string;
-		
+		const operator = formData.get("operator") as string;
+
 		const legalDetailsRaw = formData.get("legalDetails") as string;
 		let legalDetails: { label: StandardLegalLabel; value: string }[] = [];
 		try {
@@ -51,25 +51,25 @@ export async function upsertBusinessProfileAction(
 			legalDetails,
 			logoBase64,
 			signatureBase64,
-			documentFooterText,
+			operator,
 			updatedAt: new Date(),
 		};
 
 		if (id) {
-            // Check if there really is a record, even though there should be a singleton
-            const existing = await getBusinessProfileAction();
-            if (existing) {
-                await db.update(businessProfiles).set(data);
-            } else {
-                await db.insert(businessProfiles).values(data);
-            }
+			// Check if there really is a record, even though there should be a singleton
+			const existing = await getBusinessProfileAction();
+			if (existing) {
+				await db.update(businessProfiles).set(data);
+			} else {
+				await db.insert(businessProfiles).values(data);
+			}
 		} else {
-            const existing = await getBusinessProfileAction();
-            if (existing) {
-                await db.update(businessProfiles).set(data);
-            } else {
-			    await db.insert(businessProfiles).values(data);
-            }
+			const existing = await getBusinessProfileAction();
+			if (existing) {
+				await db.update(businessProfiles).set(data);
+			} else {
+				await db.insert(businessProfiles).values(data);
+			}
 		}
 
 		revalidatePath("/settings");

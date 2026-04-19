@@ -274,7 +274,9 @@ export const b2bDocuments = pgTable("b2b_documents", {
 		.notNull()
 		.default("0"),
 	notes: text("notes"),
-	parentDocumentId: uuid("parent_document_id").references(() => b2bDocuments.id),
+	parentDocumentId: uuid("parent_document_id").references(
+		() => b2bDocuments.id,
+	),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -359,9 +361,12 @@ export const businessProfiles = pgTable("business_profiles", {
 	address: text("address"),
 	bankDetails: text("bank_details"), // Markdown string
 	showBankDetails: boolean("show_bank_details").default(true).notNull(),
-	legalDetails: jsonb("legal_details").$type<{ label: StandardLegalLabel; value: string }[]>(),
+	legalDetails:
+		jsonb("legal_details").$type<
+			{ label: StandardLegalLabel; value: string }[]
+		>(),
 	logoBase64: text("logo_base64"),
 	signatureBase64: text("signature_base64"),
-	documentFooterText: text("document_footer_text"), // Markdown string
+	operator: text("operator"), // Name of the representative/operator
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
