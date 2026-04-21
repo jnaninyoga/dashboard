@@ -12,7 +12,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@/lib/hooks/use-debounce";
 
 import { SearchNormal1 } from "iconsax-reactjs";
 
