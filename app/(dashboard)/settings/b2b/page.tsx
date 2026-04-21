@@ -1,4 +1,4 @@
-import { getB2BPricingTiers } from "@/actions/settings";
+import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { CreateB2BTierButton } from "@/components/b2b/tiers/create-button";
 import { B2BTierList } from "@/components/b2b/tiers/list";
 

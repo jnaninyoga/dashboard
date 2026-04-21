@@ -4,8 +4,8 @@ import { startTransition, useActionState, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-import { scheduleNewEventAction } from "@/actions/schedule/events";
-import { getB2BPricingTiers } from "@/actions/settings";
+import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
+import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,

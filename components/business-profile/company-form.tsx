@@ -5,7 +5,7 @@ import { useActionState, useEffect, useRef,useState } from "react";
 import { getCountries } from "react-phone-number-input";
 import Image from "next/image";
 
-import { upsertBusinessProfileAction } from "@/actions/business-profile";
+import { upsertBusinessProfileAction } from "@/lib/actions/business-profile";
 import { Button } from "@/components/ui/button";
 import {
 	Card,

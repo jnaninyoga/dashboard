@@ -1,4 +1,4 @@
-import { getClientCategories } from "@/actions/settings";
+import { getClientCategories } from "@/lib/actions/settings";
 import { ClientForm } from "@/components/clients/form";
 
 export default async function AddClientPage() {

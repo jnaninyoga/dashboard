@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 
-import { getMembershipProductsAction } from "@/actions/clients/wallets";
+import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
 import { Badge } from "@/components/ui/badge";
 import {
 	FormControl,

@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-import { createClientCategory, updateClientCategory } from "@/actions/settings";
+import { createClientCategory, updateClientCategory } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,

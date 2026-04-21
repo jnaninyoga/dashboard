@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import {
 	convertQuoteToInvoiceAction,
 	updateDocumentStatusAction,
-} from "@/actions/b2b/documents";
+} from "@/lib/actions/b2b/documents";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";

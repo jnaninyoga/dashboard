@@ -1,4 +1,4 @@
-import { getPartnersAction } from "@/actions/b2b/partners";
+import { getPartnersAction } from "@/lib/actions/b2b/partners";
 import { PartnerDialog } from "@/components/b2b/partners/dialog";
 import { PartnerFilters } from "@/components/b2b/partners/filters";
 import { PartnerGrid } from "@/components/b2b/partners/grid";

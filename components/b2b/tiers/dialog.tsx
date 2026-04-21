@@ -3,7 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-import { createB2BTierAction, updateB2BTierAction } from "@/actions/settings";
+import { createB2BTierAction, updateB2BTierAction } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,

@@ -1,4 +1,4 @@
-import { getWorkingHours } from "@/actions/settings";
+import { getWorkingHours } from "@/lib/actions/settings";
 import { ScheduleForm } from "@/components/schedule/settings/form";
 
 export default async function ScheduleSettingsPage() {

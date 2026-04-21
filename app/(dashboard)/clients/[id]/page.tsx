@@ -2,9 +2,9 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getGoogleContactPhotoAction } from "@/actions/clients/mutations";
-import { getClientByIdAction } from "@/actions/clients/queries";
-import { getMembershipProductsAction } from "@/actions/clients/wallets";
+import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
+import { getClientByIdAction } from "@/lib/actions/clients/queries";
+import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
 import { ClientActions } from "@/components/clients/actions";
 import { ClientProfileTabs } from "@/components/clients/profile-tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";

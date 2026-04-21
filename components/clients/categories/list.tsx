@@ -6,7 +6,7 @@ import {
 	archiveClientCategory,
 	deleteClientCategory,
 	restoreClientCategory,
-} from "@/actions/settings";
+} from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,

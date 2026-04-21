@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-import { createMembershipProduct, updateMembershipProduct } from "@/actions/clients/memberships";
+import { createMembershipProduct, updateMembershipProduct } from "@/lib/actions/clients/memberships";
 import { Button } from "@/components/ui/button";
 import {
 	Form,

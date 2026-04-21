@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { assignProductToClient } from "@/actions/clients/wallets";
+import { assignProductToClient } from "@/lib/actions/clients/wallets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

@@ -2,7 +2,7 @@
 
 import { startTransition, useActionState, useEffect, useState } from "react";
 
-import { createPartnerAction } from "@/actions/b2b/partners";
+import { createPartnerAction } from "@/lib/actions/b2b/partners";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {

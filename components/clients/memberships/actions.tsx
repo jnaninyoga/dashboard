@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
 	archiveMembershipProduct,
 	deleteMembershipProduct,
-} from "@/actions/clients/memberships";
+} from "@/lib/actions/clients/memberships";
 import { MembershipForm } from "@/components/clients/memberships/form";
 import { Button } from "@/components/ui/button";
 import {

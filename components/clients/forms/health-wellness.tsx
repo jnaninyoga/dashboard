@@ -25,7 +25,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type HealthSection } from "@/config/health";
+import { type HealthSection } from "@/lib/config/health";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import type { ClientFormValues } from "@/lib/validators";
 

@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getDocumentByIdAction } from "@/actions/b2b/documents";
-import { getBusinessProfileAction } from "@/actions/business-profile";
+import { getDocumentByIdAction } from "@/lib/actions/b2b/documents";
+import { getBusinessProfileAction } from "@/lib/actions/business-profile";
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { EditableNotes } from "@/components/b2b/editable-notes";

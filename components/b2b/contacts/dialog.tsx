@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { getCountries } from "react-phone-number-input";
 
-import { createContactAction } from "@/actions/b2b/partners";
+import { createContactAction } from "@/lib/actions/b2b/partners";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";

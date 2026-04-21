@@ -1,4 +1,4 @@
-import { HEALTH_TEMPLATE } from "@/config/health";
+import { HEALTH_TEMPLATE } from "@/lib/config/health";
 
 import { getGoogleClient } from "./client.service";
 

@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { deleteClientAction } from "@/actions/clients/mutations";
+import { deleteClientAction } from "@/lib/actions/clients/mutations";
 import {
 	AlertDialog,
 	AlertDialogAction,

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { HEALTH_TEMPLATE } from "@/config/health";
+import { HEALTH_TEMPLATE } from "@/lib/config/health";
 import { db } from "@/services/database";
 import {
 	clientCategories,

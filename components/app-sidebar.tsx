@@ -18,7 +18,7 @@ import {
 	SidebarMenuItem,
 	SidebarRail,
 } from "@/components/ui/sidebar";
-import { dashboardConfig } from "@/config/dashboard";
+import { dashboardConfig } from "@/lib/config/dashboard";
 
 interface UserProfile {
 	name: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut } from "@/actions/auth";
+import { signOut } from "@/lib/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,

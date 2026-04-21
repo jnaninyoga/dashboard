@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import { deleteContactAction } from "@/actions/b2b/partners";
+import { deleteContactAction } from "@/lib/actions/b2b/partners";
 import {
 	AlertDialog,
 	AlertDialogAction,

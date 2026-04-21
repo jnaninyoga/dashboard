@@ -1,7 +1,7 @@
 import Link from "next/link";
 
-import { getClientsAction } from "@/actions/clients/queries";
-import { getClientCategories } from "@/actions/settings";
+import { getClientsAction } from "@/lib/actions/clients/queries";
+import { getClientCategories } from "@/lib/actions/settings";
 import { ClientFilters } from "@/components/clients/filters";
 import { ClientsGrid } from "@/components/clients/grid";
 import { ClientsTable } from "@/components/clients/table";

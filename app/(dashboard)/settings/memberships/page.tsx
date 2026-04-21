@@ -1,4 +1,4 @@
-import { getMembershipProducts } from "@/actions/clients/memberships";
+import { getMembershipProducts } from "@/lib/actions/clients/memberships";
 import {
 	CreateMembershipDialog,
 	MembershipActions,

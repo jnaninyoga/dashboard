@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 
-import { updateDocumentNotesAction } from "@/actions/b2b/documents";
+import { updateDocumentNotesAction } from "@/lib/actions/b2b/documents";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 

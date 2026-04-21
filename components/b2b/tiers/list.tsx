@@ -5,7 +5,7 @@ import { useState } from "react";
 import {
 	deleteB2BTierAction,
 	toggleArchiveB2BTierAction,
-} from "@/actions/settings";
+} from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
