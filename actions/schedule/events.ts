@@ -1,8 +1,8 @@
 "use server";
 
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
-import { checkAvailability, createStudioEvent } from "@/services/google-calendar";
-import { getValidAccessToken } from "@/services/google-tokens";
+import { checkAvailability, createStudioEvent } from "@/services/google";
+import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/supabase/server";
 
 import { getWorkingHours } from "../settings";

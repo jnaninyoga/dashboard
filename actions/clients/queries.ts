@@ -8,8 +8,8 @@ import {
 	healthLogs,
 } from "@/drizzle/schema";
 import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
-import { getTodayEvents } from "@/services/google-calendar";
-import { getValidAccessToken } from "@/services/google-tokens";
+import { getTodayEvents } from "@/services/google";
+import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/supabase/server";
 
 import { and, desc, eq, gte, ilike, inArray, isNull, or } from "drizzle-orm";

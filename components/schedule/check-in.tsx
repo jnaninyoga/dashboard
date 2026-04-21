@@ -6,7 +6,7 @@ import { checkInClientAction } from "@/actions/schedule/attendance";
 import { type AttendanceRecord } from "@/actions/schedule/attendance";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type Client, type HealthLog } from "@/drizzle/schema";
-import { type JnaninEventType } from "@/services/google-calendar";
+import { type JnaninEventType } from "@/services/google";
 
 import { Location, People, SecurityUser, TickCircle,User } from "iconsax-reactjs";
 import { toast } from "sonner";

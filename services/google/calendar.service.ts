@@ -1,6 +1,8 @@
 import { CalendarEvent } from "@/lib/types";
 
-import { calendar_v3,google } from "googleapis";
+import { calendar_v3 } from "googleapis";
+
+import { getGoogleClient } from "./client.service";
 
 /**
  * Checks if the primary calendar is free during the requested time window.
@@ -15,13 +17,10 @@ export async function checkAvailability(
 	startTime: string,
 	endTime: string,
 ): Promise<boolean> {
-	const auth = new google.auth.OAuth2();
-	auth.setCredentials({ access_token: accessToken });
-
-	const calendar = google.calendar({ version: "v3", auth });
+	const google = getGoogleClient(accessToken);
 
 	try {
-		const response = await calendar.freebusy.query({
+		const response = await google.calendar.freebusy.query({
 			requestBody: {
 				timeMin: startTime,
 				timeMax: endTime,
@@ -31,7 +30,7 @@ export async function checkAvailability(
 
 		const calendars = response.data.calendars;
 		if (!calendars || !calendars["primary"]) {
-			return true; // Assume free if we can't read it, though usually this means an error occurred
+			return true; // Assume free if we can't read it
 		}
 
 		const busy = calendars["primary"].busy;
@@ -65,10 +64,7 @@ export async function createStudioEvent(
 	accessToken: string,
 	data: CreateEventData,
 ): Promise<calendar_v3.Schema$Event> {
-	const auth = new google.auth.OAuth2();
-	auth.setCredentials({ access_token: accessToken });
-
-	const calendar = google.calendar({ version: "v3", auth });
+	const google = getGoogleClient(accessToken);
 
 	let colorId = "1"; // default
 	switch (data.type) {
@@ -102,7 +98,7 @@ export async function createStudioEvent(
 	};
 
 	try {
-		const result = await calendar.events.insert({
+		const result = await google.calendar.events.insert({
 			calendarId: "primary",
 			requestBody: {
 				summary: data.title,
@@ -128,10 +124,7 @@ export async function createStudioEvent(
  * Fetches today's events from the primary calendar to display on the dashboard.
  */
 export async function getTodayEvents(accessToken: string): Promise<CalendarEvent[]> {
-	const auth = new google.auth.OAuth2();
-	auth.setCredentials({ access_token: accessToken });
-
-	const calendar = google.calendar({ version: "v3", auth });
+	const google = getGoogleClient(accessToken);
 
 	// Get start and end of "today" in local time
 	const todayStart = new Date();
@@ -141,7 +134,7 @@ export async function getTodayEvents(accessToken: string): Promise<CalendarEvent
 	todayEnd.setHours(23, 59, 59, 999);
 
 	try {
-		const response = await calendar.events.list({
+		const response = await google.calendar.events.list({
 			calendarId: "primary",
 			timeMin: todayStart.toISOString(),
 			timeMax: todayEnd.toISOString(),
@@ -160,10 +153,7 @@ export async function getTodayEvents(accessToken: string): Promise<CalendarEvent
  * Fetches upcoming events from the primary calendar.
  */
 export async function getUpcomingEvents(accessToken: string, daysForward = 7): Promise<CalendarEvent[]> {
-	const auth = new google.auth.OAuth2();
-	auth.setCredentials({ access_token: accessToken });
-
-	const calendar = google.calendar({ version: "v3", auth });
+	const google = getGoogleClient(accessToken);
 
 	const start = new Date();
 	start.setHours(0, 0, 0, 0);
@@ -173,7 +163,7 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7): P
 	end.setHours(23, 59, 59, 999);
 
 	try {
-		const response = await calendar.events.list({
+		const response = await google.calendar.events.list({
 			calendarId: "primary",
 			timeMin: start.toISOString(),
 			timeMax: end.toISOString(),
@@ -192,13 +182,10 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7): P
  * Fetches a specific event by its ID.
  */
 export async function getEventById(accessToken: string, eventId: string): Promise<CalendarEvent> {
-	const auth = new google.auth.OAuth2();
-	auth.setCredentials({ access_token: accessToken });
-
-	const calendar = google.calendar({ version: "v3", auth });
+	const google = getGoogleClient(accessToken);
 
 	try {
-		const response = await calendar.events.get({
+		const response = await google.calendar.events.get({
 			calendarId: "primary",
 			eventId: eventId,
 		});
@@ -209,4 +196,3 @@ export async function getEventById(accessToken: string, eventId: string): Promis
 		throw new Error("Failed to fetch event from Google Calendar.");
 	}
 }
-

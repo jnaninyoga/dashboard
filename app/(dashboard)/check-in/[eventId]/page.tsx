@@ -3,8 +3,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { getEventAttendanceAction } from "@/actions/schedule/attendance";
 import { CheckInManager } from "@/components/schedule/check-in";
-import { getEventById, type JnaninEventType } from "@/services/google-calendar";
-import { getValidAccessToken } from "@/services/google-tokens";
+import { getEventById, type JnaninEventType } from "@/services/google";
+import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/supabase/server";
 
 import { format } from "date-fns";

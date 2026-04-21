@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/drizzle";
 import { attendanceLedger, clients,clientWallets } from "@/drizzle/schema";
 import { HealthLog } from "@/drizzle/schema";
-import { type JnaninEventType } from "@/services/google-calendar";
+import { type JnaninEventType } from "@/services/google";
 
 import { and,desc, eq } from "drizzle-orm";
 

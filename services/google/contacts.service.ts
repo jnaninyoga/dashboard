@@ -1,5 +1,6 @@
 import { HEALTH_TEMPLATE } from "@/config/health";
-import { getGoogleClient } from "@/lib/google";
+
+import { getGoogleClient } from "./client.service";
 
 interface ContactData {
 	fullName: string;
@@ -157,7 +158,7 @@ export async function updateClientInGoogleContacts(
 		},
 	};
 
-	// 3. Construct Biography Note (Reused logic - could be extracted but keeping inline for now)
+	// 3. Construct Biography Note
 	let bioNote = "🧘 JnaninYoga Client Profile\n===========================\n";
 	bioNote += `Category: ${data.category.charAt(0).toUpperCase() + data.category.slice(1)}\n`;
 	if (data.gender)
@@ -233,15 +234,14 @@ export async function getContactPhoto(
 		const photoUrl = person.data.photos?.[0]?.url;
 		if (photoUrl) return { photoUrl };
 	} catch {
-		// Direct lookup failed (404 — contact may have been merged or ID changed).
-		// Fall through to connections list fallback.
+		// Direct lookup failed
 	}
 
 	// Fallback: search through connections matching by phone number
 	if (!phone) return { photoUrl: null };
 
 	try {
-		// Normalize the phone for comparison (strip spaces, dashes, etc.)
+		// Normalize the phone for comparison
 		const normalizePhone = (p: string) => p.replace(/[\s\-()]+/g, "");
 		const normalizedPhone = normalizePhone(phone);
 
@@ -350,7 +350,6 @@ export async function deleteContact(
 		});
 		return true;
 	} catch (error: unknown) {
-		// Robust handling: If resource not found (404), consider it deleted/success
 		const err = error as { code?: number; message?: string };
 		if (err.code === 404 || err.message?.includes("not found")) {
 			console.warn(

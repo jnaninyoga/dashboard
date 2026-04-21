@@ -6,8 +6,8 @@ import { db } from "@/drizzle";
 import { b2bContacts, b2bDocuments, b2bPartners } from "@/drizzle/schema";
 import { B2BDocumentStatus, B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
 import { contactSchema, partnerSchema } from "@/lib/validators";
-import { syncPartnerContactToGoogle } from "@/services/google-contacts";
-import { getValidAccessToken } from "@/services/google-tokens";
+import { syncPartnerContactToGoogle } from "@/services/google";
+import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/supabase/server";
 
 import { and, count, eq, exists, ilike, or } from "drizzle-orm";

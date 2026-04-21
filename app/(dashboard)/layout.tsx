@@ -6,7 +6,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { getValidAccessToken } from "@/services/google-tokens";
+import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/supabase/server";
 
 export default async function DashboardLayout({

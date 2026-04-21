@@ -1,8 +1,8 @@
 import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 
-import { formatCurrencyAmountToWords } from "@/lib/currency";
 import type { BusinessProfile, DocumentLine, DocumentWithRelations } from "@/lib/types/b2b";
+import { formatCurrencyAmountToWords } from "@/lib/utils/currency";
 
 import {
 	Document,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { getSiteUrl } from "@/lib/site-url";
-import { storeUserTokens } from "@/services/google-tokens";
+import { getSiteUrl } from "@/lib/utils/site-url";
+import { storeUserTokens } from "@/services/google";
 import { createClient } from "@/supabase/server";
 
 export async function GET(request: Request) {

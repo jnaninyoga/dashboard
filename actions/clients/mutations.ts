@@ -17,8 +17,8 @@ import { clientSchema } from "@/lib/validators";
 import {
 	syncClientToGoogleContacts,
 	updateClientInGoogleContacts,
-} from "@/services/google-contacts";
-import { getValidAccessToken } from "@/services/google-tokens";
+} from "@/services/google";
+import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/supabase/server";
 
 import { and, eq, isNull } from "drizzle-orm";
@@ -420,7 +420,7 @@ export async function deleteClientAction(id: string) {
 			let accessToken: string;
 			try {
 				accessToken = await getValidAccessToken(user.id);
-				const { deleteContact } = await import("@/services/google-contacts");
+				const { deleteContact } = await import("@/services/google");
 				await deleteContact(
 					accessToken,
 					client.googleContactResourceName,
@@ -474,7 +474,7 @@ export async function getGoogleContactPhotoAction(
 		}
 	}
 
-	const { getContactPhoto } = await import("@/services/google-contacts");
+	const { getContactPhoto } = await import("@/services/google");
 	const { photoUrl, newResourceName } = await getContactPhoto(accessToken, resourceName, phone);
 
 	if (clientId && (photoUrl || newResourceName)) {
