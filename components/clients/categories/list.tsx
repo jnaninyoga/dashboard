@@ -2,11 +2,6 @@
 
 import { useState } from "react";
 
-import {
-	archiveClientCategory,
-	deleteClientCategory,
-	restoreClientCategory,
-} from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -23,6 +18,11 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	archiveClientCategory,
+	deleteClientCategory,
+	restoreClientCategory,
+} from "@/lib/actions/settings";
 import { type Category } from "@/lib/types";
 
 import {

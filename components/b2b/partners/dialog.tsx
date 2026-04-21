@@ -2,7 +2,6 @@
 
 import { startTransition, useActionState, useEffect, useState } from "react";
 
-import { createPartnerAction } from "@/lib/actions/b2b/partners";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createPartnerAction } from "@/lib/actions/b2b/partners";
 
 import { Buildings, Refresh } from "iconsax-reactjs";
 

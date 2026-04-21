@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { assignProductToClient } from "@/lib/actions/clients/wallets";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,8 +20,9 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { type ClientWallet, type MembershipProduct } from "@/services/database/schema";
+import { assignProductToClient } from "@/lib/actions/clients/wallets";
 import { cn } from "@/lib/utils/ui";
+import { type ClientWallet, type MembershipProduct } from "@/services/database/schema";
 
 import { format } from "date-fns";
 import { Bag2 as ShoppingCart, Card as CreditCard, Tag } from "iconsax-reactjs";

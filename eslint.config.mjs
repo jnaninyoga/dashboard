@@ -93,7 +93,8 @@ const eslintConfig = defineConfig([
 		"build/**",
 		"next-env.d.ts",
 		"components/ui/**",
-		"hooks/**",
+		"lib/hooks/**",
+		"lib/scripts/**",
 	]),
 ]);
 

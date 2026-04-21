@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-import { getClientsAction } from "@/lib/actions/clients/queries";
-import { getClientCategories } from "@/lib/actions/settings";
 import { ClientFilters } from "@/components/clients/filters";
 import { ClientsGrid } from "@/components/clients/grid";
 import { ClientsTable } from "@/components/clients/table";
 import { ClientViewToggle } from "@/components/clients/view-toggle";
 import { Button } from "@/components/ui/button";
+import { getClientsAction } from "@/lib/actions/clients/queries";
+import { getClientCategories } from "@/lib/actions/settings";
 import { Gender, View } from "@/lib/types";
 
 import { Add } from "iconsax-reactjs";

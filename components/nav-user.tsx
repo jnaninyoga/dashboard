@@ -1,6 +1,5 @@
 "use client";
 
-import { signOut } from "@/lib/actions/auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -16,6 +15,7 @@ import {
 	SidebarMenuItem,
 	useSidebar,
 } from "@/components/ui/sidebar";
+import { signOut } from "@/lib/actions/auth";
 
 import { ArrowSwapVertical, Logout } from "iconsax-reactjs";
 

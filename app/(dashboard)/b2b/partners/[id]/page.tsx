@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getPartnerByIdAction } from "@/lib/actions/b2b/partners";
 import { CopyableTaxId } from "@/components/b2b/copyable-tax-id";
 import { ProfileTabs } from "@/components/b2b/partners/profile-tabs";
 import { Separator } from "@/components/ui/separator";
+import { getPartnerByIdAction } from "@/lib/actions/b2b/partners";
 import { type PartnerWithRelations } from "@/lib/types/b2b";
 
 import {

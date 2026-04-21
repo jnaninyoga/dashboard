@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 
+import { ClientForm } from "@/components/clients/form";
 import { getClientByIdAction } from "@/lib/actions/clients/queries";
 import { getClientCategories } from "@/lib/actions/settings";
-import { ClientForm } from "@/components/clients/form";
 import { Gender, HealthCategory, HealthSeverity, ReferralSource } from "@/lib/types";
 
 // Next.js 15+ params are promises

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 
-import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
 import { Badge } from "@/components/ui/badge";
 import {
 	FormControl,
@@ -12,9 +11,10 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { type MembershipProduct } from "@/services/database/schema";
+import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
 import { type Category } from "@/lib/types";
 import { ClientFormValues } from "@/lib/validators";
+import { type MembershipProduct } from "@/services/database/schema";
 
 import { Refresh } from "iconsax-reactjs";
 

@@ -4,8 +4,6 @@ import { useEffect, useState, useTransition } from "react";
 import { useRef } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
-import { updateDocumentLinesAction } from "@/lib/actions/b2b/documents";
-import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +29,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { updateDocumentLinesAction } from "@/lib/actions/b2b/documents";
+import { getB2BPricingTiers } from "@/lib/actions/settings";
 import {
 	type B2BDocumentLine,
 	type B2BDocumentStatus,

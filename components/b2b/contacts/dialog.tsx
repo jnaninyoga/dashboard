@@ -3,7 +3,6 @@
 import { startTransition, useActionState, useEffect, useState } from "react";
 import { getCountries } from "react-phone-number-input";
 
-import { createContactAction } from "@/lib/actions/b2b/partners";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,6 +18,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { createContactAction } from "@/lib/actions/b2b/partners";
 
 import { Refresh, UserAdd } from "iconsax-reactjs";
 

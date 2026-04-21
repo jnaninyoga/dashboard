@@ -1,0 +1,85 @@
+import {
+	Gender,
+	HealthCategory,
+	HealthSeverity,
+	ReferralSource,
+} from "@/lib/types";
+import { clients } from "@/services/database/schema";
+
+import { createInsertSchema } from "drizzle-zod";
+import { z } from "zod";
+
+// --- CLIENT SCHEMA ---
+export const clientSchema = createInsertSchema(clients, {
+	email: z
+		.email({ message: "Invalid email address" })
+		.nullable()
+		.optional()
+		.or(z.literal("")),
+	birthDate: (schema: z.ZodString) =>
+		schema.refine((date: string) => !isNaN(Date.parse(date)), {
+			message: "Invalid date string",
+		}),
+	fullName: z.string().min(2, { message: "Name is required (min 2 chars)" }),
+	phone: z
+		.string()
+		.min(10, { message: "Phone number must be at least 10 characters" })
+		.regex(/^\+?[\d\s-()]+$/, {
+			message: "Phone number can only contain digits, spaces, and dashes",
+		})
+		.refine((val) => val.replace(/\D/g, "").length >= 10, {
+			message: "Phone number must contain at least 10 digits",
+		}),
+	categoryId: z
+		.string()
+		.uuid({
+			message: "Please select a valid category",
+		})
+		.optional()
+		.nullable()
+		.or(z.literal("")),
+	gender: z.enum([Gender.MALE, Gender.FEMALE], {
+		message: "Please select a gender",
+	}),
+	referralSource: z
+		.enum([
+			ReferralSource.SOCIAL_MEDIA,
+			ReferralSource.WEBSITE,
+			ReferralSource.FRIEND,
+			ReferralSource.PROFESSIONAL_NETWORK,
+			ReferralSource.OTHER,
+		])
+		.optional(),
+	intakeData: z.record(z.string(), z.string().optional()).optional(),
+})
+	.omit({
+		id: true,
+		createdAt: true,
+		googleContactResourceName: true,
+		photoUrl: true,
+	})
+	.extend({
+		healthLogs: z
+			.array(
+				z.object({
+					category: z.enum([
+						HealthCategory.PHYSICAL,
+						HealthCategory.MENTAL,
+						HealthCategory.LIFESTYLE,
+					]),
+					condition: z.string(),
+					severity: z.enum([
+						HealthSeverity.INFO,
+						HealthSeverity.WARNING,
+						HealthSeverity.CRITICAL,
+					]),
+					isAlert: z.boolean(),
+					treatment: z.string().optional(),
+					startDate: z.string(),
+				}),
+			)
+			.optional(),
+		initialProductId: z.string().optional(),
+	});
+
+export type ClientFormValues = z.infer<typeof clientSchema>;

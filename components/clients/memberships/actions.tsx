@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 
-import {
-	archiveMembershipProduct,
-	deleteMembershipProduct,
-} from "@/lib/actions/clients/memberships";
 import { MembershipForm } from "@/components/clients/memberships/form";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +20,10 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+	archiveMembershipProduct,
+	deleteMembershipProduct,
+} from "@/lib/actions/clients/memberships";
 
 import {
 	AddCircle,

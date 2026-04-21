@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 
-import {
-	deleteB2BTierAction,
-	toggleArchiveB2BTierAction,
-} from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -22,6 +18,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import {
+	deleteB2BTierAction,
+	toggleArchiveB2BTierAction,
+} from "@/lib/actions/settings";
 import { type B2BTier } from "@/lib/types";
 
 import {

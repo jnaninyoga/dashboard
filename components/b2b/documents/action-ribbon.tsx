@@ -4,12 +4,12 @@ import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
 	convertQuoteToInvoiceAction,
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
 import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
 

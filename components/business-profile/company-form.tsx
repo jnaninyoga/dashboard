@@ -5,7 +5,6 @@ import { useActionState, useEffect, useRef,useState } from "react";
 import { getCountries } from "react-phone-number-input";
 import Image from "next/image";
 
-import { upsertBusinessProfileAction } from "@/lib/actions/business-profile";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -32,6 +31,7 @@ import {
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { upsertBusinessProfileAction } from "@/lib/actions/business-profile";
 import type { BusinessProfile } from "@/lib/types/b2b";
 import { cn } from "@/lib/utils/ui";
 

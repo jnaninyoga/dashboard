@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { checkInClientAction } from "@/lib/actions/schedule/attendance";
 import { type AttendanceRecord } from "@/lib/actions/schedule/attendance";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type Client, type HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 

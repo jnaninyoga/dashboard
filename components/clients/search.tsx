@@ -2,11 +2,11 @@
 
 import * as React from "react";
 
-import { getClientsAction } from "@/lib/actions/clients/queries";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type Client, type HealthLog } from "@/services/database/schema";
+import { getClientsAction } from "@/lib/actions/clients/queries";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { cn } from "@/lib/utils/ui";
+import { type Client, type HealthLog } from "@/services/database/schema";
 
 import { CloseCircle,Refresh, SearchNormal1 } from "iconsax-reactjs";
 

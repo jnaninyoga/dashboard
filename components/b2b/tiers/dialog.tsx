@@ -3,7 +3,6 @@
 import { useActionState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-import { createB2BTierAction, updateB2BTierAction } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -21,6 +20,7 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { createB2BTierAction, updateB2BTierAction } from "@/lib/actions/settings";
 import { type B2BTier } from "@/lib/types";
 import { type B2BTierFormValues,b2bTierSchema } from "@/lib/validators";
 

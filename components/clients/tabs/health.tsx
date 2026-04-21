@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { addHealthLog, toggleHealthAlert } from "@/lib/actions/clients/health";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,10 +23,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { addHealthLog, toggleHealthAlert } from "@/lib/actions/clients/health";
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
-import { type Client, type HealthLog } from "@/services/database/schema";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import { cn } from "@/lib/utils/ui";
+import { type Client, type HealthLog } from "@/services/database/schema";
 
 import { format } from "date-fns";
 import {

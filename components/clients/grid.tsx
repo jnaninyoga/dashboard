@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +12,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
 import { type ClientWithRelations as Client } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
 

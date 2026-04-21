@@ -1,4 +1,3 @@
-import { getMembershipProducts } from "@/lib/actions/clients/memberships";
 import {
 	CreateMembershipDialog,
 	MembershipActions,
@@ -11,6 +10,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { getMembershipProducts } from "@/lib/actions/clients/memberships";
 
 export default async function MembershipSettingsPage() {
 	const products = await getMembershipProducts();

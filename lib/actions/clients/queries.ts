@@ -1,5 +1,6 @@
 "use server";
 
+import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
 import { db } from "@/services/database";
 import {
 	attendanceLedger,
@@ -7,7 +8,6 @@ import {
 	clientWallets,
 	healthLogs,
 } from "@/services/database/schema";
-import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
 import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";

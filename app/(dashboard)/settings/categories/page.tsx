@@ -1,6 +1,6 @@
-import { getClientCategories } from "@/lib/actions/settings";
 import { CreateCategoryButton } from "@/components/clients/categories/create-button";
 import { CategoryList } from "@/components/clients/categories/list";
+import { getClientCategories } from "@/lib/actions/settings";
 
 export default async function CategorySettingsPage() {
 	const categories = await getClientCategories();

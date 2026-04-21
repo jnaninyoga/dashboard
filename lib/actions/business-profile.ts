@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { type StandardLegalLabel } from "@/lib/types/b2b";
 import { db } from "@/services/database";
 import { businessProfiles } from "@/services/database/schema";
-import { type StandardLegalLabel } from "@/lib/types/b2b";
 
 export async function getBusinessProfileAction() {
 	const result = await db.query.businessProfiles.findFirst();

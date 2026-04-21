@@ -1,7 +1,7 @@
 import Image from "next/image";
 
-import { loginWithGoogle } from "@/lib/actions/auth";
 import { BloomingBlossoms } from "@/components/ui/blooming-blossoms";
+import { loginWithGoogle } from "@/lib/actions/auth";
 
 import { Google } from "iconsax-reactjs";
 

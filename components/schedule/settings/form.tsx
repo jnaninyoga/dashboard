@@ -3,12 +3,12 @@
 import { startTransition, useActionState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
-import { setWorkingHours } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { setWorkingHours } from "@/lib/actions/settings";
 import { DAYS, DEFAULT_HOURS } from "@/lib/config/schedule";
 import { type WorkingHoursConfig } from "@/lib/types";
 

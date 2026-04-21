@@ -9,11 +9,6 @@ import {
 } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
-import {
-	createDocumentAction,
-	getNextDocumentNumber,
-} from "@/lib/actions/b2b/documents";
-import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,6 +59,11 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import {
+	createDocumentAction,
+	getNextDocumentNumber,
+} from "@/lib/actions/b2b/documents";
+import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { type B2BContact, type B2BPricingTier } from "@/lib/types";
 import { createDocumentWithLinesSchema } from "@/lib/validators";
 

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
+import { Gender, type NewHealthLog } from "@/lib/types";
+import { clientSchema } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
 	clientCategories,
@@ -12,8 +14,6 @@ import {
 	healthLogs,
 	membershipProducts,
 } from "@/services/database/schema";
-import { Gender, type NewHealthLog } from "@/lib/types";
-import { clientSchema } from "@/lib/validators";
 import {
 	syncClientToGoogleContacts,
 	updateClientInGoogleContacts,

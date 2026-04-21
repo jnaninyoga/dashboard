@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getDocumentByIdAction } from "@/lib/actions/b2b/documents";
-import { getBusinessProfileAction } from "@/lib/actions/business-profile";
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { EditableNotes } from "@/components/b2b/editable-notes";
@@ -16,6 +14,8 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { getDocumentByIdAction } from "@/lib/actions/b2b/documents";
+import { getBusinessProfileAction } from "@/lib/actions/business-profile";
 import {
 	type B2BDocumentLine,
 	type DocumentWithRelations,

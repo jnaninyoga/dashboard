@@ -1,6 +1,6 @@
-import { getDocumentsAction } from "@/lib/actions/b2b/documents";
 import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
 import { DocumentFilters } from "@/components/b2b/documents/filters";
+import { getDocumentsAction } from "@/lib/actions/b2b/documents";
 import { B2BDocumentStatus, B2BDocumentType, DocumentWithRelations } from "@/lib/types/b2b";
 
 type SearchParams = Promise<{

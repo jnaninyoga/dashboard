@@ -4,8 +4,6 @@ import { startTransition, useActionState, useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
-import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -23,6 +21,8 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
+import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
 

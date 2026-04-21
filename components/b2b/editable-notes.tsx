@@ -2,9 +2,9 @@
 
 import { useState, useTransition } from "react";
 
-import { updateDocumentNotesAction } from "@/lib/actions/b2b/documents";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { updateDocumentNotesAction } from "@/lib/actions/b2b/documents";
 
 import { NoteText, Save2 } from "iconsax-reactjs";
 import { toast } from "sonner";

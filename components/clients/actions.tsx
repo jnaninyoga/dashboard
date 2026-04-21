@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
-import { deleteClientAction } from "@/lib/actions/clients/mutations";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -21,6 +20,7 @@ import {
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { deleteClientAction } from "@/lib/actions/clients/mutations";
 import { type Client } from "@/lib/types";
 
 import { Edit2, More, Refresh, Trash } from "iconsax-reactjs";

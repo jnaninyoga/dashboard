@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 
-import { deleteContactAction } from "@/lib/actions/b2b/partners";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -28,6 +27,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { deleteContactAction } from "@/lib/actions/b2b/partners";
 import { type Contact } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
 
