@@ -2,7 +2,7 @@
 
 import * as React from "react"
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/ui"
 
 import { Record } from "iconsax-reactjs"
 import { RadioGroup as RadioGroupPrimitive } from "radix-ui"

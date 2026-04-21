@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CalendarEvent } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import { format, isWithinInterval, parseISO,subMinutes } from "date-fns";
 import { Clock, LinkCircle } from "iconsax-reactjs";

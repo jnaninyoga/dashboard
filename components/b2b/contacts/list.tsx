@@ -29,7 +29,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { type Contact } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import { Call, Edit, More, Sms, Star, Trash, User } from "iconsax-reactjs";
 

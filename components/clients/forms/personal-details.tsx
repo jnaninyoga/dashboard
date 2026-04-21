@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type Category, Gender, ReferralSource } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 import type { ClientFormValues } from "@/lib/validators";
 
 import { format, isValid } from "date-fns";

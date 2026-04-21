@@ -6,7 +6,7 @@ import { getClientsAction } from "@/actions/clients/queries";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { type Client, type HealthLog } from "@/drizzle/schema";
 import { useDebounce } from "@/hooks/use-debounce";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import { CloseCircle,Refresh, SearchNormal1 } from "iconsax-reactjs";
 

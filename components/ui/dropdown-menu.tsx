@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { ArrowRight2, Record, TickCircle } from "iconsax-reactjs";

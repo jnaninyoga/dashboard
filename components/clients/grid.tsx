@@ -14,7 +14,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { type ClientWithRelations as Client } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import { Call, Danger, Sms, TickCircle, User, Whatsapp } from "iconsax-reactjs";
 

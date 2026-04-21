@@ -33,7 +33,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type { BusinessProfile } from "@/lib/types/b2b";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import {
 	Add,

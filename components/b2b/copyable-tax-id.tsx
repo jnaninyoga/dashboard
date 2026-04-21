@@ -8,7 +8,7 @@ import {
 	InputGroupButton,
 	InputGroupInput,
 } from "@/components/ui/input-group";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import { Copy, Hashtag, TickCircle } from "iconsax-reactjs";
 

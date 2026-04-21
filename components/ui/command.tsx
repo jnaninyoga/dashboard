@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/ui"
 
 import { Command as CommandPrimitive } from "cmdk"
 import { SearchNormal1 } from "iconsax-reactjs"

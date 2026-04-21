@@ -22,7 +22,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { type ClientWallet, type MembershipProduct } from "@/drizzle/schema";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import { format } from "date-fns";
 import { Bag2 as ShoppingCart, Card as CreditCard, Tag } from "iconsax-reactjs";

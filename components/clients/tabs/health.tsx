@@ -27,7 +27,7 @@ import {
 import { HEALTH_TEMPLATE } from "@/config/health";
 import { type Client, type HealthLog } from "@/drizzle/schema";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/ui";
 
 import { format } from "date-fns";
 import {
