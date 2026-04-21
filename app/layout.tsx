@@ -6,7 +6,7 @@ import { SerwistRegistration } from "@/components/serwist-registration";
 
 import { Toaster } from "sonner";
 
-import "../styles/globals.css";
+import "./globals.css";
 
 
 const plusJakarta = Plus_Jakarta_Sans({
