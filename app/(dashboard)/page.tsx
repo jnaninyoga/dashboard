@@ -2,7 +2,7 @@ import { CockpitClient } from "@/components/dashboard/cockpit/client";
 import { CalendarEvent } from "@/lib/types";
 import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 import { format } from "date-fns";
 

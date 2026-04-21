@@ -1,7 +1,7 @@
 import { getBusinessProfileAction } from "@/actions/business-profile";
 import { CompanyProfileForm } from "@/components/business-profile/company-form";
 import { SaveProfileButton } from "@/components/business-profile/save-button";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 export default async function CompanySettingsPage() {
 	const profile = await getBusinessProfileAction();

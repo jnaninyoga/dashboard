@@ -26,7 +26,7 @@ import {
     type ClientWallet, 
     type HealthLog, 
     type MembershipProduct 
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 
 import { 
     Call as Phone, 

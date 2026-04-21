@@ -1,7 +1,7 @@
 import {
 	type clientWallets,
 	type membershipProducts,
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 
 export type MembershipProduct = typeof membershipProducts.$inferSelect;
 export type NewMembershipProduct = typeof membershipProducts.$inferInsert;

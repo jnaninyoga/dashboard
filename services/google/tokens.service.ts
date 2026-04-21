@@ -1,7 +1,7 @@
 "use server";
 
-import { db } from "@/drizzle";
-import { userTokens } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { userTokens } from "@/services/database/schema";
 
 import { eq } from "drizzle-orm";
 

@@ -2,13 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/drizzle";
-import { b2bContacts, b2bDocuments, b2bPartners } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { b2bContacts, b2bDocuments, b2bPartners } from "@/services/database/schema";
 import { B2BDocumentStatus, B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
 import { contactSchema, partnerSchema } from "@/lib/validators";
 import { syncPartnerContactToGoogle } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 import { and, count, eq, exists, ilike, or } from "drizzle-orm";
 

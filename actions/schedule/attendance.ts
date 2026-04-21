@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/drizzle";
-import { attendanceLedger, clients,clientWallets } from "@/drizzle/schema";
-import { HealthLog } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { attendanceLedger, clients,clientWallets } from "@/services/database/schema";
+import { HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
 import { and,desc, eq } from "drizzle-orm";

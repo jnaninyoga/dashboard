@@ -2,9 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/drizzle";
-import {clients, clientWallets, membershipProducts } from "@/drizzle/schema";
-import { createClient } from "@/supabase/server";
+import { db } from "@/services/database";
+import {clients, clientWallets, membershipProducts } from "@/services/database/schema";
+import { createClient } from "@/services/supabase/server";
 
 import {eq } from "drizzle-orm";
 

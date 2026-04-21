@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { storeUserTokens } from "@/services/google";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

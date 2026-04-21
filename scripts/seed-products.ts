@@ -1,8 +1,8 @@
 
 import "dotenv/config";
 
-import { db } from "../drizzle";
-import { membershipProducts } from "../drizzle/schema";
+import { db } from "@/services/database";
+import { membershipProducts } from "@/services/database/schema";
 
 async function main() {
 	console.log("Seeding membership products...");

@@ -1,6 +1,6 @@
 
-import { db } from "@/drizzle";
-import { clientCategories } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { clientCategories } from "@/services/database/schema";
 
 import { eq } from "drizzle-orm";
 

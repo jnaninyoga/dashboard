@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/drizzle";
-import { appSettings, b2bPricingTiers, clientCategories, clients } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { appSettings, b2bPricingTiers, clientCategories, clients } from "@/services/database/schema";
 
 import { asc, eq } from "drizzle-orm";
 

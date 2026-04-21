@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { type Client } from "@/drizzle/schema";
+import { type Client } from "@/services/database/schema";
 
 import {
 	Briefcase,

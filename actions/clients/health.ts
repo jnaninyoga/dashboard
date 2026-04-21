@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/drizzle";
-import { healthLogs } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { healthLogs } from "@/services/database/schema";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 import { eq } from "drizzle-orm";
 

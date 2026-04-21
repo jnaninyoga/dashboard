@@ -1,16 +1,16 @@
 "use server";
 
-import { db } from "@/drizzle";
+import { db } from "@/services/database";
 import {
 	attendanceLedger,
 	clients,
 	clientWallets,
 	healthLogs,
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
 import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 import { and, desc, eq, gte, ilike, inArray, isNull, or } from "drizzle-orm";
 

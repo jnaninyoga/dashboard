@@ -2,7 +2,7 @@ import {
 	b2bContacts,
 	b2bPartners,
 	clients,
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 import {
 	Gender,
 	HealthCategory,

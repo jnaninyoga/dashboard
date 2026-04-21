@@ -4,14 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { HEALTH_TEMPLATE } from "@/config/health";
-import { db } from "@/drizzle";
+import { db } from "@/services/database";
 import {
 	clientCategories,
 	clients,
 	clientWallets,
 	healthLogs,
 	membershipProducts,
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 import { Gender, type NewHealthLog } from "@/lib/types";
 import { clientSchema } from "@/lib/validators";
 import {
@@ -19,7 +19,7 @@ import {
 	updateClientInGoogleContacts,
 } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 import { and, eq, isNull } from "drizzle-orm";
 

@@ -21,7 +21,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { type ClientWallet, type MembershipProduct } from "@/drizzle/schema";
+import { type ClientWallet, type MembershipProduct } from "@/services/database/schema";
 import { cn } from "@/lib/utils/ui";
 
 import { format } from "date-fns";

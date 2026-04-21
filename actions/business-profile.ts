@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/drizzle";
-import { businessProfiles } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { businessProfiles } from "@/services/database/schema";
 import { type StandardLegalLabel } from "@/lib/types/b2b";
 
 export async function getBusinessProfileAction() {

@@ -6,7 +6,7 @@ import {
     type MembershipProduct,
     type NewClient, 
     type NewClientCategory as NewCategory 
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 
 export type Category = typeof clientCategories.$inferSelect;
 export type Client = ClientSchema;

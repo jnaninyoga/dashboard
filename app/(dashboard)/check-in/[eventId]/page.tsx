@@ -5,7 +5,7 @@ import { getEventAttendanceAction } from "@/actions/schedule/attendance";
 import { CheckInManager } from "@/components/schedule/check-in";
 import { getEventById, type JnaninEventType } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 import { format } from "date-fns";
 import { ArrowLeft2,Calendar as CalendarIcon } from "iconsax-reactjs";

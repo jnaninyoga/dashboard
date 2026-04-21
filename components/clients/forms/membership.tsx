@@ -12,7 +12,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { type MembershipProduct } from "@/drizzle/schema";
+import { type MembershipProduct } from "@/services/database/schema";
 import { type Category } from "@/lib/types";
 import { ClientFormValues } from "@/lib/validators";
 

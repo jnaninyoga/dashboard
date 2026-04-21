@@ -5,7 +5,7 @@ import {
 	type Client,
 	type ClientWallet,
 	type MembershipProduct,
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 
 import { HealthTab } from "./tabs/health";
 import { ProfileTab } from "./tabs/profile";

@@ -1,4 +1,4 @@
-import { type HealthLog as HealthLogSchema } from "@/drizzle/schema";
+import { type HealthLog as HealthLogSchema } from "@/services/database/schema";
 
 export enum HealthCategory {
 	PHYSICAL = "physical",
@@ -13,4 +13,4 @@ export enum HealthSeverity {
 }
 
 export type HealthLog = HealthLogSchema;
-export type { NewHealthLog } from "@/drizzle/schema";
+export type { NewHealthLog } from "@/services/database/schema";

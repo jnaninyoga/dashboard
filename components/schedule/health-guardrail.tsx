@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { type Client, type HealthLog } from "@/drizzle/schema";
+import { type Client, type HealthLog } from "@/services/database/schema";
 
 import { Danger, InfoCircle } from "iconsax-reactjs";
 

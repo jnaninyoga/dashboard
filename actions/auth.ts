@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 
 import { getSiteUrl } from "@/lib/utils/site-url";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 export async function loginWithGoogle() {
 	const supabase = await createClient();

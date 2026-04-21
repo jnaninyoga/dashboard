@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 
-import { db } from "@/drizzle";
-import { clientWallets,membershipProducts } from "@/drizzle/schema";
+import { db } from "@/services/database";
+import { clientWallets,membershipProducts } from "@/services/database/schema";
 
 import {desc, eq } from "drizzle-orm";
 

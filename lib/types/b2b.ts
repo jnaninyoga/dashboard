@@ -4,7 +4,7 @@ import {
 	b2bDocuments,
 	b2bPartners,
 	b2bPricingTiers,
-} from "@/drizzle/schema";
+} from "@/services/database/schema";
 
 export type B2BPartner = typeof b2bPartners.$inferSelect;
 export type B2BContact = typeof b2bContacts.$inferSelect;

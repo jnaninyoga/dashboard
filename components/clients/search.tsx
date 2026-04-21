@@ -4,7 +4,7 @@ import * as React from "react";
 
 import { getClientsAction } from "@/actions/clients/queries";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type Client, type HealthLog } from "@/drizzle/schema";
+import { type Client, type HealthLog } from "@/services/database/schema";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { cn } from "@/lib/utils/ui";
 

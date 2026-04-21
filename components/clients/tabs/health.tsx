@@ -25,7 +25,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { HEALTH_TEMPLATE } from "@/config/health";
-import { type Client, type HealthLog } from "@/drizzle/schema";
+import { type Client, type HealthLog } from "@/services/database/schema";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import { cn } from "@/lib/utils/ui";
 

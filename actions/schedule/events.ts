@@ -3,7 +3,7 @@
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
 import { checkAvailability, createStudioEvent } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/supabase/server";
+import { createClient } from "@/services/supabase/server";
 
 import { getWorkingHours } from "../settings";
 
