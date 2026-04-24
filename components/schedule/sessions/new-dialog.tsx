@@ -28,6 +28,9 @@ import { type SessionFormValues,sessionSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parse } from "date-fns";
+
+const todayStr = () => format(new Date(), "yyyy-MM-dd");
+const currentHourStr = () => format(new Date(), "HH:00");
 import { Refresh } from "iconsax-reactjs";
 import { toast } from "sonner";
 
@@ -84,6 +87,8 @@ export function NewSessionDialog({
 	}, [state, reset, onOpenChange, router]);
 
 	const selectedType = useWatch({ control, name: "type" });
+	const selectedDate = useWatch({ control, name: "dateStr" });
+	const isToday = selectedDate === todayStr();
 
 	const onSubmit = async (data: SessionFormValues) => {
 		try {
@@ -282,7 +287,9 @@ export function NewSessionDialog({
 						<Controller
 							control={control}
 							name="dateStr"
-							render={({ field }) => <Input type="date" {...field} />}
+							render={({ field }) => (
+								<Input type="date" min={todayStr()} {...field} />
+							)}
 						/>
 						{errors.dateStr ? (
 							<p className="text-sm text-red-500">{errors.dateStr.message}</p>
@@ -295,7 +302,13 @@ export function NewSessionDialog({
 							<Controller
 								control={control}
 								name="startTimeStr"
-								render={({ field }) => <Input type="time" {...field} />}
+								render={({ field }) => (
+									<Input
+										type="time"
+										min={isToday ? currentHourStr() : undefined}
+										{...field}
+									/>
+								)}
 							/>
 							{errors.startTimeStr ? (
 								<p className="text-sm text-red-500">

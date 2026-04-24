@@ -21,15 +21,17 @@ interface CheckInManagerProps {
     eventId: string;
     eventType: JnaninEventType | string;
     initialAttendance: AttendanceRecord[];
+    isPast?: boolean;
 }
 
-export function CheckInManager({ eventId, eventType, initialAttendance }: CheckInManagerProps) {
+export function CheckInManager({ eventId, eventType, initialAttendance, isPast = false }: CheckInManagerProps) {
     const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance);
     const [selectedClient, setSelectedClient] = useState<ClientWithLogs | null>(null);
     const [showGuardrail, setShowGuardrail] = useState(false);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
 
     const onClientSelected = (client: ClientWithLogs) => {
+        if (isPast) return; // safety: past events are read-only
         const hasAlerts = client.healthLogs?.some((log) => log.isAlert);
         if (hasAlerts) {
             setSelectedClient(client);
@@ -76,16 +78,24 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
             <div className="animate-slide-up flex w-full flex-col gap-6">
                 {!checkedInClient ? (
                     <div className="bg-card zen-shadow-lg flex min-h-[50vh] flex-col items-center justify-center gap-8 rounded-3xl p-8 transition-all md:p-12">
-                        <div className="bg-primary/10 rounded-full p-6">
-                            <User className="text-primary h-16 w-16" variant="Outline" />
+                        <div className="bg-muted rounded-full p-6">
+                            <User className="text-muted-foreground h-16 w-16" variant="Outline" />
                         </div>
                         <div className="flex flex-col gap-2 text-center">
-                            <h2 className="font-heading text-foreground text-2xl font-bold">Private Session Ready</h2>
-                            <p className="text-muted-foreground">Scan or search for the single client attending.</p>
+                            <h2 className="font-heading text-foreground text-2xl font-bold">
+                                {isPast ? "No Attendance Recorded" : "Private Session Ready"}
+                            </h2>
+                            <p className="text-muted-foreground">
+                                {isPast
+                                    ? "This private session ended with no client checked in."
+                                    : "Scan or search for the single client attending."}
+                            </p>
                         </div>
-                        <div className="mt-4 w-full max-w-md">
-                            <ClientSearch onSelectClient={onClientSelected} />
-                        </div>
+                        {!isPast ? (
+                            <div className="mt-4 w-full max-w-md">
+                                <ClientSearch onSelectClient={onClientSelected} />
+                            </div>
+                        ) : null}
                     </div>
                 ) : (
                     <div className="bg-card zen-shadow-lg relative flex flex-col gap-8 overflow-hidden rounded-3xl p-6 transition-all md:p-10">
@@ -164,10 +174,12 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
     // Group / Outdoor View
     return (
         <div className="animate-slide-up flex w-full flex-col gap-6">
-            {/* Search Bar Block — Zen Glass Surface */}
-            <div className="zen-glass zen-shadow-glow sticky top-[72px] z-30 rounded-3xl p-5 transition-all md:p-6">
-                <ClientSearch onSelectClient={onClientSelected} />
-            </div>
+            {/* Search Bar — hidden in read-only history mode so operators can't backfill attendees */}
+            {!isPast ? (
+                <div className="zen-glass zen-shadow-glow sticky top-[72px] z-30 rounded-3xl p-5 transition-all md:p-6">
+                    <ClientSearch onSelectClient={onClientSelected} />
+                </div>
+            ) : null}
 
             {/* Manifest List */}
             <div className="bg-card zen-shadow-lg min-h-[50vh] flex-1 rounded-3xl p-6 md:p-8">
@@ -178,10 +190,12 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                         ) : (
                             <div className="bg-primary/10 rounded-2xl p-2"><People className="text-primary h-5 w-5" variant="Outline" /></div>
                         )}
-                        Active Manifest
+                        {isPast ? "Attendance Record" : "Active Manifest"}
                     </h2>
                     <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground hidden text-sm font-medium sm:block">Total Check-ins</span>
+                        <span className="text-muted-foreground hidden text-sm font-medium sm:block">
+                            {isPast ? "Total Present" : "Total Check-ins"}
+                        </span>
                         <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 font-bold">
                             {attendance.length}
                         </span>
@@ -191,8 +205,14 @@ export function CheckInManager({ eventId, eventType, initialAttendance }: CheckI
                 {attendance.length === 0 ? (
                     <div className="text-muted-foreground flex flex-col items-center justify-center py-20">
                         <People className="mb-6 h-20 w-20 opacity-15" variant="Outline" />
-                        <h3 className="font-heading text-foreground/60 text-xl font-semibold">The studio is empty</h3>
-                        <p className="text-muted-foreground mt-2 max-w-sm text-center">Use the search bar above to begin checking clients into the session.</p>
+                        <h3 className="font-heading text-foreground/60 text-xl font-semibold">
+                            {isPast ? "No one was checked in" : "The studio is empty"}
+                        </h3>
+                        <p className="text-muted-foreground mt-2 max-w-sm text-center">
+                            {isPast
+                                ? "This session ended with no attendance recorded."
+                                : "Use the search bar above to begin checking clients into the session."}
+                        </p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

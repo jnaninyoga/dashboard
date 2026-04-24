@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
-import { checkAvailability, createStudioEvent } from "@/services/google";
+import { cancelStudioEvent, checkAvailability, createStudioEvent } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
@@ -28,22 +30,33 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 		return { error: "Not authenticated" };
 	}
 
-	// RULE 1: Shop Hours Verification
-	let workingHours = await getWorkingHours();
-	if (!workingHours) {
-		workingHours = DEFAULT_HOURS;
+	// RULE 0: Reject past events. Events must start from the current hour onwards.
+	const hourFloor = new Date();
+	hourFloor.setMinutes(0, 0, 0);
+	if (new Date(data.isoStart) < hourFloor) {
+		return { error: "Cannot schedule events in the past." };
 	}
 
-	const dayConfig = workingHours[data.weekday.toString()];
-	if (!dayConfig || !dayConfig.isOpen) {
-		return { error: "Studio is closed on this day." };
-	}
+	// RULE 1: Shop Hours Verification — only enforced for in-studio event types.
+	// B2B and outdoor sessions are held off-site and are not bound to studio hours.
+	const isStudioEvent = data.type === "group" || data.type === "private";
+	if (isStudioEvent) {
+		let workingHours = await getWorkingHours();
+		if (!workingHours) {
+			workingHours = DEFAULT_HOURS;
+		}
 
-	// Simple string comparison works for HH:mm formats (e.g. "08:00" >= "07:00")
-	if (data.startTimeStr < dayConfig.start || data.endTimeStr > dayConfig.end) {
-		return {
-			error: `Requested time is outside open hours. The studio is open from ${dayConfig.start} to ${dayConfig.end} on this day.`,
-		};
+		const dayConfig = workingHours[data.weekday.toString()];
+		if (!dayConfig || !dayConfig.isOpen) {
+			return { error: "Studio is closed on this day." };
+		}
+
+		// Simple string comparison works for HH:mm formats (e.g. "08:00" >= "07:00")
+		if (data.startTimeStr < dayConfig.start || data.endTimeStr > dayConfig.end) {
+			return {
+				error: `Requested time is outside open hours. The studio is open from ${dayConfig.start} to ${dayConfig.end} on this day.`,
+			};
+		}
 	}
 
 	// Get Token
@@ -77,4 +90,42 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 		console.error("Failed to schedule event:", error);
 		return { error: "Failed to create the event in Google Calendar." };
 	}
+}
+
+/**
+ * Cancels an event by deleting it from Google Calendar. Local attendance
+ * records (if any) remain intact so past check-ins stay queryable.
+ */
+export async function cancelEventAction(eventId: string) {
+	if (!eventId) {
+		return { error: "Missing event id." };
+	}
+
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { error: "Not authenticated" };
+	}
+
+	let accessToken: string;
+	try {
+		accessToken = await getValidAccessToken(user.id);
+	} catch {
+		return { error: "Session expired or disconnected. Please relogin to sync with Google Calendar." };
+	}
+
+	try {
+		await cancelStudioEvent(accessToken, eventId);
+	} catch (error) {
+		console.error("Failed to cancel event:", error);
+		return { error: "Failed to cancel the event in Google Calendar." };
+	}
+
+	revalidatePath("/schedule");
+	revalidatePath("/");
+
+	return { success: true };
 }
