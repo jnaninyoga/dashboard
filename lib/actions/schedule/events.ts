@@ -28,22 +28,26 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 		return { error: "Not authenticated" };
 	}
 
-	// RULE 1: Shop Hours Verification
-	let workingHours = await getWorkingHours();
-	if (!workingHours) {
-		workingHours = DEFAULT_HOURS;
-	}
+	// RULE 1: Shop Hours Verification — only enforced for in-studio event types.
+	// B2B and outdoor sessions are held off-site and are not bound to studio hours.
+	const isStudioEvent = data.type === "group" || data.type === "private";
+	if (isStudioEvent) {
+		let workingHours = await getWorkingHours();
+		if (!workingHours) {
+			workingHours = DEFAULT_HOURS;
+		}
 
-	const dayConfig = workingHours[data.weekday.toString()];
-	if (!dayConfig || !dayConfig.isOpen) {
-		return { error: "Studio is closed on this day." };
-	}
+		const dayConfig = workingHours[data.weekday.toString()];
+		if (!dayConfig || !dayConfig.isOpen) {
+			return { error: "Studio is closed on this day." };
+		}
 
-	// Simple string comparison works for HH:mm formats (e.g. "08:00" >= "07:00")
-	if (data.startTimeStr < dayConfig.start || data.endTimeStr > dayConfig.end) {
-		return {
-			error: `Requested time is outside open hours. The studio is open from ${dayConfig.start} to ${dayConfig.end} on this day.`,
-		};
+		// Simple string comparison works for HH:mm formats (e.g. "08:00" >= "07:00")
+		if (data.startTimeStr < dayConfig.start || data.endTimeStr > dayConfig.end) {
+			return {
+				error: `Requested time is outside open hours. The studio is open from ${dayConfig.start} to ${dayConfig.end} on this day.`,
+			};
+		}
 	}
 
 	// Get Token
