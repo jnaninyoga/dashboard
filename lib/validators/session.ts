@@ -22,6 +22,20 @@ export const sessionSchema = z
 	)
 	.refine(
 		(data) => {
+			// Events can only start from the current hour onwards.
+			const eventStart = new Date(`${data.dateStr}T${data.startTimeStr}:00`);
+			if (isNaN(eventStart.getTime())) return true; // format issues handled elsewhere
+			const hourFloor = new Date();
+			hourFloor.setMinutes(0, 0, 0);
+			return eventStart >= hourFloor;
+		},
+		{
+			message: "Cannot schedule events in the past",
+			path: ["startTimeStr"],
+		},
+	)
+	.refine(
+		(data) => {
 			if (
 				data.type === "outdoor" &&
 				(!data.outdoorPrice || isNaN(Number(data.outdoorPrice)))

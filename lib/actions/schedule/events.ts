@@ -28,6 +28,13 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 		return { error: "Not authenticated" };
 	}
 
+	// RULE 0: Reject past events. Events must start from the current hour onwards.
+	const hourFloor = new Date();
+	hourFloor.setMinutes(0, 0, 0);
+	if (new Date(data.isoStart) < hourFloor) {
+		return { error: "Cannot schedule events in the past." };
+	}
+
 	// RULE 1: Shop Hours Verification — only enforced for in-studio event types.
 	// B2B and outdoor sessions are held off-site and are not bound to studio hours.
 	const isStudioEvent = data.type === "group" || data.type === "private";
