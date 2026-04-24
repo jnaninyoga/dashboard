@@ -12,6 +12,7 @@ import { format, isWithinInterval, parseISO, subMinutes } from "date-fns";
 import type { Icon } from "iconsax-reactjs";
 import { Buildings, Calendar, Clock, LoginCurve, Profile2User, Sun1, Tag, User } from "iconsax-reactjs";
 
+import { CancelEventButton } from "./cancel-button";
 import { HexPattern, LotusPattern, MandalaPattern, SunPattern } from "./patterns";
 
 type EventTypeKey = "group" | "private" | "b2b" | "outdoor";
@@ -206,13 +207,16 @@ export function EventCard({ event }: { event: CalendarEvent }) {
                 </div>
             </div>
 
-            <div className="relative mt-auto p-5 md:mt-0 md:bg-transparent md:p-6 md:pl-0">
+            <div className="relative mt-auto flex items-center gap-2 p-5 md:mt-0 md:bg-transparent md:p-6 md:pl-0">
+                {event.id ? (
+                    <CancelEventButton eventId={event.id} eventTitle={event.summary} />
+                ) : null}
                 {isOffsite ? (
                     <Button
                         asChild
                         disabled={!calendarLink}
                         className={cn(
-                            "min-h-[48px] w-full rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:w-auto",
+                            "min-h-[48px] flex-1 rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:flex-none",
                             meta?.cta,
                         )}
                     >
@@ -230,7 +234,7 @@ export function EventCard({ event }: { event: CalendarEvent }) {
                     <Button
                         asChild
                         className={cn(
-                            "min-h-[48px] w-full rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:w-auto",
+                            "min-h-[48px] flex-1 rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:flex-none",
                             meta?.cta,
                             isLive && meta?.liveGlow,
                         )}

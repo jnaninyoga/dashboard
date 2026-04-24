@@ -179,6 +179,27 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7): P
 }
 
 /**
+ * Cancels (deletes) an event on the primary calendar. The event is removed
+ * from Google Calendar; attendance records stored locally are preserved.
+ */
+export async function cancelStudioEvent(
+	accessToken: string,
+	eventId: string,
+): Promise<void> {
+	const google = getGoogleClient(accessToken);
+
+	try {
+		await google.calendar.events.delete({
+			calendarId: "primary",
+			eventId,
+		});
+	} catch (error) {
+		console.error("Error cancelling Studio Event:", error);
+		throw new Error("Failed to cancel event in Google Calendar.");
+	}
+}
+
+/**
  * Fetches a specific event by its ID.
  */
 export async function getEventById(accessToken: string, eventId: string): Promise<CalendarEvent> {

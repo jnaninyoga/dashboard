@@ -1,7 +1,9 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
+
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
-import { checkAvailability, createStudioEvent } from "@/services/google";
+import { cancelStudioEvent, checkAvailability, createStudioEvent } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
@@ -88,4 +90,42 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 		console.error("Failed to schedule event:", error);
 		return { error: "Failed to create the event in Google Calendar." };
 	}
+}
+
+/**
+ * Cancels an event by deleting it from Google Calendar. Local attendance
+ * records (if any) remain intact so past check-ins stay queryable.
+ */
+export async function cancelEventAction(eventId: string) {
+	if (!eventId) {
+		return { error: "Missing event id." };
+	}
+
+	const supabase = await createClient();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
+
+	if (!user) {
+		return { error: "Not authenticated" };
+	}
+
+	let accessToken: string;
+	try {
+		accessToken = await getValidAccessToken(user.id);
+	} catch {
+		return { error: "Session expired or disconnected. Please relogin to sync with Google Calendar." };
+	}
+
+	try {
+		await cancelStudioEvent(accessToken, eventId);
+	} catch (error) {
+		console.error("Failed to cancel event:", error);
+		return { error: "Failed to cancel the event in Google Calendar." };
+	}
+
+	revalidatePath("/schedule");
+	revalidatePath("/");
+
+	return { success: true };
 }
