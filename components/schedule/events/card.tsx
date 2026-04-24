@@ -115,7 +115,7 @@ export function EventCard({ event }: { event: CalendarEvent }) {
     return (
         <Card
             className={cn(
-                "group relative flex flex-col justify-between overflow-hidden rounded-3xl border-0 transition-all duration-300 ease-out md:flex-row md:items-center",
+                "group border-border/70 relative flex flex-col justify-between overflow-hidden rounded-3xl border transition-all duration-300 ease-out md:flex-row md:items-center",
                 isLive
                     ? "bg-card zen-shadow-md hover:zen-shadow-lg ring-1 ring-green-500/50 hover:-translate-y-0.5"
                     : isPast
