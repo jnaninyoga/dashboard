@@ -19,7 +19,14 @@ export default async function CheckInIndexPage() {
 
     try {
         const token = await getValidAccessToken(user.id);
-        events = await getTodayEvents(token);
+        const todayEvents = await getTodayEvents(token);
+        // Check-in only applies to in-studio sessions (group, private). Off-site
+        // b2b/outdoor events are managed in Google Calendar and have no check-in
+        // workflow, so we filter them out of the portal to avoid confusion.
+        events = todayEvents.filter((e) => {
+            const type = e.extendedProperties?.private?.jnaninEventType;
+            return type === "group" || type === "private";
+        });
     } catch {
         errorMsg = "Please reconnect Google Calendar to view today's schedule.";
     }
@@ -28,9 +35,9 @@ export default async function CheckInIndexPage() {
         <>
             <header className="flex flex-col space-y-1">
                 <h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Check-in Portal</h1>
-                <p className="text-md text-muted-foreground">Select a session from today&apos;s schedule to manage client attendance.</p>
+                <p className="text-md text-muted-foreground">Select a group or private studio session from today to manage client attendance.</p>
             </header>
-            
+
             <CockpitClient initialEvents={events} initialError={errorMsg} />
         </>
     );
