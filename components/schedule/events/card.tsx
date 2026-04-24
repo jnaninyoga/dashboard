@@ -52,7 +52,7 @@ const TYPE_META: Record<EventTypeKey, TypeMeta> = {
         badge: "bg-secondary ring-1 ring-secondary-2/60",
         ribbon: "from-secondary-3/20",
         cta: cn(
-            "bg-secondary-3 text-white hover:bg-secondary-3/90",
+            "bg-secondary-3 hover:bg-secondary-3/90 text-white",
             CTA_ROSE,
         ),
         liveGlow: "shadow-[0_6px_24px_rgba(214,127,125,0.5)]",
@@ -113,7 +113,7 @@ export function EventCard({ event }: { event: CalendarEvent }) {
             className={cn(
                 "group relative flex flex-col justify-between overflow-hidden rounded-3xl border-0 transition-all duration-300 ease-out md:flex-row md:items-center",
                 isLive
-                    ? "bg-card zen-shadow-md ring-primary/20 hover:zen-shadow-lg ring-1 hover:-translate-y-0.5"
+                    ? "bg-card zen-shadow-md hover:zen-shadow-lg ring-1 ring-green-500/50 hover:-translate-y-0.5"
                     : "bg-card zen-shadow hover:zen-shadow-md hover:-translate-y-0.5",
             )}
         >
@@ -160,9 +160,12 @@ export function EventCard({ event }: { event: CalendarEvent }) {
                         </span>
                     )}
                     {isLive ? (
-                        <span className="inline-flex items-center">
-                            <span className="bg-destructive mr-1.5 h-2 w-2 animate-pulse rounded-full shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
-                            <span className="text-destructive text-[11px] font-bold tracking-widest uppercase">Active</span>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-1 text-green-600 shadow-sm backdrop-blur-sm">
+                            <span className="relative flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                            </span>
+                            <span className="text-[10px] font-bold tracking-wider uppercase">Live</span>
                         </span>
                     ) : null}
                 </div>
