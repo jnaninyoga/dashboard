@@ -39,16 +39,21 @@ export default async function CheckInPage({ params }: PageProps) {
         notFound();
     }
 
-    const details = eventDetails as { 
-        summary?: string; 
+    const details = eventDetails as {
+        summary?: string;
         start?: { dateTime?: string; date?: string };
+        end?: { dateTime?: string; date?: string };
         extendedProperties?: { private?: { jnaninEventType?: string } };
     };
 
     const title = details.summary || "Unnamed Event";
     const startTime = details.start?.dateTime || details.start?.date;
+    const endTime = details.end?.dateTime || details.end?.date;
     const type = (details.extendedProperties?.private?.jnaninEventType as JnaninEventType) || "group";
-    
+    // Past events go into read-only attendance-history mode so operators can't
+    // accidentally backfill attendees after the session has ended.
+    const isPast = endTime ? new Date(endTime) < new Date() : false;
+
     // Fetch currently checked-in clients
     const attendanceRecords = await getEventAttendanceAction(eventId);
 
@@ -63,7 +68,7 @@ export default async function CheckInPage({ params }: PageProps) {
                             <span>Back to Schedule</span>
                         </Link>
                         <span className="bg-secondary text-secondary-foreground rounded-full px-4 py-1.5 text-xs font-bold tracking-widest uppercase">
-                            {type} Session
+                            {isPast ? `${type} · History` : `${type} Session`}
                         </span>
                     </div>
                     
@@ -80,10 +85,11 @@ export default async function CheckInPage({ params }: PageProps) {
 
             {/* Main Content Area */}
             <main className="relative z-20 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
-                <CheckInManager 
-                    eventId={eventId} 
-                    eventType={type} 
-                    initialAttendance={attendanceRecords} 
+                <CheckInManager
+                    eventId={eventId}
+                    eventType={type}
+                    initialAttendance={attendanceRecords}
+                    isPast={isPast}
                 />
             </main>
         </div>

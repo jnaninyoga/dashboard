@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils/ui";
 
 import { format, isWithinInterval, parseISO, subMinutes } from "date-fns";
 import type { Icon } from "iconsax-reactjs";
-import { Buildings, Calendar, Clock, LoginCurve, Profile2User, Sun1, Tag, User } from "iconsax-reactjs";
+import { Buildings, Calendar, ClipboardTick, Clock, LoginCurve, Profile2User, Sun1, Tag, User } from "iconsax-reactjs";
 
 import { CancelEventButton } from "./cancel-button";
 import { HexPattern, LotusPattern, MandalaPattern, SunPattern } from "./patterns";
@@ -97,6 +97,9 @@ export function EventCard({ event }: { event: CalendarEvent }) {
         end: endTime,
     });
 
+    // Past events are read-only: no cancel, no check-in — only attendance history.
+    const isPast = endTime < now;
+
     const eventType = event.extendedProperties?.private?.jnaninEventType as EventTypeKey | undefined;
     const outdoorPrice = event.extendedProperties?.private?.outdoorPrice as string | undefined;
     const b2bPrice = event.extendedProperties?.private?.jnaninEventPrice as string | undefined;
@@ -115,9 +118,18 @@ export function EventCard({ event }: { event: CalendarEvent }) {
                 "group relative flex flex-col justify-between overflow-hidden rounded-3xl border-0 transition-all duration-300 ease-out md:flex-row md:items-center",
                 isLive
                     ? "bg-card zen-shadow-md hover:zen-shadow-lg ring-1 ring-green-500/50 hover:-translate-y-0.5"
-                    : "bg-card zen-shadow hover:zen-shadow-md hover:-translate-y-0.5",
+                    : isPast
+                      ? "bg-card zen-shadow opacity-70 grayscale-[40%] hover:opacity-95"
+                      : "bg-card zen-shadow hover:zen-shadow-md hover:-translate-y-0.5",
             )}
         >
+            {/* Cancel affordance — X in the top-right corner. Hidden for past events (read-only). */}
+            {!isPast && event.id ? (
+                <div className="absolute top-2 right-2 z-20">
+                    <CancelEventButton eventId={event.id} eventTitle={event.summary} />
+                </div>
+            ) : null}
+
             {/* Left edge accent — colored gradient bleed */}
             {meta ? (
                 <div
@@ -134,7 +146,10 @@ export function EventCard({ event }: { event: CalendarEvent }) {
                 <div
                     aria-hidden
                     className={cn(
-                        "pointer-events-none absolute -top-10 -right-16 h-[280px] w-[280px] opacity-[0.2] transition-all duration-700 ease-out group-hover:rotate-6 group-hover:opacity-[0.32]",
+                        "pointer-events-none absolute -top-10 -right-16 h-[280px] w-[280px] transition-all duration-700 ease-out",
+                        isPast
+                            ? "opacity-[0.1]"
+                            : "opacity-[0.2] group-hover:rotate-6 group-hover:opacity-[0.32]",
                         meta.accent,
                     )}
                 >
@@ -207,16 +222,13 @@ export function EventCard({ event }: { event: CalendarEvent }) {
                 </div>
             </div>
 
-            <div className="relative mt-auto flex items-center gap-2 p-5 md:mt-0 md:bg-transparent md:p-6 md:pl-0">
-                {event.id ? (
-                    <CancelEventButton eventId={event.id} eventTitle={event.summary} />
-                ) : null}
+            <div className="relative mt-auto p-5 md:mt-0 md:bg-transparent md:p-6 md:pl-0">
                 {isOffsite ? (
                     <Button
                         asChild
                         disabled={!calendarLink}
                         className={cn(
-                            "min-h-[48px] flex-1 rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:flex-none",
+                            "min-h-[48px] w-full rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:w-auto",
                             meta?.cta,
                         )}
                     >
@@ -233,15 +245,22 @@ export function EventCard({ event }: { event: CalendarEvent }) {
                 ) : (
                     <Button
                         asChild
+                        variant={isPast ? "outline" : "default"}
                         className={cn(
-                            "min-h-[48px] flex-1 rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:flex-none",
-                            meta?.cta,
+                            "min-h-[48px] w-full rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:w-auto",
+                            !isPast && meta?.cta,
                             isLive && meta?.liveGlow,
+                            isPast &&
+                                "text-muted-foreground border-muted-foreground/30 hover:text-foreground hover:border-muted-foreground/60",
                         )}
                     >
                         <Link href={`/check-in/${event.id}`}>
-                            <LoginCurve className="mr-2 h-4 w-4" variant="Bulk" />
-                            Check In
+                            {isPast ? (
+                                <ClipboardTick className="mr-2 h-4 w-4" variant="Bulk" />
+                            ) : (
+                                <LoginCurve className="mr-2 h-4 w-4" variant="Bulk" />
+                            )}
+                            {isPast ? "Attendance" : "Check In"}
                         </Link>
                     </Button>
                 )}
