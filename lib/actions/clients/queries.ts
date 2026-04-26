@@ -183,3 +183,38 @@ export async function getClientByIdAction(id: string) {
 		return { error: "Failed to fetch client" };
 	}
 }
+
+/**
+ * Batch-resolves a list of emails against the clients table.
+ * Used by the outdoor event guest stack to identify which Google Calendar
+ * attendees are also registered clients (photo + ring highlight).
+ */
+export async function getClientsByEmailsAction(
+	emails: string[],
+): Promise<{ email: string; clientId: string; fullName: string; photoUrl: string | null; phone: string | null }[]> {
+	if (emails.length === 0) return [];
+
+	try {
+		const rows = await db
+			.select({
+				email: clients.email,
+				clientId: clients.id,
+				fullName: clients.fullName,
+				photoUrl: clients.photoUrl,
+				phone: clients.phone,
+			})
+			.from(clients)
+			.where(inArray(clients.email, emails));
+
+		return rows.filter((r) => r.email !== null) as {
+			email: string;
+			clientId: string;
+			fullName: string;
+			photoUrl: string | null;
+			phone: string | null;
+		}[];
+	} catch (error) {
+		console.error("Error fetching clients by emails:", error);
+		return [];
+	}
+}
