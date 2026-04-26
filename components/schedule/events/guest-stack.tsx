@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +34,6 @@ import {
 	UserSquare,
 	Whatsapp,
 } from "iconsax-reactjs";
-import Link from "next/link";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -171,7 +171,7 @@ export function GuestAvatarStack({ attendees }: GuestAvatarStackProps) {
 							</div>
 
 							{overflow > 0 ? (
-								<span className="bg-muted text-muted-foreground -ml-1 flex size-6 items-center justify-center rounded-full text-[9px] font-bold ring-[1.5px] ring-card">
+								<span className="bg-muted text-muted-foreground ring-card -ml-1 flex size-6 items-center justify-center rounded-full text-[9px] font-bold ring-[1.5px]">
 									+{overflow}
 								</span>
 							) : null}
@@ -180,7 +180,7 @@ export function GuestAvatarStack({ attendees }: GuestAvatarStackProps) {
 					<TooltipContent
 						sideOffset={8}
 						side="bottom"
-						className="zen-shadow-md z-50 w-64 rounded-2xl border-0 bg-card p-4"
+						className="zen-shadow-md bg-card z-50 w-64 rounded-2xl border-0 p-4"
 					>
 						<AnalyticsBar guests={enrichedGuests} />
 					</TooltipContent>
@@ -214,14 +214,6 @@ function ParticipantsDialog({
 	const [search, setSearch] = useState("");
 	const [filter, setFilter] = useState<FilterMode>("all");
 
-	// Reset on close
-	useEffect(() => {
-		if (!open) {
-			setSearch("");
-			setFilter("all");
-		}
-	}, [open]);
-
 	// Filtered list
 	const filtered = useMemo(() => {
 		let list = guests;
@@ -248,7 +240,17 @@ function ParticipantsDialog({
 	];
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
+		<Dialog
+			open={open}
+			onOpenChange={(v) => {
+				if (!v) {
+					// Reset state when closing
+					setSearch("");
+					setFilter("all");
+				}
+				onOpenChange(v);
+			}}
+		>
 			<DialogContent
 				showCloseButton
 				className="flex max-h-[85vh] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-md"
@@ -282,7 +284,7 @@ function ParticipantsDialog({
 							placeholder="Search participants..."
 							value={search}
 							onChange={(e) => setSearch(e.target.value)}
-							className="h-11 rounded-xl pl-9.5 pr-10"
+							className="h-11 rounded-xl pr-10 pl-9.5"
 							autoComplete="off"
 						/>
 						{search ? (
@@ -412,7 +414,7 @@ function ParticipantsDialog({
 														<TooltipTrigger asChild>
 															<Link
 																href={`mailto:${guest.email}`}
-																className="flex size-7 items-center justify-center rounded-xl bg-secondary text-secondary-3/80 transition-all hover:scale-105 hover:bg-secondary-2 hover:text-white active:scale-95"
+																className="bg-secondary text-secondary-3/80 hover:bg-secondary-2 flex size-7 items-center justify-center rounded-xl transition-all hover:scale-105 hover:text-white active:scale-95"
 															>
 																<Sms className="size-4" variant="Bold" />
 															</Link>
@@ -450,7 +452,7 @@ function ParticipantsDialog({
 															<TooltipTrigger asChild>
 																<Link
 																	href={`tel:${guest.phone}`}
-																	className="flex size-7 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all hover:scale-105 hover:bg-primary hover:text-primary-foreground active:scale-95"
+																	className="bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground flex size-7 items-center justify-center rounded-xl transition-all hover:scale-105 active:scale-95"
 																>
 																	<Call className="size-4" variant="Bold" />
 																</Link>
@@ -510,7 +512,7 @@ export function AnalyticsBar({ guests }: { guests: EnrichedGuest[] }) {
 					Clients · {clientCount}{" "}
 					<span className="text-muted-foreground">({clientPct}%)</span>
 				</span>
-				<span className="flex items-center gap-1.5 text-muted-foreground">
+				<span className="text-muted-foreground flex items-center gap-1.5">
 					<span className="bg-secondary-2 inline-block size-2 rounded-full" />
 					Guests · {guestCount}{" "}
 					<span className="text-muted-foreground">({100 - clientPct}%)</span>

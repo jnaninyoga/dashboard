@@ -230,7 +230,7 @@ export function EventCard({ event }: { event: CalendarEvent }) {
 						</span>
 					) : null}
 					{eventType === "outdoor" && event.attendees && event.attendees.length > 0 ? (
-						<span className="flex items-center border-l pl-4 border-border/50">
+						<span className="border-border/50 flex items-center border-l pl-4">
 							<GuestAvatarStack attendees={event.attendees} />
 						</span>
 					) : null}
