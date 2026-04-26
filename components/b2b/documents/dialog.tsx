@@ -65,7 +65,11 @@ import {
 } from "@/lib/actions/b2b/documents";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { type B2BContact, type B2BPricingTier } from "@/lib/types";
-import { createDocumentWithLinesSchema } from "@/lib/validators";
+import {
+	createDocumentWithLinesSchema,
+	documentLineSchema,
+	documentSchema,
+} from "@/lib/validators/document";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -195,10 +199,15 @@ export function DocumentDialog({
 	partnerId,
 	contacts,
 	children,
+	initialValues,
 }: {
 	partnerId: string;
 	contacts: B2BContact[];
 	children: React.ReactNode;
+	initialValues?: {
+		document?: Partial<typeof documentSchema._input>;
+		lines?: (Partial<typeof documentLineSchema._input> & { maxQuantity?: number })[];
+	};
 }) {
 	const [open, setOpen] = useState(false);
 	const [pricingTiers, setPricingTiers] = useState<B2BPricingTier[]>([]);
@@ -214,18 +223,24 @@ export function DocumentDialog({
 			document: {
 				partnerId,
 				contactId:
-					contacts.find((c) => c.isPrimary)?.id || contacts[0]?.id || "",
-				type: "quote" as const,
+					initialValues?.document?.contactId ||
+					contacts.find((c) => c.isPrimary)?.id ||
+					contacts[0]?.id ||
+					"",
+				type: initialValues?.document?.type || ("quote" as const),
 				status: "draft" as const,
 				documentNumber: "", // Initialized in useEffect
 				issueDate: new Date().toISOString().split("T")[0],
 				dueDate: "", // Initialized in useEffect along with documentNumber
-				subtotal: "0",
-				taxRate: "0",
-				totalAmount: "0",
-				notes: "",
+				subtotal: initialValues?.document?.subtotal || "0",
+				taxRate: initialValues?.document?.taxRate || "0",
+				totalAmount: initialValues?.document?.totalAmount || "0",
+				notes: initialValues?.document?.notes || "",
+				parentDocumentId: initialValues?.document?.parentDocumentId || null,
 			},
-			lines: [{ description: "", quantity: "1", unitPrice: "0", totalPrice: "0" }],
+			lines: initialValues?.lines || [
+				{ description: "", quantity: "1", unitPrice: "0", totalPrice: "0" },
+			],
 		},
 	});
 
@@ -366,8 +381,8 @@ export function DocumentDialog({
 													<FormItem>
 														<ZenLabel>Type</ZenLabel>
 														<Select
-															defaultValue={field.value}
-															disabled={isPending}
+															value={field.value}
+															disabled={isPending || !!initialValues?.document?.type}
 															onValueChange={(val: "quote" | "invoice") => {
 																field.onChange(val);
 																getNextDocumentNumber(val).then((num) => {
@@ -428,9 +443,9 @@ export function DocumentDialog({
 												<FormItem>
 													<ZenLabel>Recipient Contact</ZenLabel>
 													<Select
-														defaultValue={field.value || undefined}
+														value={field.value ?? ""}
 														disabled={isPending}
-														onValueChange={field.onChange}
+														onValueChange={(val) => field.onChange(val === "" ? null : val)}
 													>
 														<FormControl>
 															<SelectTrigger className="focus:ring-primary/20 bg-card w-full border font-semibold transition-all">
@@ -438,18 +453,33 @@ export function DocumentDialog({
 															</SelectTrigger>
 														</FormControl>
 														<SelectContent className="w-full border shadow-xl">
-															{contacts.map((contact) => (
-																<SelectItem
-																	key={contact.id}
-																	value={contact.id}
-																	className="font-semibold"
-																>
-																	{contact.fullName}{" "}
-																	<span className="ml-1 font-normal opacity-40">
-																		({contact.role || "No role"})
-																	</span>
-																</SelectItem>
-															))}
+															{contacts.length > 0 ? (
+																contacts.map((contact) => (
+																	<SelectItem
+																		key={contact.id}
+																		value={contact.id}
+																		className="font-semibold"
+																	>
+																		<div className="flex items-center gap-2">
+																			<span>{contact.fullName}</span>
+																			{contact.role && (
+																				<span className="text-[10px] opacity-40 font-normal">
+																					({contact.role})
+																				</span>
+																			)}
+																			{contact.isPrimary && (
+																				<span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+																					Primary
+																				</span>
+																			)}
+																		</div>
+																	</SelectItem>
+																))
+															) : (
+																<div className="p-4 text-center text-xs text-muted-foreground">
+																	No contacts found for this partner
+																</div>
+															)}
 														</SelectContent>
 													</Select>
 													<FormMessage />
@@ -578,25 +608,38 @@ export function DocumentDialog({
 																<FormField
 																	control={form.control}
 																	name={`lines.${index}.quantity`}
-																	render={({ field: f }) => (
-																		<FormItem className="space-y-0">
-																			<FormControl>
-																				<Input
-																					inputMode="decimal"
-																					{...f}
-																					value={f.value ?? ""}
-																					className="focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold"
-																					disabled={isPending}
-																					onChange={(e) => {
-																						const val = e.target.value.replace(/[^0-9.]/g, "");
-																						const parts = val.split(".");
-																						const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
-																						f.onChange(sanitized);
-																					}}
-																				/>
-																			</FormControl>
-																		</FormItem>
-																	)}
+																	render={({ field: f }) => {
+																		const maxQty = (initialValues?.lines?.[index] as any)?.maxQuantity;
+																		return (
+																			<FormItem className="space-y-1">
+																				<FormControl>
+																					<div className="relative">
+																						<Input
+																							inputMode="decimal"
+																							{...f}
+																							value={f.value ?? ""}
+																							className={`focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold ${maxQty ? "border-amber-500/30" : ""}`}
+																							disabled={isPending}
+																							onChange={(e) => {
+																								let val = e.target.value.replace(/[^0-9.]/g, "");
+																								if (maxQty && Number(val) > maxQty) {
+																									val = maxQty.toString();
+																								}
+																								const parts = val.split(".");
+																								const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+																								f.onChange(sanitized);
+																							}}
+																						/>
+																					</div>
+																				</FormControl>
+																				{maxQty && (
+																					<p className="text-[9px] text-amber-600 font-bold text-center">
+																						Max: {maxQty}
+																					</p>
+																				)}
+																			</FormItem>
+																		);
+																	}}
 																/>
 															</TableCell>
 

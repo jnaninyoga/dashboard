@@ -74,6 +74,7 @@ export function EditableDocumentLines({
 		resolver: zodResolver(linesFormSchema),
 		defaultValues: {
 			lines: initialLines.map((l) => ({
+				sourceLineId: l.sourceLineId,
 				description: l.description,
 				quantity: String(l.quantity),
 				unitPrice: String(l.unitPrice),
@@ -114,6 +115,7 @@ export function EditableDocumentLines({
 			const res = await updateDocumentLinesAction(documentId, {
 				lines: values.lines.map((l) => ({
 					...l,
+					sourceLineId: l.sourceLineId,
 					totalPrice: (Number(l.quantity) * Number(l.unitPrice)).toString(),
 				})),
 				subtotal: subtotal.toString(),
@@ -207,6 +209,7 @@ export function EditableDocumentLines({
 														<DescriptionAutocomplete
 															value={f.value}
 															onChange={f.onChange}
+															disabled={isPending}
 															onSelectTier={(tier) => {
 																form.setValue(
 																	`lines.${index}.description`,
@@ -294,8 +297,6 @@ export function EditableDocumentLines({
 											</span>
 										</span>
 									</TableCell>
-
-
 
 									<TableCell className="py-3 text-center align-top">
 										<Button
@@ -394,11 +395,13 @@ function DescriptionAutocomplete({
 	onChange,
 	onSelectTier,
 	pricingTiers,
+	disabled,
 }: {
 	value: string;
 	onChange: (val: string) => void;
 	onSelectTier: (tier: B2BPricingTier) => void;
 	pricingTiers: B2BPricingTier[];
+	disabled?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -413,6 +416,7 @@ function DescriptionAutocomplete({
 							onChange(e.target.value);
 							if (!open && e.target.value) setOpen(true);
 						}}
+						disabled={disabled}
 						className="bg-card h-8 border text-sm font-medium"
 						placeholder="Description..."
 					/>

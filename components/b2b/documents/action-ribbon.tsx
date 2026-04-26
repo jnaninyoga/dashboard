@@ -1,14 +1,15 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-	convertQuoteToInvoiceAction,
 	updateDocumentStatusAction,
+	convertQuoteToInvoiceAction,
+	confirmInvoiceWithBackorderAction,
 } from "@/lib/actions/b2b/documents";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
 import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
@@ -25,10 +26,23 @@ import {
 import { toast } from "sonner";
 
 import { PDFDownloadBtn } from "./download-btn";
+import { DocumentDialog } from "./dialog";
+import { RecordPaymentDialog } from "./record-payment-dialog";
+import { BackorderDialog } from "./backorder-dialog";
 
-export function DocumentActionRibbon({ doc, profile }: { doc: DocumentWithRelations, profile: BusinessProfile | null }) {
+export function DocumentActionRibbon({ 
+	doc, 
+	profile,
+	previousInvoices = []
+}: { 
+	doc: DocumentWithRelations, 
+	profile: BusinessProfile | null,
+	previousInvoices?: any[]
+}) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
+    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+	const [isBackorderOpen, setIsBackorderOpen] = useState(false);
 
 	const handleStatusUpdate = (status: B2BDocumentStatus) => {
 		startTransition(async () => {
@@ -42,18 +56,6 @@ export function DocumentActionRibbon({ doc, profile }: { doc: DocumentWithRelati
 				router.refresh();
 			} else {
 				toast.error(res.error || "Failed to update document");
-			}
-		});
-	};
-
-	const handleConvert = () => {
-		startTransition(async () => {
-			const res = await convertQuoteToInvoiceAction(doc.id);
-			if (res.success && res.id) {
-				toast.success("Invoice generated successfully!");
-				router.push(`/b2b/documents/${res.id}`);
-			} else {
-				toast.error(res.error || "Failed to convert quote");
 			}
 		});
 	};
@@ -94,7 +96,7 @@ export function DocumentActionRibbon({ doc, profile }: { doc: DocumentWithRelati
 										<Link href={`/b2b/documents/${child.id}`}>
 											<Badge
 												variant="outline"
-												className="text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200"
+												className={`text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200 ${child.status === 'paid' ? 'bg-green-500/10' : ''}`}
 											>
 												{child.documentNumber}
 											</Badge>
@@ -112,16 +114,74 @@ export function DocumentActionRibbon({ doc, profile }: { doc: DocumentWithRelati
 			<div className="flex flex-wrap items-center gap-3">
                 <PDFDownloadBtn doc={doc} profile={profile} />
 
-				{/* Draft -> Sent */}
+				{/* Draft -> Confirm & Send (With Backorder Logic) */}
 				{doc.status === "draft" ? (
-					<Button
-						onClick={() => handleStatusUpdate("sent")}
-						disabled={isPending}
-						className="zen-glow-teal gap-2 rounded-xl font-bold"
-					>
-						<Send size={18} variant="Bold" />
-						Mark as Sent
-					</Button>
+					<>
+						<Button
+							onClick={() => {
+								const hasBilledItems = doc.lines?.some(l => l.sourceLineId && Number(l.quantity) > 0);
+								
+								// Smart Backorder Check:
+								// Does this invoice (plus previous ones) leave any unbilled quantity from the parent quote?
+								let hasUnbilledItems = false;
+								if (isInvoice && doc.parent?.lines) {
+									const parentLines = doc.parent.lines;
+									
+									// 1. Calculate how much has been billed so far across ALL invoices (previous + current)
+									// We group by sourceLineId
+									const billedTotals: Record<string, number> = {};
+									
+									// Add quantities from previous confirmed/partially_paid invoices
+									previousInvoices.forEach(inv => {
+										inv.lines?.forEach((line: any) => {
+											if (line.sourceLineId) {
+												billedTotals[line.sourceLineId] = (billedTotals[line.sourceLineId] || 0) + Number(line.quantity);
+											}
+										});
+									});
+									
+									// Add quantities from the CURRENT draft invoice
+									doc.lines?.forEach(line => {
+										if (line.sourceLineId) {
+											billedTotals[line.sourceLineId] = (billedTotals[line.sourceLineId] || 0) + Number(line.quantity);
+										}
+									});
+									
+									// 2. Compare with the Quote's required quantities
+									hasUnbilledItems = parentLines.some(qLine => {
+										const totalBilled = billedTotals[qLine.id] || 0;
+										return totalBilled < Number(qLine.quantity);
+									});
+								}
+
+								if (isInvoice && doc.parentDocumentId && hasBilledItems && hasUnbilledItems) {
+									setIsBackorderOpen(true);
+								} else {
+									handleStatusUpdate("sent");
+								}
+							}}
+							disabled={isPending}
+							className="zen-glow-teal gap-2 rounded-xl font-bold"
+						>
+							<Send size={18} variant="Bold" />
+							Confirm & Send
+						</Button>
+						<BackorderDialog
+							open={isBackorderOpen}
+							onOpenChange={setIsBackorderOpen}
+							onConfirm={(createBackorder) => {
+								startTransition(async () => {
+									const res = await confirmInvoiceWithBackorderAction(doc.id, createBackorder);
+									if (res.success) {
+										toast.success(createBackorder ? "Invoice confirmed and backorder created" : "Invoice confirmed");
+										router.refresh();
+									} else {
+										toast.error(res.error || "Failed to confirm invoice");
+									}
+								});
+							}}
+						/>
+					</>
 				) : null}
 
 				{/* Quote Specific: Sent -> Accepted */}
@@ -136,29 +196,46 @@ export function DocumentActionRibbon({ doc, profile }: { doc: DocumentWithRelati
 					</Button>
 				) : null}
 
-				{/* Quote Specific: Accepted -> Convert to Invoice */}
-				{isQuote && doc.status === "accepted" && doc.children?.length === 0 ? (
+				{/* Quote Specific: Accepted -> Generate Invoice (Only if no invoices exist yet) */}
+				{isQuote && doc.status === "accepted" && (!doc.children || doc.children.length === 0) ? (
 					<Button
-						onClick={handleConvert}
+						onClick={() => {
+							startTransition(async () => {
+								const res = await convertQuoteToInvoiceAction(doc.id);
+								if (res.success && res.id) {
+									toast.success("Draft invoice created");
+									router.push(`/b2b/documents/${res.id}`);
+								} else {
+									toast.error(res.error || "Failed to create draft invoice");
+								}
+							});
+						}}
 						disabled={isPending}
-						className="bg-primary hover:bg-primary/90 font-heading gap-2 rounded-xl font-bold shadow-md"
+						className="zen-glow-teal gap-2 rounded-xl font-bold shadow-md"
 					>
 						<Convert size={18} variant="Bold" />
-						Convert to Invoice
+						Generate Invoice
 						<ArrowRight size={16} />
 					</Button>
 				) : null}
 
-				{/* Invoice Specific: Sent -> Paid */}
-				{isInvoice && doc.status === "sent" ? (
-					<Button
-						onClick={() => handleStatusUpdate("paid")}
-						disabled={isPending}
-						className="gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm hover:bg-green-700"
-					>
-						<MoneySend size={18} variant="Bold" />
-						Mark as Paid
-					</Button>
+				{/* Invoice Specific: Sent/Partially Paid -> Record Payment */}
+				{isInvoice && (doc.status === "sent" || doc.status === "partially_paid") ? (
+					<>
+                        <Button
+                            onClick={() => setIsPaymentOpen(true)}
+                            disabled={isPending}
+                            className="gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm hover:bg-green-700"
+                        >
+                            <MoneySend size={18} variant="Bold" />
+                            Record Payment
+                        </Button>
+                        <RecordPaymentDialog 
+                            doc={doc} 
+                            open={isPaymentOpen} 
+                            onOpenChange={setIsPaymentOpen} 
+                        />
+                    </>
 				) : null}
 
 				{/* Invoice Specific: Paid -> Unpaid (Sent) */}

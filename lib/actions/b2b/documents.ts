@@ -5,9 +5,9 @@ import { revalidatePath } from "next/cache";
 import { B2BDocumentLine, B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
 import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
 import { db } from "@/services/database";
-import { b2bDocumentLines, b2bDocuments } from "@/services/database/schema";
+import { b2bDocumentLines, b2bDocuments, b2bPayments } from "@/services/database/schema";
 
-import { and, desc, eq, ilike, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, not, or } from "drizzle-orm";
 
 export type ActionState = {
 	error?: string;
@@ -164,22 +164,75 @@ export async function getDocumentsAction(filters?: {
 	}
 }
 
-export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; error?: string }> {
+export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: any[], allRelatedInvoices?: any[] }; error?: string }> {
 	try {
 		const document = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
 			with: {
-				partner: true,
+				partner: {
+					with: {
+						contacts: true,
+					},
+				},
 				contact: true,
 				lines: {
 					orderBy: [desc(b2bDocumentLines.createdAt)],
 				},
-				parent: true,
+				parent: {
+					with: {
+						lines: true,
+					},
+				},
 				children: true,
+				payments: {
+					orderBy: [desc(b2bPayments.paymentDate)],
+				},
 			},
 		})) as DocumentWithRelations | null;
 
-		return { document: document ?? undefined };
+		if (!document) return { error: "Document not found" };
+
+		// Fetch related invoices for fulfillment tracking and account summary
+		let previousInvoices: any[] = [];
+		if (document.type === "invoice" && document.parentDocumentId) {
+			previousInvoices = await db.query.b2bDocuments.findMany({
+				where: and(
+					eq(b2bDocuments.partnerId, document.partnerId),
+					eq(b2bDocuments.type, "invoice"),
+					eq(b2bDocuments.parentDocumentId, document.parentDocumentId),
+					not(eq(b2bDocuments.status, "cancelled")),
+				),
+				with: {
+					lines: true,
+					payments: {
+						orderBy: [desc(b2bPayments.paymentDate)],
+					},
+				},
+				orderBy: asc(b2bDocuments.createdAt),
+			});
+
+			// Filter for the UI (Statement of Account only shows unpaid invoices created BEFORE this one)
+			const statementInvoices = previousInvoices.filter(inv => 
+				inv.id !== document.id && 
+				inArray(inv.status, ["sent", "partially_paid"]) &&
+				new Date(inv.createdAt).getTime() < new Date(document.createdAt).getTime()
+			).map(inv => ({ ...inv, isSibling: true }));
+
+			return { 
+				document, 
+				accountSummary: {
+					previousInvoices: statementInvoices,
+					allRelatedInvoices: previousInvoices // For fulfillment logic in ActionRibbon
+				} 
+			};
+		}
+
+		return { 
+			document, 
+			accountSummary: {
+				previousInvoices: []
+			} 
+		};
 
 	} catch (error) {
 		console.error("Error fetching document:", error);
@@ -189,54 +242,159 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 
 export async function convertQuoteToInvoiceAction(quoteId: string): Promise<ActionState> {
 	try {
-		const quote = await db.query.b2bDocuments.findFirst({
+		const quote = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, quoteId),
 			with: {
 				lines: true,
+				children: {
+					with: {
+						lines: true,
+					},
+				},
 			},
-		});
+		})) as DocumentWithRelations | null;
 
 		if (!quote || quote.type !== "quote") {
 			return { error: "Original quote not found" };
+		}
+
+		// 1. Calculate remaining quantities for each line
+		const initialLines = (quote.lines || []).map((line) => {
+			const alreadyInvoiced = (quote.children || []).reduce((acc: number, child: DocumentWithRelations) => {
+				const matchingLine = child.lines?.find((l) => l.sourceLineId === line.id);
+				return acc + (Number(matchingLine?.quantity) || 0);
+			}, 0);
+
+			const remaining = Math.max(0, Number(line.quantity) - alreadyInvoiced);
+
+			return {
+				sourceLineId: line.id,
+				description: line.description,
+				unitPrice: line.unitPrice,
+				quantity: remaining,
+				totalPrice: (remaining * Number(line.unitPrice)).toString(),
+			};
+		}).filter(l => l.quantity > 0);
+
+		// 2. No more carry-over line in line_items (moved to Account Statement UI)
+
+		if (initialLines.length === 0) {
+			return { error: "Quote is already fully invoiced" };
 		}
 
 		const nextNumber = await getNextDocumentNumber("invoice");
 		let newId: string;
 
 		await db.transaction(async (tx) => {
-			// 1. Create Invoice
+			const subtotal = initialLines.reduce((acc, l) => acc + Number(l.totalPrice), 0);
+			const taxRate = Number(quote.taxRate);
+			const totalAmount = subtotal * (1 + taxRate / 100);
+
+			// 1. Create Draft Invoice
 			const [invoice] = await tx
 				.insert(b2bDocuments)
 				.values({
 					partnerId: quote.partnerId,
 					contactId: quote.contactId,
 					type: "invoice",
-					status: "draft",
+					status: "draft", 
 					documentNumber: nextNumber,
 					issueDate: new Date().toISOString().split("T")[0],
-					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0], // 15 days default
-					subtotal: quote.subtotal,
+					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+					subtotal: subtotal.toString(),
 					taxRate: quote.taxRate,
-					totalAmount: quote.totalAmount,
-					notes: `Generated from ${quote.documentNumber}`,
+					totalAmount: totalAmount.toFixed(2),
+					notes: `Invoice for work completed from ${quote.documentNumber}`,
 					parentDocumentId: quoteId,
 				})
 				.returning();
 
 			newId = invoice.id;
 
-			// 2. Copy Lines
-			const linesToInsert = quote.lines.map((line: B2BDocumentLine) => ({
+			// 2. Insert Lines
+			const linesToInsert = initialLines.map((line) => ({
 				documentId: invoice.id,
+				sourceLineId: line.sourceLineId,
 				description: line.description,
-				quantity: line.quantity,
+				quantity: line.quantity.toString(),
 				unitPrice: line.unitPrice,
 				totalPrice: line.totalPrice,
 			}));
 
 			await tx.insert(b2bDocumentLines).values(linesToInsert);
+			
+			// 3. Ensure Quote is marked as accepted
+			if (quote.status !== "accepted") {
+				await tx.update(b2bDocuments)
+					.set({ status: "accepted", updatedAt: new Date() })
+					.where(eq(b2bDocuments.id, quoteId));
+			}
+		});
 
-			// 3. Mark Quote as Accepted if it wasn't
+		revalidatePath(`/b2b/partners/${quote.partnerId}`);
+		revalidatePath("/b2b/documents");
+		// @ts-expect-error - newId is assigned in transaction
+		return { success: true, id: newId };
+	} catch (error) {
+		console.error("Error converting quote to invoice:", error);
+		return { error: "Failed to create draft invoice" };
+	}
+}
+
+export async function createPartialInvoiceAction(
+	quoteId: string,
+	data: {
+		lines: { sourceLineId?: string; description: string; quantity: string; unitPrice: string; totalPrice: string }[];
+		subtotal: string;
+		taxRate: string;
+		totalAmount: string;
+		notes?: string;
+	}
+): Promise<ActionState> {
+	try {
+		const quote = await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, quoteId),
+		});
+
+		if (!quote || quote.type !== "quote") {
+			return { error: "Source quotation not found" };
+		}
+
+		const nextNumber = await getNextDocumentNumber("invoice");
+		let newId: string;
+
+		await db.transaction(async (tx) => {
+			const [invoice] = await tx
+				.insert(b2bDocuments)
+				.values({
+					partnerId: quote.partnerId,
+					contactId: quote.contactId,
+					type: "invoice",
+					status: "sent",
+					documentNumber: nextNumber,
+					issueDate: new Date().toISOString().split("T")[0],
+					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+					subtotal: data.subtotal,
+					taxRate: data.taxRate,
+					totalAmount: data.totalAmount,
+					notes: data.notes || `Partial invoice from ${quote.documentNumber}`,
+					parentDocumentId: quoteId,
+				})
+				.returning();
+
+			newId = invoice.id;
+
+			const linesToInsert = data.lines.map((line) => ({
+				documentId: invoice.id,
+				description: line.description,
+				quantity: line.quantity,
+				unitPrice: line.unitPrice,
+				totalPrice: line.totalPrice,
+				sourceLineId: line.sourceLineId,
+			}));
+
+			await tx.insert(b2bDocumentLines).values(linesToInsert);
+
 			if (quote.status !== "accepted") {
 				await tx
 					.update(b2bDocuments)
@@ -247,11 +405,86 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 
 		revalidatePath("/b2b/documents");
 		revalidatePath(`/b2b/partners/${quote.partnerId}`);
+		revalidatePath(`/b2b/documents/${quoteId}`);
 		// @ts-expect-error - newId is assigned in transaction
 		return { success: true, id: newId };
 	} catch (error) {
-		console.error("Error converting quote to invoice:", error);
-		return { error: "Failed to convert quote" };
+		console.error("Error creating partial invoice:", error);
+		return { error: "Failed to create partial invoice" };
+	}
+}
+
+export async function recordDocumentPaymentAction(
+	id: string,
+	amountPaid: string,
+	partnerId?: string
+): Promise<ActionState> {
+	try {
+		const doc = await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, id),
+		});
+
+		if (!doc) return { error: "Document not found" };
+
+		// FIFO Payment Logic
+		await db.transaction(async (tx) => {
+			// 1. Fetch all unpaid/partially paid invoices for this partner, sorted by oldest first
+			const unpaidInvoices = await tx.query.b2bDocuments.findMany({
+				where: and(
+					eq(b2bDocuments.partnerId, partnerId || doc.partnerId),
+					eq(b2bDocuments.type, "invoice"),
+					inArray(b2bDocuments.status, ["sent", "partially_paid"]),
+					doc.parentDocumentId 
+						? eq(b2bDocuments.parentDocumentId, doc.parentDocumentId)
+						: eq(b2bDocuments.id, doc.id)
+				),
+				with: {
+					payments: true,
+				},
+				orderBy: asc(b2bDocuments.createdAt),
+			});
+
+			let remainingPayment = Number(amountPaid);
+
+			for (const invoice of unpaidInvoices) {
+				if (remainingPayment <= 0) break;
+
+				const invoiceTotal = Number(invoice.totalAmount);
+				const currentPaid = (invoice.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+				const invoiceBalance = Math.max(0, invoiceTotal - currentPaid);
+
+				const paymentToApply = Math.min(remainingPayment, invoiceBalance);
+				const updatedPaid = currentPaid + paymentToApply;
+				
+				let newStatus: B2BDocumentStatus = updatedPaid >= (invoiceTotal - 0.01) ? "paid" : "partially_paid";
+
+				await tx.update(b2bDocuments)
+					.set({
+						status: newStatus,
+						updatedAt: new Date()
+					})
+					.where(eq(b2bDocuments.id, invoice.id));
+
+				// Record the individual transaction for accurate history
+				await tx.insert(b2bPayments).values({
+					documentId: invoice.id,
+					amount: paymentToApply.toString(),
+					paymentDate: new Date(),
+					notes: `Payment recorded via ${doc.documentNumber}`
+				});
+
+				remainingPayment -= paymentToApply;
+			}
+		});
+
+		revalidatePath(`/b2b/documents/${id}`);
+		if (partnerId || doc.partnerId) revalidatePath(`/b2b/partners/${partnerId || doc.partnerId}`);
+		revalidatePath("/b2b/documents");
+		
+		return { success: true };
+	} catch (error) {
+		console.error("Error recording payment:", error);
+		return { error: "Failed to record payment" };
 	}
 }
 
@@ -282,6 +515,60 @@ export async function updateDocumentNotesAction(id: string, notes: string): Prom
 	}
 }
 
+/**
+ * Confirms a draft invoice and optionally creates a backorder for remaining quantities
+ */
+export async function confirmInvoiceWithBackorderAction(
+	invoiceId: string,
+	createBackorder: boolean
+): Promise<ActionState> {
+	try {
+		const invoice = (await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, invoiceId),
+			with: {
+				parent: true,
+			},
+		})) as DocumentWithRelations | null;
+
+		if (!invoice || invoice.type !== "invoice") {
+			return { error: "Invoice not found" };
+		}
+
+		// 1. Mark current invoice as sent and clean up zero-quantity lines
+		await db.transaction(async (tx) => {
+			await tx.update(b2bDocuments)
+				.set({ status: "sent", updatedAt: new Date() })
+				.where(eq(b2bDocuments.id, invoiceId));
+
+			// Remove any lines that have 0 quantity (they don't belong on a professional invoice)
+			await tx.delete(b2bDocumentLines)
+				.where(and(
+					eq(b2bDocumentLines.documentId, invoiceId),
+					eq(b2bDocumentLines.quantity, "0")
+				));
+		});
+
+		// 2. If backorder requested and parent quote exists, create next draft
+		if (createBackorder && invoice.parentDocumentId) {
+			const res = await convertQuoteToInvoiceAction(invoice.parentDocumentId);
+			if (res.error) {
+				// If error is just "Quote is already fully invoiced", we ignore it
+				if (res.error !== "Quote is already fully invoiced") {
+					return res;
+				}
+			}
+		}
+
+		revalidatePath(`/b2b/documents/${invoiceId}`);
+		revalidatePath("/b2b/documents");
+		
+		return { success: true };
+	} catch (error) {
+		console.error("Error confirming invoice:", error);
+		return { error: "Failed to confirm invoice" };
+	}
+}
+
 export async function updateDocumentLinesAction(
 	id: string, 
 	data: { lines: DocumentLineFormValues[], subtotal: string, taxRate: string, totalAmount: string }
@@ -301,6 +588,7 @@ export async function updateDocumentLinesAction(
 			// 2. Insert new lines
 			const linesToInsert = data.lines.map((line) => ({
 				documentId: id,
+				sourceLineId: line.sourceLineId,
 				description: line.description,
 				quantity: line.quantity.toString(),
 				unitPrice: line.unitPrice.toString(),
