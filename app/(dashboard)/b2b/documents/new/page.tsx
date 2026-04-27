@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { NewQuoteForm } from "@/components/b2b/documents/new-quote-form";
+import { PartnerPickerList } from "@/components/b2b/documents/partner-picker-list";
 import {
 	getNextDocumentNumber,
 } from "@/lib/actions/b2b/documents";
@@ -9,7 +10,7 @@ import {
 	getPartnersAction,
 } from "@/lib/actions/b2b/partners";
 
-import { ArrowLeft, Buildings, DocumentText } from "iconsax-reactjs";
+import { ArrowLeft, DocumentText } from "iconsax-reactjs";
 
 type SearchParams = Promise<{ partner?: string }>;
 
@@ -78,39 +79,7 @@ async function PartnerPicker({ missing = false }: { missing?: boolean }) {
 						</Link>
 					</div>
 				) : (
-					<ul className="divide-secondary/15 divide-y">
-						{partners.map((p) => (
-							<li key={p.id}>
-								<Link
-									href={`/b2b/documents/new?partner=${p.id}`}
-									className="hover:bg-primary/5 group flex items-center justify-between rounded-xl px-3 py-3 transition-colors"
-								>
-									<div className="flex items-center gap-3">
-										<div className="bg-secondary/40 text-secondary-3 group-hover:bg-primary/10 group-hover:text-primary flex size-10 items-center justify-center rounded-xl transition-colors">
-											<Buildings size={18} variant="Bulk" />
-										</div>
-										<div className="flex flex-col">
-											<span className="text-foreground text-sm font-bold">
-												{p.companyName}
-											</span>
-											{p.taxId ? (
-												<span className="text-muted-foreground/60 font-mono text-[10px]">
-													ICE {p.taxId}
-												</span>
-											) : (
-												<span className="text-amber-700/70 font-mono text-[10px]">
-													ICE missing
-												</span>
-											)}
-										</div>
-									</div>
-									<span className="text-muted-foreground/40 group-hover:text-primary text-xs font-bold tracking-widest uppercase transition-colors">
-										Continue →
-									</span>
-								</Link>
-							</li>
-						))}
-					</ul>
+					<PartnerPickerList partners={partners} />
 				)}
 			</div>
 		</div>
