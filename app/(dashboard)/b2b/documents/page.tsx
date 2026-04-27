@@ -1,7 +1,12 @@
+import Link from "next/link";
+
 import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
 import { DocumentFilters } from "@/components/b2b/documents/filters";
+import { Button } from "@/components/ui/button";
 import { getDocumentsAction } from "@/lib/actions/b2b/documents";
 import { B2BDocumentStatus, B2BDocumentType, DocumentWithRelations } from "@/lib/types/b2b";
+
+import { DocumentText } from "iconsax-reactjs";
 
 type SearchParams = Promise<{
 	query?: string;
@@ -38,6 +43,12 @@ export default async function DocumentsPage(props: {
 						Unified management of all Quotations and Invoices.
 					</p>
 				</header>
+				<Link href="/b2b/documents/new">
+					<Button className="zen-glow-teal h-10 gap-2 rounded-xl font-bold">
+						<DocumentText size={16} variant="Bold" />
+						New Quotation
+					</Button>
+				</Link>
 			</div>
 
 			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">

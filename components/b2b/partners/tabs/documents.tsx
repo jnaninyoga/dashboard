@@ -1,6 +1,7 @@
 "use client";
 
-import { DocumentDialog } from "@/components/b2b/documents/dialog";
+import Link from "next/link";
+
 import { DocumentList } from "@/components/b2b/documents/list";
 import { Button } from "@/components/ui/button";
 import { TabsContent } from "@/components/ui/tabs";
@@ -23,20 +24,19 @@ export function DocumentsTab({ partner }: DocumentsTabProps) {
 					<Document size={24} variant="Bulk" className="text-primary" />
 					<h2 className="font-heading text-xl font-bold">Documents</h2>
 				</div>
-				<DocumentDialog partnerId={partner.id} contacts={partner.contacts || []}>
+				<Link href={`/b2b/documents/new?partner=${partner.id}`}>
 					<Button
 						size="sm"
 						className="zen-glow-teal h-9 gap-2 rounded-xl text-xs font-bold"
 					>
 						<Document size={16} className="mr-1" variant="Outline" />
-						New Document
+						New Quotation
 					</Button>
-				</DocumentDialog>
+				</Link>
 			</div>
 			<DocumentList
 				documents={partner.documents || []}
 				partnerId={partner.id}
-				contacts={partner.contacts || []}
 			/>
 		</TabsContent>
 	);
