@@ -10,6 +10,7 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
 import { BoxAdd, InfoCircle } from "iconsax-reactjs";
 
 interface BackorderDialogProps {
@@ -25,10 +26,10 @@ export function BackorderDialog({
 }: BackorderDialogProps) {
 	return (
 		<AlertDialog open={open} onOpenChange={onOpenChange}>
-			<AlertDialogContent className="sm:max-w-[420px] rounded-4xl p-0 overflow-hidden border-none zen-shadow-2xl bg-card">
-				<AlertDialogHeader className="p-8 pb-6 bg-card border-b">
+			<AlertDialogContent className="zen-shadow-2xl bg-card overflow-hidden rounded-4xl border-none p-0 sm:max-w-[420px]">
+				<AlertDialogHeader className="bg-card border-b p-8 pb-6">
 					<div className="flex items-center gap-4 text-left">
-						<div className="size-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 zen-teal-glow">
+						<div className="bg-primary/10 text-primary border-primary/20 zen-teal-glow flex size-14 items-center justify-center rounded-2xl border">
 							<BoxAdd size={28} variant="Bulk" />
 						</div>
 						<div>
@@ -42,30 +43,30 @@ export function BackorderDialog({
 					</div>
 				</AlertDialogHeader>
 
-				<div className="space-y-4 bg-card px-8 py-4">
-					<div className="bg-muted/30 rounded-2xl p-5 space-y-3 border border-muted-foreground/10">
-						<p className="text-sm leading-relaxed text-muted-foreground font-medium">
+				<div className="bg-card space-y-4 px-8 py-4">
+					<div className="bg-muted/30 border-muted-foreground/10 space-y-3 rounded-2xl border p-5">
+						<p className="text-muted-foreground text-sm leading-relaxed font-medium">
 							Would you like to transfer the remaining units to a{" "}
 							<strong>new draft invoice</strong> for later delivery?
 						</p>
 					</div>
 
-					<div className="flex items-center gap-2 p-3 bg-primary/10 border border-primary/10 rounded-xl text-[11px] text-primary font-medium">
+					<div className="bg-primary/10 border-primary/10 text-primary flex items-center gap-2 rounded-xl border p-3 text-[11px] font-medium">
 						<InfoCircle size={14} variant="Bold" className="shrink-0" />
 						Choosing "No" will consider the quoted lines as fully fulfilled.
 					</div>
 				</div>
 
-				<AlertDialogFooter className="p-6 bg-muted/20 border-t gap-3 sm:gap-2">
+				<AlertDialogFooter className="bg-muted/20 gap-3 border-t p-6 sm:gap-2">
 					<AlertDialogCancel
 						onClick={() => onConfirm(false)}
-						className="flex-1 h-12 rounded-2xl font-bold border-muted-foreground/20 hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 transition-all duration-200"
+						className="border-muted-foreground/20 hover:bg-destructive/5 hover:text-destructive hover:border-destructive/20 h-12 flex-1 rounded-2xl font-bold transition-all duration-200"
 					>
 						No, Finish Billing
 					</AlertDialogCancel>
 					<AlertDialogAction
 						onClick={() => onConfirm(true)}
-						className="flex-1 zen-glow-teal h-12 rounded-2xl font-black shadow-lg"
+						className="zen-glow-teal h-12 flex-1 rounded-2xl font-black shadow-lg"
 					>
 						Yes, Create Backorder
 					</AlertDialogAction>

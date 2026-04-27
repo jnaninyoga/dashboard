@@ -3,8 +3,8 @@ import {
 	b2bDocumentLines,
 	b2bDocuments,
 	b2bPartners,
-	b2bPricingTiers,
 	b2bPayments,
+	b2bPricingTiers,
 } from "@/services/database/schema";
 
 export type B2BPartner = typeof b2bPartners.$inferSelect;

@@ -1,15 +1,14 @@
+import Link from "next/link";
+
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { DocumentWithRelations } from "@/lib/types/b2b";
+
 import { format } from "date-fns";
 import {
-	Clock,
 	DocumentText,
-	Link1,
-	ReceiptText,
 	TickCircle,
 } from "iconsax-reactjs";
-import { B2BDocument, DocumentWithRelations } from "@/lib/types/b2b";
-import { Separator } from "@/components/ui/separator";
-import Link from "next/link";
 
 interface AccountStatementProps {
 	document: DocumentWithRelations;
@@ -38,7 +37,7 @@ export function AccountStatement({
 	return (
 		<div className="animate-slide-up flex flex-col gap-8 delay-200 lg:flex-row lg:justify-end">
 			<div
-				className={`bg-card w-full border border-foreground/10 shadow-sm p-8 lg:max-w-md ${showStatementView ? "rounded-[2.5rem]" : "rounded-3xl"}`}
+				className={`bg-card border-foreground/10 w-full border p-8 shadow-sm lg:max-w-md ${showStatementView ? "rounded-[2.5rem]" : "rounded-3xl"}`}
 			>
 				{/* SECTION A: Standard Invoice Totals */}
 				<div className="space-y-4">
@@ -50,7 +49,7 @@ export function AccountStatement({
 
 					<div className="space-y-3">
 						<div className="flex w-full items-center justify-between">
-							<span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">
+							<span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
 								Subtotal
 							</span>
 							<span className="font-heading text-foreground text-lg font-bold tabular-nums">
@@ -61,7 +60,7 @@ export function AccountStatement({
 							</span>
 						</div>
 						<div className="flex w-full items-center justify-between">
-							<span className="text-muted-foreground text-[11px] font-bold uppercase tracking-wider">
+							<span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
 								Tax ({parseFloat(document.taxRate)}%)
 							</span>
 							<span className="font-heading text-foreground text-lg font-bold tabular-nums">
@@ -81,12 +80,12 @@ export function AccountStatement({
 						{!showStatementView ? <Separator /> : null}
 						<div className="flex w-full items-center justify-between">
 							<span
-								className={`font-heading text-xs font-bold uppercase tracking-[0.2em] ${showStatementView ? "text-foreground" : "text-primary"}`}
+								className={`font-heading text-xs font-bold tracking-[0.2em] uppercase ${showStatementView ? "text-foreground" : "text-primary"}`}
 							>
 								{showStatementView ? "Invoice Total" : "Total Amount"}
 							</span>
 							<span
-								className={`font-heading ${showStatementView ? "text-foreground" : "text-primary"} text-3xl font-bold tabular-nums tracking-tight`}
+								className={`font-heading ${showStatementView ? "text-foreground" : "text-primary"} text-3xl font-bold tracking-tight tabular-nums`}
 							>
 								{currentTotal.toLocaleString(undefined, {
 									minimumFractionDigits: 2,
@@ -99,14 +98,14 @@ export function AccountStatement({
 
 						{/* Payment History (Granular Records) */}
 						{document.payments && document.payments.length > 0 ? (
-							<div className="space-y-3 animate-in fade-in slide-in-from-top-1 mt-4 border-t border-dashed border-foreground/15 py-3">
+							<div className="animate-in fade-in slide-in-from-top-1 border-foreground/15 mt-4 space-y-3 border-t border-dashed py-3">
 								{document.payments.map((payment) => (
 									<div
 										key={payment.id}
 										className="flex w-full items-center justify-between"
 									>
 										<div className="flex items-center gap-2">
-											<div className="size-5 rounded-full bg-green-500/10 flex items-center justify-center">
+											<div className="flex size-5 items-center justify-center rounded-full bg-green-500/10">
 												<TickCircle
 													size={12}
 													variant="Bold"
@@ -118,7 +117,7 @@ export function AccountStatement({
 												{format(new Date(payment.paymentDate), "MM/dd/yyyy")}
 											</span>
 										</div>
-										<span className="font-heading text-green-600 font-bold tabular-nums">
+										<span className="font-heading font-bold text-green-600 tabular-nums">
 											- {parseFloat(payment.amount).toLocaleString()}
 											<span className="ml-1 text-xs font-normal opacity-60">
 												MAD
@@ -136,26 +135,26 @@ export function AccountStatement({
 					<>
 						{/* SECTION B: Account Statement */}
 						{previousInvoices.length > 0 ? (
-							<div className="space-y-5 border-t border-foreground/10 py-4 mt-4">
+							<div className="border-foreground/10 mt-4 space-y-5 border-t py-4">
 								<div className="flex items-center justify-between">
-									<h3 className="font-heading text-xs font-bold uppercase tracking-[0.2em] text-foreground">
+									<h3 className="font-heading text-foreground text-xs font-bold tracking-[0.2em] uppercase">
 										Account Statement
 									</h3>
-									<Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[9px] font-bold">
+									<Badge className="border-amber-500/20 bg-amber-500/10 text-[9px] font-bold text-amber-600">
 										Outstanding
 									</Badge>
 								</div>
 
-								<div className="bg-secondary/20 rounded-2xl border border-secondary-2/70 overflow-hidden">
-									<div className="divide-y divide-secondary-2/70">
+								<div className="bg-secondary/20 border-secondary-2/70 overflow-hidden rounded-2xl border">
+									<div className="divide-secondary-2/70 divide-y">
 										{previousInvoices.map((inv) => (
 											<Link
 												key={inv.id}
 												href={`/b2b/documents/${inv.id}`}
-												className="flex items-center justify-between px-5 py-3 hover:bg-secondary/40 transition-colors group"
+												className="hover:bg-secondary/40 group flex items-center justify-between px-5 py-3 transition-colors"
 											>
 												<div className="flex items-center gap-3">
-													<div className="size-8 rounded-xl bg-secondary-2/20 flex items-center justify-center group-hover:bg-secondary-2/30 transition-colors">
+													<div className="bg-secondary-2/20 group-hover:bg-secondary-2/30 flex size-8 items-center justify-center rounded-xl transition-colors">
 														<DocumentText
 															size={16}
 															variant="Bulk"
@@ -163,16 +162,16 @@ export function AccountStatement({
 														/>
 													</div>
 													<div className="flex flex-col">
-														<span className="text-xs font-bold text-secondary-foreground">
+														<span className="text-secondary-foreground text-xs font-bold">
 															{inv.documentNumber}
 														</span>
-														<span className="text-[9px] font-medium text-muted-foreground/70 uppercase tracking-wider">
+														<span className="text-muted-foreground/70 text-[9px] font-medium tracking-wider uppercase">
 															{format(new Date(inv.issueDate), "MMM dd, yyyy")}
 														</span>
 													</div>
 												</div>
 												<div className="text-right">
-													<span className="font-heading text-sm font-bold text-secondary-foreground tabular-nums">
+													<span className="font-heading text-secondary-foreground text-sm font-bold tabular-nums">
 														{(
 															Number(inv.totalAmount) -
 															(inv.payments || []).reduce(
@@ -190,8 +189,8 @@ export function AccountStatement({
 											</Link>
 										))}
 									</div>
-									<div className="bg-secondary/40 flex items-center justify-between px-5 py-2 border-t border-secondary-2/70">
-										<span className="text-xs font-bold uppercase tracking-widest text-primary">
+									<div className="bg-secondary/40 border-secondary-2/70 flex items-center justify-between border-t px-5 py-2">
+										<span className="text-primary text-xs font-bold tracking-widest uppercase">
 											Accumulated Debt
 										</span>
 										<span className="font-heading text-primary font-bold tabular-nums">
@@ -211,11 +210,11 @@ export function AccountStatement({
 						<Separator />
 						<div className="mt-4 flex w-full items-center justify-between">
 							<div className="flex flex-col text-left">
-								<span className="font-heading text-sm font-black uppercase tracking-[0.2em] text-primary">
+								<span className="font-heading text-primary text-sm font-black tracking-[0.2em] uppercase">
 									Total Amount Due
 								</span>
 							</div>
-							<span className="font-heading text-primary text-4xl font-black tabular-nums tracking-tighter">
+							<span className="font-heading text-primary text-4xl font-black tracking-tighter tabular-nums">
 								{(totalAmountDue - amountPaid).toLocaleString(undefined, {
 									minimumFractionDigits: 2,
 								})}

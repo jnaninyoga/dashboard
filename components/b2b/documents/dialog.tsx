@@ -463,12 +463,12 @@ export function DocumentDialog({
 																		<div className="flex items-center gap-2">
 																			<span>{contact.fullName}</span>
 																			{contact.role && (
-																				<span className="text-[10px] opacity-40 font-normal">
+																				<span className="text-[10px] font-normal opacity-40">
 																					({contact.role})
 																				</span>
 																			)}
 																			{contact.isPrimary && (
-																				<span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full uppercase tracking-tighter">
+																				<span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[9px] tracking-tighter uppercase">
 																					Primary
 																				</span>
 																			)}
@@ -476,7 +476,7 @@ export function DocumentDialog({
 																	</SelectItem>
 																))
 															) : (
-																<div className="p-4 text-center text-xs text-muted-foreground">
+																<div className="text-muted-foreground p-4 text-center text-xs">
 																	No contacts found for this partner
 																</div>
 															)}
@@ -633,7 +633,7 @@ export function DocumentDialog({
 																					</div>
 																				</FormControl>
 																				{maxQty && (
-																					<p className="text-[9px] text-amber-600 font-bold text-center">
+																					<p className="text-center text-[9px] font-bold text-amber-600">
 																						Max: {maxQty}
 																					</p>
 																				)}
