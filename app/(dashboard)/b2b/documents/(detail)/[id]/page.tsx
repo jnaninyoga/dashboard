@@ -126,7 +126,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 	}
 
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+		<>
 			{/* Breadcrumb */}
 			<Link
 				href="/b2b/documents"
@@ -344,6 +344,6 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				initialNotes={document.notes}
 				readOnly={document.status !== "draft" || !!document.archivedAt}
 			/>
-		</div>
+		</>
 	);
 }

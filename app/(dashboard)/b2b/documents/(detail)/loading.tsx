@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+		<>
 			{/* Breadcrumb Skeleton */}
 			<Skeleton className="bg-muted-foreground/10 h-4 w-32" />
 
@@ -80,6 +80,6 @@ export default function Loading() {
 
 			{/* Notes Mimic */}
 			<Skeleton className="bg-muted-foreground/10 mt-4 h-32 w-full rounded-2xl" />
-		</div>
+		</>
 	);
 }

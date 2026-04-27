@@ -179,7 +179,7 @@ export function NewQuoteForm({
 		<Form {...form}>
 			<form
 				onSubmit={form.handleSubmit(onSubmit)}
-				className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6"
+				className="flex flex-col gap-6"
 			>
 				{/* Breadcrumb */}
 				<Link

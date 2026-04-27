@@ -39,7 +39,7 @@ async function PartnerPicker({ missing = false }: { missing?: boolean }) {
 	const { partners = [] } = await getPartnersAction();
 
 	return (
-		<div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
+		<>
 			<Link
 				href="/b2b/documents"
 				className="group text-muted-foreground hover:text-primary flex w-fit items-center gap-2 text-sm transition-colors"
@@ -80,6 +80,6 @@ async function PartnerPicker({ missing = false }: { missing?: boolean }) {
 					<PartnerPickerList partners={partners} />
 				)}
 			</div>
-		</div>
+		</>
 	);
 }
