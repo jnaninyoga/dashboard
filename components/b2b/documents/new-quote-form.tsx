@@ -24,6 +24,7 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import {
 	Popover,
 	PopoverAnchor,
@@ -45,7 +46,6 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { createDocumentAction } from "@/lib/actions/b2b/documents";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
 import {
@@ -63,6 +63,7 @@ import {
 	DocumentText,
 	Edit2,
 	MoneyTime,
+	NoteText,
 	Refresh,
 	Save2,
 	Trash,
@@ -573,24 +574,26 @@ export function NewQuoteForm({
 					</div>
 				</div>
 
-				{/* Notes */}
+				{/* Notes — same card + MarkdownEditor as the document detail page */}
 				<div className="animate-slide-up bg-card rounded-3xl border p-6 shadow-sm delay-200">
+					<div className="mb-4 flex h-10 items-center gap-2">
+						<NoteText size={20} className="text-primary" variant="Bulk" />
+						<h3 className="text-primary text-sm font-bold tracking-widest uppercase">
+							Notes
+						</h3>
+					</div>
 					<FormField
 						control={form.control}
 						name="document.notes"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
-									Notes (optional)
-								</FormLabel>
 								<FormControl>
-									<Textarea
-										{...field}
+									<MarkdownEditor
 										value={field.value || ""}
-										rows={4}
-										className="rounded-xl"
-										placeholder="Terms, scope clarifications, internal remarks…"
+										onChange={(e) => field.onChange(e.target.value)}
+										placeholder="Add terms, bank details, or internal remarks..."
 										disabled={isPending}
+										className="border-secondary/10"
 									/>
 								</FormControl>
 							</FormItem>
