@@ -1,12 +1,7 @@
 "use client";
 
-import {
-	startTransition,
-	useActionState,
-	useEffect,
-	useRef,
-	useState,
-} from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 import { Badge } from "@/components/ui/badge";
@@ -209,6 +204,7 @@ export function DocumentDialog({
 		lines?: (Partial<typeof documentLineSchema._input> & { maxQuantity?: number })[];
 	};
 }) {
+	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [pricingTiers, setPricingTiers] = useState<B2BPricingTier[]>([]);
 
@@ -216,6 +212,10 @@ export function DocumentDialog({
 		createDocumentAction,
 		null,
 	);
+	// Each `state` object from useActionState is referentially stable across the
+	// renders that follow it. Without this latch the success effect fires every
+	// render after submit — two toasts, dialog flicker — instead of exactly once.
+	const handledStateRef = useRef<typeof state>(null);
 
 	const form = useForm<CreateDocumentValues>({
 		resolver: zodResolver(createDocumentWithLinesSchema),
@@ -251,16 +251,18 @@ export function DocumentDialog({
 
 	/* ── Side-effects ─── */
 	useEffect(() => {
-		if (state?.success) {
-			toast.success("Document created successfully");
-			startTransition(() => {
-				setOpen(false);
-				form.reset();
-			});
-		} else if (state?.error) {
+		if (!state || handledStateRef.current === state) return;
+		handledStateRef.current = state;
+
+		if (state.success && state.id) {
+			toast.success("Document created");
+			setOpen(false);
+			form.reset();
+			router.push(`/b2b/documents/${state.id}`);
+		} else if (state.error) {
 			toast.error(state.error);
 		}
-	}, [state, form]);
+	}, [state, form, router]);
 
 	useEffect(() => {
 		if (open) {
