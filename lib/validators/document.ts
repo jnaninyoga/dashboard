@@ -14,10 +14,14 @@ export const documentLineSchema = z.object({
 export type DocumentLineFormValues = z.infer<typeof documentLineSchema>;
 
 // --- B2B DOCUMENT SCHEMA ---
+// Numbering, subtotal, and totalAmount are owned server-side: the next
+// document_number is reserved at insert time; subtotal / totalAmount are
+// recomputed from the lines + taxRate. They're optional here so the form
+// can leave them empty.
 export const documentSchema = z.object({
 	partnerId: z.string().uuid("Please select a partner"),
 	contactId: z.string().uuid().optional().nullable(),
-	type: z.enum(["quote", "invoice"]),
+	type: z.enum(["quote", "invoice"]).default("quote"),
 	status: z.enum([
 		"draft",
 		"sent",
@@ -26,12 +30,12 @@ export const documentSchema = z.object({
 		"paid",
 		"cancelled",
 	]),
-	documentNumber: z.string().min(1, "Document number is required"),
+	documentNumber: z.string().optional(),
 	issueDate: z.string().min(1, "Issue date is required"),
 	dueDate: z.string().optional().nullable(),
-	subtotal: z.string().min(1),
+	subtotal: z.string().optional(),
 	taxRate: z.string().min(1),
-	totalAmount: z.string().min(1, "Total amount is required"),
+	totalAmount: z.string().optional(),
 	notes: z.string().optional().nullable(),
 	parentDocumentId: z.string().uuid().optional().nullable(),
 });
@@ -46,30 +50,10 @@ export const createDocumentWithLinesSchema = z.object({
 		.min(1, "At least one line item is required"),
 });
 
-// --- PARTIAL INVOICE SCHEMA ---
-export const partialInvoiceSchema = z.object({
-	lines: z.array(
-		z.object({
-			sourceLineId: z.string(),
-			description: z.string(),
-			unitPrice: z.string(),
-			quantity: z.string(),
-			totalPrice: z.string(),
-			maxQuantity: z.number(),
-		}),
-	),
-	adjustment: z.string().default("0"),
-	adjustmentLabel: z.string().default("Financial Adjustment"),
-	taxRate: z.string(),
-	notes: z.string().optional(),
-});
-
-export type PartialInvoiceFormValues = z.infer<typeof partialInvoiceSchema>;
-
 // --- RECORD PAYMENT SCHEMA ---
 export const recordPaymentSchema = z.object({
-	amountPaid: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, {
-		message: "Please enter a valid amount",
+	amountPaid: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+		message: "Enter a positive amount",
 	}),
 });
 
