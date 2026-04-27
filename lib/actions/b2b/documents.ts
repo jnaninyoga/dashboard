@@ -20,6 +20,11 @@ type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 // totals calculation produces consistent values for the audit trail.
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
+// Morocco ICE: 15 digits, no separators. Required on B2B invoices so the buyer
+// can claim the VAT credit (CGI art. 145, B2B since 2019).
+const isValidIce = (s: string | null | undefined): boolean =>
+	typeof s === "string" && /^\d{15}$/.test(s.trim());
+
 type LineInput = { quantity: number | string; unitPrice: number | string };
 
 /**
@@ -175,6 +180,7 @@ export async function updateDocumentStatusAction(
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
+			with: { partner: true },
 		});
 		if (!doc) return { error: "Document not found" };
 		if (doc.archivedAt) return { error: "Archived documents cannot change status" };
@@ -183,6 +189,15 @@ export async function updateDocumentStatusAction(
 		if (!allowed.includes(status)) {
 			return {
 				error: `Cannot transition ${doc.status} → ${status}. Allowed: ${allowed.join(", ") || "(terminal)"}`,
+			};
+		}
+
+		// Issuing an invoice requires a valid buyer ICE (15 digits) — without it
+		// the partner cannot reclaim VAT and the invoice fails Morocco audit.
+		if (status === "sent" && doc.type === "invoice" && !isValidIce(doc.partner?.taxId)) {
+			return {
+				error:
+					"Add the buyer's ICE (15 digits) to the partner before issuing this invoice.",
 			};
 		}
 
@@ -698,11 +713,24 @@ export async function confirmInvoiceWithBackorderAction(
 			where: eq(b2bDocuments.id, invoiceId),
 			with: {
 				parent: true,
+				partner: true,
 			},
 		})) as DocumentWithRelations | null;
 
 		if (!invoice || invoice.type !== "invoice") {
 			return { error: "Invoice not found" };
+		}
+		if (invoice.archivedAt) {
+			return { error: "Archived documents cannot change status" };
+		}
+		if (invoice.status !== "draft") {
+			return { error: "Only drafts can be confirmed" };
+		}
+		if (!isValidIce(invoice.partner?.taxId)) {
+			return {
+				error:
+					"Add the buyer's ICE (15 digits) to the partner before issuing this invoice.",
+			};
 		}
 
 		// 1. Mark current invoice as sent and clean up zero-quantity lines

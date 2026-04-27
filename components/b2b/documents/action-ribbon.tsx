@@ -25,6 +25,7 @@ import {
 	Send,
 	TickCircle,
 	Trash,
+	Warning2,
 } from "iconsax-reactjs";
 import { toast } from "sonner";
 
@@ -93,6 +94,13 @@ export function DocumentActionRibbon({
 	const isQuote = doc.type === "quote";
 	const isInvoice = doc.type === "invoice";
 
+	// Morocco ICE (Identifiant Commun de l'Entreprise): 15 digits, mandatory on
+	// B2B invoices. We block the "Confirm & Send" path for invoices when the
+	// buyer has no valid ICE so the partner doesn't lose VAT deductibility.
+	const buyerIce = doc.partner?.taxId?.trim() ?? "";
+	const buyerIceValid = /^\d{15}$/.test(buyerIce);
+	const blockSendForMissingIce = isInvoice && !buyerIceValid;
+
 	return (
 		<div className="animate-slide-up bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
 			{/* Linked Documents / Relations (Left Side) */}
@@ -154,6 +162,21 @@ export function DocumentActionRibbon({
 					</Badge>
 				) : null}
 
+				{!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce ? (
+					<Link
+						href={`/b2b/partners/${doc.partnerId}`}
+						className="text-amber-700 hover:underline"
+					>
+						<Badge
+							variant="outline"
+							className="gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-amber-700 uppercase"
+						>
+							<Warning2 size={12} variant="Bold" />
+							Buyer ICE missing
+						</Badge>
+					</Link>
+				) : null}
+
 				{/* Draft -> Confirm & Send (With Backorder Logic) */}
 				{!doc.archivedAt && doc.status === "draft" ? (
 					<>
@@ -200,7 +223,12 @@ export function DocumentActionRibbon({
 									handleStatusUpdate("sent");
 								}
 							}}
-							disabled={isPending}
+							disabled={isPending || blockSendForMissingIce}
+							title={
+								blockSendForMissingIce
+									? "Add the buyer's ICE on the partner before issuing this invoice"
+									: undefined
+							}
 							className="zen-glow-teal gap-2 rounded-xl font-bold"
 						>
 							<Send size={18} variant="Bold" />
