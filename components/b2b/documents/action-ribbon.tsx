@@ -1,34 +1,37 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useState,useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-	updateDocumentStatusAction,
-	convertQuoteToInvoiceAction,
+	archiveDocumentAction,
 	confirmInvoiceWithBackorderAction,
+	convertQuoteToInvoiceAction,
+	deleteDocumentAction,
+	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
 import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
 
 import {
+	Archive,
 	ArrowRight,
-	CloseCircle,
 	Convert,
 	Link1,
 	MoneySend,
 	Send,
 	TickCircle,
+	Trash,
 } from "iconsax-reactjs";
 import { toast } from "sonner";
 
-import { PDFDownloadBtn } from "./download-btn";
-import { DocumentDialog } from "./dialog";
-import { RecordPaymentDialog } from "./record-payment-dialog";
+import { ArchiveDocumentDialog } from "./archive-dialog";
 import { BackorderDialog } from "./backorder-dialog";
+import { PDFDownloadBtn } from "./download-btn";
+import { RecordPaymentDialog } from "./record-payment-dialog";
 
 export function DocumentActionRibbon({ 
 	doc, 
@@ -41,8 +44,9 @@ export function DocumentActionRibbon({
 }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
-    const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+	const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 	const [isBackorderOpen, setIsBackorderOpen] = useState(false);
+	const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
 	const handleStatusUpdate = (status: B2BDocumentStatus) => {
 		startTransition(async () => {
@@ -56,6 +60,32 @@ export function DocumentActionRibbon({
 				router.refresh();
 			} else {
 				toast.error(res.error || "Failed to update document");
+			}
+		});
+	};
+
+	const handleDeleteDraft = () => {
+		if (!confirm("Delete this draft? This cannot be undone.")) return;
+		startTransition(async () => {
+			const res = await deleteDocumentAction(doc.id, doc.partnerId);
+			if (res.success) {
+				toast.success("Draft deleted");
+				router.push("/b2b/documents");
+			} else {
+				toast.error(res.error || "Failed to delete draft");
+			}
+		});
+	};
+
+	const handleArchive = (reason: string) => {
+		startTransition(async () => {
+			const res = await archiveDocumentAction(doc.id, reason, doc.partnerId);
+			if (res.success) {
+				toast.success("Document archived");
+				setIsArchiveOpen(false);
+				router.refresh();
+			} else {
+				toast.error(res.error || "Failed to archive");
 			}
 		});
 	};
@@ -112,10 +142,20 @@ export function DocumentActionRibbon({
 
 			{/* Actions (Right Side - Stable CTA) */}
 			<div className="flex flex-wrap items-center gap-3">
-                <PDFDownloadBtn doc={doc} profile={profile} />
+				<PDFDownloadBtn doc={doc} profile={profile} />
+
+				{doc.archivedAt ? (
+					<Badge
+						variant="outline"
+						className="gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-amber-700 uppercase"
+					>
+						<Archive size={12} variant="Bold" />
+						Archived
+					</Badge>
+				) : null}
 
 				{/* Draft -> Confirm & Send (With Backorder Logic) */}
-				{doc.status === "draft" ? (
+				{!doc.archivedAt && doc.status === "draft" ? (
 					<>
 						<Button
 							onClick={() => {
@@ -185,7 +225,7 @@ export function DocumentActionRibbon({
 				) : null}
 
 				{/* Quote Specific: Sent -> Accepted */}
-				{isQuote && doc.status === "sent" ? (
+				{!doc.archivedAt && isQuote && doc.status === "sent" ? (
 					<Button
 						onClick={() => handleStatusUpdate("accepted")}
 						disabled={isPending}
@@ -197,7 +237,7 @@ export function DocumentActionRibbon({
 				) : null}
 
 				{/* Quote Specific: Accepted -> Generate Invoice (Only if no invoices exist yet) */}
-				{isQuote && doc.status === "accepted" && (!doc.children || doc.children.length === 0) ? (
+				{!doc.archivedAt && isQuote && doc.status === "accepted" && (!doc.children || doc.children.length === 0) ? (
 					<Button
 						onClick={() => {
 							startTransition(async () => {
@@ -220,7 +260,7 @@ export function DocumentActionRibbon({
 				) : null}
 
 				{/* Invoice Specific: Sent/Partially Paid -> Record Payment */}
-				{isInvoice && (doc.status === "sent" || doc.status === "partially_paid") ? (
+				{!doc.archivedAt && isInvoice && (doc.status === "sent" || doc.status === "partially_paid") ? (
 					<>
                         <Button
                             onClick={() => setIsPaymentOpen(true)}
@@ -238,30 +278,39 @@ export function DocumentActionRibbon({
                     </>
 				) : null}
 
-				{/* Invoice Specific: Paid -> Unpaid (Sent) */}
-				{isInvoice && doc.status === "paid" ? (
+				{/* Retire action: drafts are deleted (irreversible);
+				    issued documents are archived (preserves audit trail). */}
+				{!doc.archivedAt && doc.status === "draft" ? (
 					<Button
-						onClick={() => handleStatusUpdate("sent")}
-						disabled={isPending}
-						variant="outline"
-						className="border-destructive/20 text-destructive hover:bg-destructive/5 gap-2 rounded-xl font-bold"
-					>
-						<CloseCircle size={18} variant="Outline" />
-						Mark as Unpaid
-					</Button>
-				) : null}
-
-				{/* Cancel Action */}
-				{doc.status !== "cancelled" && doc.status !== "paid" ? (
-					<Button
-						onClick={() => handleStatusUpdate("cancelled")}
+						onClick={handleDeleteDraft}
 						disabled={isPending}
 						variant="ghost"
 						className="text-muted-foreground hover:bg-destructive/5 hover:text-destructive gap-2 rounded-xl font-medium"
 					>
-						<CloseCircle size={18} />
-						Cancel Document
+						<Trash size={18} />
+						Delete Draft
 					</Button>
+				) : null}
+
+				{!doc.archivedAt && doc.status !== "draft" ? (
+					<>
+						<Button
+							onClick={() => setIsArchiveOpen(true)}
+							disabled={isPending}
+							variant="ghost"
+							className="text-muted-foreground gap-2 rounded-xl font-medium hover:bg-amber-500/10 hover:text-amber-700"
+						>
+							<Archive size={18} />
+							Archive
+						</Button>
+						<ArchiveDocumentDialog
+							documentNumber={doc.documentNumber}
+							open={isArchiveOpen}
+							onOpenChange={setIsArchiveOpen}
+							onConfirm={handleArchive}
+							pending={isPending}
+						/>
+					</>
 				) : null}
 			</div>
 		</div>

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
-import { B2BDocumentLine, B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
+import { B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
 import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
@@ -15,6 +15,17 @@ import {
 import { and, asc, desc, eq, ilike, inArray, not, or, sql } from "drizzle-orm";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+// Allowed status transitions. Anything outside this map is rejected — once an
+// invoice is `sent`, payments drive it forward; corrections go through archive.
+const ALLOWED_STATUS_TRANSITIONS: Record<B2BDocumentStatus, B2BDocumentStatus[]> = {
+	draft: ["sent"],
+	sent: ["accepted", "partially_paid", "paid"],
+	accepted: [],
+	partially_paid: ["paid"],
+	paid: [],
+	cancelled: [],
+};
 
 export type ActionState = {
 	error?: string;
@@ -135,6 +146,19 @@ export async function updateDocumentStatusAction(
 	partnerId?: string
 ): Promise<ActionState> {
 	try {
+		const doc = await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, id),
+		});
+		if (!doc) return { error: "Document not found" };
+		if (doc.archivedAt) return { error: "Archived documents cannot change status" };
+
+		const allowed = ALLOWED_STATUS_TRANSITIONS[doc.status] ?? [];
+		if (!allowed.includes(status)) {
+			return {
+				error: `Cannot transition ${doc.status} → ${status}. Allowed: ${allowed.join(", ") || "(terminal)"}`,
+			};
+		}
+
 		await db
 			.update(b2bDocuments)
 			.set({ status, updatedAt: new Date() })
@@ -143,7 +167,7 @@ export async function updateDocumentStatusAction(
 		if (partnerId) revalidatePath(`/b2b/partners/${partnerId}`);
 		revalidatePath("/b2b/documents");
 		revalidatePath(`/b2b/documents/${id}`);
-		
+
 		return { success: true };
 	} catch (error) {
 		console.error("Error updating document status:", error);
@@ -151,17 +175,88 @@ export async function updateDocumentStatusAction(
 	}
 }
 
+/**
+ * Archive an issued document (soft-hide). The row, its number, and its history
+ * are preserved — required for an audit-grade trail. Drafts use deleteDocumentAction.
+ */
+export async function archiveDocumentAction(
+	id: string,
+	reason?: string,
+	partnerId?: string,
+): Promise<ActionState> {
+	try {
+		const doc = await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, id),
+		});
+		if (!doc) return { error: "Document not found" };
+		if (doc.status === "draft") {
+			return { error: "Drafts should be deleted, not archived" };
+		}
+		if (doc.archivedAt) return { error: "Document is already archived" };
+
+		await db
+			.update(b2bDocuments)
+			.set({
+				archivedAt: new Date(),
+				archivedReason: reason?.trim() || null,
+				updatedAt: new Date(),
+			})
+			.where(eq(b2bDocuments.id, id));
+
+		if (partnerId) revalidatePath(`/b2b/partners/${partnerId}`);
+		revalidatePath("/b2b/documents");
+		revalidatePath(`/b2b/documents/${id}`);
+
+		return { success: true };
+	} catch (error) {
+		console.error("Error archiving document:", error);
+		return { error: "Failed to archive document" };
+	}
+}
+
+export async function unarchiveDocumentAction(
+	id: string,
+	partnerId?: string,
+): Promise<ActionState> {
+	try {
+		const doc = await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, id),
+		});
+		if (!doc) return { error: "Document not found" };
+		if (!doc.archivedAt) return { error: "Document is not archived" };
+
+		await db
+			.update(b2bDocuments)
+			.set({ archivedAt: null, archivedReason: null, updatedAt: new Date() })
+			.where(eq(b2bDocuments.id, id));
+
+		if (partnerId) revalidatePath(`/b2b/partners/${partnerId}`);
+		revalidatePath("/b2b/documents");
+		revalidatePath(`/b2b/documents/${id}`);
+
+		return { success: true };
+	} catch (error) {
+		console.error("Error restoring document:", error);
+		return { error: "Failed to restore document" };
+	}
+}
+
 export async function getDocumentsAction(filters?: {
 	query?: string;
 	type?: B2BDocumentType | "all";
 	status?: B2BDocumentStatus | "all";
+	includeArchived?: boolean;
 }): Promise<{ documents?: DocumentWithRelations[]; error?: string }> {
-	const { query, type, status } = filters || {};
+	const { query, type, status, includeArchived } = filters || {};
 
 	try {
 		const documents = (await db.query.b2bDocuments.findMany({
-			where: (docs) => {
+			where: (docs, { isNull }) => {
 				const conditions = [];
+
+				if (!includeArchived) {
+					conditions.push(isNull(docs.archivedAt));
+				}
 
 				if (query) {
 					conditions.push(
@@ -229,11 +324,12 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 		let previousInvoices: any[] = [];
 		if (document.type === "invoice" && document.parentDocumentId) {
 			previousInvoices = await db.query.b2bDocuments.findMany({
-				where: and(
-					eq(b2bDocuments.partnerId, document.partnerId),
-					eq(b2bDocuments.type, "invoice"),
-					eq(b2bDocuments.parentDocumentId, document.parentDocumentId),
-					not(eq(b2bDocuments.status, "cancelled")),
+				where: (docs, { isNull }) => and(
+					eq(docs.partnerId, document.partnerId),
+					eq(docs.type, "invoice"),
+					eq(docs.parentDocumentId!, document.parentDocumentId!),
+					not(eq(docs.status, "cancelled")),
+					isNull(docs.archivedAt),
 				),
 				with: {
 					lines: true,
@@ -489,7 +585,7 @@ export async function recordDocumentPaymentAction(
 				const paymentToApply = Math.min(remainingPayment, invoiceBalance);
 				const updatedPaid = currentPaid + paymentToApply;
 				
-				let newStatus: B2BDocumentStatus = updatedPaid >= (invoiceTotal - 0.01) ? "paid" : "partially_paid";
+				const newStatus: B2BDocumentStatus = updatedPaid >= (invoiceTotal - 0.01) ? "paid" : "partially_paid";
 
 				await tx.update(b2bDocuments)
 					.set({
@@ -523,6 +619,14 @@ export async function recordDocumentPaymentAction(
 
 export async function deleteDocumentAction(id: string, partnerId?: string): Promise<ActionState> {
 	try {
+		const doc = await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, id),
+		});
+		if (!doc) return { error: "Document not found" };
+		if (doc.status !== "draft") {
+			return { error: "Issued documents must be archived, not deleted" };
+		}
+
 		await db.delete(b2bDocuments).where(eq(b2bDocuments.id, id));
 		if (partnerId) revalidatePath(`/b2b/partners/${partnerId}`);
 		revalidatePath("/b2b/documents");
@@ -535,11 +639,19 @@ export async function deleteDocumentAction(id: string, partnerId?: string): Prom
 
 export async function updateDocumentNotesAction(id: string, notes: string): Promise<ActionState> {
 	try {
+		const doc = await db.query.b2bDocuments.findFirst({
+			where: eq(b2bDocuments.id, id),
+		});
+		if (!doc) return { error: "Document not found" };
+		if (doc.status !== "draft") {
+			return { error: "Notes can only be edited on drafts" };
+		}
+
 		await db
 			.update(b2bDocuments)
 			.set({ notes, updatedAt: new Date() })
 			.where(eq(b2bDocuments.id, id));
-		
+
 		revalidatePath(`/b2b/documents/${id}`);
 		return { success: true };
 	} catch (error) {

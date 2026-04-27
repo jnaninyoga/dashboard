@@ -12,11 +12,13 @@ import { toast } from "sonner";
 interface EditableNotesProps {
 	documentId: string;
 	initialNotes: string | null;
+	readOnly?: boolean;
 }
 
 export function EditableNotes({
 	documentId,
 	initialNotes,
+	readOnly = false,
 }: EditableNotesProps) {
 	const [notes, setNotes] = useState(initialNotes || "");
 	const [isPending, startTransition] = useTransition();
@@ -34,6 +36,8 @@ export function EditableNotes({
 
 	const hasChanged = notes !== (initialNotes || "");
 
+	if (readOnly && !notes) return null;
+
 	return (
 		<div className="animate-slide-up bg-card rounded-3xl border p-6 shadow-sm delay-200">
 			<div className="mb-4 flex h-10 items-center justify-between">
@@ -43,7 +47,7 @@ export function EditableNotes({
 						Notes
 					</h3>
 				</div>
-				{hasChanged ? (
+				{!readOnly && hasChanged ? (
 					<Button
 						onClick={handleSave}
 						disabled={isPending}
@@ -60,7 +64,7 @@ export function EditableNotes({
 				value={notes}
 				onChange={(e) => setNotes(e.target.value)}
 				placeholder="Add terms, bank details, or internal remarks..."
-				disabled={isPending}
+				disabled={isPending || readOnly}
 				className="border-secondary/10"
 			/>
 		</div>

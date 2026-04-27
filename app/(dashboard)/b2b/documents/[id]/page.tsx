@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { AccountStatement } from "@/components/b2b/documents/account-statement";
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
-import { AccountStatement } from "@/components/b2b/documents/account-statement";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
 	Table,
 	TableBody,
@@ -239,7 +238,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 					{amountPaid > 0 && !isQuote ? (
 						<div className="flex flex-col">
-							<div className="text-primary/30 font-heading text-2xl font-black tabular-nums line-through decoration-primary/20 decoration-2">
+							<div className="text-primary/30 font-heading decoration-primary/20 text-2xl font-black tabular-nums line-through decoration-2">
 								{currentTotal.toLocaleString("en-US", {
 									minimumFractionDigits: 2,
 									maximumFractionDigits: 2,
@@ -340,7 +339,11 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			)}
 
 			{/* Notes Section */}
-			<EditableNotes documentId={document.id} initialNotes={document.notes} />
+			<EditableNotes
+				documentId={document.id}
+				initialNotes={document.notes}
+				readOnly={document.status !== "draft" || !!document.archivedAt}
+			/>
 		</div>
 	);
 }
