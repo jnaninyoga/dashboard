@@ -32,7 +32,10 @@ import { toast } from "sonner";
 import { ArchiveDocumentDialog } from "./archive-dialog";
 import { BackorderDialog } from "./backorder-dialog";
 import { PDFDownloadBtn } from "./download-btn";
-import { RecordPaymentDialog } from "./record-payment-dialog";
+import {
+	type PaymentQueueEntry,
+	RecordPaymentDialog,
+} from "./record-payment-dialog";
 
 export function DocumentActionRibbon({ 
 	doc, 
@@ -100,6 +103,47 @@ export function DocumentActionRibbon({
 	const buyerIce = doc.partner?.taxId?.trim() ?? "";
 	const buyerIceValid = /^\d{15}$/.test(buyerIce);
 	const blockSendForMissingIce = isInvoice && !buyerIceValid;
+
+	// FIFO queue for the payment dialog: every open invoice in the same scope as
+	// the server, sorted by document number so the preview matches what
+	// recordDocumentPaymentAction will actually do.
+	const paymentQueue: PaymentQueueEntry[] = (() => {
+		const docPaid = (doc.payments || []).reduce(
+			(s, p) => s + Number(p.amount),
+			0,
+		);
+		const self =
+			isInvoice && (doc.status === "sent" || doc.status === "partially_paid")
+				? [
+						{
+							id: doc.id,
+							documentNumber: doc.documentNumber,
+							totalAmount: Number(doc.totalAmount),
+							amountPaid: docPaid,
+						},
+					]
+				: [];
+		const siblings = previousInvoices
+			.filter(
+				(inv) =>
+					inv &&
+					inv.id !== doc.id &&
+					!inv.archivedAt &&
+					(inv.status === "sent" || inv.status === "partially_paid"),
+			)
+			.map((inv) => ({
+				id: inv.id as string,
+				documentNumber: inv.documentNumber as string,
+				totalAmount: Number(inv.totalAmount),
+				amountPaid: (inv.payments || []).reduce(
+					(s: number, p: { amount: string | number }) => s + Number(p.amount),
+					0,
+				),
+			}));
+		return [...self, ...siblings].sort((a, b) =>
+			a.documentNumber.localeCompare(b.documentNumber),
+		);
+	})();
 
 	return (
 		<div className="animate-slide-up bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
@@ -298,10 +342,11 @@ export function DocumentActionRibbon({
                             <MoneySend size={18} variant="Bold" />
                             Record Payment
                         </Button>
-                        <RecordPaymentDialog 
-                            doc={doc} 
-                            open={isPaymentOpen} 
-                            onOpenChange={setIsPaymentOpen} 
+                        <RecordPaymentDialog
+                            doc={doc}
+                            queue={paymentQueue}
+                            open={isPaymentOpen}
+                            onOpenChange={setIsPaymentOpen}
                         />
                     </>
 				) : null}
