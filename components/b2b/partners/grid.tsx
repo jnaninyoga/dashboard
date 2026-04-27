@@ -2,19 +2,13 @@
 
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { type PartnerWithRelations } from "@/lib/types";
 
-import { Buildings, Document, More, User } from "iconsax-reactjs";
+import { Buildings, Document, User } from "iconsax-reactjs";
 
 import { CopyableTaxId } from "../copyable-tax-id";
+import { PartnerActions } from "./actions";
 
 export function PartnerGrid({
 	partners,
@@ -48,40 +42,10 @@ export function PartnerGrid({
 					}}
 				>
 					<div className="absolute top-4 right-4 z-10">
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="bg-background/50 hover:bg-secondary h-8 w-8 rounded-xl backdrop-blur-sm transition-all"
-								>
-									<More size={18} className="rotate-90" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent
-								align="end"
-								className="border-secondary/20 w-48 rounded-xl shadow-xl"
-							>
-								<DropdownMenuItem
-									asChild
-									className="cursor-pointer p-3 text-xs font-bold tracking-wide uppercase"
-								>
-									<Link
-										href={`/b2b/partners/${partner.id}`}
-										className="flex items-center gap-2"
-									>
-										<Buildings size={16} variant="Outline" />
-										View Profile
-									</Link>
-								</DropdownMenuItem>
-								<DropdownMenuItem className="text-destructive cursor-pointer p-3 text-xs font-bold tracking-wide uppercase">
-									<div className="flex items-center gap-2">
-										<More size={16} className="rotate-90" />
-										Delete
-									</div>
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
+						<PartnerActions
+							partner={partner}
+							triggerClassName="bg-background/50 hover:bg-secondary h-8 w-8 rounded-xl backdrop-blur-sm transition-all"
+						/>
 					</div>
 
 					<CardContent className="relative p-0">

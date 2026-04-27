@@ -3,29 +3,19 @@
 import Link from "next/link";
 
 import { CopyableTaxId } from "@/components/b2b/copyable-tax-id";
-import { Button } from "@/components/ui/button";
-import { 
-	DropdownMenu, 
-	DropdownMenuContent, 
-	DropdownMenuItem, 
-	DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-	Table, 
-	TableBody, 
-	TableCell, 
-	TableHead, 
-	TableHeader, 
-	TableRow 
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import { type PartnerWithRelations } from "@/lib/types";
 
-import { 
-	Buildings, 
-	Document,
-	More,
-	Trash,
-	User} from "iconsax-reactjs";
+import { Buildings, Document, User } from "iconsax-reactjs";
+
+import { PartnerActions } from "./actions";
 
 export function PartnerTable({ partners }: { partners: PartnerWithRelations[] }) {
 	if (!partners.length) {
@@ -87,25 +77,7 @@ export function PartnerTable({ partners }: { partners: PartnerWithRelations[] })
 							</div>
 						</TableCell>
 						<TableCell>
-							<DropdownMenu>
-								<DropdownMenuTrigger asChild>
-									<Button variant="ghost" size="icon" className="hover:bg-secondary h-9 w-9 rounded-xl transition-all">
-										<More size={20} className="rotate-90" />
-									</Button>
-								</DropdownMenuTrigger>
-								<DropdownMenuContent align="end" className="border-secondary/20 w-48 rounded-xl shadow-xl">
-									<DropdownMenuItem asChild className="cursor-pointer p-3 text-xs font-bold tracking-wide uppercase">
-										<Link href={`/b2b/partners/${partner.id}`} className="flex items-center gap-2">
-											<Buildings size={16} variant="Outline" />
-											View Profile
-										</Link>
-									</DropdownMenuItem>
-									<DropdownMenuItem className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive focus:[&>svg]:text-destructive flex cursor-pointer items-center gap-2 p-3 text-xs font-bold tracking-wide uppercase">
-										<Trash size={16} variant="Bulk" className="text-destructive" />
-										Delete
-									</DropdownMenuItem>
-								</DropdownMenuContent>
-							</DropdownMenu>
+							<PartnerActions partner={partner} />
 						</TableCell>
 					</TableRow>
 				))}
