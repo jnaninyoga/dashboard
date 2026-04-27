@@ -407,12 +407,17 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 				new Date(inv.createdAt).getTime() < new Date(document.createdAt).getTime()
 			).map(inv => ({ ...inv, isSibling: true }));
 
-			return { 
-				document, 
+			return {
+				document,
 				accountSummary: {
 					previousInvoices: statementInvoices,
-					allRelatedInvoices: previousInvoices // For fulfillment logic in ActionRibbon
-				} 
+					// Sibling invoices for the action ribbon's backorder check.
+					// Excludes the current document — its lines are read directly
+					// from `doc.lines` so including it here would double-count.
+					allRelatedInvoices: previousInvoices.filter(
+						(inv) => inv.id !== document.id,
+					),
+				},
 			};
 		}
 

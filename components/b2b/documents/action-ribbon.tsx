@@ -238,14 +238,21 @@ export function DocumentActionRibbon({
 									// We group by sourceLineId
 									const billedTotals: Record<string, number> = {};
 									
-									// Add quantities from previous confirmed/partially_paid invoices
-									previousInvoices.forEach(inv => {
-										inv.lines?.forEach((line: any) => {
-											if (line.sourceLineId) {
-												billedTotals[line.sourceLineId] = (billedTotals[line.sourceLineId] || 0) + Number(line.quantity);
-											}
+									// Add quantities from sibling invoices on the same quote.
+									// Skip the current doc — its lines are added below;
+									// double-counting them would hide remainders and bypass
+									// the backorder dialog.
+									previousInvoices
+										.filter((inv) => inv.id !== doc.id)
+										.forEach((inv) => {
+											inv.lines?.forEach((line: any) => {
+												if (line.sourceLineId) {
+													billedTotals[line.sourceLineId] =
+														(billedTotals[line.sourceLineId] || 0) +
+														Number(line.quantity);
+												}
+											});
 										});
-									});
 									
 									// Add quantities from the CURRENT draft invoice
 									doc.lines?.forEach(line => {
