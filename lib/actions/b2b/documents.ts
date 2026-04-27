@@ -5,9 +5,16 @@ import { revalidatePath } from "next/cache";
 import { B2BDocumentLine, B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
 import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
 import { db } from "@/services/database";
-import { b2bDocumentLines, b2bDocuments, b2bPayments } from "@/services/database/schema";
+import {
+	b2bDocumentLines,
+	b2bDocuments,
+	b2bDocumentSequences,
+	b2bPayments,
+} from "@/services/database/schema";
 
-import { and, asc, desc, eq, ilike, inArray, not, or } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, not, or, sql } from "drizzle-orm";
+
+type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export type ActionState = {
 	error?: string;
@@ -17,30 +24,51 @@ export type ActionState = {
 };
 
 /**
- * ERP-style incremental document numbering
+ * Reserve the next document number for (type, year) using b2b_document_sequences
+ * with row-level locking (SELECT … FOR UPDATE) inside the caller's transaction.
+ * Two concurrent invoice creations cannot collide.
  */
-export async function getNextDocumentNumber(type: B2BDocumentType): Promise<string> {
+async function reserveNextDocumentNumber(
+	tx: DbTx,
+	type: B2BDocumentType,
+): Promise<string> {
 	const prefix = type === "quote" ? "QUO" : "INV";
 	const year = new Date().getFullYear();
-	
-	const lastDoc = await db.query.b2bDocuments.findFirst({
-		where: and(
-			eq(b2bDocuments.type, type),
-			ilike(b2bDocuments.documentNumber, `${prefix}-${year}-%`)
-		),
-		orderBy: [desc(b2bDocuments.documentNumber)],
-	});
 
-	let nextNumber = 1;
-	if (lastDoc) {
-		const parts = lastDoc.documentNumber.split("-");
-		const lastSeq = parseInt(parts[parts.length - 1]);
-		if (!isNaN(lastSeq)) {
-			nextNumber = lastSeq + 1;
-		}
-	}
+	// First-touch insert; ignored if the row already exists.
+	await tx
+		.insert(b2bDocumentSequences)
+		.values({ type, year, nextValue: 1 })
+		.onConflictDoNothing();
 
-	return `${prefix}-${year}-${nextNumber.toString().padStart(4, "0")}`;
+	// Lock the row, read current value, then bump it.
+	const locked = await tx.execute<{ next_value: number }>(sql`
+		SELECT "next_value" FROM "b2b_document_sequences"
+		WHERE "type" = ${type} AND "year" = ${year}
+		FOR UPDATE
+	`);
+	const current = Number(locked[0]?.next_value ?? 1);
+
+	await tx
+		.update(b2bDocumentSequences)
+		.set({ nextValue: current + 1 })
+		.where(
+			and(
+				eq(b2bDocumentSequences.type, type),
+				eq(b2bDocumentSequences.year, year),
+			),
+		);
+
+	return `${prefix}-${year}-${current.toString().padStart(4, "0")}`;
+}
+
+/**
+ * Public wrapper for callers that don't already own a transaction.
+ */
+export async function getNextDocumentNumber(
+	type: B2BDocumentType,
+): Promise<string> {
+	return db.transaction((tx) => reserveNextDocumentNumber(tx, type));
 }
 
 export async function createDocumentAction(
@@ -61,11 +89,16 @@ export async function createDocumentAction(
 	try {
 		let newId: string;
 		await db.transaction(async (tx) => {
+			// Reserve the official sequence number inside the same transaction so
+			// the row lock guarantees no two concurrent inserts can clash.
+			const documentNumber = await reserveNextDocumentNumber(tx, document.type);
+
 			// 1. Insert Document
 			const [newDoc] = await tx
 				.insert(b2bDocuments)
 				.values({
 					...document,
+					documentNumber,
 					subtotal: document.subtotal.toString(),
 					taxRate: document.taxRate.toString(),
 					totalAmount: document.totalAmount.toString(),
@@ -282,10 +315,10 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 			return { error: "Quote is already fully invoiced" };
 		}
 
-		const nextNumber = await getNextDocumentNumber("invoice");
 		let newId: string;
 
 		await db.transaction(async (tx) => {
+			const nextNumber = await reserveNextDocumentNumber(tx, "invoice");
 			const subtotal = initialLines.reduce((acc, l) => acc + Number(l.totalPrice), 0);
 			const taxRate = Number(quote.taxRate);
 			const totalAmount = subtotal * (1 + taxRate / 100);
@@ -297,7 +330,7 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 					partnerId: quote.partnerId,
 					contactId: quote.contactId,
 					type: "invoice",
-					status: "draft", 
+					status: "draft",
 					documentNumber: nextNumber,
 					issueDate: new Date().toISOString().split("T")[0],
 					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
@@ -360,10 +393,10 @@ export async function createPartialInvoiceAction(
 			return { error: "Source quotation not found" };
 		}
 
-		const nextNumber = await getNextDocumentNumber("invoice");
 		let newId: string;
 
 		await db.transaction(async (tx) => {
+			const nextNumber = await reserveNextDocumentNumber(tx, "invoice");
 			const [invoice] = await tx
 				.insert(b2bDocuments)
 				.values({
