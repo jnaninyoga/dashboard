@@ -20,13 +20,12 @@ type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 // totals calculation produces consistent values for the audit trail.
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-// Morocco ICE: 15 digits. Required on B2B invoices so the partner can claim
-// the VAT credit (CGI art. 145, B2B since 2019). Spaces / dashes are tolerated
-// — operators often paste the ICE with separators.
+// We require *some* numeric tax id on the partner before issuing an invoice.
+// Length isn't enforced — partners outside Morocco may use shorter formats,
+// and Odoo doesn't strict it either. Spaces / dashes are tolerated.
 const isValidIce = (s: string | null | undefined): boolean => {
 	if (typeof s !== "string") return false;
-	const digits = s.replace(/\D/g, "");
-	return digits.length === 15;
+	return s.replace(/\D/g, "").length > 0;
 };
 
 type LineInput = { quantity: number | string; unitPrice: number | string };
@@ -201,7 +200,7 @@ export async function updateDocumentStatusAction(
 		if (status === "sent" && doc.type === "invoice" && !isValidIce(doc.partner?.taxId)) {
 			return {
 				error:
-					"Add the partner's ICE (15 digits) before issuing this invoice.",
+					"Add the partner's ICE (Tax ID) before issuing this invoice.",
 			};
 		}
 
@@ -797,7 +796,7 @@ export async function confirmInvoiceWithBackorderAction(
 		if (!isValidIce(invoice.partner?.taxId)) {
 			return {
 				error:
-					"Add the partner's ICE (15 digits) before issuing this invoice.",
+					"Add the partner's ICE (Tax ID) before issuing this invoice.",
 			};
 		}
 

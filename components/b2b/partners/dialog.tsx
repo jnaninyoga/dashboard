@@ -109,7 +109,7 @@ export function PartnerDialog({
 					</div>
 					<div className="grid gap-2">
 						<Label htmlFor="taxId" className="text-sm font-semibold">
-							Tax ID / ICE (15 digits)
+							Tax ID / ICE
 						</Label>
 						<Input
 							id="taxId"

@@ -97,11 +97,11 @@ export function DocumentActionRibbon({
 	const isQuote = doc.type === "quote";
 	const isInvoice = doc.type === "invoice";
 
-	// Morocco ICE (Identifiant Commun de l'Entreprise): 15 digits, mandatory on
-	// B2B invoices. Block "Confirm & Send" until the partner has a valid ICE,
-	// otherwise they lose VAT deductibility on the invoice.
+	// Block "Confirm & Send" until the partner has *some* numeric tax id.
+	// Length isn't enforced — partners outside Morocco may use shorter
+	// formats, and we don't want Odoo-style rigidity here.
 	const partnerIceDigits = (doc.partner?.taxId ?? "").replace(/\D/g, "");
-	const partnerIceValid = partnerIceDigits.length === 15;
+	const partnerIceValid = partnerIceDigits.length > 0;
 	const blockSendForMissingIce = isInvoice && !partnerIceValid;
 
 	// FIFO queue for the payment dialog: every open invoice in the same scope as
@@ -270,7 +270,7 @@ export function DocumentActionRibbon({
 							disabled={isPending || blockSendForMissingIce}
 							title={
 								blockSendForMissingIce
-									? "Add the partner's ICE (15 digits) before issuing this invoice"
+									? "Add the partner's ICE (Tax ID) before issuing this invoice"
 									: undefined
 							}
 							className="zen-glow-teal gap-2 rounded-xl font-bold"
