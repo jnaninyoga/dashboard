@@ -20,10 +20,14 @@ type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 // totals calculation produces consistent values for the audit trail.
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 
-// Morocco ICE: 15 digits, no separators. Required on B2B invoices so the buyer
-// can claim the VAT credit (CGI art. 145, B2B since 2019).
-const isValidIce = (s: string | null | undefined): boolean =>
-	typeof s === "string" && /^\d{15}$/.test(s.trim());
+// Morocco ICE: 15 digits. Required on B2B invoices so the partner can claim
+// the VAT credit (CGI art. 145, B2B since 2019). Spaces / dashes are tolerated
+// — operators often paste the ICE with separators.
+const isValidIce = (s: string | null | undefined): boolean => {
+	if (typeof s !== "string") return false;
+	const digits = s.replace(/\D/g, "");
+	return digits.length === 15;
+};
 
 type LineInput = { quantity: number | string; unitPrice: number | string };
 
@@ -192,12 +196,12 @@ export async function updateDocumentStatusAction(
 			};
 		}
 
-		// Issuing an invoice requires a valid buyer ICE (15 digits) — without it
-		// the partner cannot reclaim VAT and the invoice fails Morocco audit.
+		// Issuing an invoice requires a valid partner ICE (15 digits) — without
+		// it the partner cannot reclaim VAT and the invoice fails Morocco audit.
 		if (status === "sent" && doc.type === "invoice" && !isValidIce(doc.partner?.taxId)) {
 			return {
 				error:
-					"Add the buyer's ICE (15 digits) to the partner before issuing this invoice.",
+					"Add the partner's ICE (15 digits) before issuing this invoice.",
 			};
 		}
 
@@ -793,7 +797,7 @@ export async function confirmInvoiceWithBackorderAction(
 		if (!isValidIce(invoice.partner?.taxId)) {
 			return {
 				error:
-					"Add the buyer's ICE (15 digits) to the partner before issuing this invoice.",
+					"Add the partner's ICE (15 digits) before issuing this invoice.",
 			};
 		}
 

@@ -98,11 +98,11 @@ export function DocumentActionRibbon({
 	const isInvoice = doc.type === "invoice";
 
 	// Morocco ICE (Identifiant Commun de l'Entreprise): 15 digits, mandatory on
-	// B2B invoices. We block the "Confirm & Send" path for invoices when the
-	// buyer has no valid ICE so the partner doesn't lose VAT deductibility.
-	const buyerIce = doc.partner?.taxId?.trim() ?? "";
-	const buyerIceValid = /^\d{15}$/.test(buyerIce);
-	const blockSendForMissingIce = isInvoice && !buyerIceValid;
+	// B2B invoices. Block "Confirm & Send" until the partner has a valid ICE,
+	// otherwise they lose VAT deductibility on the invoice.
+	const partnerIceDigits = (doc.partner?.taxId ?? "").replace(/\D/g, "");
+	const partnerIceValid = partnerIceDigits.length === 15;
+	const blockSendForMissingIce = isInvoice && !partnerIceValid;
 
 	// FIFO queue for the payment dialog: every open invoice in the same scope as
 	// the server, sorted by document number so the preview matches what
@@ -216,7 +216,7 @@ export function DocumentActionRibbon({
 							className="gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-amber-700 uppercase"
 						>
 							<Warning2 size={12} variant="Bold" />
-							Buyer ICE missing
+							Partner ICE missing
 						</Badge>
 					</Link>
 				) : null}
@@ -270,7 +270,7 @@ export function DocumentActionRibbon({
 							disabled={isPending || blockSendForMissingIce}
 							title={
 								blockSendForMissingIce
-									? "Add the buyer's ICE on the partner before issuing this invoice"
+									? "Add the partner's ICE (15 digits) before issuing this invoice"
 									: undefined
 							}
 							className="zen-glow-teal gap-2 rounded-xl font-bold"
