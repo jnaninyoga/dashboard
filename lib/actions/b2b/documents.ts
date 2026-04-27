@@ -16,6 +16,29 @@ import { and, asc, desc, eq, ilike, inArray, not, or, sql } from "drizzle-orm";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+// 2-decimal banker's-style rounding for MAD amounts. Centralised so every
+// totals calculation produces consistent values for the audit trail.
+const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+type LineInput = { quantity: number | string; unitPrice: number | string };
+
+/**
+ * Server-recomputes line.totalPrice, document subtotal, and document total
+ * from the trusted (qty, unitPrice, taxRate) inputs. Client-supplied totals
+ * are ignored — totals on a posted document must always match the lines.
+ */
+function computeTotals(lines: LineInput[], taxRate: number | string) {
+	const tax = Number(taxRate);
+	const linesPriced = lines.map((line) => {
+		const qty = Number(line.quantity);
+		const unit = Number(line.unitPrice);
+		return { quantity: qty, unitPrice: unit, totalPrice: round2(qty * unit) };
+	});
+	const subtotal = round2(linesPriced.reduce((acc, l) => acc + l.totalPrice, 0));
+	const totalAmount = round2(subtotal * (1 + tax / 100));
+	return { lines: linesPriced, subtotal, taxRate: tax, totalAmount };
+}
+
 // Allowed status transitions. Anything outside this map is rejected — once an
 // invoice is `sent`, payments drive it forward; corrections go through archive.
 const ALLOWED_STATUS_TRANSITIONS: Record<B2BDocumentStatus, B2BDocumentStatus[]> = {
@@ -104,27 +127,31 @@ export async function createDocumentAction(
 			// the row lock guarantees no two concurrent inserts can clash.
 			const documentNumber = await reserveNextDocumentNumber(tx, document.type);
 
+			// Recompute totals server-side. Client-supplied subtotal / totalAmount
+			// are ignored to prevent tampering or drift on a posted document.
+			const computed = computeTotals(lines, document.taxRate);
+
 			// 1. Insert Document
 			const [newDoc] = await tx
 				.insert(b2bDocuments)
 				.values({
 					...document,
 					documentNumber,
-					subtotal: document.subtotal.toString(),
-					taxRate: document.taxRate.toString(),
-					totalAmount: document.totalAmount.toString(),
+					subtotal: computed.subtotal.toFixed(2),
+					taxRate: computed.taxRate.toFixed(2),
+					totalAmount: computed.totalAmount.toFixed(2),
 				})
 				.returning();
 
 			newId = newDoc.id;
 
-			// 2. Insert Lines
-			const linesToInsert = lines.map((line) => ({
+			// 2. Insert Lines (with recomputed totalPrice)
+			const linesToInsert = lines.map((line, i) => ({
 				...line,
 				documentId: newDoc.id,
-				quantity: line.quantity.toString(),
-				unitPrice: line.unitPrice.toString(),
-				totalPrice: line.totalPrice.toString(),
+				quantity: computed.lines[i].quantity.toString(),
+				unitPrice: computed.lines[i].unitPrice.toFixed(2),
+				totalPrice: computed.lines[i].totalPrice.toFixed(2),
 			}));
 
 			await tx.insert(b2bDocumentLines).values(linesToInsert);
@@ -401,23 +428,20 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 				description: line.description,
 				unitPrice: line.unitPrice,
 				quantity: remaining,
-				totalPrice: (remaining * Number(line.unitPrice)).toString(),
 			};
 		}).filter(l => l.quantity > 0);
-
-		// 2. No more carry-over line in line_items (moved to Account Statement UI)
 
 		if (initialLines.length === 0) {
 			return { error: "Quote is already fully invoiced" };
 		}
 
+		// Tax inherited from parent quote per the solo-operator rule.
+		const computed = computeTotals(initialLines, quote.taxRate);
+
 		let newId: string;
 
 		await db.transaction(async (tx) => {
 			const nextNumber = await reserveNextDocumentNumber(tx, "invoice");
-			const subtotal = initialLines.reduce((acc, l) => acc + Number(l.totalPrice), 0);
-			const taxRate = Number(quote.taxRate);
-			const totalAmount = subtotal * (1 + taxRate / 100);
 
 			// 1. Create Draft Invoice
 			const [invoice] = await tx
@@ -430,9 +454,9 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 					documentNumber: nextNumber,
 					issueDate: new Date().toISOString().split("T")[0],
 					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-					subtotal: subtotal.toString(),
-					taxRate: quote.taxRate,
-					totalAmount: totalAmount.toFixed(2),
+					subtotal: computed.subtotal.toFixed(2),
+					taxRate: computed.taxRate.toFixed(2),
+					totalAmount: computed.totalAmount.toFixed(2),
 					notes: `Invoice for work completed from ${quote.documentNumber}`,
 					parentDocumentId: quoteId,
 				})
@@ -441,13 +465,13 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 			newId = invoice.id;
 
 			// 2. Insert Lines
-			const linesToInsert = initialLines.map((line) => ({
+			const linesToInsert = initialLines.map((line, i) => ({
 				documentId: invoice.id,
 				sourceLineId: line.sourceLineId,
 				description: line.description,
-				quantity: line.quantity.toString(),
-				unitPrice: line.unitPrice,
-				totalPrice: line.totalPrice,
+				quantity: computed.lines[i].quantity.toString(),
+				unitPrice: computed.lines[i].unitPrice.toFixed(2),
+				totalPrice: computed.lines[i].totalPrice.toFixed(2),
 			}));
 
 			await tx.insert(b2bDocumentLines).values(linesToInsert);
@@ -474,9 +498,7 @@ export async function createPartialInvoiceAction(
 	quoteId: string,
 	data: {
 		lines: { sourceLineId?: string; description: string; quantity: string; unitPrice: string; totalPrice: string }[];
-		subtotal: string;
 		taxRate: string;
-		totalAmount: string;
 		notes?: string;
 	}
 ): Promise<ActionState> {
@@ -488,6 +510,10 @@ export async function createPartialInvoiceAction(
 		if (!quote || quote.type !== "quote") {
 			return { error: "Source quotation not found" };
 		}
+
+		// Inherit tax rate from the parent quote — solo-operator simplicity rule.
+		// The user sets tax once on the quote; everything downstream follows it.
+		const computed = computeTotals(data.lines, quote.taxRate);
 
 		let newId: string;
 
@@ -503,9 +529,9 @@ export async function createPartialInvoiceAction(
 					documentNumber: nextNumber,
 					issueDate: new Date().toISOString().split("T")[0],
 					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-					subtotal: data.subtotal,
-					taxRate: data.taxRate,
-					totalAmount: data.totalAmount,
+					subtotal: computed.subtotal.toFixed(2),
+					taxRate: computed.taxRate.toFixed(2),
+					totalAmount: computed.totalAmount.toFixed(2),
 					notes: data.notes || `Partial invoice from ${quote.documentNumber}`,
 					parentDocumentId: quoteId,
 				})
@@ -513,12 +539,12 @@ export async function createPartialInvoiceAction(
 
 			newId = invoice.id;
 
-			const linesToInsert = data.lines.map((line) => ({
+			const linesToInsert = data.lines.map((line, i) => ({
 				documentId: invoice.id,
 				description: line.description,
-				quantity: line.quantity,
-				unitPrice: line.unitPrice,
-				totalPrice: line.totalPrice,
+				quantity: computed.lines[i].quantity.toString(),
+				unitPrice: computed.lines[i].unitPrice.toFixed(2),
+				totalPrice: computed.lines[i].totalPrice.toFixed(2),
 				sourceLineId: line.sourceLineId,
 			}));
 
@@ -715,8 +741,8 @@ export async function confirmInvoiceWithBackorderAction(
 }
 
 export async function updateDocumentLinesAction(
-	id: string, 
-	data: { lines: DocumentLineFormValues[], subtotal: string, taxRate: string, totalAmount: string }
+	id: string,
+	data: { lines: DocumentLineFormValues[]; taxRate: string }
 ): Promise<ActionState> {
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
@@ -724,20 +750,23 @@ export async function updateDocumentLinesAction(
 		});
 
 		if (!doc) return { error: "Document not found" };
+		if (doc.archivedAt) return { error: "Archived documents cannot be edited" };
 		if (doc.status !== "draft") return { error: "Only draft documents can be edited" };
+
+		const computed = computeTotals(data.lines, data.taxRate);
 
 		await db.transaction(async (tx) => {
 			// 1. Delete old lines
 			await tx.delete(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, id));
 
-			// 2. Insert new lines
-			const linesToInsert = data.lines.map((line) => ({
+			// 2. Insert new lines (server-recomputed totals)
+			const linesToInsert = data.lines.map((line, i) => ({
 				documentId: id,
 				sourceLineId: line.sourceLineId,
 				description: line.description,
-				quantity: line.quantity.toString(),
-				unitPrice: line.unitPrice.toString(),
-				totalPrice: line.totalPrice.toString(),
+				quantity: computed.lines[i].quantity.toString(),
+				unitPrice: computed.lines[i].unitPrice.toFixed(2),
+				totalPrice: computed.lines[i].totalPrice.toFixed(2),
 			}));
 
 			if (linesToInsert.length > 0) {
@@ -748,9 +777,9 @@ export async function updateDocumentLinesAction(
 			await tx
 				.update(b2bDocuments)
 				.set({
-					subtotal: data.subtotal,
-					taxRate: data.taxRate,
-					totalAmount: data.totalAmount,
+					subtotal: computed.subtotal.toFixed(2),
+					taxRate: computed.taxRate.toFixed(2),
+					totalAmount: computed.totalAmount.toFixed(2),
 					updatedAt: new Date(),
 				})
 				.where(eq(b2bDocuments.id, id));

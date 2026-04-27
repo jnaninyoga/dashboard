@@ -110,17 +110,16 @@ export function EditableDocumentLines({
 
 
 	const handleSave = (values: LinesFormValues) => {
-
 		startTransition(async () => {
+			// Totals are recomputed server-side from (quantity, unitPrice, taxRate);
+			// the client-displayed totals above are preview-only.
 			const res = await updateDocumentLinesAction(documentId, {
 				lines: values.lines.map((l) => ({
 					...l,
 					sourceLineId: l.sourceLineId,
 					totalPrice: (Number(l.quantity) * Number(l.unitPrice)).toString(),
 				})),
-				subtotal: subtotal.toString(),
 				taxRate: values.taxRate,
-				totalAmount: totalAmount.toString(),
 			});
 
 			if (res.success) {
