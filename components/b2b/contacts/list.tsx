@@ -15,7 +15,7 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -36,17 +36,17 @@ import { Call, Edit, More, Sms, Star, Trash, User } from "iconsax-reactjs";
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 	if (!contacts.length) {
 		return (
-			<Card className="group flex flex-col items-center justify-center rounded-3xl border border-2 border-dashed p-20 text-center shadow-none">
-				<Avatar className="bg-secondary/45 border-secondary-3/30 h-16 w-16 border shadow-xs">
+			<div className="group border-foreground/10 bg-card/80 hover:bg-card flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
+				<Avatar className="mb-4 bg-secondary/60 border-secondary-3/20 size-22 border shadow-sm transition-colors zen-glow-blush">
 					<AvatarFallback className="bg-transparent">
-						<User className="text-secondary-3/60 h-8 w-8" variant="Outline" />
+						<User className="text-secondary-3/80 size-10 group-hover:text-secondary-3 transition-colors" variant="Bulk" />
 					</AvatarFallback>
 				</Avatar>
-				<h3 className="text-foreground font-heading font-bold">No contacts</h3>
-				<p className="text-muted-foreground/80 text-sm">
+				<h3 className="font-heading text-foreground text-xl font-bold">No contacts</h3>
+				<p className="text-muted-foreground mt-2 max-w-lg text-sm">
 					Add a collaborator to manage this partner.
 				</p>
-			</Card>
+			</div>
 		);
 	}
 

@@ -41,27 +41,19 @@ interface DocumentListProps {
 export function DocumentList({ documents, partnerId }: DocumentListProps) {
 	if (!documents.length) {
 		return (
-			<div className="group border-secondary/10 bg-secondary/5 hover:bg-secondary/10 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
-				<div className="border-secondary/5 bg-background mb-4 rounded-2xl border p-6 shadow-sm transition-transform group-hover:scale-110">
+			<div className="group border-foreground/10 bg-card/80 hover:bg-card flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
+				<div className="border-primary/15 bg-primary/10 mb-4 rounded-2xl border p-6 shadow-sm transition-colors zen-glow-teal">
 					<DocumentIcon
-						className="text-primary/30 h-10 w-10"
-						variant="Outline"
+						className="text-primary/80 size-10 group-hover:text-primary transition-colors"
+						variant="Bulk"
 					/>
 				</div>
 				<h3 className="font-heading text-foreground text-xl font-bold">
 					No documents
 				</h3>
-				<p className="text-muted-foreground mt-2 max-w-sm text-sm">
+				<p className="text-muted-foreground mt-2 max-w-lg text-sm">
 					Quotes and invoices for this partner will appear here once generated.
 				</p>
-				<Link href={`/b2b/documents/new?partner=${partnerId}`}>
-					<Button
-						variant="outline"
-						className="border-primary/20 text-primary hover:bg-primary/5 mt-6 rounded-xl font-bold transition-all active:scale-95"
-					>
-						Create first quotation
-					</Button>
-				</Link>
 			</div>
 		);
 	}
