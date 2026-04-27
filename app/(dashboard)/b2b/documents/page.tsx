@@ -44,8 +44,8 @@ export default async function DocumentsPage(props: {
 					</p>
 				</header>
 				<Link href="/b2b/documents/new">
-					<Button className="zen-glow-teal h-10 gap-2 rounded-xl font-bold">
-						<DocumentText size={16} variant="Bold" />
+					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
+						<DocumentText className="mr-2 size-4" variant="Bold" />
 						New Quotation
 					</Button>
 				</Link>
