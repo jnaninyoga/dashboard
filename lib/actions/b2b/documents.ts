@@ -587,7 +587,8 @@ export async function createPartialInvoiceAction(
 export async function recordDocumentPaymentAction(
 	id: string,
 	amountPaid: string,
-	partnerId?: string
+	partnerId?: string,
+	requestId?: string,
 ): Promise<ActionState> {
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
@@ -595,6 +596,23 @@ export async function recordDocumentPaymentAction(
 		});
 
 		if (!doc) return { error: "Document not found" };
+
+		const amount = Number(amountPaid);
+		if (!Number.isFinite(amount) || amount <= 0) {
+			return { error: "Enter a positive amount" };
+		}
+
+		// Idempotency short-circuit: if a payment with this requestId already
+		// exists, treat the call as a no-op success. The b2b_payments.request_id
+		// UNIQUE index also catches the race between this read and the insert.
+		if (requestId) {
+			const existing = await db.query.b2bPayments.findFirst({
+				where: eq(b2bPayments.requestId, requestId),
+			});
+			if (existing) {
+				return { success: true };
+			}
+		}
 
 		// FIFO Payment Logic
 		await db.transaction(async (tx) => {
@@ -618,7 +636,24 @@ export async function recordDocumentPaymentAction(
 				orderBy: asc(b2bDocuments.documentNumber),
 			});
 
-			let remainingPayment = Number(amountPaid);
+			// Reject overpayment: the operator must record exactly what was
+			// received, never more. Solo-operator rule: no partner credits, no
+			// silent prepayments — keep the model simple.
+			const totalOutstanding = unpaidInvoices.reduce((acc, inv) => {
+				const total = Number(inv.totalAmount);
+				const paid = (inv.payments || []).reduce(
+					(s, p) => s + Number(p.amount),
+					0,
+				);
+				return acc + Math.max(0, total - paid);
+			}, 0);
+
+			if (amount > round2(totalOutstanding) + 0.01) {
+				throw new OverpaymentError(round2(totalOutstanding));
+			}
+
+			let remainingPayment = amount;
+			let isFirstRow = true;
 
 			for (const invoice of unpaidInvoices) {
 				if (remainingPayment <= 0) break;
@@ -627,38 +662,63 @@ export async function recordDocumentPaymentAction(
 				const currentPaid = (invoice.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
 				const invoiceBalance = Math.max(0, invoiceTotal - currentPaid);
 
-				const paymentToApply = Math.min(remainingPayment, invoiceBalance);
-				const updatedPaid = currentPaid + paymentToApply;
-				
-				const newStatus: B2BDocumentStatus = updatedPaid >= (invoiceTotal - 0.01) ? "paid" : "partially_paid";
+				const paymentToApply = round2(Math.min(remainingPayment, invoiceBalance));
+				if (paymentToApply <= 0) continue;
 
-				await tx.update(b2bDocuments)
-					.set({
-						status: newStatus,
-						updatedAt: new Date()
-					})
+				const updatedPaid = currentPaid + paymentToApply;
+				const newStatus: B2BDocumentStatus =
+					updatedPaid >= invoiceTotal - 0.01 ? "paid" : "partially_paid";
+
+				await tx
+					.update(b2bDocuments)
+					.set({ status: newStatus, updatedAt: new Date() })
 					.where(eq(b2bDocuments.id, invoice.id));
 
-				// Record the individual transaction for accurate history
+				// Tag the first allocation row with the requestId so the UNIQUE
+				// index dedupes concurrent retries of the same submit.
 				await tx.insert(b2bPayments).values({
 					documentId: invoice.id,
-					amount: paymentToApply.toString(),
+					amount: paymentToApply.toFixed(2),
 					paymentDate: new Date(),
-					notes: `Payment recorded via ${doc.documentNumber}`
+					notes: `Payment recorded via ${doc.documentNumber}`,
+					requestId: isFirstRow ? requestId ?? null : null,
 				});
 
-				remainingPayment -= paymentToApply;
+				remainingPayment = round2(remainingPayment - paymentToApply);
+				isFirstRow = false;
 			}
 		});
 
 		revalidatePath(`/b2b/documents/${id}`);
 		if (partnerId || doc.partnerId) revalidatePath(`/b2b/partners/${partnerId || doc.partnerId}`);
 		revalidatePath("/b2b/documents");
-		
+
 		return { success: true };
 	} catch (error) {
+		if (error instanceof OverpaymentError) {
+			return {
+				error: `Amount exceeds outstanding balance of ${error.outstanding.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+			};
+		}
+		// Postgres unique_violation → idempotent retry of an already-recorded payment.
+		if (
+			error instanceof Error &&
+			"code" in error &&
+			(error as { code?: string }).code === "23505" &&
+			error.message.includes("request_id")
+		) {
+			return { success: true };
+		}
 		console.error("Error recording payment:", error);
 		return { error: "Failed to record payment" };
+	}
+}
+
+class OverpaymentError extends Error {
+	outstanding: number;
+	constructor(outstanding: number) {
+		super("Overpayment");
+		this.outstanding = outstanding;
 	}
 }
 
