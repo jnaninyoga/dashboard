@@ -598,20 +598,24 @@ export async function recordDocumentPaymentAction(
 
 		// FIFO Payment Logic
 		await db.transaction(async (tx) => {
-			// 1. Fetch all unpaid/partially paid invoices for this partner, sorted by oldest first
+			// Fetch unpaid / partially-paid invoices in legal sequence (document
+			// number, ascending). createdAt drifts under backdating; the audit
+			// trail is the document number. Archived rows are excluded — they no
+			// longer count toward the partner's outstanding balance.
 			const unpaidInvoices = await tx.query.b2bDocuments.findMany({
-				where: and(
-					eq(b2bDocuments.partnerId, partnerId || doc.partnerId),
-					eq(b2bDocuments.type, "invoice"),
-					inArray(b2bDocuments.status, ["sent", "partially_paid"]),
-					doc.parentDocumentId 
-						? eq(b2bDocuments.parentDocumentId, doc.parentDocumentId)
-						: eq(b2bDocuments.id, doc.id)
+				where: (docs, { isNull }) => and(
+					eq(docs.partnerId, partnerId || doc.partnerId),
+					eq(docs.type, "invoice"),
+					inArray(docs.status, ["sent", "partially_paid"]),
+					doc.parentDocumentId
+						? eq(docs.parentDocumentId, doc.parentDocumentId)
+						: eq(docs.id, doc.id),
+					isNull(docs.archivedAt),
 				),
 				with: {
 					payments: true,
 				},
-				orderBy: asc(b2bDocuments.createdAt),
+				orderBy: asc(b2bDocuments.documentNumber),
 			});
 
 			let remainingPayment = Number(amountPaid);
