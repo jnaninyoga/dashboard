@@ -347,7 +347,7 @@ export function NewQuoteForm({
 				</div>
 
 				{/* Lines */}
-				<div className="animate-slide-up bg-card rounded-3xl border p-6 shadow-sm delay-100">
+				<div className="animate-slide-up p-6 delay-100">
 					<div className="mb-4 flex items-center justify-between">
 						<h3 className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
 							Line Items
