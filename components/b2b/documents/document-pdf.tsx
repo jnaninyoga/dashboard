@@ -636,6 +636,18 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 							<View style={S.docNumPill}>
 								<Text style={S.docNumText}>N° {doc.documentNumber}</Text>
 							</View>
+							{doc.parent && doc.type === "invoice" ? (
+								<Text
+									style={{
+										fontSize: 8,
+										color: C.muted,
+										marginTop: 6,
+										letterSpacing: 0.4,
+									}}
+								>
+									Reliquat du devis N° {doc.parent.documentNumber}
+								</Text>
+							) : null}
 						</View>
 					</View>
 
@@ -716,10 +728,10 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 						</View>
 
 
-						{/* Totals */}
+						{/* Totals — Morocco audit convention: TOTAL HT / TVA / TOTAL TTC */}
 						<View style={S.bottomRight}>
 							<View style={S.totalsRow}>
-								<Text style={S.totalsLabel}>SOUS-TOTAL</Text>
+								<Text style={S.totalsLabel}>TOTAL HT</Text>
 								<Text style={S.totalsValue}>{formatNum(subtotal)} MAD</Text>
 							</View>
 							{hasTax ? (
@@ -731,7 +743,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 
 
 							<View style={S.grandTotalPill}>
-								<Text style={S.grandTotalLabel}>TOTAL</Text>
+								<Text style={S.grandTotalLabel}>TOTAL TTC</Text>
 								<Text style={S.grandTotalValue}>
 									{formatNum(totalAmount)} MAD
 								</Text>
