@@ -29,6 +29,7 @@ import {
 	Popover,
 	PopoverAnchor,
 	PopoverContent,
+	PopoverTrigger,
 } from "@/components/ui/popover";
 import {
 	Select,
@@ -62,6 +63,7 @@ import {
 	Calendar,
 	DocumentText,
 	Edit2,
+	HamburgerMenu,
 	MoneyTime,
 	NoteText,
 	Refresh,
@@ -650,25 +652,44 @@ function DescriptionAutocomplete({
 	disabled?: boolean;
 }) {
 	const [open, setOpen] = useState(false);
+	// PopoverTrigger handles its own toggle; the input's onFocus opens (never
+	// closes) so the two paths can't fight each other or flash.
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	return (
 		<div ref={containerRef} className="relative w-full">
 			<Popover open={open} onOpenChange={setOpen}>
+				<PopoverTrigger asChild>
+					<Button
+						type="button"
+						size="icon"
+						variant="ghost"
+						tabIndex={-1}
+						disabled={disabled}
+						// Don't steal focus from the input when the burger is clicked.
+						onMouseDown={(e) => e.preventDefault()}
+						className="absolute top-1/2 left-1 z-10 size-6 -translate-y-1/2 rounded-md text-muted-foreground/60 hover:bg-secondary/40 hover:text-foreground"
+					>
+						<HamburgerMenu size={14} variant="Bulk" />
+					</Button>
+				</PopoverTrigger>
 				<PopoverAnchor asChild>
 					<Input
 						value={value}
-						onFocus={() => setOpen(true)}
+						onFocus={() => {
+							if (!open) setOpen(true);
+						}}
 						onChange={(e) => {
 							onChange(e.target.value);
 							if (!open) setOpen(true);
 						}}
 						disabled={disabled}
-						className="bg-card h-8 border text-sm font-medium"
+						className="bg-card h-8 border pl-9 text-sm font-medium"
 						placeholder="Description…"
 					/>
 				</PopoverAnchor>
 				<PopoverContent
+					align="start"
 					className="border p-0"
 					style={{ width: "var(--radix-popover-anchor-width)" }}
 					onOpenAutoFocus={(e) => e.preventDefault()}
