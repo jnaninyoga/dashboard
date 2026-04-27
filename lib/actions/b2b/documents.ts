@@ -105,12 +105,27 @@ async function reserveNextDocumentNumber(
 }
 
 /**
- * Public wrapper for callers that don't already own a transaction.
+ * Read-only preview of the next number for (type, year). Does NOT consume the
+ * sequence — safe to call on every render of the create page so refreshes
+ * don't leave gaps. The actual value is claimed inside createDocumentAction's
+ * transaction via reserveNextDocumentNumber; if another insert lands in the
+ * meantime the saved number may be one higher than the preview, which is fine.
  */
-export async function getNextDocumentNumber(
+export async function peekNextDocumentNumber(
 	type: B2BDocumentType,
 ): Promise<string> {
-	return db.transaction((tx) => reserveNextDocumentNumber(tx, type));
+	const prefix = type === "quote" ? "QUO" : "INV";
+	const year = new Date().getFullYear();
+
+	const row = await db.query.b2bDocumentSequences.findFirst({
+		where: and(
+			eq(b2bDocumentSequences.type, type),
+			eq(b2bDocumentSequences.year, year),
+		),
+	});
+
+	const next = row?.nextValue ?? 1;
+	return `${prefix}-${year}-${next.toString().padStart(4, "0")}`;
 }
 
 export async function createDocumentAction(

@@ -2,9 +2,7 @@ import Link from "next/link";
 
 import { NewQuoteForm } from "@/components/b2b/documents/new-quote-form";
 import { PartnerPickerList } from "@/components/b2b/documents/partner-picker-list";
-import {
-	getNextDocumentNumber,
-} from "@/lib/actions/b2b/documents";
+import { peekNextDocumentNumber } from "@/lib/actions/b2b/documents";
 import {
 	getPartnerByIdAction,
 	getPartnersAction,
@@ -26,7 +24,7 @@ export default async function NewQuotePage(props: { searchParams: SearchParams }
 		return <PartnerPicker missing />;
 	}
 
-	const previewNumber = await getNextDocumentNumber("quote");
+	const previewNumber = await peekNextDocumentNumber("quote");
 
 	return (
 		<NewQuoteForm
