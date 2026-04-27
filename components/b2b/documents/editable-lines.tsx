@@ -411,9 +411,10 @@ function DescriptionAutocomplete({
 				<PopoverAnchor asChild>
 					<Input
 						value={value}
+						onFocus={() => setOpen(true)}
 						onChange={(e) => {
 							onChange(e.target.value);
-							if (!open && e.target.value) setOpen(true);
+							if (!open) setOpen(true);
 						}}
 						disabled={disabled}
 						className="bg-card h-8 border text-sm font-medium"
