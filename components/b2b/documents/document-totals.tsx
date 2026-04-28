@@ -1,8 +1,9 @@
 import { Separator } from "@/components/ui/separator";
 import { DocumentWithRelations } from "@/lib/types/b2b";
 
-import { format } from "date-fns";
 import { TickCircle } from "iconsax-reactjs";
+
+import { PaymentHistorySummary } from "./payment-history-dialog";
 
 interface DocumentTotalsProps {
 	document: DocumentWithRelations;
@@ -78,34 +79,10 @@ export function DocumentTotals({
 					</div>
 
 					{document.payments && document.payments.length > 0 ? (
-						<div className="animate-in fade-in slide-in-from-top-1 border-foreground/15 mt-4 space-y-3 border-t border-dashed py-3">
-							{document.payments.map((payment) => (
-								<div
-									key={payment.id}
-									className="flex w-full items-center justify-between"
-								>
-									<div className="flex items-center gap-2">
-										<div className="flex size-5 items-center justify-center rounded-full bg-green-500/10">
-											<TickCircle
-												size={12}
-												variant="Bold"
-												className="text-green-600"
-											/>
-										</div>
-										<span className="text-xs font-bold text-emerald-700 italic">
-											Paid on{" "}
-											{format(new Date(payment.paymentDate), "MM/dd/yyyy")}
-										</span>
-									</div>
-									<span className="font-heading font-bold text-green-600 tabular-nums">
-										- {parseFloat(payment.amount).toLocaleString()}
-										<span className="ml-1 text-xs font-normal opacity-60">
-											MAD
-										</span>
-									</span>
-								</div>
-							))}
-						</div>
+						<PaymentHistorySummary
+							payments={document.payments}
+							documentNumber={document.documentNumber}
+						/>
 					) : null}
 
 					{showAmountDue ? (
