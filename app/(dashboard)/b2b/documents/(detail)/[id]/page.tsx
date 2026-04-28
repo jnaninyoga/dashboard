@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AccountStatement } from "@/components/b2b/documents/account-statement";
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
+import { DocumentTotals } from "@/components/b2b/documents/document-totals";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import { Badge } from "@/components/ui/badge";
@@ -43,7 +44,11 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 		id,
 	)) as {
 		document: DocumentWithRelations | null;
-		accountSummary?: { previousInvoices: any[]; allRelatedInvoices?: any[] };
+		accountSummary?: {
+			previousInvoices: any[];
+			allRelatedInvoices?: any[];
+			chainInvoices?: any[];
+		};
 		error?: string;
 	};
 
@@ -53,15 +58,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 	const profile = await getBusinessProfileAction();
 
-	// Account Statement Calculations
-	const previousInvoices = accountSummary?.previousInvoices || [];
-	const previousBalance = previousInvoices.reduce((acc, inv) => {
-		const invPaid = (inv.payments || []).reduce(
-			(sum: number, p: any) => sum + Number(p.amount),
-			0,
-		);
-		return acc + (Number(inv.totalAmount) - invPaid);
-	}, 0);
+	const chainInvoices = accountSummary?.chainInvoices || [];
 
 	const getStatusProps = (status: string) => {
 		const s = status.toLowerCase();
@@ -115,15 +112,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 		(sum, p) => sum + parseFloat(p.amount),
 		0,
 	);
-	const totalAmountDue = currentTotal + previousBalance;
-
-	let totalInvoiced = 0;
-	if (isQuote && document.children) {
-		totalInvoiced = document.children.reduce(
-			(acc, child) => acc + parseFloat(child.totalAmount),
-			0,
-		);
-	}
+	const amountDue = currentTotal - amountPaid;
 
 	return (
 		<>
@@ -326,15 +315,27 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 						</TableBody>
 					</Table>
 
-					<AccountStatement
-						document={document}
-						previousInvoices={previousInvoices}
-						previousBalance={previousBalance}
-						currentTotal={currentTotal}
-						amountPaid={amountPaid}
-						totalAmountDue={totalAmountDue}
-						isQuote={isQuote}
-					/>
+					<div className="animate-slide-up flex flex-col gap-6 delay-200 lg:flex-row lg:items-start">
+						{chainInvoices.length > 1 ? (
+							<div className="flex-1">
+								<AccountStatement
+									invoices={chainInvoices}
+									currentDocumentId={document.id}
+								/>
+							</div>
+						) : null}
+						<div
+							className={`w-full lg:max-w-md ${chainInvoices.length > 1 ? "" : "lg:ml-auto"}`}
+						>
+							<DocumentTotals
+								document={document}
+								currentTotal={currentTotal}
+								amountPaid={amountPaid}
+								amountDue={amountDue}
+								isQuote={isQuote}
+							/>
+						</div>
+					</div>
 				</>
 			)}
 

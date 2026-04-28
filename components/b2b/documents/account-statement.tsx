@@ -1,228 +1,240 @@
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { DocumentWithRelations } from "@/lib/types/b2b";
+import { B2BPayment, DocumentWithRelations } from "@/lib/types/b2b";
 
 import { format } from "date-fns";
-import {
-	DocumentText,
-	TickCircle,
-} from "iconsax-reactjs";
+import { ArrowRight, DocumentText, TickCircle } from "iconsax-reactjs";
+import { cn } from "@/lib/utils/ui";
+
+type ChainInvoice = DocumentWithRelations & { payments?: B2BPayment[] };
 
 interface AccountStatementProps {
-	document: DocumentWithRelations;
-	previousInvoices: any[];
-	previousBalance: number;
-	currentTotal: number;
-	amountPaid: number;
-	totalAmountDue: number;
-	isQuote: boolean;
+	invoices: ChainInvoice[];
+	currentDocumentId: string;
+}
+
+function formatMoney(value: number) {
+	return value.toLocaleString(undefined, { minimumFractionDigits: 2 });
 }
 
 export function AccountStatement({
-	document,
-	previousInvoices,
-	previousBalance,
-	currentTotal,
-	amountPaid,
-	totalAmountDue,
-	isQuote,
+	invoices,
+	currentDocumentId,
 }: AccountStatementProps) {
-	const hasPartialPayment = amountPaid > 0;
-	const hasPreviousDebt = previousInvoices.length > 0;
-	const showStatementView =
-		(hasPartialPayment || hasPreviousDebt) && document.type === "invoice";
+	const rows = invoices.map((inv) => {
+		const total = Number(inv.totalAmount);
+		const paid = (inv.payments ?? []).reduce(
+			(sum, p) => sum + Number(p.amount),
+			0,
+		);
+		const due = total - paid;
+		return {
+			invoice: inv,
+			total,
+			paid,
+			due,
+			isFullyPaid: due <= 0.005,
+			isCurrent: inv.id === currentDocumentId,
+		};
+	});
+
+	const chainTotal = rows.reduce((s, r) => s + r.total, 0);
+	const chainPaid = rows.reduce((s, r) => s + r.paid, 0);
+	const chainDue = rows.reduce((s, r) => s + r.due, 0);
+	const chainCleared = chainDue <= 0.005;
 
 	return (
-		<div className="animate-slide-up flex flex-col gap-8 delay-200 lg:flex-row lg:justify-end">
-			<div
-				className={`bg-card border-foreground/10 w-full border p-8 shadow-sm lg:max-w-md ${showStatementView ? "rounded-[2.5rem]" : "rounded-3xl"}`}
-			>
-				{/* SECTION A: Standard Invoice Totals */}
-				<div className="space-y-4">
-					{!showStatementView && (
-						<h3 className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-							{isQuote ? "Quote Totals" : "Invoice Totals"}
-						</h3>
+		<div className="bg-card border-foreground/10 animate-slide-up w-full rounded-3xl border p-8 shadow-sm delay-200">
+			<div className="space-y-5">
+				<div className="flex items-center justify-between">
+					<h3 className="font-heading text-foreground text-xs font-bold tracking-[0.2em] uppercase">
+						Account Statement
+					</h3>
+					{chainCleared ? (
+						<Badge className="border-green-500/20 bg-green-500/10 text-[9px] font-bold text-green-600">
+							Cleared
+						</Badge>
+					) : (
+						<Badge className="border-amber-500/20 bg-amber-500/10 text-[9px] font-bold text-amber-600">
+							Outstanding
+						</Badge>
 					)}
-
-					<div className="space-y-3">
-						<div className="flex w-full items-center justify-between">
-							<span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
-								Subtotal
-							</span>
-							<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-								{parseFloat(document.subtotal).toLocaleString()}
-								<span className="text-muted-foreground/70 ml-1 text-xs font-normal">
-									MAD
-								</span>
-							</span>
-						</div>
-						<div className="flex w-full items-center justify-between">
-							<span className="text-muted-foreground text-[11px] font-bold tracking-wider uppercase">
-								Tax ({parseFloat(document.taxRate)}%)
-							</span>
-							<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-								{(
-									parseFloat(document.subtotal) *
-									(parseFloat(document.taxRate) / 100)
-								).toLocaleString(undefined, {
-									minimumFractionDigits: 0,
-									maximumFractionDigits: 2,
-								})}
-								<span className="text-muted-foreground/70 ml-1 text-xs font-normal">
-									MAD
-								</span>
-							</span>
-						</div>
-
-						{!showStatementView ? <Separator /> : null}
-						<div className="flex w-full items-center justify-between">
-							<span
-								className={`font-heading text-xs font-bold tracking-[0.2em] uppercase ${showStatementView ? "text-foreground" : "text-primary"}`}
-							>
-								{showStatementView ? "Invoice Total" : "Total Amount"}
-							</span>
-							<span
-								className={`font-heading ${showStatementView ? "text-foreground" : "text-primary"} text-3xl font-bold tracking-tight tabular-nums`}
-							>
-								{currentTotal.toLocaleString(undefined, {
-									minimumFractionDigits: 2,
-								})}
-								<span className="ml-1.5 text-sm font-semibold opacity-60">
-									MAD
-								</span>
-							</span>
-						</div>
-
-						{/* Payment History (Granular Records) */}
-						{document.payments && document.payments.length > 0 ? (
-							<div className="animate-in fade-in slide-in-from-top-1 border-foreground/15 mt-4 space-y-3 border-t border-dashed py-3">
-								{document.payments.map((payment) => (
-									<div
-										key={payment.id}
-										className="flex w-full items-center justify-between"
-									>
-										<div className="flex items-center gap-2">
-											<div className="flex size-5 items-center justify-center rounded-full bg-green-500/10">
-												<TickCircle
-													size={12}
-													variant="Bold"
-													className="text-green-600"
-												/>
-											</div>
-											<span className="text-xs font-bold text-emerald-700 italic">
-												Paid on{" "}
-												{format(new Date(payment.paymentDate), "MM/dd/yyyy")}
-											</span>
-										</div>
-										<span className="font-heading font-bold text-green-600 tabular-nums">
-											- {parseFloat(payment.amount).toLocaleString()}
-											<span className="ml-1 text-xs font-normal opacity-60">
-												MAD
-											</span>
-										</span>
-									</div>
-								))}
-							</div>
-						) : null}
-					</div>
 				</div>
 
-				{/* Conditional Statement Sections */}
-				{showStatementView ? (
-					<>
-						{/* SECTION B: Account Statement */}
-						{previousInvoices.length > 0 ? (
-							<div className="border-foreground/10 mt-4 space-y-5 border-t py-4">
-								<div className="flex items-center justify-between">
-									<h3 className="font-heading text-foreground text-xs font-bold tracking-[0.2em] uppercase">
-										Account Statement
-									</h3>
-									<Badge className="border-amber-500/20 bg-amber-500/10 text-[9px] font-bold text-amber-600">
-										Outstanding
-									</Badge>
-								</div>
+				{/* Invoice cards */}
+				<div className="space-y-3">
+					{rows.map(
+						({ invoice, total, paid, due, isFullyPaid, isCurrent }) => {
+							const cardBaseClasses = cn("relative overflow-hidden rounded-2xl border px-4 py-3 transition-colors", {
+								"border-primary/30 bg-primary/5": isCurrent,
+								"border-secondary-2/40 bg-secondary/10": isFullyPaid,
+								"border-secondary-2/70 bg-secondary/20": !isCurrent && !isFullyPaid
+							});
 
-								<div className="bg-secondary/20 border-secondary-2/70 overflow-hidden rounded-2xl border">
-									<div className="divide-secondary-2/70 divide-y">
-										{previousInvoices.map((inv) => (
-											<Link
-												key={inv.id}
-												href={`/b2b/documents/${inv.id}`}
-												className="hover:bg-secondary/40 group flex items-center justify-between px-5 py-3 transition-colors"
-											>
-												<div className="flex items-center gap-3">
-													<div className="bg-secondary-2/20 group-hover:bg-secondary-2/30 flex size-8 items-center justify-center rounded-xl transition-colors">
-														<DocumentText
-															size={16}
-															variant="Bulk"
-															className="text-secondary-3 group-hover:text-secondary-foreground transition-colors"
-														/>
-													</div>
-													<div className="flex flex-col">
-														<span className="text-secondary-foreground text-xs font-bold">
-															{inv.documentNumber}
-														</span>
-														<span className="text-muted-foreground/70 text-[9px] font-medium tracking-wider uppercase">
-															{format(new Date(inv.issueDate), "MMM dd, yyyy")}
-														</span>
-													</div>
-												</div>
-												<div className="text-right">
-													<span className="font-heading text-secondary-foreground text-sm font-bold tabular-nums">
-														{(
-															Number(inv.totalAmount) -
-															(inv.payments || []).reduce(
-																(sum: number, p: any) => sum + Number(p.amount),
-																0,
-															)
-														).toLocaleString(undefined, {
-															minimumFractionDigits: 2,
-														})}
-														<span className="ml-1 text-[10px] font-normal opacity-60">
-															MAD
-														</span>
-													</span>
-												</div>
-											</Link>
-										))}
-									</div>
-									<div className="bg-secondary/40 border-secondary-2/70 flex items-center justify-between border-t px-5 py-2">
-										<span className="text-primary text-xs font-bold tracking-widest uppercase">
-											Accumulated Debt
-										</span>
-										<span className="font-heading text-primary font-bold tabular-nums">
-											{previousBalance.toLocaleString(undefined, {
-												minimumFractionDigits: 2,
+							const header = (
+								<div className="flex items-center justify-between gap-3">
+									<div className="flex min-w-0 items-center gap-3">
+										<div
+											className={cn("flex size-9 shrink-0 items-center justify-center rounded-xl", {
+												"bg-primary/15": isCurrent,
+												"bg-green-500/10": isFullyPaid,
+												"bg-secondary-2/20 group-hover:bg-primary/10 transition-colors": !isCurrent && !isFullyPaid
 											})}
-											<span className="ml-1 text-sm font-normal opacity-60">
+										>
+											<DocumentText
+												size={16}
+												variant="Bulk"
+												className={cn("transition-colors", {
+													"text-primary": isCurrent,
+													"text-green-600": isFullyPaid,
+													"text-secondary-3 group-hover:text-primary transition-colors": !isCurrent && !isFullyPaid
+												})}
+											/>
+										</div>
+										<div className="flex min-w-0 flex-col">
+											<span className={cn("truncate text-sm leading-tight font-bold transition-colors", isCurrent ? "text-primary" : "text-secondary-foreground group-hover:text-primary")}>
+												{invoice.documentNumber}
+											</span>
+											<span className="text-muted-foreground/70 text-[10px] font-medium tracking-wider uppercase">
+												{format(new Date(invoice.issueDate), "MMM dd, yyyy")}
+											</span>
+										</div>
+									</div>
+
+									<div className="flex shrink-0 items-center gap-2">
+										{isCurrent ? (
+											<span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">
+												Current
+											</span>
+										) : null}
+										{isFullyPaid ? (
+											<span className="flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[9px] font-bold tracking-wider text-green-700 uppercase">
+												<TickCircle size={10} variant="Bold" />
+												Paid
+											</span>
+										) : null}
+										{!isCurrent ? (
+											<ArrowRight
+												size={18}
+												className="text-secondary-foreground group-hover:text-primary transition-colors"
+											/>
+										) : null}
+									</div>
+								</div>
+							);
+
+							const summaryRow = (
+								<div className="mt-2 flex items-center justify-between gap-3">
+									<div className="flex items-center gap-3 text-[10px] tracking-wider uppercase">
+										<div className="flex items-baseline gap-1.5">
+											<span className="text-muted-foreground/70 font-bold">
+												Total
+											</span>
+											<span className="text-secondary-foreground font-heading text-xs font-bold tabular-nums">
+												{formatMoney(total)}
+											</span>
+										</div>
+										<span className="text-muted-foreground/30">·</span>
+										<div className="flex items-baseline gap-1.5">
+											<span className="text-muted-foreground/70 font-bold">
+												Paid
+											</span>
+											<span
+												className={cn("font-heading text-xs font-bold tabular-nums", {
+													"text-green-600": paid > 0,
+													"text-muted-foreground/60": paid === 0
+												})}
+											>
+												{formatMoney(paid)}
+											</span>
+										</div>
+									</div>
+									<div className="flex items-baseline gap-1.5">
+										<span className="text-muted-foreground/70 text-[9px] font-bold tracking-widest uppercase">
+											{isFullyPaid ? "Settled" : "Due"}
+										</span>
+										<span
+											className={cn("font-heading text-base font-bold tracking-tight tabular-nums", {
+												"text-muted-foreground/60 line-through decoration-current/40 decoration-1": isFullyPaid,
+												"text-primary": isCurrent,
+												"text-secondary-foreground": !isFullyPaid && !isCurrent
+											})}
+										>
+											{formatMoney(due)}
+											<span className="ml-1 text-[9px] font-semibold opacity-60">
 												MAD
 											</span>
 										</span>
 									</div>
 								</div>
-							</div>
-						) : null}
+							);
 
-						{/* SECTION C: Grand Total */}
-						<Separator />
-						<div className="mt-4 flex w-full items-center justify-between">
-							<div className="flex flex-col text-left">
-								<span className="font-heading text-primary text-sm font-black tracking-[0.2em] uppercase">
-									Total Amount Due
-								</span>
-							</div>
-							<span className="font-heading text-primary text-4xl font-black tracking-tighter tabular-nums">
-								{(totalAmountDue - amountPaid).toLocaleString(undefined, {
-									minimumFractionDigits: 2,
-								})}
-								<span className="ml-1.5 text-xs font-bold opacity-40">MAD</span>
+							const inner = (
+								<>
+									{header}
+									{summaryRow}
+								</>
+							);
+
+							if (isCurrent) {
+								return (
+									<div key={invoice.id} className={cardBaseClasses}>
+										{inner}
+									</div>
+								);
+							}
+
+							return (
+								<Link
+									key={invoice.id}
+									href={`/b2b/documents/${invoice.id}`}
+									className={`group block ${cardBaseClasses} hover:border-primary/30 hover:bg-primary/5`}
+								>
+									{inner}
+								</Link>
+							);
+						},
+					)}
+				</div>
+
+				{/* Summary footer */}
+				<div className="bg-secondary/30 border-secondary-2/50 mt-2 space-y-3 rounded-2xl border px-5 py-4">
+					<div className="flex items-center justify-between">
+						<div className="flex items-baseline gap-2">
+							<span className="text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase">
+								Chain Total
+							</span>
+							<span className="font-heading text-secondary-foreground text-base font-bold tabular-nums">
+								{formatMoney(chainTotal)}
 							</span>
 						</div>
-					</>
-				) : null}
+						<div className="flex items-baseline gap-2">
+							<span className="text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase">
+								Paid
+							</span>
+							<span className="font-heading text-base font-bold text-green-600 tabular-nums">
+								{formatMoney(chainPaid)}
+							</span>
+						</div>
+					</div>
+					<div className="border-secondary-2/50 flex items-end justify-between border-t pt-3">
+						<span className="font-heading text-primary text-xs font-bold tracking-[0.2em] uppercase">
+							{chainCleared ? "Total Cleared" : "Total Due"}
+						</span>
+						<span
+							className={cn("font-heading text-2xl font-bold tracking-tight tabular-nums", {
+								"text-green-600": chainCleared,
+								"text-primary": !chainCleared
+							})}
+						>
+							{formatMoney(chainDue)}
+							<span className="ml-1.5 text-xs font-semibold opacity-60">
+								MAD
+							</span>
+						</span>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

@@ -352,7 +352,7 @@ export async function getDocumentsAction(filters?: {
 	}
 }
 
-export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: any[], allRelatedInvoices?: any[] }; error?: string }> {
+export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: any[], allRelatedInvoices?: any[], chainInvoices?: any[] }; error?: string }> {
 	try {
 		const document = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -417,15 +417,18 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 					allRelatedInvoices: previousInvoices.filter(
 						(inv) => inv.id !== document.id,
 					),
+					// Full backorder chain (incl. current) for the AccountStatement view.
+					chainInvoices: previousInvoices,
 				},
 			};
 		}
 
-		return { 
-			document, 
+		return {
+			document,
 			accountSummary: {
-				previousInvoices: []
-			} 
+				previousInvoices: [],
+				chainInvoices: [],
+			}
 		};
 
 	} catch (error) {
