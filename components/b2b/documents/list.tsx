@@ -25,13 +25,13 @@ import {
 	ArchiveBook,
 	CloseCircle,
 	DocumentDownload,
-	DocumentText as DocumentIcon,
 	DocumentText,
 	More,
 	ReceiptText,
 } from "iconsax-reactjs";
 
 import { DocumentStatusBadge } from "./status-badge";
+import DocumentNotFound from "./not-found";
 
 interface DocumentListProps {
 	documents: DocumentWithContact[];
@@ -39,24 +39,9 @@ interface DocumentListProps {
 }
 
 export function DocumentList({ documents, partnerId }: DocumentListProps) {
-	if (!documents.length) {
-		return (
-			<div className="group border-foreground/10 bg-card/80 hover:bg-card flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
-				<div className="border-primary/15 bg-primary/10 mb-4 rounded-2xl border p-6 shadow-sm transition-colors zen-glow-teal">
-					<DocumentIcon
-						className="text-primary/80 size-10 group-hover:text-primary transition-colors"
-						variant="Bulk"
-					/>
-				</div>
-				<h3 className="font-heading text-foreground text-xl font-bold">
-					No documents
-				</h3>
-				<p className="text-muted-foreground mt-2 max-w-lg text-sm">
-					Quotes and invoices for this partner will appear here once generated.
-				</p>
-			</div>
-		);
-	}
+	if (!documents.length) return <DocumentNotFound 
+		message="Quotes and invoices for this partner will appear here once generated." 
+	/>;
 
 	return (
 		<div className="space-y-4">
