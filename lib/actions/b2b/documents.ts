@@ -352,7 +352,7 @@ export async function getDocumentsAction(filters?: {
 	}
 }
 
-export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: any[], allRelatedInvoices?: any[], chainInvoices?: any[] }; error?: string }> {
+export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: DocumentWithRelations[], allRelatedInvoices?: DocumentWithRelations[], chainInvoices?: DocumentWithRelations[] }; error?: string }> {
 	try {
 		const document = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -381,7 +381,7 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 		if (!document) return { error: "Document not found" };
 
 		// Fetch related invoices for fulfillment tracking and account summary
-		let previousInvoices: any[] = [];
+		let previousInvoices: DocumentWithRelations[] = [];
 		if (document.type === "invoice" && document.parentDocumentId) {
 			previousInvoices = await db.query.b2bDocuments.findMany({
 				where: (docs, { isNull }) => and(
@@ -401,9 +401,9 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 			});
 
 			// Filter for the UI (Statement of Account only shows unpaid invoices created BEFORE this one)
-			const statementInvoices = previousInvoices.filter(inv => 
-				inv.id !== document.id && 
-				inArray(inv.status, ["sent", "partially_paid"]) &&
+			const statementInvoices = previousInvoices.filter(inv =>
+				inv.id !== document.id &&
+				(["sent", "partially_paid"] as string[]).includes(inv.status) &&
 				new Date(inv.createdAt).getTime() < new Date(document.createdAt).getTime()
 			).map(inv => ({ ...inv, isSibling: true }));
 

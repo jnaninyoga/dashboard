@@ -45,7 +45,7 @@ export function PartnerPickerList({ partners }: { partners: B2BPartner[] }) {
 				<div className="border-secondary/10 bg-secondary/5 rounded-2xl border-2 border-dashed p-10 text-center">
 					<p className="text-muted-foreground text-sm">
 						No partners match{" "}
-						<span className="font-mono font-bold">"{query}"</span>.
+						<span className="font-mono font-bold">&quot;{query}&quot;</span>.
 					</p>
 				</div>
 			) : (

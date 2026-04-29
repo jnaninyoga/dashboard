@@ -68,7 +68,7 @@ async function PartnerPicker({ missing = false }: { missing?: boolean }) {
 				{partners.length === 0 ? (
 					<div className="border-secondary/10 bg-secondary/5 rounded-2xl border-2 border-dashed p-10 text-center">
 						<p className="text-muted-foreground mb-4 text-sm">
-							You don't have any partners yet.
+							You don&apos;t have any partners yet.
 						</p>
 						<Link href="/b2b/partners">
 							<span className="text-primary text-sm font-bold hover:underline">

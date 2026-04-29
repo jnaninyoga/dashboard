@@ -2,12 +2,12 @@ import Link from "next/link";
 
 import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
 import { DocumentFilters } from "@/components/b2b/documents/filters";
+import DocumentNotFound from "@/components/b2b/documents/not-found";
 import { Button } from "@/components/ui/button";
 import { getDocumentsAction } from "@/lib/actions/b2b/documents";
 import { B2BDocumentStatus, B2BDocumentType, DocumentWithRelations } from "@/lib/types/b2b";
 
 import { DocumentText } from "iconsax-reactjs";
-import DocumentNotFound from "@/components/b2b/documents/not-found";
 
 type SearchParams = Promise<{
 	query?: string;

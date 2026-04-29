@@ -8,6 +8,7 @@ import { type PartnerWithRelations } from "@/lib/types";
 import { Buildings, Document, User } from "iconsax-reactjs";
 
 import { CopyableTaxId } from "../copyable-tax-id";
+
 import { PartnerActions } from "./actions";
 
 export function PartnerGrid({

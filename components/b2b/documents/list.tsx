@@ -30,15 +30,15 @@ import {
 	ReceiptText,
 } from "iconsax-reactjs";
 
-import { DocumentStatusBadge } from "./status-badge";
 import DocumentNotFound from "./not-found";
+import { DocumentStatusBadge } from "./status-badge";
 
 interface DocumentListProps {
 	documents: DocumentWithContact[];
 	partnerId: string;
 }
 
-export function DocumentList({ documents, partnerId }: DocumentListProps) {
+export function DocumentList({ documents }: DocumentListProps) {
 	if (!documents.length) return <DocumentNotFound 
 		message="Quotes and invoices for this partner will appear here once generated." 
 	/>;

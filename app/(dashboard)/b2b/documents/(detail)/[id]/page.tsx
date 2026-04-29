@@ -45,9 +45,9 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 	)) as {
 		document: DocumentWithRelations | null;
 		accountSummary?: {
-			previousInvoices: any[];
-			allRelatedInvoices?: any[];
-			chainInvoices?: any[];
+			previousInvoices: DocumentWithRelations[];
+			allRelatedInvoices?: DocumentWithRelations[];
+			chainInvoices?: DocumentWithRelations[];
 		};
 		error?: string;
 	};

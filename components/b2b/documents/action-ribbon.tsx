@@ -44,7 +44,7 @@ export function DocumentActionRibbon({
 }: { 
 	doc: DocumentWithRelations, 
 	profile: BusinessProfile | null,
-	previousInvoices?: any[]
+	previousInvoices?: DocumentWithRelations[]
 }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
@@ -245,7 +245,7 @@ export function DocumentActionRibbon({
 									previousInvoices
 										.filter((inv) => inv.id !== doc.id)
 										.forEach((inv) => {
-											inv.lines?.forEach((line: any) => {
+											inv.lines?.forEach((line) => {
 												if (line.sourceLineId) {
 													billedTotals[line.sourceLineId] =
 														(billedTotals[line.sourceLineId] || 0) +

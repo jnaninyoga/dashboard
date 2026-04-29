@@ -15,7 +15,6 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardTitle } from "@/components/ui/card";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -37,9 +36,9 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
 	if (!contacts.length) {
 		return (
 			<div className="group border-foreground/10 bg-card/80 hover:bg-card flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
-				<Avatar className="mb-4 bg-secondary/60 border-secondary-3/20 size-22 border shadow-sm transition-colors zen-glow-blush">
+				<Avatar className="bg-secondary/60 border-secondary-3/20 zen-glow-blush mb-4 size-22 border shadow-sm transition-colors">
 					<AvatarFallback className="bg-transparent">
-						<User className="text-secondary-3/80 size-10 group-hover:text-secondary-3 transition-colors" variant="Bulk" />
+						<User className="text-secondary-3/80 group-hover:text-secondary-3 size-10 transition-colors" variant="Bulk" />
 					</AvatarFallback>
 				</Avatar>
 				<h3 className="font-heading text-foreground text-xl font-bold">No contacts</h3>

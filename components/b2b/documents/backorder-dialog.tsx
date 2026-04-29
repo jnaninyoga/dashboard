@@ -53,7 +53,7 @@ export function BackorderDialog({
 
 					<div className="bg-primary/10 border-primary/10 text-primary flex items-center gap-2 rounded-xl border p-3 text-[11px] font-medium">
 						<InfoCircle size={14} variant="Bold" className="shrink-0" />
-						Choosing "No" will consider the quoted lines as fully fulfilled.
+						Choosing &quot;No&quot; will consider the quoted lines as fully fulfilled.
 					</div>
 				</div>
 

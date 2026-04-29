@@ -64,7 +64,8 @@ export function PartnerDialog({
 				router.refresh();
 			});
 		}
-	}, [state, isEdit, router, setOpen]);
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [state]);
 
 	return (
 		<Dialog open={open} onOpenChange={setOpen}>

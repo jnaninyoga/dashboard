@@ -44,7 +44,7 @@ export function PaymentHistorySummary({
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className="animate-in fade-in slide-in-from-top-1 border-green-500/40 group mt-4 flex w-full items-center justify-between rounded-xl border border-dashed py-3 pr-3 pl-2 transition-colors hover:bg-green-500/5"
+				className="animate-in fade-in slide-in-from-top-1 group mt-4 flex w-full items-center justify-between rounded-xl border border-dashed border-green-500/40 py-3 pr-3 pl-2 transition-colors hover:bg-green-500/5"
 			>
 				<div className="flex items-center gap-2">
 					<div className="flex size-7 items-center justify-center rounded-full bg-green-500/10">
@@ -71,7 +71,7 @@ export function PaymentHistorySummary({
 					</span>
 					<ArrowRight
 						size={14}
-						className="text-muted-foreground/40 group-hover:text-green-600 transition-colors"
+						className="text-muted-foreground/40 transition-colors group-hover:text-green-600"
 					/>
 				</div>
 			</button>
@@ -84,7 +84,7 @@ export function PaymentHistorySummary({
 								<Receipt2 size={24} variant="Bulk" />
 							</div>
 							<div className="min-w-0">
-								<DialogTitle className="truncate text-xl font-bold tracking-tight text-start">
+								<DialogTitle className="truncate text-start text-xl font-bold tracking-tight">
 									Payment History
 								</DialogTitle>
 								<DialogDescription>

@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +29,7 @@ import {
 	recordPaymentSchema,
 } from "@/lib/validators/document";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { MoneySend, TickCircle, Wallet3 } from "iconsax-reactjs";
 import { toast } from "sonner";
 
@@ -100,6 +100,7 @@ export function RecordPaymentDialog({
 		defaultValues: { amountPaid: totalOutstanding.toFixed(2) },
 	});
 
+	// eslint-disable-next-line react-hooks/incompatible-library
 	const watchedAmount = form.watch("amountPaid");
 	const paidAmount = Number(watchedAmount || 0);
 
