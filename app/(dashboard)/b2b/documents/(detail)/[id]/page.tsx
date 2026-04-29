@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AccountStatement } from "@/components/b2b/documents/account-statement";
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
+import { ChainStrip } from "@/components/b2b/documents/chain-strip";
 import { DocumentTotals } from "@/components/b2b/documents/document-totals";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { EditableNotes } from "@/components/b2b/editable-notes";
@@ -254,6 +254,15 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				</div>
 			</div>
 
+			{/* Backorder chain strip (only when this invoice is part of a multi-invoice chain) */}
+			{chainInvoices.length > 1 ? (
+				<ChainStrip
+					invoices={chainInvoices}
+					currentDocumentId={document.id}
+					partnerName={document.partner?.companyName ?? null}
+				/>
+			) : null}
+
 			{/* Actions Ribbon */}
 			<DocumentActionRibbon
 				doc={document}
@@ -315,18 +324,8 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 						</TableBody>
 					</Table>
 
-					<div className="animate-slide-up flex flex-col gap-6 delay-200 lg:flex-row lg:items-start">
-						{chainInvoices.length > 1 ? (
-							<div className="flex-1">
-								<AccountStatement
-									invoices={chainInvoices}
-									currentDocumentId={document.id}
-								/>
-							</div>
-						) : null}
-						<div
-							className={`w-full lg:max-w-md ${chainInvoices.length > 1 ? "" : "lg:ml-auto"}`}
-						>
+					<div className="animate-slide-up flex w-full justify-end delay-200">
+						<div className="w-full lg:max-w-md">
 							<DocumentTotals
 								document={document}
 								currentTotal={currentTotal}
