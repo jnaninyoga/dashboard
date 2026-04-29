@@ -44,7 +44,7 @@ export function PaymentHistorySummary({
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className="animate-in fade-in slide-in-from-top-1 border-foreground/15 hover:bg-green-500/5 group mt-4 flex w-full items-center justify-between rounded-xl border border-dashed py-3 pr-3 pl-2 transition-colors"
+				className="animate-in fade-in slide-in-from-top-1 border-green-500/40 group mt-4 flex w-full items-center justify-between rounded-xl border border-dashed py-3 pr-3 pl-2 transition-colors hover:bg-green-500/5"
 			>
 				<div className="flex items-center gap-2">
 					<div className="flex size-7 items-center justify-center rounded-full bg-green-500/10">
@@ -71,20 +71,20 @@ export function PaymentHistorySummary({
 					</span>
 					<ArrowRight
 						size={14}
-						className="text-muted-foreground/40 group-hover:text-primary transition-colors"
+						className="text-muted-foreground/40 group-hover:text-green-600 transition-colors"
 					/>
 				</div>
 			</button>
 
 			<Dialog open={open} onOpenChange={setOpen}>
-				<DialogContent className="zen-shadow-lg overflow-hidden rounded-3xl border-none p-0 sm:max-w-[480px]">
-					<DialogHeader className="bg-card border-b p-8 pb-6">
+				<DialogContent className="zen-shadow-lg gap-0 overflow-hidden rounded-3xl border-none p-0 sm:max-w-120">
+					<DialogHeader className="bg-card m-0 border-b p-8 pb-6">
 						<div className="flex items-center gap-4">
 							<div className="flex size-12 items-center justify-center rounded-2xl border border-green-500/20 bg-green-500/10 text-green-600">
 								<Receipt2 size={24} variant="Bulk" />
 							</div>
 							<div className="min-w-0">
-								<DialogTitle className="truncate text-xl font-bold tracking-tight">
+								<DialogTitle className="truncate text-xl font-bold tracking-tight text-start">
 									Payment History
 								</DialogTitle>
 								<DialogDescription>
@@ -95,13 +95,13 @@ export function PaymentHistorySummary({
 						</div>
 					</DialogHeader>
 
-					<div className="space-y-5 p-8">
-						<div className="bg-secondary/20 border-secondary-2/70 flex items-end justify-between rounded-2xl border px-5 py-4">
+					<div className="space-y-5 px-8 py-6">
+						<div className="flex items-end justify-between rounded-2xl border border-green-500/20 bg-green-500/10 px-5 py-4">
 							<div className="flex flex-col leading-tight">
-								<span className="text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase">
+								<span className="text-[10px] font-bold tracking-widest text-green-600 uppercase">
 									Total Paid
 								</span>
-								<span className="text-muted-foreground/60 text-[10px] font-medium">
+								<span className="text-[10px] font-medium text-green-600">
 									Across {count} payment{count > 1 ? "s" : ""}
 								</span>
 							</div>
@@ -113,33 +113,30 @@ export function PaymentHistorySummary({
 							</span>
 						</div>
 
-						<div className="relative max-h-[360px] space-y-3 overflow-y-auto pr-1">
+						<div className="relative max-h-90 space-y-3 overflow-y-auto pr-1">
 							{sorted.map((payment, idx) => (
 								<div
 									key={payment.id}
-									className="bg-secondary/15 border-secondary-2/40 hover:bg-secondary/30 relative flex items-start gap-3 overflow-hidden rounded-2xl border p-4 transition-colors"
+									className="bg-primary/10 border-primary/20 hover:bg-primary/15 relative flex items-start gap-3 overflow-hidden rounded-2xl border p-4 transition-colors"
 								>
-									<div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10">
+									<div className="bg-primary/15 group-hover:bg-primary/20 relative flex size-10 shrink-0 items-center justify-center rounded-xl transition-colors">
 										<MoneyTime
 											size={18}
 											variant="Bulk"
-											className="text-green-600"
+											className="text-primary"
 										/>
+										<span className="border-card bg-primary text-primary-foreground absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 px-1 text-[9px] font-bold tabular-nums">
+											#{count - idx}
+										</span>
 									</div>
 									<div className="flex min-w-0 flex-1 flex-col gap-1">
-										<div className="flex items-start justify-between gap-2">
-											<div className="flex flex-col leading-tight">
-												<span className="text-secondary-foreground text-sm font-bold">
-													{format(
-														new Date(payment.paymentDate),
-														"MMM dd, yyyy",
-													)}
-												</span>
-												<span className="text-muted-foreground/70 text-[10px] font-medium tracking-wider uppercase">
-													{format(new Date(payment.paymentDate), "EEEE")} &middot; #
-													{count - idx}
-												</span>
-											</div>
+										<div className="flex items-center justify-between gap-2">
+											<span className="text-primary text-sm font-bold">
+												{format(new Date(payment.paymentDate), "EEEE")+ ", "+format(
+													new Date(payment.paymentDate),
+													"MMM dd, yyyy",
+												)}
+											</span>
 											<span className="font-heading text-lg font-bold text-green-600 tabular-nums">
 												{formatMoney(parseFloat(payment.amount))}
 												<span className="ml-1 text-[10px] font-semibold opacity-60">
@@ -148,7 +145,7 @@ export function PaymentHistorySummary({
 											</span>
 										</div>
 										{payment.notes ? (
-											<p className="text-muted-foreground border-secondary-2/40 mt-1 border-t border-dashed pt-2 text-xs italic">
+											<p className="text-muted-foreground border-primary/40 mt-1 border-t border-dashed pt-2 text-xs italic">
 												{payment.notes}
 											</p>
 										) : null}
