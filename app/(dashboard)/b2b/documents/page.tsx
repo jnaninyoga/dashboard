@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
-import { DocumentFilters } from "@/components/b2b/documents/filters";
 import DocumentNotFound from "@/components/b2b/documents/not-found";
 import { Button } from "@/components/ui/button";
 import { getDocumentsAction } from "@/lib/actions/b2b/documents";
@@ -12,7 +11,8 @@ import { DocumentText } from "iconsax-reactjs";
 type SearchParams = Promise<{
 	query?: string;
 	type?: B2BDocumentType;
-	status?: B2BDocumentStatus;
+	status?: B2BDocumentStatus | "unpaid";
+	isBackorder?: string;
 }>;
 
 export default async function DocumentsPage(props: {
@@ -22,11 +22,13 @@ export default async function DocumentsPage(props: {
 	const query = searchParams.query || "";
 	const type = searchParams.type || "all";
 	const status = searchParams.status || "all";
+	const isBackorder = searchParams.isBackorder === "true";
 
 	const { documents, error } = await getDocumentsAction({
 		query,
 		type,
 		status,
+		isBackorder,
 	});
 
 	if (error) {
@@ -52,9 +54,7 @@ export default async function DocumentsPage(props: {
 				</Link>
 			</div>
 
-			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">
-				<DocumentFilters />
-			</div>
+
 
 			<DocumentDashboardTable documents={(documents as DocumentWithRelations[]) || []} />
 

@@ -62,6 +62,15 @@ export function DocumentFilters() {
 		});
 	};
 
+	const handleBackorderChange = (value: string) => {
+		const newQueryString = createQueryString("isBackorder", value);
+		if (newQueryString === searchParams.toString()) return;
+
+		startTransition(() => {
+			router.replace(`${pathname}?${newQueryString}`, { scroll: false });
+		});
+	};
+
 	return (
 		<div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
 			<div className="relative flex-1">
@@ -135,6 +144,22 @@ export function DocumentFilters() {
 								Accepted
 							</Badge>
 						</SelectItem>
+						<SelectItem value="unpaid">
+							<Badge
+								variant="destructive"
+								className="bg-red-100 text-red-800 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase hover:bg-red-100"
+							>
+								Unpaid
+							</Badge>
+						</SelectItem>
+						<SelectItem value="partially_paid">
+							<Badge
+								variant="outline"
+								className="border-orange-500 text-orange-500 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+							>
+								Partially Paid
+							</Badge>
+						</SelectItem>
 						<SelectItem value="paid">
 							<Badge
 								variant="success"
@@ -149,6 +174,29 @@ export function DocumentFilters() {
 								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
 							>
 								Cancelled
+							</Badge>
+						</SelectItem>
+					</SelectContent>
+				</Select>
+
+				<Select
+					defaultValue={searchParams.get("isBackorder") || "all"}
+					onValueChange={handleBackorderChange}
+					disabled={isPending}
+				>
+					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+						<SelectValue placeholder="Backorder" />
+					</SelectTrigger>
+					<SelectContent className="border shadow-xl">
+						<SelectItem value="all">
+							All Documents
+						</SelectItem>
+						<SelectItem value="true">
+							<Badge
+								variant="outline"
+								className="border-purple-500 text-purple-600 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+							>
+								Backorders Only
 							</Badge>
 						</SelectItem>
 					</SelectContent>

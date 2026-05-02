@@ -50,8 +50,9 @@ function computeTotals(lines: LineInput[], taxRate: number | string) {
 // Allowed status transitions. Anything outside this map is rejected — once an
 // invoice is `sent`, payments drive it forward; corrections go through archive.
 const ALLOWED_STATUS_TRANSITIONS: Record<B2BDocumentStatus, B2BDocumentStatus[]> = {
-	draft: ["sent"],
-	sent: ["accepted", "partially_paid", "paid"],
+	draft: ["sent", "unpaid"],
+	sent: ["accepted", "partially_paid", "paid", "unpaid"],
+	unpaid: ["partially_paid", "paid", "cancelled"],
 	accepted: [],
 	partially_paid: ["paid"],
 	paid: [],
@@ -212,7 +213,7 @@ export async function updateDocumentStatusAction(
 
 		// Issuing an invoice requires a valid partner ICE (15 digits) — without
 		// it the partner cannot reclaim VAT and the invoice fails Morocco audit.
-		if (status === "sent" && doc.type === "invoice" && !isValidIce(doc.partner?.taxId)) {
+		if ((status === "sent" || status === "unpaid") && doc.type === "invoice" && !isValidIce(doc.partner?.taxId)) {
 			return {
 				error:
 					"Add the partner's ICE (Tax ID) before issuing this invoice.",
@@ -305,6 +306,7 @@ export async function getDocumentsAction(filters?: {
 	query?: string;
 	type?: B2BDocumentType | "all";
 	status?: B2BDocumentStatus | "all";
+	isBackorder?: boolean | "all";
 	includeArchived?: boolean;
 }): Promise<{ documents?: DocumentWithRelations[]; error?: string }> {
 	const { query, type, status, includeArchived } = filters || {};
@@ -332,7 +334,16 @@ export async function getDocumentsAction(filters?: {
 				}
 
 				if (status && status !== "all") {
-					conditions.push(eq(docs.status, status));
+					conditions.push(eq(docs.status, status as B2BDocumentStatus));
+				}
+
+				if (filters?.isBackorder && filters.isBackorder !== "all") {
+					conditions.push(
+						and(
+							eq(docs.type, "invoice"),
+							sql`${docs.parentDocumentId} IS NOT NULL`
+						)
+					);
 				}
 
 				return conditions.length > 0 ? and(...conditions) : undefined;
@@ -340,6 +351,8 @@ export async function getDocumentsAction(filters?: {
 			with: {
 				partner: true,
 				contact: true,
+				payments: true,
+				parent: true,
 			},
 			orderBy: [desc(b2bDocuments.issueDate), desc(b2bDocuments.createdAt)],
 		})) as DocumentWithRelations[];
@@ -403,7 +416,7 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 			// Filter for the UI (Statement of Account only shows unpaid invoices created BEFORE this one)
 			const statementInvoices = previousInvoices.filter(inv =>
 				inv.id !== document.id &&
-				(["sent", "partially_paid"] as string[]).includes(inv.status) &&
+				(["sent", "unpaid", "partially_paid"] as string[]).includes(inv.status) &&
 				new Date(inv.createdAt).getTime() < new Date(document.createdAt).getTime()
 			).map(inv => ({ ...inv, isSibling: true }));
 
@@ -566,7 +579,7 @@ export async function createPartialInvoiceAction(
 					partnerId: quote.partnerId,
 					contactId: quote.contactId,
 					type: "invoice",
-					status: "sent",
+					status: "unpaid",
 					documentNumber: nextNumber,
 					issueDate: new Date().toISOString().split("T")[0],
 					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
@@ -650,7 +663,7 @@ export async function recordDocumentPaymentAction(
 				where: (docs, { isNull }) => and(
 					eq(docs.partnerId, partnerId || doc.partnerId),
 					eq(docs.type, "invoice"),
-					inArray(docs.status, ["sent", "partially_paid"]),
+					inArray(docs.status, ["sent", "unpaid", "partially_paid"]),
 					doc.parentDocumentId
 						? eq(docs.parentDocumentId, doc.parentDocumentId)
 						: eq(docs.id, doc.id),
@@ -823,10 +836,10 @@ export async function confirmInvoiceWithBackorderAction(
 			};
 		}
 
-		// 1. Mark current invoice as sent and clean up zero-quantity lines
+		// 1. Mark current invoice as unpaid and clean up zero-quantity lines
 		await db.transaction(async (tx) => {
 			await tx.update(b2bDocuments)
-				.set({ status: "sent", updatedAt: new Date() })
+				.set({ status: "unpaid", updatedAt: new Date() })
 				.where(eq(b2bDocuments.id, invoiceId));
 
 			// Remove any lines that have 0 quantity (they don't belong on a professional invoice)

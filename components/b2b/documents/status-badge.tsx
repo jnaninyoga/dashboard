@@ -1,4 +1,7 @@
+import { ReactNode } from "react";
+
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils/ui";
 
 import {
 	Clock,
@@ -14,43 +17,60 @@ interface DocumentStatusBadgeProps {
 	className?: string;
 }
 
+type BadgeVariant =
+	| "default"
+	| "secondary"
+	| "destructive"
+	| "outline"
+	| "success"
+	| "info"
+	| "warning"
+	| "muted";
+
+interface StatusProps {
+	variant: BadgeVariant;
+	icon: ReactNode;
+	label: string;
+}
+
 export function DocumentStatusBadge({ status, className }: DocumentStatusBadgeProps) {
-	const getStatusProps = (s: string) => {
+	const getStatusProps = (s: string): StatusProps => {
 		switch (s.toLowerCase()) {
 			case "paid":
 				return {
-					variant: "success" as const,
+					variant: "success",
 					icon: <TickCircle size={14} variant="Bold" />,
 					label: "Paid",
 				};
-			case "partially_paid":
+			case "unpaid":
 				return {
-					variant: "info" as const,
-					icon: <MoneyTime size={14} variant="Bold" />,
-					label: "Partially Paid",
+					variant: "warning",
+					icon: <Clock size={14} variant="Bold" />,
+					label: "Unpaid",
+				};
+			case "partially_paid":
+			case "sent":
+				return {
+					variant: "info",
+					icon: s.toLowerCase() === "sent" ? <Clock size={14} variant="Bold" /> : <MoneyTime size={14} variant="Bold" />,
+					label: s.toLowerCase() === "sent" ? "Sent" : "Partially Paid",
 				};
 			case "accepted":
 				return {
-					variant: "success" as const,
+					variant: "default", // Primary color to distinguish from "Paid" green
 					icon: <ReceiptText size={14} variant="Bold" />,
 					label: "Accepted",
 				};
-			case "sent":
-				return {
-					variant: "info" as const,
-					icon: <Clock size={14} variant="Bold" />,
-					label: "Sent",
-				};
 			case "cancelled":
 				return {
-					variant: "destructive" as const,
+					variant: "destructive",
 					icon: <CloseCircle size={14} variant="Bold" />,
 					label: "Cancelled",
 				};
 			case "draft":
 			default:
 				return {
-					variant: "muted" as const,
+					variant: "muted",
 					icon: <Edit2 size={14} variant="Bold" />,
 					label: "Draft",
 				};
@@ -62,7 +82,10 @@ export function DocumentStatusBadge({ status, className }: DocumentStatusBadgePr
 	return (
 		<Badge
 			variant={statusProps.variant}
-			className={`flex w-fit items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase transition-all ${className || ""}`}
+			className={cn(
+				"flex w-fit items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase transition-all",
+				className
+			)}
 		>
 			{statusProps.icon}
 			{statusProps.label}

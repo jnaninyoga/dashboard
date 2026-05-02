@@ -62,6 +62,7 @@ export const b2bDocumentStatusEnum = pgEnum("b2b_document_status", [
 	"draft",
 	"sent",
 	"accepted",
+	"unpaid",
 	"partially_paid",
 	"paid",
 	"cancelled",

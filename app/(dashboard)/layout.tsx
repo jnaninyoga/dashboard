@@ -48,7 +48,9 @@ export default async function DashboardLayout({
 						<SidebarTrigger className="-ml-1 min-h-[48px] min-w-[48px]" />
 					</div>
 				</header>
-				<div className="animate-slide-up mx-auto flex w-full max-w-5xl flex-1 flex-col">{children}</div>
+				<div className="animate-slide-up mx-auto flex w-full max-w-screen-2xl flex-1 flex-col p-6 lg:p-8">
+					{children}
+				</div>
 			</SidebarInset>
 		</SidebarProvider>
 	);

@@ -18,6 +18,7 @@ export type B2BDocumentStatus =
 	| "draft"
 	| "sent"
 	| "accepted"
+	| "unpaid"
 	| "partially_paid"
 	| "paid"
 	| "cancelled";
