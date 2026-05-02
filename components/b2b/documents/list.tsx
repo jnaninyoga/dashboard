@@ -3,7 +3,6 @@
 import Link from "next/link";
 
 import { DocumentCard } from "@/components/b2b/documents/card";
-import { DocumentDialog } from "@/components/b2b/documents/dialog";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -19,58 +18,30 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { type B2BContact, type DocumentWithContact } from "@/lib/types";
+import { type DocumentWithContact } from "@/lib/types";
 
 import { format } from "date-fns";
 import {
 	ArchiveBook,
 	CloseCircle,
 	DocumentDownload,
-	DocumentText as DocumentIcon,
 	DocumentText,
 	More,
 	ReceiptText,
 } from "iconsax-reactjs";
 
+import DocumentNotFound from "./not-found";
 import { DocumentStatusBadge } from "./status-badge";
 
 interface DocumentListProps {
 	documents: DocumentWithContact[];
 	partnerId: string;
-	contacts: B2BContact[];
 }
 
-export function DocumentList({
-	documents,
-	partnerId,
-	contacts,
-}: DocumentListProps) {
-	if (!documents.length) {
-		return (
-			<div className="group border-secondary/10 bg-secondary/5 hover:bg-secondary/10 flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
-				<div className="border-secondary/5 bg-background mb-4 rounded-2xl border p-6 shadow-sm transition-transform group-hover:scale-110">
-					<DocumentIcon
-						className="text-primary/30 h-10 w-10"
-						variant="Outline"
-					/>
-				</div>
-				<h3 className="font-heading text-foreground text-xl font-bold">
-					No documents
-				</h3>
-				<p className="text-muted-foreground mt-2 max-w-sm text-sm">
-					Quotes and invoices for this partner will appear here once generated.
-				</p>
-				<DocumentDialog partnerId={partnerId} contacts={contacts}>
-					<Button
-						variant="outline"
-						className="border-primary/20 text-primary hover:bg-primary/5 mt-6 rounded-xl font-bold transition-all active:scale-95"
-					>
-						Generate first document
-					</Button>
-				</DocumentDialog>
-			</div>
-		);
-	}
+export function DocumentList({ documents }: DocumentListProps) {
+	if (!documents.length) return <DocumentNotFound 
+		message="Quotes and invoices for this partner will appear here once generated." 
+	/>;
 
 	return (
 		<div className="space-y-4">

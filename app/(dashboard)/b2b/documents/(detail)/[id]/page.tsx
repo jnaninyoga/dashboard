@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
+import { ChainStrip } from "@/components/b2b/documents/chain-strip";
+import { DocumentTotals } from "@/components/b2b/documents/document-totals";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
 	Table,
 	TableBody,
@@ -39,8 +40,15 @@ type Params = Promise<{ id: string }>;
 
 export default async function DocumentDetailPage(props: { params: Params }) {
 	const { id } = await props.params;
-	const { document, error } = (await getDocumentByIdAction(id)) as {
+	const { document, accountSummary, error } = (await getDocumentByIdAction(
+		id,
+	)) as {
 		document: DocumentWithRelations | null;
+		accountSummary?: {
+			previousInvoices: DocumentWithRelations[];
+			allRelatedInvoices?: DocumentWithRelations[];
+			chainInvoices?: DocumentWithRelations[];
+		};
 		error?: string;
 	};
 
@@ -50,6 +58,8 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 	const profile = await getBusinessProfileAction();
 
+	const chainInvoices = accountSummary?.chainInvoices || [];
+
 	const getStatusProps = (status: string) => {
 		const s = status.toLowerCase();
 		switch (s) {
@@ -58,6 +68,12 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					variant: "success" as const,
 					icon: <TickCircle size={14} variant="Bold" />,
 					label: "Paid",
+				};
+			case "partially_paid":
+				return {
+					variant: "info" as const,
+					icon: <MoneyTime size={14} variant="Bold" />,
+					label: "Partially Paid",
 				};
 			case "accepted":
 				return {
@@ -89,8 +105,17 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 	const status = getStatusProps(document.status);
 
+	// Financial Calculations
+	const isQuote = document.type === "quote";
+	const currentTotal = parseFloat(document.totalAmount);
+	const amountPaid = (document.payments || []).reduce(
+		(sum, p) => sum + parseFloat(p.amount),
+		0,
+	);
+	const amountDue = currentTotal - amountPaid;
+
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+		<>
 			{/* Breadcrumb */}
 			<Link
 				href="/b2b/documents"
@@ -193,20 +218,57 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 				<div className="relative z-10 flex flex-col justify-end text-right">
 					<span className="text-primary text-[10px] font-black tracking-widest uppercase opacity-40">
-						Total Amount
+						{isQuote
+							? "Quoted Amount"
+							: amountPaid > 0
+								? "Balance Due"
+								: "Invoice Total"}
 					</span>
-					<div className="text-primary font-heading zen-teal-glow text-4xl font-black tabular-nums">
-						{parseFloat(document.totalAmount).toLocaleString("en-US", {
-							minimumFractionDigits: 2,
-							maximumFractionDigits: 2,
-						})}
-						<span className="ml-2 text-base font-bold opacity-60">MAD</span>
-					</div>
+
+					{amountPaid > 0 && !isQuote ? (
+						<div className="flex flex-col">
+							<div className="text-primary/30 font-heading decoration-primary/20 text-2xl font-black tabular-nums line-through decoration-2">
+								{currentTotal.toLocaleString("en-US", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})}
+								<span className="ml-2 text-sm font-bold">MAD</span>
+							</div>
+							<div className="text-primary font-heading zen-teal-glow text-4xl font-black tabular-nums">
+								{(currentTotal - amountPaid).toLocaleString("en-US", {
+									minimumFractionDigits: 2,
+									maximumFractionDigits: 2,
+								})}
+								<span className="ml-2 text-base font-bold opacity-60">MAD</span>
+							</div>
+						</div>
+					) : (
+						<div className="text-primary font-heading zen-teal-glow text-4xl font-black tabular-nums">
+							{currentTotal.toLocaleString("en-US", {
+								minimumFractionDigits: 2,
+								maximumFractionDigits: 2,
+							})}
+							<span className="ml-2 text-base font-bold opacity-60">MAD</span>
+						</div>
+					)}
 				</div>
 			</div>
 
+			{/* Backorder chain strip (only when this invoice is part of a multi-invoice chain) */}
+			{chainInvoices.length > 1 ? (
+				<ChainStrip
+					invoices={chainInvoices}
+					currentDocumentId={document.id}
+					partnerName={document.partner?.companyName ?? null}
+				/>
+			) : null}
+
 			{/* Actions Ribbon */}
-			<DocumentActionRibbon doc={document} profile={profile} />
+			<DocumentActionRibbon
+				doc={document}
+				profile={profile}
+				previousInvoices={accountSummary?.allRelatedInvoices || []}
+			/>
 
 			{/* Line Items Section */}
 			{document.status === "draft" ? (
@@ -262,55 +324,26 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 						</TableBody>
 					</Table>
 
-					<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
-						<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
-							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
-									Subtotal
-								</span>
-								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{parseFloat(document.subtotal).toLocaleString()}
-									<span className="text-muted-foreground ml-1 text-xs font-normal">
-										MAD
-									</span>
-								</span>
-							</div>
-							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
-									Tax ({parseFloat(document.taxRate)}%)
-								</span>
-								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{(
-										parseFloat(document.subtotal) *
-										(parseFloat(document.taxRate) / 100)
-									).toLocaleString(undefined, {
-										minimumFractionDigits: 0,
-										maximumFractionDigits: 2,
-									})}
-									<span className="text-muted-foreground ml-1 text-xs font-normal">
-										MAD
-									</span>
-								</span>
-							</div>
-							<Separator className="w-full" />
-							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-primary text-[10px] font-black tracking-widest uppercase">
-									Total
-								</span>
-								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
-									{parseFloat(document.totalAmount).toLocaleString()}
-									<span className="text-primary ml-1.5 text-sm font-semibold">
-										MAD
-									</span>
-								</span>
-							</div>
+					<div className="animate-slide-up flex w-full justify-end delay-200">
+						<div className="w-full lg:max-w-md">
+							<DocumentTotals
+								document={document}
+								currentTotal={currentTotal}
+								amountPaid={amountPaid}
+								amountDue={amountDue}
+								isQuote={isQuote}
+							/>
 						</div>
 					</div>
 				</>
 			)}
 
 			{/* Notes Section */}
-			<EditableNotes documentId={document.id} initialNotes={document.notes} />
-		</div>
+			<EditableNotes
+				documentId={document.id}
+				initialNotes={document.notes}
+				readOnly={document.status !== "draft" || !!document.archivedAt}
+			/>
+		</>
 	);
 }

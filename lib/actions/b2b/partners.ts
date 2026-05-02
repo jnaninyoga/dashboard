@@ -131,6 +131,42 @@ export async function createContactAction(
 	}
 }
 
+export async function updatePartnerAction(
+	id: string,
+	prevState: ActionState | null,
+	formData: FormData,
+): Promise<ActionState> {
+	const rawData = {
+		companyName: formData.get("companyName"),
+		address: formData.get("address") || null,
+		taxId: formData.get("taxId") || null,
+	};
+
+	const validated = partnerSchema.safeParse(rawData);
+	if (!validated.success) {
+		return {
+			error: "Validation failed",
+			issues: validated.error.flatten().fieldErrors,
+		};
+	}
+
+	try {
+		await db
+			.update(b2bPartners)
+			.set({ ...validated.data, updatedAt: new Date() })
+			.where(eq(b2bPartners.id, id));
+
+		revalidatePath("/b2b/partners");
+		revalidatePath(`/b2b/partners/${id}`);
+		// Status guards on document issuance read partner.taxId — keep them in sync.
+		revalidatePath("/b2b/documents");
+		return { success: true };
+	} catch (error) {
+		console.error("Error updating partner:", error);
+		return { error: "Failed to update partner" };
+	}
+}
+
 export async function deletePartnerAction(id: string): Promise<ActionState> {
 	try {
 		// Check for associated documents (prevent deleting partner if they have quotes/invoices)

@@ -1,25 +1,11 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useRef } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Command,
-	CommandEmpty,
-	CommandGroup,
-	CommandItem,
-	CommandList,
-} from "@/components/ui/command";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import {
-	Popover,
-	PopoverAnchor,
-	PopoverContent,
-} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import {
 	Table,
@@ -44,6 +30,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Add, Refresh, Save2, Trash } from "iconsax-reactjs";
 import { toast } from "sonner";
 import { z } from "zod";
+
+import { DescriptionAutocomplete } from "./description-autocomplete";
 
 const linesFormSchema = z.object({
 	lines: z.array(documentLineSchema).min(1),
@@ -74,6 +62,7 @@ export function EditableDocumentLines({
 		resolver: zodResolver(linesFormSchema),
 		defaultValues: {
 			lines: initialLines.map((l) => ({
+				sourceLineId: l.sourceLineId,
 				description: l.description,
 				quantity: String(l.quantity),
 				unitPrice: String(l.unitPrice),
@@ -109,16 +98,16 @@ export function EditableDocumentLines({
 
 
 	const handleSave = (values: LinesFormValues) => {
-
 		startTransition(async () => {
+			// Totals are recomputed server-side from (quantity, unitPrice, taxRate);
+			// the client-displayed totals above are preview-only.
 			const res = await updateDocumentLinesAction(documentId, {
 				lines: values.lines.map((l) => ({
 					...l,
+					sourceLineId: l.sourceLineId,
 					totalPrice: (Number(l.quantity) * Number(l.unitPrice)).toString(),
 				})),
-				subtotal: subtotal.toString(),
 				taxRate: values.taxRate,
-				totalAmount: totalAmount.toString(),
 			});
 
 			if (res.success) {
@@ -207,6 +196,7 @@ export function EditableDocumentLines({
 														<DescriptionAutocomplete
 															value={f.value}
 															onChange={f.onChange}
+															disabled={isPending}
 															onSelectTier={(tier) => {
 																form.setValue(
 																	`lines.${index}.description`,
@@ -294,8 +284,6 @@ export function EditableDocumentLines({
 											</span>
 										</span>
 									</TableCell>
-
-
 
 									<TableCell className="py-3 text-center align-top">
 										<Button
@@ -389,75 +377,3 @@ export function EditableDocumentLines({
 	);
 }
 
-function DescriptionAutocomplete({
-	value,
-	onChange,
-	onSelectTier,
-	pricingTiers,
-}: {
-	value: string;
-	onChange: (val: string) => void;
-	onSelectTier: (tier: B2BPricingTier) => void;
-	pricingTiers: B2BPricingTier[];
-}) {
-	const [open, setOpen] = useState(false);
-	const containerRef = useRef<HTMLDivElement>(null);
-
-	return (
-		<div ref={containerRef} className="relative w-full">
-			<Popover open={open} onOpenChange={setOpen}>
-				<PopoverAnchor asChild>
-					<Input
-						value={value}
-						onChange={(e) => {
-							onChange(e.target.value);
-							if (!open && e.target.value) setOpen(true);
-						}}
-						className="bg-card h-8 border text-sm font-medium"
-						placeholder="Description..."
-					/>
-				</PopoverAnchor>
-				<PopoverContent
-					className="border p-0"
-					style={{ width: "var(--radix-popover-anchor-width)" }}
-					onOpenAutoFocus={(e) => e.preventDefault()}
-				>
-					<Command className="bg-card">
-						<CommandList className="max-h-48">
-							<CommandEmpty>No results.</CommandEmpty>
-							<CommandGroup>
-								{pricingTiers
-									.filter((t) =>
-										t.name.toLowerCase().includes(value.toLowerCase()),
-									)
-									.map((tier) => (
-										<CommandItem
-											key={tier.id}
-											value={tier.name}
-											onSelect={() => {
-												onSelectTier(tier);
-												setOpen(false);
-											}}
-											className="hover:bg-primary/5 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary flex cursor-pointer items-center justify-between px-3 py-2 transition-colors"
-										>
-											<div className="flex flex-col">
-												<span className="text-xs font-bold tracking-tight">
-													{tier.name}
-												</span>
-											</div>
-											<Badge
-												variant="outline"
-												className="bg-accent/20 text-primary border-primary/10 ml-2 font-mono text-[10px] font-black"
-											>
-												{tier.price.toLocaleString()} MAD
-											</Badge>
-										</CommandItem>
-									))}
-							</CommandGroup>
-						</CommandList>
-					</Command>
-				</PopoverContent>
-			</Popover>
-		</div>
-	);
-}

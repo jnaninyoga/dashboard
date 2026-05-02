@@ -1,17 +1,21 @@
 import { type StandardLegalLabel } from "@/lib/types/b2b";
 
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
 	type AnyPgColumn,
 	boolean,
+	check,
 	date,
 	decimal,
+	index,
 	integer,
 	jsonb,
 	pgEnum,
 	pgTable,
+	primaryKey,
 	text,
 	timestamp,
+	unique,
 	uuid,
 } from "drizzle-orm/pg-core";
 
@@ -58,6 +62,7 @@ export const b2bDocumentStatusEnum = pgEnum("b2b_document_status", [
 	"draft",
 	"sent",
 	"accepted",
+	"partially_paid",
 	"paid",
 	"cancelled",
 ]);
@@ -259,35 +264,58 @@ export const b2bContacts = pgTable("b2b_contacts", {
 export type B2BContact = typeof b2bContacts.$inferSelect;
 export type NewB2BContact = typeof b2bContacts.$inferInsert;
 
-export const b2bDocuments = pgTable("b2b_documents", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	partnerId: uuid("partner_id")
-		.references(() => b2bPartners.id, { onDelete: "cascade" })
-		.notNull(),
-	contactId: uuid("contact_id").references(() => b2bContacts.id),
-	type: b2bDocumentTypeEnum("type").notNull(),
-	status: b2bDocumentStatusEnum("status").notNull().default("draft"),
-	documentNumber: text("document_number").notNull(),
-	issueDate: date("issue_date").notNull(),
-	dueDate: date("due_date"),
-	subtotal: decimal("subtotal", { precision: 10, scale: 2 })
-		.notNull()
-		.default("0"),
-	taxRate: decimal("tax_rate", { precision: 10, scale: 2 })
-		.notNull()
-		.default("0"),
-	totalAmount: decimal("total_amount", { precision: 10, scale: 2 })
-		.notNull()
-		.default("0"),
-	notes: text("notes"),
-	parentDocumentId: uuid("parent_document_id").references(
-		(): AnyPgColumn => b2bDocuments.id,
-	),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-	updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+export const b2bDocuments = pgTable(
+	"b2b_documents",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		partnerId: uuid("partner_id")
+			.references(() => b2bPartners.id, { onDelete: "cascade" })
+			.notNull(),
+		contactId: uuid("contact_id").references(() => b2bContacts.id),
+		type: b2bDocumentTypeEnum("type").notNull(),
+		status: b2bDocumentStatusEnum("status").notNull().default("draft"),
+		documentNumber: text("document_number").notNull(),
+		issueDate: date("issue_date").notNull(),
+		dueDate: date("due_date"),
+		subtotal: decimal("subtotal", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
+		taxRate: decimal("tax_rate", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
+		totalAmount: decimal("total_amount", { precision: 10, scale: 2 })
+			.notNull()
+			.default("0"),
+		notes: text("notes"),
+		parentDocumentId: uuid("parent_document_id").references(
+			(): AnyPgColumn => b2bDocuments.id,
+		),
+		archivedAt: timestamp("archived_at"),
+		archivedReason: text("archived_reason"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(t) => [
+		unique("b2b_documents_document_number_unique").on(t.documentNumber),
+		index("b2b_documents_archived_at_idx")
+			.on(t.archivedAt)
+			.where(sql`${t.archivedAt} IS NULL`),
+	],
+);
 export type B2BDocument = typeof b2bDocuments.$inferSelect;
 export type NewB2BDocument = typeof b2bDocuments.$inferInsert;
+
+// Race-safe sequential numbering. One row per (type, year).
+// Updated with SELECT … FOR UPDATE inside the same transaction as the document insert.
+export const b2bDocumentSequences = pgTable(
+	"b2b_document_sequences",
+	{
+		type: b2bDocumentTypeEnum("type").notNull(),
+		year: integer("year").notNull(),
+		nextValue: integer("next_value").notNull().default(1),
+	},
+	(t) => [primaryKey({ columns: [t.type, t.year] })],
+);
 
 export const b2bDocumentLines = pgTable("b2b_document_lines", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -304,11 +332,43 @@ export const b2bDocumentLines = pgTable("b2b_document_lines", {
 	totalPrice: decimal("total_price", { precision: 10, scale: 2 })
 		.notNull()
 		.default("0"),
+	sourceLineId: uuid("source_line_id").references(
+		(): AnyPgColumn => b2bDocumentLines.id,
+		{ onDelete: "restrict" },
+	),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 export type B2BDocumentLine = typeof b2bDocumentLines.$inferSelect;
 export type NewB2BDocumentLine = typeof b2bDocumentLines.$inferInsert;
+
+export const b2bPayments = pgTable(
+	"b2b_payments",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		documentId: uuid("document_id")
+			.references(() => b2bDocuments.id, { onDelete: "cascade" })
+			.notNull(),
+		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+		paymentDate: timestamp("payment_date").defaultNow().notNull(),
+		notes: text("notes"),
+		// Idempotency key. Client sends a UUID per dialog open; unique index prevents
+		// duplicate writes from double-submit. Nullable so backfilled rows are fine.
+		requestId: uuid("request_id").unique(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+		updatedAt: timestamp("updated_at").defaultNow().notNull(),
+	},
+	(t) => [
+		check("b2b_payments_amount_positive", sql`${t.amount} > 0`),
+		index("b2b_payments_document_date_idx").on(
+			t.documentId,
+			t.paymentDate.desc(),
+		),
+	],
+);
+
+export type B2BPayment = typeof b2bPayments.$inferSelect;
+export type NewB2BPayment = typeof b2bPayments.$inferInsert;
 
 // Relations
 export const b2bPartnersRelations = relations(b2bPartners, ({ many }) => ({
@@ -344,8 +404,16 @@ export const b2bDocumentsRelations = relations(
 			relationName: "document_parent",
 		}),
 		lines: many(b2bDocumentLines),
+		payments: many(b2bPayments),
 	}),
 );
+
+export const b2bPaymentsRelations = relations(b2bPayments, ({ one }) => ({
+	document: one(b2bDocuments, {
+		fields: [b2bPayments.documentId],
+		references: [b2bDocuments.id],
+	}),
+}));
 
 export const b2bDocumentLinesRelations = relations(
 	b2bDocumentLines,

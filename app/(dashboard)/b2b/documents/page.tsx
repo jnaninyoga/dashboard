@@ -1,7 +1,13 @@
+import Link from "next/link";
+
 import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
 import { DocumentFilters } from "@/components/b2b/documents/filters";
+import DocumentNotFound from "@/components/b2b/documents/not-found";
+import { Button } from "@/components/ui/button";
 import { getDocumentsAction } from "@/lib/actions/b2b/documents";
 import { B2BDocumentStatus, B2BDocumentType, DocumentWithRelations } from "@/lib/types/b2b";
+
+import { DocumentText } from "iconsax-reactjs";
 
 type SearchParams = Promise<{
 	query?: string;
@@ -38,6 +44,12 @@ export default async function DocumentsPage(props: {
 						Unified management of all Quotations and Invoices.
 					</p>
 				</header>
+				<Link href="/b2b/documents/new">
+					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
+						<DocumentText className="mr-2 size-4" variant="Bold" />
+						New Quotation
+					</Button>
+				</Link>
 			</div>
 
 			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">
@@ -46,17 +58,9 @@ export default async function DocumentsPage(props: {
 
 			<DocumentDashboardTable documents={(documents as DocumentWithRelations[]) || []} />
 
-			{!documents?.length && (
-				<div className="flex flex-col items-center justify-center py-20 text-center">
-					<div className="bg-muted mb-4 rounded-full p-6">
-						<span className="text-muted-foreground/30 text-4xl">📄</span>
-					</div>
-					<h3 className="text-lg font-bold">No documents found</h3>
-					<p className="text-muted-foreground text-sm">
-						Try adjusting your filters or search query.
-					</p>
-				</div>
-			)}
+			{!documents?.length ? (
+				<DocumentNotFound message="Try adjusting your filters or search query." />
+			) : null}
 		</>
 	);
 }

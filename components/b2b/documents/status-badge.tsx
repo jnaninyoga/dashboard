@@ -4,6 +4,7 @@ import {
 	Clock,
 	CloseCircle,
 	Edit2,
+	MoneyTime,
 	ReceiptText,
 	TickCircle,
 } from "iconsax-reactjs";
@@ -21,6 +22,12 @@ export function DocumentStatusBadge({ status, className }: DocumentStatusBadgePr
 					variant: "success" as const,
 					icon: <TickCircle size={14} variant="Bold" />,
 					label: "Paid",
+				};
+			case "partially_paid":
+				return {
+					variant: "info" as const,
+					icon: <MoneyTime size={14} variant="Bold" />,
+					label: "Partially Paid",
 				};
 			case "accepted":
 				return {
