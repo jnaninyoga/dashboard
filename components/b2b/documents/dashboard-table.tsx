@@ -36,12 +36,11 @@ import {
 	ArrowUp2,
 	Category,
 	DocumentText,
-	More,
 	ReceiptText,
 } from "iconsax-reactjs";
 
-import { DocumentStatusBadge } from "./status-badge";
 import { DocumentFilters } from "./filters";
+import { DocumentStatusBadge } from "./status-badge";
 
 interface DocumentDashboardTableProps {
 	documents: DocumentWithRelations[];
@@ -83,7 +82,7 @@ export function DocumentDashboardTable({
 								<DocumentText size={20} variant="Bulk" />
 							)}
 						</div>
-						<div className="flex flex-col min-w-0">
+						<div className="flex min-w-0 flex-col">
 							<span className="text-foreground truncate text-sm font-bold tracking-tight">
 								{doc.documentNumber}
 							</span>
@@ -108,7 +107,7 @@ export function DocumentDashboardTable({
 				return (
 					<Link
 						href={`/b2b/partners/${doc.partnerId}`}
-						className="group/partner flex flex-col min-w-0"
+						className="group/partner flex min-w-0 flex-col"
 					>
 						<span className="text-foreground group-hover/partner:text-primary truncate text-sm transition-colors">
 							{contactName ? (
@@ -136,7 +135,7 @@ export function DocumentDashboardTable({
 			cell: ({ row }) => {
 				const isBackorder = row.original.type === "invoice" && !!row.original.parentDocumentId;
 				return isBackorder ? (
-					<span className="text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-widest uppercase">
+					<span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-purple-600 uppercase">
 						Yes
 					</span>
 				) : (
@@ -178,7 +177,7 @@ export function DocumentDashboardTable({
 				const amountDue = Math.max(0, totalAmount - totalPayments);
 				
 				return (
-					<span className="text-orange-500 text-sm font-bold tabular-nums">
+					<span className="text-sm font-bold text-orange-500 tabular-nums">
 						{amountDue.toLocaleString("en-US", {
 							minimumFractionDigits: 2,
 							maximumFractionDigits: 2,
@@ -207,6 +206,7 @@ export function DocumentDashboardTable({
 
 	];
 
+	// eslint-disable-next-line react-hooks/incompatible-library
 	const table = useReactTable({
 		data: documents,
 		columns,
@@ -263,13 +263,13 @@ export function DocumentDashboardTable({
 									return (
 										<TableHead
 											key={header.id}
-											className="whitespace-nowrap px-4 first:pl-6 last:pr-6"
+											className="px-4 whitespace-nowrap first:pl-6 last:pr-6"
 										>
 											{header.isPlaceholder ? null : (
 												<div
 													className={
 														header.column.getCanSort()
-															? "flex items-center gap-2 cursor-pointer select-none"
+															? "flex cursor-pointer items-center gap-2 select-none"
 															: ""
 													}
 													onClick={header.column.getToggleSortingHandler()}
@@ -295,13 +295,13 @@ export function DocumentDashboardTable({
 							table.getRowModel().rows.map((row) => (
 								<TableRow
 									key={row.id}
-									className="hover:bg-primary/5 group border-none transition-colors cursor-pointer"
+									className="hover:bg-primary/5 group cursor-pointer border-none transition-colors"
 									onClick={() => router.push(`/b2b/documents/${row.original.id}`)}
 								>
 									{row.getVisibleCells().map((cell) => (
 										<TableCell
 											key={cell.id}
-											className="px-4 py-3 first:pl-6 last:pr-6 whitespace-nowrap"
+											className="px-4 py-3 whitespace-nowrap first:pl-6 last:pr-6"
 										>
 											{flexRender(
 												cell.column.columnDef.cell,
@@ -315,7 +315,7 @@ export function DocumentDashboardTable({
 							<TableRow>
 								<TableCell
 									colSpan={columns.length}
-									className="h-24 text-center text-muted-foreground"
+									className="text-muted-foreground h-24 text-center"
 								>
 									No results.
 								</TableCell>
@@ -325,7 +325,7 @@ export function DocumentDashboardTable({
 				</Table>
 
 			<div className="flex items-center justify-between pt-2">
-				<div className="text-sm text-muted-foreground font-medium pl-2">
+				<div className="text-muted-foreground pl-2 text-sm font-medium">
 					Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of {table.getFilteredRowModel().rows.length} entries
 				</div>
 				<div className="flex items-center space-x-2">

@@ -147,7 +147,7 @@ export function DocumentFilters() {
 						<SelectItem value="unpaid">
 							<Badge
 								variant="destructive"
-								className="bg-red-100 text-red-800 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase hover:bg-red-100"
+								className="bg-red-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-red-800 uppercase hover:bg-red-100"
 							>
 								Unpaid
 							</Badge>
@@ -155,7 +155,7 @@ export function DocumentFilters() {
 						<SelectItem value="partially_paid">
 							<Badge
 								variant="outline"
-								className="border-orange-500 text-orange-500 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+								className="border-orange-500 px-2 py-0.5 text-[10px] font-bold tracking-widest text-orange-500 uppercase"
 							>
 								Partially Paid
 							</Badge>
@@ -194,7 +194,7 @@ export function DocumentFilters() {
 						<SelectItem value="true">
 							<Badge
 								variant="outline"
-								className="border-purple-500 text-purple-600 px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
+								className="border-purple-500 px-2 py-0.5 text-[10px] font-bold tracking-widest text-purple-600 uppercase"
 							>
 								Backorders Only
 							</Badge>
