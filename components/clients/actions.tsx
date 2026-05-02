@@ -55,7 +55,7 @@ export function ClientActions({
 				<DropdownMenuTrigger asChild>
 					<Button variant="ghost" className="h-8 w-8 p-0">
 						<span className="sr-only">Open menu</span>
-						<More className="h-4 w-4" variant="Outline" />
+						<More className="h-4 w-4 rotate-90" variant="Linear" />
 					</Button>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
@@ -96,7 +96,10 @@ export function ClientActions({
 							disabled={isPending}
 						>
 							{isPending ? (
-								<Refresh className="mr-2 h-4 w-4 animate-spin" variant="Outline" />
+								<Refresh
+									className="mr-2 h-4 w-4 animate-spin"
+									variant="Outline"
+								/>
 							) : (
 								<Trash className="mr-2 h-4 w-4" variant="Bulk" />
 							)}

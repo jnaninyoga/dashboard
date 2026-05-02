@@ -74,20 +74,23 @@ function ClientAvatar({
 	client: Client;
 	className?: string;
 }) {
-	const [photoUrl, setPhotoUrl] = useState<string | null>(client.photoUrl || null);
+	const [photoUrl, setPhotoUrl] = useState<string | null>(
+		client.photoUrl || null,
+	);
 
 	useEffect(() => {
 		// Skip API call if we already have a cached photo URL
 		if (photoUrl) return;
 
 		if (client.googleContactResourceName) {
-			getGoogleContactPhotoAction(client.googleContactResourceName, client.id).then(
-				(res) => {
-					if (res.success && res.url) {
-						setPhotoUrl(res.url);
-					}
-				},
-			);
+			getGoogleContactPhotoAction(
+				client.googleContactResourceName,
+				client.id,
+			).then((res) => {
+				if (res.success && res.url) {
+					setPhotoUrl(res.url);
+				}
+			});
 		}
 	}, [client.googleContactResourceName, client.id, photoUrl]);
 
@@ -133,7 +136,7 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 						)}
 						style={{
 							animationDelay: `${index * 50}ms`,
-							animationFillMode: 'both'
+							animationFillMode: "both",
 						}}
 					>
 						{/* Top Status Bar & Actions */}
@@ -154,7 +157,8 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 										</TooltipTrigger>
 										<TooltipContent side="left">
 											<p className="text-xs font-semibold text-green-600">
-												Checked in to {client.activeSessionName || "a session"} today
+												Checked in to {client.activeSessionName || "a session"}{" "}
+												today
 											</p>
 										</TooltipContent>
 									</Tooltip>
@@ -207,23 +211,41 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 											<div className="flex cursor-default items-center gap-1.5 font-medium">
 												{client.gender === "male" ? (
 													<>
-														<User className="size-3.5 text-blue-500" variant="Bulk" />
-														<span className="text-foreground capitalize">Male</span>
+														<User
+															className="size-3.5 text-blue-500"
+															variant="Bulk"
+														/>
+														<span className="text-foreground capitalize">
+															Male
+														</span>
 													</>
 												) : client.gender === "female" ? (
 													<>
-														<User className="size-3.5 text-pink-500" variant="Bulk" />
-														<span className="text-foreground capitalize">Female</span>
+														<User
+															className="size-3.5 text-pink-500"
+															variant="Bulk"
+														/>
+														<span className="text-foreground capitalize">
+															Female
+														</span>
 													</>
 												) : (
 													<>
-														<User className="size-3.5 text-gray-400" variant="Outline" />
-														<span className="text-foreground capitalize">Unspecified</span>
+														<User
+															className="size-3.5 text-gray-400"
+															variant="Outline"
+														/>
+														<span className="text-foreground capitalize">
+															Unspecified
+														</span>
 													</>
 												)}
 											</div>
 										</TooltipTrigger>
-										<TooltipContent sideOffset={6} className="zen-shadow-sm rounded-lg border-0 px-2 py-1 text-[11px] font-bold capitalize">
+										<TooltipContent
+											sideOffset={6}
+											className="zen-shadow-sm rounded-lg border-0 px-2 py-1 text-[11px] font-bold capitalize"
+										>
 											{client.gender || "Not specified"}
 										</TooltipContent>
 									</Tooltip>
@@ -266,16 +288,25 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 								</span>
 								<div className="flex flex-wrap gap-1.5">
 									{client.category ? (
-										<Badge variant="secondary" className="bg-primary/10 text-primary rounded-full border-0 px-2 py-0.5 text-[10px] font-semibold tracking-wide">
+										<Badge
+											variant="secondary"
+											className="bg-primary/10 text-primary rounded-full border-0 px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+										>
 											{client.category.name}
-											{client.category.discountValue && client.category.discountValue !== "0" && client.category.discountType === "percentage" 
-												? ` (${client.category.discountValue}%)` 
-												: client.category.discountValue && client.category.discountValue !== "0" 
-													? ` (${client.category.discountValue} MAD)` 
+											{client.category.discountValue &&
+											client.category.discountValue !== "0" &&
+											client.category.discountType === "percentage"
+												? ` (${client.category.discountValue}%)`
+												: client.category.discountValue &&
+													  client.category.discountValue !== "0"
+													? ` (${client.category.discountValue} MAD)`
 													: ""}
 										</Badge>
 									) : (
-										<Badge variant="outline" className="rounded-full border-dashed px-2 py-0.5 text-[10px] font-semibold tracking-wide opacity-60">
+										<Badge
+											variant="outline"
+											className="rounded-full border-dashed px-2 py-0.5 text-[10px] font-semibold tracking-wide opacity-60"
+										>
 											Uncategorized
 										</Badge>
 									)}
@@ -283,28 +314,26 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 							</div>
 
 							{/* Compact Footer — Split with Vertical Separator */}
-							<div className="text-muted-foreground bg-secondary/30 mt-auto flex items-stretch overflow-hidden rounded-md py-2 text-xs">
+							<div className="text-secondary-3 bg-secondary/40 border-secondary-2/40 mt-auto flex items-stretch overflow-hidden rounded-md border py-2 text-xs">
 								<TooltipProvider delayDuration={150}>
 									{/* Left Section: Social Icons */}
-									<div className="flex flex-1 items-center justify-center gap-4 border px-3 sm:justify-start">
+									<div className="border-secondary-2/60 flex flex-1 items-center gap-4 border-r px-3 sm:justify-start">
 										<Tooltip>
 											<TooltipTrigger asChild>
-												{client.email ? (
-															<Link
-																href={`mailto:${client.email}`}
-																className="hover:text-primary flex items-center justify-center p-1 transition-colors hover:scale-110 active:scale-95"
-															>
-																<Sms className="h-4 w-4 opacity-90" variant="Outline" />
-															</Link>
-												) : (
-													<div
-														className="text-muted-foreground/50 flex items-center justify-center p-1"
-													>
-														<Sms className="h-4 w-4" variant="Outline" />
-													</div>
-												)}
+												<Link
+													href={client.email ? `mailto:${client.email}` : "#"}
+													tabIndex={client.email ? 0 : -1}
+													onClick={(e) => !client.email && e.preventDefault()}
+													aria-disabled={!client.email}
+													className="bg-secondary-2/40 hover:text-primary hover:bg-primary/15 aria-disabled:text-muted-foreground aria-disabled:bg-muted aria-disabled:hover:text-muted-foreground/60 flex items-center justify-center rounded-full p-2 transition-colors hover:scale-110 active:scale-95"
+												>
+													<Sms className="h-4 w-4" variant="Bulk" />
+												</Link>
 											</TooltipTrigger>
-											<TooltipContent sideOffset={6} className="zen-shadow-sm z-50 rounded-lg border-0 px-2 py-1 text-[11px] font-bold">
+											<TooltipContent
+												sideOffset={6}
+												className="zen-shadow-sm z-50 rounded-lg border-0 px-2 py-1 text-[11px] font-bold"
+											>
 												{client.email || "No Email"}
 											</TooltipContent>
 										</Tooltip>
@@ -314,12 +343,15 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 												<Link
 													href={`https://wa.me/${client.phone}`}
 													target="_blank"
-													className="flex items-center justify-center p-1 transition-colors hover:scale-110 hover:text-[#25D366] active:scale-95"
+													className="bg-secondary-2/40 flex items-center justify-center rounded-full p-2 transition-colors hover:scale-110 hover:bg-[#25D366]/15 hover:text-[#25D366] active:scale-95"
 												>
-													<Whatsapp className="h-4 w-4" variant="Outline" />
+													<Whatsapp className="h-4 w-4" variant="Bulk" />
 												</Link>
 											</TooltipTrigger>
-											<TooltipContent sideOffset={6} className="zen-shadow-sm z-50 rounded-lg border-0 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
+											<TooltipContent
+												sideOffset={6}
+												className="zen-shadow-sm z-50 rounded-lg border-0 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700"
+											>
 												WhatsApp: {client.phone}
 											</TooltipContent>
 										</Tooltip>
@@ -328,12 +360,15 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 											<TooltipTrigger asChild>
 												<Link
 													href={`tel:${client.phone}`}
-													className="hover:text-primary flex items-center justify-center p-1 transition-colors hover:scale-110 active:scale-95"
+													className="bg-secondary-2/40 hover:text-primary hover:bg-primary/15 flex items-center justify-center rounded-full p-2 transition-colors hover:scale-110 active:scale-95"
 												>
-													<Call className="h-4 w-4 opacity-90" variant="Outline" />
+													<Call className="h-4 w-4" variant="Bulk" />
 												</Link>
 											</TooltipTrigger>
-											<TooltipContent sideOffset={6} className="zen-shadow-sm z-50 rounded-lg border-0 px-2 py-1 text-[11px] font-bold">
+											<TooltipContent
+												sideOffset={6}
+												className="zen-shadow-sm z-50 rounded-lg border-0 px-2 py-1 text-[11px] font-bold"
+											>
 												Call: {client.phone}
 											</TooltipContent>
 										</Tooltip>
@@ -344,12 +379,20 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 										{alerts.length > 0 ? (
 											<Tooltip>
 												<TooltipTrigger asChild>
-													<div className="text-destructive group/health flex animate-pulse cursor-help items-center gap-2 p-1 font-bold">
+													<div className="text-destructive group/health relative flex animate-pulse cursor-help items-center rounded-full bg-red-200 p-2 font-bold hover:animate-none hover:bg-red-600 hover:text-white">
 														<Danger className="size-4" variant="Bulk" />
-														<span className="xs:inline hidden text-[10px] tracking-tighter uppercase">Alerts ({alerts.length})</span>
+														<span
+															aria-hidden={alerts.length <= 1}
+															className="absolute top-0 right-0 flex h-3 w-3 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold tracking-tighter text-white transition-all duration-200 group-hover/health:border group-hover/health:border-red-600 group-hover/health:bg-white group-hover/health:text-red-600"
+														>
+															{alerts.length}
+														</span>
 													</div>
 												</TooltipTrigger>
-												<TooltipContent sideOffset={6} className="zen-shadow-lg z-50 max-w-xs rounded-xl border-0 bg-red-50 p-3 text-[11px] text-red-900">
+												<TooltipContent
+													sideOffset={6}
+													className="zen-shadow-lg z-50 max-w-xs rounded-xl border-0 bg-red-50 p-3 text-[11px] text-red-900"
+												>
 													<div className="flex flex-col gap-2">
 														<div className="flex items-center gap-1.5 border-b border-red-200 pb-1 font-bold text-red-700">
 															<Danger className="size-3.5" variant="Bulk" />
@@ -358,11 +401,17 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 														{alerts.map((log, idx) => (
 															<div key={idx} className="flex flex-col gap-0.5">
 																<div className="flex items-center gap-1.5">
-																	<span className={cn(
-																		"size-1.5 shrink-0 rounded-full",
-																		log.severity === "critical" ? "bg-red-600" : "bg-orange-400"
-																	)} />
-																	<span className="font-bold">{log.condition}</span>
+																	<span
+																		className={cn(
+																			"size-1.5 shrink-0 rounded-full",
+																			log.severity === "critical"
+																				? "bg-red-600"
+																				: "bg-orange-400",
+																		)}
+																	/>
+																	<span className="font-bold">
+																		{log.condition}
+																	</span>
 																</div>
 															</div>
 														))}
@@ -372,12 +421,14 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 										) : (
 											<Tooltip>
 												<TooltipTrigger asChild>
-													<div className="text-primary flex cursor-help items-center gap-2 p-1 font-bold opacity-80 transition-opacity hover:opacity-100">
-														<TickCircle className="size-4" variant="Outline" />
-														<span className="xs:inline hidden text-[10px] tracking-tighter uppercase">Safe</span>
+													<div className="flex cursor-help items-center gap-2 rounded-full bg-green-200 p-2 font-bold text-green-600 opacity-80 transition-opacity hover:opacity-100">
+														<TickCircle className="size-4" variant="Bulk" />
 													</div>
 												</TooltipTrigger>
-												<TooltipContent sideOffset={6} className="zen-shadow-sm z-50 rounded-lg border-0 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700">
+												<TooltipContent
+													sideOffset={6}
+													className="zen-shadow-sm z-50 rounded-lg border-0 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700"
+												>
 													No health alerts recorded
 												</TooltipContent>
 											</Tooltip>
