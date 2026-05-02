@@ -342,7 +342,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			<EditableNotes
 				documentId={document.id}
 				initialNotes={document.notes}
-				readOnly={document.status !== "draft" || !!document.archivedAt}
+				readOnly={!!document.archivedAt}
 			/>
 		</>
 	);
