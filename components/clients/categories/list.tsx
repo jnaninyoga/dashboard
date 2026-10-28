@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useConfirm } from "@/components/feedback/confirm";
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -30,7 +31,6 @@ import { type Category } from "@/lib/types";
 import {
 	ArchiveBook as Archive,
 	Edit2 as Edit,
-	More,
 	RotateLeft,
 	Trash,
 } from "iconsax-reactjs";
@@ -125,10 +125,7 @@ export function CategoryList({
 								<TableCell className="pr-6 text-right">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
-											<Button variant="ghost" className="h-8 w-8 p-0">
-												<span className="sr-only">Open menu</span>
-												<More className="h-4 w-4" />
-											</Button>
+											<RowActionsTrigger label={`Actions for ${category.name}`} />
 										</DropdownMenuTrigger>
 										<DropdownMenuContent align="end">
 											<DropdownMenuLabel>Actions</DropdownMenuLabel>

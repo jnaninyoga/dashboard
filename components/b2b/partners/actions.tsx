@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useConfirm } from "@/components/feedback/confirm";
-import { Button } from "@/components/ui/button";
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -17,7 +17,7 @@ import { deletePartnerAction } from "@/lib/actions/b2b/partners";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type PartnerWithRelations } from "@/lib/types/b2b";
 
-import { Buildings, Edit2, More, Trash } from "iconsax-reactjs";
+import { Buildings, Edit2, Trash } from "iconsax-reactjs";
 
 import { PartnerDialog } from "./dialog";
 
@@ -60,17 +60,11 @@ export function PartnerActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						size="icon"
-						className={
-							triggerClassName ??
-							"hover:bg-secondary h-9 w-9 rounded-xl transition-all"
-						}
+					<RowActionsTrigger
+						label={`Actions for ${partner.companyName}`}
+						className={triggerClassName}
 						disabled={isPending}
-					>
-						<More size={20} className="rotate-90" />
-					</Button>
+					/>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
 					align="end"

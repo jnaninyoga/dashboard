@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -13,7 +14,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -23,7 +23,7 @@ import {
 import { deleteClientAction } from "@/lib/actions/clients/mutations";
 import { type Client } from "@/lib/types";
 
-import { Edit2, More, Refresh, Trash } from "iconsax-reactjs";
+import { Edit2, Refresh, Trash } from "iconsax-reactjs";
 
 export function ClientActions({
 	client,
@@ -53,10 +53,7 @@ export function ClientActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="h-8 w-8 p-0">
-						<span className="sr-only">Open menu</span>
-						<More className="h-4 w-4 rotate-90" variant="Linear" />
-					</Button>
+					<RowActionsTrigger label={`Actions for ${client.fullName}`} />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					{showEdit ? (

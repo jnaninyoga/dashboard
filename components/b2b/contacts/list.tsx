@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -30,7 +30,7 @@ import { deleteContactAction } from "@/lib/actions/b2b/partners";
 import { type Contact } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
 
-import { Call, Edit, More, Sms, Star, Trash, User } from "iconsax-reactjs";
+import { Call, Edit, Sms, Star, Trash, User } from "iconsax-reactjs";
 
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 	if (!contacts.length) {
@@ -161,13 +161,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 						) : null}
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="bg-muted text-secondary-foreground group-hover:bg-background flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-								>
-									<More size={16} className="rotate-90" />
-								</Button>
+								<RowActionsTrigger label={`Actions for ${contact.fullName}`} />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
 								align="end"

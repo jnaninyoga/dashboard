@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { MembershipSheet } from "@/components/clients/memberships/form";
 import { useConfirm } from "@/components/feedback/confirm";
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -23,7 +24,6 @@ import {
 	AddCircle,
 	ArchiveBook as Archive,
 	Edit2 as Edit,
-	More,
 	Trash,
 } from "iconsax-reactjs";
 
@@ -77,10 +77,7 @@ export function MembershipActions({ product }: { product: Product }) {
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="h-8 w-8 p-0">
-						<span className="sr-only">Open menu</span>
-						<More className="h-4 w-4" />
-					</Button>
+					<RowActionsTrigger label={`Actions for ${product.name}`} />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					<DropdownMenuLabel>Actions</DropdownMenuLabel>

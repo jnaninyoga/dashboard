@@ -45,7 +45,7 @@ export function PartnerGrid({
 					<div className="absolute top-4 right-4 z-10">
 						<PartnerActions
 							partner={partner}
-							triggerClassName="bg-background/50 hover:bg-secondary h-8 w-8 rounded-xl backdrop-blur-sm transition-all"
+							triggerClassName="bg-background/50 backdrop-blur-sm"
 						/>
 					</div>
 
