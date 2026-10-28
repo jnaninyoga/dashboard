@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
+import {
+	allocatePayment,
+	orderPaymentQueue,
+	outstandingOf,
+	PAYABLE_INVOICE_STATUSES,
+} from "@/lib/domain/billing/payments";
 import { B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
+import { parseAmountInput } from "@/lib/utils/currency";
 import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
@@ -12,7 +19,7 @@ import {
 	b2bPayments,
 } from "@/services/database/schema";
 
-import { and, asc, desc, eq, ilike, inArray, not, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, not, or, sql } from "drizzle-orm";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -636,7 +643,7 @@ export async function recordDocumentPaymentAction(
 
 		if (!doc) return { error: "Document not found" };
 
-		const amount = Number(amountPaid);
+		const amount = round2(parseAmountInput(amountPaid));
 		if (!Number.isFinite(amount) || amount <= 0) {
 			return { error: "Enter a positive amount" };
 		}
@@ -653,77 +660,77 @@ export async function recordDocumentPaymentAction(
 			}
 		}
 
-		// FIFO Payment Logic
 		await db.transaction(async (tx) => {
-			// Fetch unpaid / partially-paid invoices in legal sequence (document
-			// number, ascending). createdAt drifts under backdating; the audit
-			// trail is the document number. Archived rows are excluded — they no
-			// longer count toward the partner's outstanding balance.
-			const unpaidInvoices = await tx.query.b2bDocuments.findMany({
-				where: (docs, { isNull }) => and(
-					eq(docs.partnerId, partnerId || doc.partnerId),
-					eq(docs.type, "invoice"),
-					inArray(docs.status, ["sent", "unpaid", "partially_paid"]),
-					doc.parentDocumentId
-						? eq(docs.parentDocumentId, doc.parentDocumentId)
-						: eq(docs.id, doc.id),
-					isNull(docs.archivedAt),
-				),
-				with: {
-					payments: true,
-				},
-				orderBy: asc(b2bDocuments.documentNumber),
+			// Scope: this invoice, or every invoice billed from the same quote.
+			// Archived rows are excluded — they no longer count toward the
+			// partner's outstanding balance.
+			const scope = and(
+				eq(b2bDocuments.partnerId, partnerId || doc.partnerId),
+				eq(b2bDocuments.type, "invoice"),
+				inArray(b2bDocuments.status, [...PAYABLE_INVOICE_STATUSES]),
+				doc.parentDocumentId
+					? eq(b2bDocuments.parentDocumentId, doc.parentDocumentId)
+					: eq(b2bDocuments.id, doc.id),
+				isNull(b2bDocuments.archivedAt),
+			);
+
+			// Serialise concurrent payments on the same chain so two submits
+			// can't both see the same balance and over-allocate.
+			await tx
+				.select({ id: b2bDocuments.id })
+				.from(b2bDocuments)
+				.where(scope)
+				.for("update");
+
+			const openInvoices = await tx.query.b2bDocuments.findMany({
+				where: scope,
+				with: { payments: true },
 			});
+
+			const queue = orderPaymentQueue(
+				doc.id,
+				openInvoices.map((inv) => ({
+					id: inv.id,
+					documentNumber: inv.documentNumber,
+					totalAmount: Number(inv.totalAmount),
+					amountPaid: (inv.payments || []).reduce(
+						(s, p) => s + Number(p.amount),
+						0,
+					),
+				})),
+			);
 
 			// Reject overpayment: the operator must record exactly what was
 			// received, never more. Solo-operator rule: no partner credits, no
 			// silent prepayments — keep the model simple.
-			const totalOutstanding = unpaidInvoices.reduce((acc, inv) => {
-				const total = Number(inv.totalAmount);
-				const paid = (inv.payments || []).reduce(
-					(s, p) => s + Number(p.amount),
-					0,
-				);
-				return acc + Math.max(0, total - paid);
-			}, 0);
-
-			if (amount > round2(totalOutstanding) + 0.01) {
-				throw new OverpaymentError(round2(totalOutstanding));
+			const totalOutstanding = outstandingOf(queue);
+			if (amount > totalOutstanding) {
+				throw new OverpaymentError(totalOutstanding);
 			}
 
-			let remainingPayment = amount;
 			let isFirstRow = true;
+			for (const allocation of allocatePayment(queue, amount)) {
+				if (allocation.applied <= 0) continue;
 
-			for (const invoice of unpaidInvoices) {
-				if (remainingPayment <= 0) break;
-
-				const invoiceTotal = Number(invoice.totalAmount);
-				const currentPaid = (invoice.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-				const invoiceBalance = Math.max(0, invoiceTotal - currentPaid);
-
-				const paymentToApply = round2(Math.min(remainingPayment, invoiceBalance));
-				if (paymentToApply <= 0) continue;
-
-				const updatedPaid = currentPaid + paymentToApply;
-				const newStatus: B2BDocumentStatus =
-					updatedPaid >= invoiceTotal - 0.01 ? "paid" : "partially_paid";
+				const newStatus: B2BDocumentStatus = allocation.becomesPaid
+					? "paid"
+					: "partially_paid";
 
 				await tx
 					.update(b2bDocuments)
 					.set({ status: newStatus, updatedAt: new Date() })
-					.where(eq(b2bDocuments.id, invoice.id));
+					.where(eq(b2bDocuments.id, allocation.id));
 
 				// Tag the first allocation row with the requestId so the UNIQUE
 				// index dedupes concurrent retries of the same submit.
 				await tx.insert(b2bPayments).values({
-					documentId: invoice.id,
-					amount: paymentToApply.toFixed(2),
+					documentId: allocation.id,
+					amount: allocation.applied.toFixed(2),
 					paymentDate: new Date(),
 					notes: `Payment recorded via ${doc.documentNumber}`,
 					requestId: isFirstRow ? requestId ?? null : null,
 				});
 
-				remainingPayment = round2(remainingPayment - paymentToApply);
 				isFirstRow = false;
 			}
 		});

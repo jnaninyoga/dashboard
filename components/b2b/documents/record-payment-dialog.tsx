@@ -23,7 +23,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { recordDocumentPaymentAction } from "@/lib/actions/b2b/documents";
+import {
+	allocatePayment,
+	outstandingOf,
+	type PaymentTarget,
+} from "@/lib/domain/billing/payments";
 import { type DocumentWithRelations } from "@/lib/types/b2b";
+import { parseAmountInput } from "@/lib/utils/currency";
 import {
 	type RecordPaymentFormValues,
 	recordPaymentSchema,
@@ -33,12 +39,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { MoneySend, TickCircle, Wallet3 } from "iconsax-reactjs";
 import { toast } from "sonner";
 
-export type PaymentQueueEntry = {
-	id: string;
-	documentNumber: string;
-	totalAmount: number;
-	amountPaid: number;
-};
+export type PaymentQueueEntry = PaymentTarget;
 
 const formatMAD = (n: number) =>
 	n.toLocaleString("fr-FR", {
@@ -46,16 +47,15 @@ const formatMAD = (n: number) =>
 		maximumFractionDigits: 2,
 	});
 
-// Mirrors the server-side allocator so the preview always matches the result.
-function previewAllocation(queue: PaymentQueueEntry[], payment: number) {
-	let remaining = Math.max(0, payment);
-	return queue.map((q) => {
-		const due = Math.max(0, q.totalAmount - q.amountPaid);
-		const applied = Math.min(remaining, due);
-		remaining = Math.max(0, remaining - applied);
-		const becomesPaid = q.amountPaid + applied >= q.totalAmount - 0.01;
-		return { ...q, due, applied, becomesPaid };
-	});
+// crypto.randomUUID only exists in secure contexts; the server column is a
+// uuid, so the fallback must still produce a valid v4 UUID.
+function newRequestId(): string {
+	if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+	const b = crypto.getRandomValues(new Uint8Array(16));
+	b[6] = (b[6] & 0x0f) | 0x40;
+	b[8] = (b[8] & 0x3f) | 0x80;
+	const h = Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+	return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
 }
 
 export function RecordPaymentDialog({
@@ -74,44 +74,44 @@ export function RecordPaymentDialog({
 	// Latches through the post-submit refresh so a fast double-click cannot
 	// re-fire while the page is repainting.
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	// One UUID per dialog open; the server uses it to dedupe retries via the
-	// b2b_payments.request_id UNIQUE index.
-	const requestIdRef = useRef<string | null>(null);
-	useEffect(() => {
-		if (open) {
-			requestIdRef.current =
-				typeof crypto !== "undefined" && crypto.randomUUID
-					? crypto.randomUUID()
-					: `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-		}
-	}, [open]);
-
-	const totalOutstanding = useMemo(
-		() =>
-			queue.reduce(
-				(acc, q) => acc + Math.max(0, q.totalAmount - q.amountPaid),
-				0,
-			),
-		[queue],
+	const totalOutstanding = useMemo(() => outstandingOf(queue), [queue]);
+	// The invoice being viewed is paid first, so it is the default amount.
+	const thisInvoiceDue = useMemo(
+		() => outstandingOf(queue.filter((q) => q.id === doc.id)),
+		[queue, doc.id],
 	);
 
 	const form = useForm<RecordPaymentFormValues>({
 		resolver: zodResolver(recordPaymentSchema),
-		defaultValues: { amountPaid: totalOutstanding.toFixed(2) },
+		defaultValues: { amountPaid: thisInvoiceDue.toFixed(2) },
 	});
+
+	// Each open is a fresh payment: new idempotency key (the server dedupes
+	// retries via the b2b_payments.request_id UNIQUE index), cleared submit
+	// latch, and an amount matching the balance as it is now.
+	const requestIdRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (!open) return;
+		requestIdRef.current = newRequestId();
+		setIsSubmitting(false);
+		form.reset({ amountPaid: thisInvoiceDue.toFixed(2) });
+	}, [open, thisInvoiceDue, form]);
 
 	// eslint-disable-next-line react-hooks/incompatible-library
 	const watchedAmount = form.watch("amountPaid");
-	const paidAmount = Number(watchedAmount || 0);
+	const parsedAmount = parseAmountInput(watchedAmount);
+	const paidAmount = Number.isFinite(parsedAmount) ? parsedAmount : 0;
 
 	const allocation = useMemo(
-		() => previewAllocation(queue, paidAmount),
+		() => allocatePayment(queue, paidAmount),
 		[queue, paidAmount],
 	);
 
 	const isMultiInvoice = queue.length > 1;
 	const isOverpayment = paidAmount > totalOutstanding + 0.01;
-	const isPartial = paidAmount > 0 && paidAmount < totalOutstanding - 0.01;
+	// "Partial" is about the invoice being viewed, not the whole chain.
+	const isPartial =
+		paidAmount > 0 && paidAmount < (thisInvoiceDue || totalOutstanding) - 0.005;
 
 	const onSubmit = (values: RecordPaymentFormValues) => {
 		setIsSubmitting(true);
@@ -157,7 +157,7 @@ export function RecordPaymentDialog({
 							</DialogTitle>
 							<DialogDescription>
 								{isMultiInvoice
-									? `Clears oldest invoices first across ${queue.length} open invoices`
+									? `Pays ${doc.documentNumber} first, then the other open invoices from this quote`
 									: `Payment for ${doc.documentNumber}`}
 							</DialogDescription>
 						</div>
@@ -195,10 +195,10 @@ export function RecordPaymentDialog({
 
 							{/* Allocation preview — always shown so the operator can see
 							    exactly which invoices the payment will clear before
-							    confirming. Mirrors the server's FIFO allocator. */}
+							    confirming. Uses the same allocator as the server. */}
 							<div className="bg-muted/30 space-y-2 rounded-2xl p-4">
 								<div className="text-muted-foreground mb-2 text-[9px] font-bold tracking-widest uppercase">
-									{isMultiInvoice ? "FIFO allocation" : "This invoice"}
+									{isMultiInvoice ? "Where the payment goes" : "This invoice"}
 								</div>
 								{allocation.map((a) => {
 									const stillDue = Math.max(0, a.due - a.applied);

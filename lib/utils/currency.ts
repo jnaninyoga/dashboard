@@ -1,3 +1,22 @@
+/**
+ * Parses a typed amount in either French ("1 000,50") or English ("1,000.50")
+ * notation. When both separators appear, the last one is the decimal mark;
+ * a lone comma is always a decimal mark. Returns NaN for anything else.
+ */
+export function parseAmountInput(input: string | number | null | undefined): number {
+	if (typeof input === "number") return input;
+	if (!input) return NaN;
+	let s = input.replace(/[\s  ]/g, "");
+	const lastComma = s.lastIndexOf(",");
+	const lastDot = s.lastIndexOf(".");
+	if (lastComma > -1 && lastDot > -1) {
+		const thousands = lastComma > lastDot ? "." : ",";
+		s = s.split(thousands).join("");
+	}
+	s = s.replace(",", ".");
+	return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
+}
+
 export function numberToWordsFR(n: number): string {
     const units = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
     const tens = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingts", "quatre-vingt-dix"];
