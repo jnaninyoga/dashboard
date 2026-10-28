@@ -41,6 +41,7 @@ import {
 	type B2BPartner,
 	type B2BPricingTier,
 } from "@/lib/types/b2b";
+import { normalizeDecimalInput } from "@/lib/utils/currency";
 import { createDocumentWithLinesSchema } from "@/lib/validators/document";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -419,7 +420,7 @@ export function NewQuoteForm({
 														className="bg-card h-8 w-full border text-center font-mono text-sm font-bold"
 														disabled={isPending}
 														onChange={(e) => {
-															const val = e.target.value.replace(/[^0-9.]/g, "");
+															const val = normalizeDecimalInput(e.target.value);
 															const parts = val.split(".");
 															f.onChange(
 																parts[0] +
@@ -445,7 +446,7 @@ export function NewQuoteForm({
 															className="bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold"
 															disabled={isPending}
 															onChange={(e) => {
-																const val = e.target.value.replace(/[^0-9.]/g, "");
+																const val = normalizeDecimalInput(e.target.value);
 																const parts = val.split(".");
 																f.onChange(
 																	parts[0] +
@@ -521,7 +522,7 @@ export function NewQuoteForm({
 													className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
 													disabled={isPending}
 													onChange={(e) => {
-														const val = e.target.value.replace(/[^0-9.]/g, "");
+														const val = normalizeDecimalInput(e.target.value);
 														const parts = val.split(".");
 														f.onChange(
 															parts[0] +

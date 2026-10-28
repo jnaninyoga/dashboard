@@ -23,6 +23,7 @@ import {
 	type B2BDocumentStatus,
 	type B2BPricingTier,
 } from "@/lib/types/b2b";
+import { normalizeDecimalInput } from "@/lib/utils/currency";
 import {
 	documentLineSchema,
 } from "@/lib/validators";
@@ -227,7 +228,7 @@ export function EditableDocumentLines({
 													className="focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold"
 													disabled={isPending}
 													onChange={(e) => {
-														const val = e.target.value.replace(/[^0-9.]/g, "");
+														const val = normalizeDecimalInput(e.target.value);
 														const parts = val.split(".");
 														const sanitized =
 															parts[0] +
@@ -331,7 +332,7 @@ export function EditableDocumentLines({
 												className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
 												disabled={isPending}
 												onChange={(e) => {
-													const val = e.target.value.replace(/[^0-9.]/g, "");
+													const val = normalizeDecimalInput(e.target.value);
 													const parts = val.split(".");
 													const sanitized =
 														parts[0] +
