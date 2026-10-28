@@ -49,6 +49,7 @@ export const clientSchema = createInsertSchema(clients, {
 			ReferralSource.PROFESSIONAL_NETWORK,
 			ReferralSource.OTHER,
 		])
+		.nullable()
 		.optional(),
 	intakeData: z.record(z.string(), z.string().optional()).optional(),
 })
