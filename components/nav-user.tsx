@@ -16,19 +16,27 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { signOut } from "@/lib/actions/auth";
+import { type UserProfile } from "@/lib/utils/user";
 
 import { ArrowSwapVertical, Logout } from "iconsax-reactjs";
 
-export function NavUser({
-	user,
-}: {
-	user: {
-		name: string;
-		email: string;
-		avatar: string;
-	};
-}) {
+export function NavUser({ user }: { user: UserProfile }) {
 	const { isMobile } = useSidebar();
+
+	const avatar = (
+		<Avatar className="h-8 w-8 rounded-lg">
+			{user.avatarUrl ? (
+				<AvatarImage src={user.avatarUrl} alt={user.fullName} />
+			) : null}
+			<AvatarFallback className="rounded-lg">{user.initials}</AvatarFallback>
+		</Avatar>
+	);
+	const identity = (
+		<div className="grid flex-1 text-left text-sm leading-tight">
+			<span className="truncate font-semibold">{user.fullName}</span>
+			<span className="truncate text-xs">{user.email}</span>
+		</div>
+	);
 
 	return (
 		<SidebarMenu>
@@ -39,14 +47,8 @@ export function NavUser({
 							size="lg"
 							className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
 						>
-							<Avatar className="h-8 w-8 rounded-lg">
-								<AvatarImage src={user.avatar} alt={user.name} />
-								<AvatarFallback className="rounded-lg">JY</AvatarFallback>
-							</Avatar>
-							<div className="grid flex-1 text-left text-sm leading-tight">
-								<span className="truncate font-semibold">{user.name}</span>
-								<span className="truncate text-xs">{user.email}</span>
-							</div>
+							{avatar}
+							{identity}
 							<ArrowSwapVertical className="ml-auto size-4" variant="Outline" />
 						</SidebarMenuButton>
 					</DropdownMenuTrigger>
@@ -58,14 +60,8 @@ export function NavUser({
 					>
 						<DropdownMenuLabel className="p-0 font-normal">
 							<div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-								<Avatar className="h-8 w-8 rounded-lg">
-									<AvatarImage src={user.avatar} alt={user.name} />
-									<AvatarFallback className="rounded-lg">JY</AvatarFallback>
-								</Avatar>
-								<div className="grid flex-1 text-left text-sm leading-tight">
-									<span className="truncate font-semibold">{user.name}</span>
-									<span className="truncate text-xs">{user.email}</span>
-								</div>
+								{avatar}
+								{identity}
 							</div>
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />

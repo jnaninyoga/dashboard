@@ -1,6 +1,7 @@
 import { CompanyProfileForm } from "@/components/business-profile/company-form";
 import { SaveProfileButton } from "@/components/business-profile/save-button";
 import { getBusinessProfileAction } from "@/lib/actions/business-profile";
+import { getUserProfile } from "@/lib/utils/user";
 import { createClient } from "@/services/supabase/server";
 
 export default async function CompanySettingsPage() {
@@ -8,7 +9,7 @@ export default async function CompanySettingsPage() {
 	const supabase = await createClient();
 	const { data: { user } } = await supabase.auth.getUser();
 	
-	const currentUserName = user?.user_metadata?.full_name || user?.email || "";
+	const currentUserName = user ? getUserProfile(user).fullName : "";
 
 	return (
 		<CompanyProfileForm initialData={profile} currentUserName={currentUserName}>

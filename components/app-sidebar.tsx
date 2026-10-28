@@ -19,12 +19,7 @@ import {
 	SidebarRail,
 } from "@/components/ui/sidebar";
 import { dashboardConfig } from "@/lib/config/dashboard";
-
-interface UserProfile {
-	name: string;
-	email: string;
-	avatar: string;
-}
+import { type UserProfile } from "@/lib/utils/user";
 
 export function AppSidebar({
 	user,

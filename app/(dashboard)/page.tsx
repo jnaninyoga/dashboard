@@ -1,5 +1,6 @@
 import { CockpitClient } from "@/components/dashboard/cockpit/client";
 import { CalendarEvent } from "@/lib/types";
+import { getUserProfile } from "@/lib/utils/user";
 import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
@@ -11,6 +12,7 @@ export default async function Home() {
 
 	const supabase = await createClient();
 	const { data: { user } } = await supabase.auth.getUser();
+	const firstName = user ? getUserProfile(user).firstName : "";
 
 	let events: CalendarEvent[] = [];
 	let errorMsg: string | null = null;
@@ -29,7 +31,7 @@ export default async function Home() {
 			<header className="flex flex-col items-start justify-between space-y-2 sm:flex-row sm:items-center sm:space-y-0">
 				<div className="block space-y-1">
 					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
-						Bonjour, Ourda
+						{firstName ? `Bonjour, ${firstName}` : "Bonjour"}
 					</h1>
 					<p className="text-md text-muted-foreground">{todayStr}</p>
 				</div>

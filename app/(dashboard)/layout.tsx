@@ -6,6 +6,7 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { getUserProfile } from "@/lib/utils/user";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
@@ -33,15 +34,9 @@ export default async function DashboardLayout({
 		redirect("/login");
 	}
 
-	const userData = {
-		name: user.user_metadata?.full_name || "Admin",
-		email: user.email || "admin@jnaninyoga.com",
-		avatar: user.user_metadata?.avatar_url || "/avatars/shadcn.jpg",
-	};
-
 	return (
 		<SidebarProvider>
-			<AppSidebar user={userData} />
+			<AppSidebar user={getUserProfile(user)} />
 			<SidebarInset>
 				<header className="bg-background/80 border-border/50 sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b px-6 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
 					<div className="flex items-center gap-2">
