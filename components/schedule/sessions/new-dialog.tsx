@@ -1,17 +1,11 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useId, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,14 +19,25 @@ import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
+import { normalizeDecimalInput } from "@/lib/utils/currency";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, parse } from "date-fns";
+import { CalendarAdd, Refresh } from "iconsax-reactjs";
 
 const todayStr = () => format(new Date(), "yyyy-MM-dd");
 const currentHourStr = () => format(new Date(), "HH:00");
-import { Refresh } from "iconsax-reactjs";
+
+const freshSession = (): SessionFormValues => ({
+	title: "",
+	dateStr: todayStr(),
+	startTimeStr: "08:00",
+	endTimeStr: "09:00",
+	type: "group",
+	outdoorPrice: "",
+	b2bTierId: "",
+});
 
 export function NewSessionDialog({
 	open,
@@ -41,6 +46,7 @@ export function NewSessionDialog({
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
+	const formId = useId();
 	const [tiers, setTiers] = useState<B2BTier[]>([]);
 	const router = useRouter();
 
@@ -55,30 +61,24 @@ export function NewSessionDialog({
 		control,
 		handleSubmit,
 		reset,
-		formState: { errors },
+		formState: { errors, isDirty },
 	} = useForm<SessionFormValues>({
 		resolver: zodResolver(sessionSchema),
-		defaultValues: {
-			title: "",
-			dateStr: format(new Date(), "yyyy-MM-dd"),
-			startTimeStr: "08:00",
-			endTimeStr: "09:00",
-			type: "group",
-			outdoorPrice: "",
-			b2bTierId: "",
-		},
+		defaultValues: freshSession(),
 	});
 
+	// Each open starts a fresh session (today's date, not a discarded draft).
 	useEffect(() => {
-		if (open) {
-			getB2BPricingTiers().then(setTiers);
-		}
-	}, [open]);
+		if (!open) return;
+		reset(freshSession());
+		getB2BPricingTiers()
+			.then(setTiers)
+			.catch((error) => notify.error("Couldn't load the B2B tiers", { error }));
+	}, [open, reset]);
 
 	useEffect(() => {
 		if (state?.success) {
-			notify.success("Session scheduled successfully!");
-			reset();
+			notify.success("Session scheduled");
 			onOpenChange(false);
 			router.refresh();
 		} else if (state?.error) {
@@ -164,23 +164,27 @@ export function NewSessionDialog({
 				formAction(payload);
 			});
 		} catch (error) {
-			console.error(error);
-			notify.error("An unexpected error occurred.");
+			notify.error("Couldn't schedule this session", { error });
 		}
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-card sm:max-w-[425px]">
-				<DialogHeader>
-					<DialogTitle>Nouveau Session</DialogTitle>
-					<DialogDescription>
-						Schedule a new class or private session. Validates against studio
-						hours and calendar availability.
-					</DialogDescription>
-				</DialogHeader>
-
-				<form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+		<FormSheet
+			open={open}
+			onOpenChange={onOpenChange}
+			busy={isPending}
+			dirty={isDirty}
+			icon={<CalendarAdd size={28} variant="Bulk" />}
+			title="New session"
+			description="Checked against your Google Calendar (and studio hours for classes) before it's added."
+			footer={
+				<Button type="submit" form={formId} disabled={isPending} className="h-11 rounded-xl">
+					{isPending ? <Refresh className="mr-2 h-4 w-4 animate-spin" /> : null}
+					Schedule
+				</Button>
+			}
+		>
+				<form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
 					<div className="space-y-2">
 						<Label>Title</Label>
 						<Controller
@@ -203,7 +207,7 @@ export function NewSessionDialog({
 							render={({ field }) => (
 								<Select
 									onValueChange={field.onChange}
-									defaultValue={field.value}
+									value={field.value}
 								>
 									<SelectTrigger className="w-full">
 										<SelectValue placeholder="Select type" />
@@ -232,7 +236,7 @@ export function NewSessionDialog({
 										{...field} 
 										value={field.value ?? ""}
 										onChange={(e) => {
-											const val = e.target.value.replace(/[^0-9.]/g, "");
+											const val = normalizeDecimalInput(e.target.value);
 											const parts = val.split(".");
 											const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
 											field.onChange(sanitized);
@@ -257,7 +261,7 @@ export function NewSessionDialog({
 								render={({ field }) => (
 									<Select
 										onValueChange={field.onChange}
-										defaultValue={field.value}
+										value={field.value}
 									>
 										<SelectTrigger className="w-full">
 											<SelectValue placeholder="Select tier" />
@@ -331,23 +335,7 @@ export function NewSessionDialog({
 						</div>
 					</div>
 
-					<div className="flex justify-end space-x-2 pt-4">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => onOpenChange(false)}
-						>
-							Cancel
-						</Button>
-						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<Refresh className="mr-2 h-4 w-4 animate-spin" />
-							) : null}
-							Schedule
-						</Button>
-					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+		</FormSheet>
 	);
 }

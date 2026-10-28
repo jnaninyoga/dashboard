@@ -1,16 +1,10 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
 
+import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
@@ -23,10 +17,11 @@ import { Input } from "@/components/ui/input";
 import { createB2BTierAction, updateB2BTierAction } from "@/lib/actions/settings";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier } from "@/lib/types";
+import { normalizeDecimalInput } from "@/lib/utils/currency";
 import { type B2BTierFormValues,b2bTierSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Refresh as Loader2 } from "iconsax-reactjs";
+import { Edit2, Refresh as Loader2, Tag2 } from "iconsax-reactjs";
 
 interface B2BTierDialogProps {
     open: boolean;
@@ -35,8 +30,9 @@ interface B2BTierDialogProps {
 }
 
 export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) {
+    const formId = useId();
     const isEditing = !!tier;
-    
+
     const action = tier ? updateB2BTierAction.bind(null, tier.id) : createB2BTierAction;
 
     const [state, formAction, isPending] = useActionState(action, null);
@@ -68,73 +64,71 @@ export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) 
         }
     }, [open, tier, form]);
 
-    const onSubmit = async (values: B2BTierFormValues) => {
+    const onSubmit = (values: B2BTierFormValues) => {
         const formData = new FormData();
         formData.append("name", values.name);
         formData.append("price", values.price.toString());
-        formAction(formData);
+        startTransition(() => formAction(formData));
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{isEditing ? "Edit B2B Tier" : "New B2B Tier"}</DialogTitle>
-                </DialogHeader>
-                
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Name</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} name="name" placeholder="e.g. Famille (3-5 pax)" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
+        <FormSheet
+            open={open}
+            onOpenChange={onOpenChange}
+            busy={isPending}
+            dirty={form.formState.isDirty}
+            icon={isEditing ? <Edit2 size={26} variant="Bulk" /> : <Tag2 size={28} variant="Bulk" />}
+            title={isEditing ? "Edit B2B Tier" : "New B2B Tier"}
+            description="A price you can pick when booking a session for a partner."
+            footer={
+                <Button type="submit" form={formId} disabled={isPending} className="h-11 rounded-xl">
+                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isEditing ? "Save Changes" : "Create"}
+                </Button>
+            }
+        >
+            <Form {...form}>
+                <form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Name</FormLabel>
+                                <FormControl>
+                                    <Input {...field} name="name" placeholder="e.g. Famille (3-5 pax)" />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
 
-                        <FormField
-                            control={form.control}
-                            name="price"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Price (MAD)</FormLabel>
-                                    <FormControl>
-                                        <Input 
-                                            inputMode="decimal"
-                                            {...field} 
-                                            name="price"
-                                            value={field.value ?? ""}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/[^0-9.]/g, "");
-                                                const parts = val.split(".");
-                                                const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
-                                                field.onChange(sanitized);
-                                            }}
-                                        />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={isPending}>
-                                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                {isEditing ? "Save Changes" : "Create"}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
+                    <FormField
+                        control={form.control}
+                        name="price"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Price (MAD)</FormLabel>
+                                <FormControl>
+                                    <Input
+                                        inputMode="decimal"
+                                        {...field}
+                                        name="price"
+                                        value={field.value ?? ""}
+                                        onChange={(e) => {
+                                            const val = normalizeDecimalInput(e.target.value);
+                                            const parts = val.split(".");
+                                            const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+                                            field.onChange(sanitized);
+                                        }}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </form>
+            </Form>
+        </FormSheet>
     );
 }

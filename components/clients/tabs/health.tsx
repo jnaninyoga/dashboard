@@ -1,19 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
+import { FormSheet } from "@/components/form-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-	Dialog,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -27,6 +20,7 @@ import { addHealthLog, toggleHealthAlert } from "@/lib/actions/clients/health";
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
+import { toStudioTime } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 import { type Client, type HealthLog } from "@/services/database/schema";
 
@@ -36,6 +30,7 @@ import {
 	CloseCircle,
 	Danger,
 	Health,
+	HeartAdd,
 	InfoCircle,
 	Timer1,
 } from "iconsax-reactjs";
@@ -53,18 +48,34 @@ export function HealthTab({ client }: HealthTabProps) {
 	const clientId = client.id;
 	const healthLogs = (client.healthLogs as HealthLog[]) || [];
 	const intakeData = (client.intakeData as Record<string, string>) || {};
+	const formId = useId();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
 	// Form State
+	const today = () => format(toStudioTime(), "yyyy-MM-dd");
 	const [category, setCategory] = useState<HealthCategory>(
 		HealthCategory.PHYSICAL,
 	);
 	const [severity, setSeverity] = useState<HealthSeverity>(HealthSeverity.INFO);
 	const [condition, setCondition] = useState("");
-	const [startDate, setStartDate] = useState(
-		new Date().toISOString().split("T")[0],
-	);
+	const [startDate, setStartDate] = useState(today);
+
+	// Every open starts from a blank note.
+	const openForm = (open: boolean) => {
+		if (open) {
+			setCategory(HealthCategory.PHYSICAL);
+			setSeverity(HealthSeverity.INFO);
+			setCondition("");
+			setStartDate(today());
+		}
+		setIsOpen(open);
+	};
+	const isDirty =
+		condition.trim() !== "" ||
+		category !== HealthCategory.PHYSICAL ||
+		severity !== HealthSeverity.INFO ||
+		startDate !== today();
 
 	const activeAlerts = healthLogs.filter((log) => log.isAlert);
 	// Requirement: "Health History. A chronological list of all logs."
@@ -83,8 +94,6 @@ export function HealthTab({ client }: HealthTabProps) {
 
 			if (result.success) {
 				setIsOpen(false);
-				setCondition("");
-				setSeverity(HealthSeverity.INFO);
 				notify.success("Health note added");
 			} else {
 				notifyActionError(result, "Couldn't add this health note");
@@ -250,110 +259,111 @@ export function HealthTab({ client }: HealthTabProps) {
 			</Card>
 
 			<div className="flex justify-end">
-				<Dialog open={isOpen} onOpenChange={setIsOpen}>
-					<DialogTrigger asChild>
+				<FormSheet
+					open={isOpen}
+					onOpenChange={openForm}
+					busy={isSubmitting}
+					dirty={isDirty}
+					trigger={
 						<Button className="zen-glow-teal h-12 rounded-2xl px-6 font-bold transition-all active:scale-95">
 							<Add className="mr-2 h-5 w-5" variant="Bold" />
 							New Health Entry
 						</Button>
-					</DialogTrigger>
-					<DialogContent className="rounded-3xl p-6">
-						<DialogHeader>
-							<DialogTitle className="text-2xl font-bold">
-								Record Health Log
-							</DialogTitle>
-						</DialogHeader>
-						<form onSubmit={handleSubmit} className="space-y-6 pt-4">
-							<div className="grid grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
-										Category
-									</Label>
-									<Select
-										value={category}
-										onValueChange={(v) => setCategory(v as HealthCategory)}
-									>
-										<SelectTrigger className="h-11 rounded-xl border">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value={HealthCategory.PHYSICAL}>
-												Physical (Body)
-											</SelectItem>
-											<SelectItem value={HealthCategory.MENTAL}>
-												Mental (Mind)
-											</SelectItem>
-											<SelectItem value={HealthCategory.LIFESTYLE}>
-												Lifestyle
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
+					}
+					icon={<HeartAdd size={28} variant="Bulk" />}
+					title="New health note"
+					description="Warnings and critical notes show as alerts at check-in."
+					footer={
+						<Button
+							type="submit"
+							form={formId}
+							disabled={isSubmitting}
+							className="h-11 rounded-xl font-bold"
+						>
+							{isSubmitting ? "Saving…" : "Save note"}
+						</Button>
+					}
+				>
+					<form id={formId} onSubmit={handleSubmit} className="space-y-6 py-2">
+					<div className="grid grid-cols-2 gap-4">
+						<div className="space-y-2">
+							<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
+								Category
+							</Label>
+							<Select
+								value={category}
+								onValueChange={(v) => setCategory(v as HealthCategory)}
+							>
+								<SelectTrigger className="h-11 rounded-xl border">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={HealthCategory.PHYSICAL}>
+										Physical (Body)
+									</SelectItem>
+									<SelectItem value={HealthCategory.MENTAL}>
+										Mental (Mind)
+									</SelectItem>
+									<SelectItem value={HealthCategory.LIFESTYLE}>
+										Lifestyle
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
 
-								<div className="space-y-2">
-									<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
-										Severity
-									</Label>
-									<Select
-										value={severity}
-										onValueChange={(v) => setSeverity(v as HealthSeverity)}
-									>
-										<SelectTrigger className="h-11 rounded-xl border">
-											<SelectValue />
-										</SelectTrigger>
-										<SelectContent>
-											<SelectItem value={HealthSeverity.INFO}>
-												General Info
-											</SelectItem>
-											<SelectItem value={HealthSeverity.WARNING}>
-												Warning (Alert)
-											</SelectItem>
-											<SelectItem value={HealthSeverity.CRITICAL}>
-												Critical (Level 1)
-											</SelectItem>
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
+						<div className="space-y-2">
+							<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
+								Severity
+							</Label>
+							<Select
+								value={severity}
+								onValueChange={(v) => setSeverity(v as HealthSeverity)}
+							>
+								<SelectTrigger className="h-11 rounded-xl border">
+									<SelectValue />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value={HealthSeverity.INFO}>
+										General Info
+									</SelectItem>
+									<SelectItem value={HealthSeverity.WARNING}>
+										Warning (Alert)
+									</SelectItem>
+									<SelectItem value={HealthSeverity.CRITICAL}>
+										Critical (Level 1)
+									</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+					</div>
 
-							<div className="space-y-2">
-								<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
-									Condition / Note
-								</Label>
-								<Input
-									placeholder="e.g., Lower back pain, Stress levels high..."
-									value={condition}
-									onChange={(e) => setCondition(e.target.value)}
-									required
-									className="h-11 rounded-xl border"
-								/>
-							</div>
+					<div className="space-y-2">
+						<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
+							Condition / Note
+						</Label>
+						<Input
+							placeholder="e.g., Lower back pain, Stress levels high..."
+							value={condition}
+							onChange={(e) => setCondition(e.target.value)}
+							required
+							className="h-11 rounded-xl border"
+						/>
+					</div>
 
-							<div className="space-y-2">
-								<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
-									Effective Date
-								</Label>
-								<Input
-									type="date"
-									value={startDate}
-									onChange={(e) => setStartDate(e.target.value)}
-									required
-									className="h-11 rounded-xl border"
-								/>
-							</div>
-
-							<DialogFooter>
-								<Button
-									type="submit"
-									disabled={isSubmitting}
-									className="h-12 w-full rounded-2xl font-bold"
-								>
-									{isSubmitting ? "Syncing..." : "Commit Log Entry"}
-								</Button>
-							</DialogFooter>
-						</form>
-					</DialogContent>
-				</Dialog>
+					<div className="space-y-2">
+						<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
+							Effective Date
+						</Label>
+						<Input
+							type="date"
+							value={startDate}
+							onChange={(e) => setStartDate(e.target.value)}
+							required
+							className="h-11 rounded-xl border"
+						/>
+					</div>
+					</form>
+				</FormSheet>
 			</div>
 
 			<Card className="border-none shadow-sm">

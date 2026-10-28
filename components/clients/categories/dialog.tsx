@@ -1,16 +1,10 @@
 "use client";
 
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
 
+import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
-import {
-    Dialog,
-    DialogContent,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
 import {
     Form,
     FormControl,
@@ -24,10 +18,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { createClientCategory, updateClientCategory } from "@/lib/actions/settings";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type Category } from "@/lib/types";
-import { type CategoryFormValues,categorySchema } from "@/lib/validators";
+import { normalizeDecimalInput } from "@/lib/utils/currency";
+import {
+    type CategoryFormInput,
+    type CategoryFormValues,
+    categorySchema,
+} from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Refresh as Loader2 } from "iconsax-reactjs";
+import { Category2, Edit2, Refresh as Loader2 } from "iconsax-reactjs";
 
 interface CategoryDialogProps {
     open: boolean;
@@ -36,6 +35,7 @@ interface CategoryDialogProps {
 }
 
 export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogProps) {
+    const formId = useId();
     const isEditing = !!category;
     
     const action = isEditing && category 
@@ -44,7 +44,7 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
 
     const [state, formAction, isPending] = useActionState(action, null);
 
-    const form = useForm<CategoryFormValues>({
+    const form = useForm<CategoryFormInput, unknown, CategoryFormValues>({
         resolver: zodResolver(categorySchema),
         defaultValues: {
             name: category?.name ?? "",
@@ -83,14 +83,23 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{isEditing ? "Edit Category" : "New Category"}</DialogTitle>
-                </DialogHeader>
-                
+        <FormSheet
+            open={open}
+            onOpenChange={onOpenChange}
+            busy={isPending}
+            dirty={form.formState.isDirty}
+            icon={isEditing ? <Edit2 size={26} variant="Bulk" /> : <Category2 size={28} variant="Bulk" />}
+            title={isEditing ? "Edit Category" : "New Category"}
+            description="Clients in this category get its discount on new cards."
+            footer={
+                <Button type="submit" form={formId} disabled={isPending} className="h-11 rounded-xl">
+                    {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isEditing ? "Save Changes" : "Create"}
+                </Button>
+            }
+        >
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    <form id={formId} onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-2">
                         <FormField
                             control={form.control}
                             name="name"
@@ -112,7 +121,7 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Discount Type</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Select type" />
@@ -140,7 +149,7 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                                                 {...field} 
                                                 value={field.value ?? ""}
                                                 onChange={(e) => {
-                                                    const val = e.target.value.replace(/[^0-9.]/g, "");
+                                                    const val = normalizeDecimalInput(e.target.value);
                                                     const parts = val.split(".");
                                                     const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
                                                     field.onChange(sanitized);
@@ -152,19 +161,8 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                                 )}
                             />
                         </div>
-
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={isPending}>
-                                {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                {isEditing ? "Save Changes" : "Create"}
-                            </Button>
-                        </DialogFooter>
                     </form>
                 </Form>
-            </DialogContent>
-        </Dialog>
+        </FormSheet>
     );
 }

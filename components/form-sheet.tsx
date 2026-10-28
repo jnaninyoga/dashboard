@@ -86,10 +86,14 @@ export function FormSheet({
 		return () => cancelAnimationFrame(frame);
 	}, [open]);
 
+	// Compared a frame later: controlled fields (phone, pickers) write their
+	// hidden <input> on React's re-render, after the event that triggered it.
 	const track = () => {
-		if (snapshot.current === null) return;
-		const form = bodyRef.current?.querySelector("form");
-		setTrackedDirty(serialize(form) !== snapshot.current);
+		requestAnimationFrame(() => {
+			if (snapshot.current === null) return;
+			const form = bodyRef.current?.querySelector("form");
+			setTrackedDirty(serialize(form) !== snapshot.current);
+		});
 	};
 
 	const isDirty = dirty ?? trackedDirty;

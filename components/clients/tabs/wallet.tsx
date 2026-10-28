@@ -2,16 +2,9 @@
 
 import { useState } from "react";
 
+import { FormSheet } from "@/components/form-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
-} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
 	Select,
@@ -26,7 +19,7 @@ import { cn } from "@/lib/utils/ui";
 import { type ClientWallet, type MembershipProduct } from "@/services/database/schema";
 
 import { format } from "date-fns";
-import { Bag2 as ShoppingCart, Card as CreditCard, Tag } from "iconsax-reactjs";
+import { Bag2 as ShoppingCart, Card as CreditCard, CardAdd, Tag } from "iconsax-reactjs";
 
 type WalletWithProduct = ClientWallet & { product?: MembershipProduct | null };
 
@@ -102,53 +95,56 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 							Add credits or membership
 						</p>
 					</div>
-					<Dialog open={isOpen} onOpenChange={setIsOpen}>
-						<DialogTrigger asChild>
+					<FormSheet
+						open={isOpen}
+						onOpenChange={(open) => {
+							if (open) setSelectedProductId("");
+							setIsOpen(open);
+						}}
+						busy={isSubmitting}
+						dirty={selectedProductId !== ""}
+						trigger={
 							<Button className="zen-glow-teal h-12 w-full rounded-2xl px-6 font-bold transition-all active:scale-95">
 								<ShoppingCart className="mr-2 size-5" variant="Bold" />
-								Sell Product
+								Sell a card
 							</Button>
-						</DialogTrigger>
-						<DialogContent className="rounded-3xl p-6">
-							<DialogHeader>
-								<DialogTitle className="text-2xl font-bold">
-									Assign Product
-								</DialogTitle>
-							</DialogHeader>
-							<div className="space-y-6 pt-4">
-								<div className="space-y-2">
-									<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
-										Selected Product
-									</Label>
-									<Select
-										value={selectedProductId}
-										onValueChange={setSelectedProductId}
-									>
-										<SelectTrigger className="h-11 rounded-xl border">
-											<SelectValue placeholder="Choose a membership..." />
-										</SelectTrigger>
-										<SelectContent>
-											{products.map((product) => (
-												<SelectItem key={product.id} value={product.id}>
-													{product.name} — {product.defaultCredits} Cr (
-													{product.basePrice} MAD)
-												</SelectItem>
-											))}
-										</SelectContent>
-									</Select>
-								</div>
-							</div>
-							<DialogFooter className="mt-6">
-								<Button
-									onClick={handleSellProduct}
-									disabled={isSubmitting || !selectedProductId}
-									className="h-12 w-full rounded-2xl font-bold"
-								>
-									{isSubmitting ? "Processing Sale..." : "Confirm & Activate"}
-								</Button>
-							</DialogFooter>
-						</DialogContent>
-					</Dialog>
+						}
+						icon={<CardAdd size={28} variant="Bulk" />}
+						title="Sell a card"
+						description="The credits are added to this client's wallet right away."
+						footer={
+							<Button
+								type="button"
+								onClick={handleSellProduct}
+								disabled={isSubmitting || !selectedProductId}
+								className="h-11 rounded-xl font-bold"
+							>
+								{isSubmitting ? "Selling…" : "Sell card"}
+							</Button>
+						}
+					>
+						<div className="space-y-2 py-2">
+							<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
+								Membership
+							</Label>
+							<Select
+								value={selectedProductId}
+								onValueChange={setSelectedProductId}
+							>
+								<SelectTrigger className="h-11 w-full rounded-xl border">
+									<SelectValue placeholder="Choose a membership..." />
+								</SelectTrigger>
+								<SelectContent>
+									{products.map((product) => (
+										<SelectItem key={product.id} value={product.id}>
+											{product.name} — {product.defaultCredits} Cr (
+											{product.basePrice} MAD)
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+					</FormSheet>
 				</div>
 			</div>
 

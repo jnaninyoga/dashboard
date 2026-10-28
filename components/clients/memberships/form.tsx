@@ -1,8 +1,9 @@
 "use client";
 
-import { startTransition, useActionState, useEffect } from "react";
+import { startTransition, useActionState, useEffect, useId } from "react";
 import { useForm } from "react-hook-form";
 
+import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
 import {
 	Form,
@@ -17,101 +18,134 @@ import { Input } from "@/components/ui/input";
 import { createMembershipProduct, updateMembershipProduct } from "@/lib/actions/clients/memberships";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type MembershipProduct } from "@/lib/types";
-import { 
-	type MembershipProductFormValues, 
+import { normalizeDecimalInput } from "@/lib/utils/currency";
+import {
+	type MembershipProductFormInput,
+	type MembershipProductFormValues,
 	membershipProductSchema} from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Refresh as Loader2 } from "iconsax-reactjs";
+import { Card, Edit2, Refresh as Loader2 } from "iconsax-reactjs";
 
-type MembershipFormProps = {
+type MembershipSheetProps = {
+	open: boolean;
+	onOpenChange: (open: boolean) => void;
+	/** Edit mode: the membership to change. */
 	initialData?: MembershipProduct;
-	onSuccess: () => void;
+	trigger?: React.ReactNode;
 };
 
-export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) {
+const defaultsFor = (product?: MembershipProduct): MembershipProductFormValues => ({
+	name: product?.name ?? "",
+	basePrice: product?.basePrice ? parseFloat(product.basePrice) : 0,
+	durationMonths: product?.durationMonths ?? 1,
+	defaultCredits: product?.defaultCredits ?? 10,
+});
+
+export function MembershipSheet({ open, onOpenChange, initialData, trigger }: MembershipSheetProps) {
+	const formId = useId();
     const isEditing = !!initialData;
-    const action = isEditing && initialData 
-        ? updateMembershipProduct.bind(null, initialData.id) 
+    const action = isEditing && initialData
+        ? updateMembershipProduct.bind(null, initialData.id)
         : createMembershipProduct;
 
     const [state, formAction, isPending] = useActionState(action, null);
 
-	const form = useForm<MembershipProductFormValues>({
+	const form = useForm<MembershipProductFormInput, unknown, MembershipProductFormValues>({
 		resolver: zodResolver(membershipProductSchema),
-		defaultValues: {
-			name: initialData?.name ?? "",
-			basePrice: initialData?.basePrice ? parseFloat(initialData.basePrice) : 0,
-			durationMonths: initialData?.durationMonths ?? 1,
-			defaultCredits: initialData?.defaultCredits ?? 10,
-		},
+		defaultValues: defaultsFor(initialData),
 	});
+
+	// Each open starts from the saved values, not from a discarded edit.
+	useEffect(() => {
+		if (open) form.reset(defaultsFor(initialData));
+	}, [open, initialData, form]);
 
     useEffect(() => {
         if (state?.success) {
-            notify.success(isEditing ? "Product updated" : "Product created");
-            onSuccess();
+            notify.success(isEditing ? "Membership updated" : "Membership created");
+            onOpenChange(false);
         } else if (state?.error) {
             notifyActionError(state, "Something went wrong");
         }
-    }, [state, isEditing, onSuccess]);
+    }, [state, isEditing, onOpenChange]);
 
-	async function onSubmit(values: MembershipProductFormValues) {
+	function onSubmit(values: MembershipProductFormValues) {
 		startTransition(() => {
 			formAction(values);
 		});
 	}
 
 	return (
-		<Form {...form}>
-			<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-				<FormField
-					control={form.control}
-					name="name"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Name</FormLabel>
-							<FormControl>
-								<Input placeholder="Gold Membership" {...field} />
-							</FormControl>
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-				<div className="grid grid-cols-2 gap-4">
+		<FormSheet
+			open={open}
+			onOpenChange={onOpenChange}
+			trigger={trigger}
+			busy={isPending}
+			dirty={form.formState.isDirty}
+			icon={isEditing ? <Edit2 size={26} variant="Bulk" /> : <Card size={28} variant="Bulk" />}
+			title={isEditing ? "Edit Membership" : "New Membership"}
+			description={
+				isEditing
+					? "Changes apply to cards sold from now on."
+					: "A card type you can sell to clients."
+			}
+			footer={
+				<Button type="submit" form={formId} disabled={isPending} className="h-11 rounded-xl">
+					{isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+					{isEditing ? "Save Changes" : "Create Membership"}
+				</Button>
+			}
+		>
+			<Form {...form}>
+				<form id={formId} onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-2">
 					<FormField
 						control={form.control}
-						name="basePrice"
+						name="name"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel>Price (MAD)</FormLabel>
+								<FormLabel>Name</FormLabel>
 								<FormControl>
-									<Input 
-										inputMode="decimal"
-										{...field} 
-										value={field.value ?? ""} 
-										onChange={(e) => {
-											const val = e.target.value.replace(/[^0-9.]/g, "");
-											const parts = val.split(".");
-											const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
-											field.onChange(sanitized);
-										}}
-									/>
+									<Input placeholder="Gold Membership" {...field} />
 								</FormControl>
 								<FormMessage />
 							</FormItem>
 						)}
 					/>
-					<FormField
-						control={form.control}
-						name="durationMonths"
-						render={({ field }) => (
-							<FormItem>
-								<FormLabel>Duration (Months)</FormLabel>
-								<FormControl>
-									<Input 
+					<div className="grid grid-cols-2 gap-4">
+						<FormField
+							control={form.control}
+							name="basePrice"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Price (MAD)</FormLabel>
+									<FormControl>
+										<Input
+											inputMode="decimal"
+											{...field}
+											value={field.value ?? ""}
+											onChange={(e) => {
+												const val = normalizeDecimalInput(e.target.value);
+												const parts = val.split(".");
+												const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
+												field.onChange(sanitized);
+											}}
+										/>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+						<FormField
+							control={form.control}
+							name="durationMonths"
+							render={({ field }) => (
+								<FormItem>
+									<FormLabel>Duration (Months)</FormLabel>
+									<FormControl>
+										<Input
                                         inputMode="numeric"
-                                        {...field} 
+                                        {...field}
                                         value={field.value ?? ""}
                                         onChange={(e) => {
                                             const val = e.target.value.replace(/[^0-9]/g, "");
@@ -122,47 +156,41 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
                                             }
                                         }}
                                     />
-								</FormControl>
-								<FormMessage />
-							</FormItem>
-						)}
-					/>
-				</div>
+									</FormControl>
+									<FormMessage />
+								</FormItem>
+							)}
+						/>
+					</div>
 
-				<FormField
-					control={form.control}
-					name="defaultCredits"
-					render={({ field }) => (
-						<FormItem>
-							<FormLabel>Credits (Classes)</FormLabel>
-							<FormControl>
-								<Input 
-									inputMode="numeric"
-									{...field} 
-									value={field.value ?? ""} 
-									onChange={(e) => {
-										const val = e.target.value.replace(/[^0-9]/g, "");
-										field.onChange(parseInt(val) || 0);
-									}}
-								/>
-							</FormControl>
+					<FormField
+						control={form.control}
+						name="defaultCredits"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Credits (Classes)</FormLabel>
+								<FormControl>
+									<Input
+										inputMode="numeric"
+										{...field}
+										value={field.value ?? ""}
+										onChange={(e) => {
+											const val = e.target.value.replace(/[^0-9]/g, "");
+											field.onChange(parseInt(val) || 0);
+										}}
+									/>
+								</FormControl>
                             {initialData ? (
                                 <FormDescription className="text-xs font-medium text-amber-600">
                                     Note: Changing credits will only affect future sales. Active client wallets are preserved.
                                 </FormDescription>
                             ) : null}
-							<FormMessage />
-						</FormItem>
-					)}
-				/>
-
-				<div className="flex justify-end pt-4">
-					<Button type="submit" disabled={isPending}>
-                        {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-						{initialData ? "Update Product" : "Create Product"}
-					</Button>
-				</div>
-			</form>
-		</Form>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+				</form>
+			</Form>
+		</FormSheet>
 	);
 }
