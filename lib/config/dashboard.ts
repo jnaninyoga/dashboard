@@ -75,7 +75,7 @@ export const dashboardConfig = {
 			icon: Buildings,
 		},
 		{
-			title: "Schedule",
+			title: "Studio Hours",
 			url: "/settings/schedule",
 			icon: Timer1,
 		},

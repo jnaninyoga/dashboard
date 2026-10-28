@@ -40,7 +40,7 @@ export default async function ClientProfilePage(props: { params: Params }) {
 	const { id } = params;
 
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
+		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
 			<ProfileContent id={id} />
 		</div>
 	);

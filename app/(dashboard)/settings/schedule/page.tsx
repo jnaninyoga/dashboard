@@ -8,7 +8,7 @@ export default async function ScheduleSettingsPage() {
 		<>
 			<header className="space-y-1">
 				<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
-					Studio Schedule
+					Studio Hours
 				</h1>
 				<p className="text-md text-muted-foreground">
 					Define your baseline working hours. Event bookings outside these times

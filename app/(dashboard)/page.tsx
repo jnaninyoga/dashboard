@@ -24,7 +24,7 @@ export default async function Home() {
 	}
 
 	return (
-		<main className="flex flex-1 flex-col gap-6 p-6">
+		<main className="flex flex-1 flex-col gap-6">
 			<header className="flex flex-col items-start justify-between space-y-2 sm:flex-row sm:items-center sm:space-y-0">
 				<Greeting firstName={firstName} now={new Date().toISOString()} />
 			</header>

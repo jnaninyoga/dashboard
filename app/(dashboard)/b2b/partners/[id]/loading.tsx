@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
 	return (
-		<div className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
+		<div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
 			{/* Back link skeleton */}
 			<Skeleton className="bg-muted-foreground/10 h-4 w-28" />
 

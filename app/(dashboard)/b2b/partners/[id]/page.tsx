@@ -27,7 +27,7 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 	}
 
 	return (
-		<div className="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
+		<div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
 			{/* Breadcrumb & Navigation */}
 			<Link
 				href="/b2b/partners"

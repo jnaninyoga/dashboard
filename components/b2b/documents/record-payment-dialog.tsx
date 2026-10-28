@@ -145,7 +145,7 @@ export function RecordPaymentDialog({
 				onOpenChange(next);
 			}}
 		>
-			<DialogContent className="zen-shadow-lg overflow-hidden rounded-3xl border-none p-0 sm:max-w-[460px]">
+			<DialogContent className="zen-shadow-lg overflow-y-auto rounded-3xl border-none p-0 sm:max-w-[460px]">
 				<DialogHeader className="bg-card border-b p-8 pb-6">
 					<div className="flex items-center gap-4">
 						<div className="flex size-12 items-center justify-center rounded-2xl border border-green-500/20 bg-green-500/10 text-green-600">

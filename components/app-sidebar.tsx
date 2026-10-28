@@ -17,6 +17,7 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
+	useSidebar,
 } from "@/components/ui/sidebar";
 import { dashboardConfig } from "@/lib/config/dashboard";
 import { type UserProfile } from "@/lib/utils/user";
@@ -26,6 +27,12 @@ export function AppSidebar({
 	...props
 }: React.ComponentProps<typeof Sidebar> & { user: UserProfile }) {
 	const pathname = usePathname();
+	const { isMobile, setOpenMobile } = useSidebar();
+	// On phones the sidebar is a sheet over the page: close it once a link
+	// is chosen, or it stays covering the screen after navigating.
+	const closeOnMobile = () => {
+		if (isMobile) setOpenMobile(false);
+	};
 
 	return (
 		<Sidebar collapsible="icon" {...props} className="border-r">
@@ -50,7 +57,7 @@ export function AppSidebar({
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton asChild isActive={isActive}>
-											<Link href={item.url}>
+											<Link href={item.url} onClick={closeOnMobile}>
 												<item.icon size={20} variant={isActive ? "Bulk" : "Outline"} />
 												<span>{item.title}</span>
 											</Link>
@@ -71,7 +78,7 @@ export function AppSidebar({
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton asChild isActive={isActive}>
-											<Link href={item.url}>
+											<Link href={item.url} onClick={closeOnMobile}>
 												<item.icon size={20} variant={isActive ? "Bulk" : "Outline"} />
 												<span>{item.title}</span>
 											</Link>
@@ -93,7 +100,7 @@ export function AppSidebar({
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton asChild isActive={isActive}>
-											<Link href={item.url}>
+											<Link href={item.url} onClick={closeOnMobile}>
 												<item.icon size={20} variant={isActive ? "Bulk" : "TwoTone"} />
 												<span>{item.title}</span>
 											</Link>
@@ -114,7 +121,7 @@ export function AppSidebar({
 								return (
 									<SidebarMenuItem key={item.title}>
 										<SidebarMenuButton asChild isActive={isActive}>
-											<Link href={item.url}>
+											<Link href={item.url} onClick={closeOnMobile}>
 												<item.icon size={20} variant={isActive ? "Bulk" : "Outline"} />
 												<span>{item.title}</span>
 											</Link>
