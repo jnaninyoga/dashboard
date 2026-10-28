@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import { db } from "@/services/database";
 import { healthLogs } from "@/services/database/schema";
@@ -50,8 +51,7 @@ export async function addHealthLog(clientId: string, data: HealthLogInput) {
 		revalidatePath(`/clients/${clientId}`);
 		return { success: true };
 	} catch (error) {
-		console.error("Error adding health log:", error);
-		return { error: "Failed to add health log" };
+		return { error: "Failed to add health log", ref: logServerError("Error adding health log", error) };
 	}
 }
 
@@ -80,7 +80,6 @@ export async function toggleHealthAlert(logId: string, isAlert: boolean) {
         }
 		return { success: true };
 	} catch (error) {
-		console.error("Error toggling health alert:", error);
-		return { error: "Failed to update alert status" };
+		return { error: "Failed to update alert status", ref: logServerError("Error toggling health alert", error) };
 	}
 }

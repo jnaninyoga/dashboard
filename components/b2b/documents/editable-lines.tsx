@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { updateDocumentLinesAction } from "@/lib/actions/b2b/documents";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import {
 	type B2BDocumentLine,
 	type B2BDocumentStatus,
@@ -28,7 +29,6 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Add, Refresh, Save2, Trash } from "iconsax-reactjs";
-import { toast } from "sonner";
 import { z } from "zod";
 
 import { DescriptionAutocomplete } from "./description-autocomplete";
@@ -111,9 +111,9 @@ export function EditableDocumentLines({
 			});
 
 			if (res.success) {
-				toast.success("Line items updated");
+				notify.success("Line items updated");
 			} else {
-				toast.error(res.error || "Failed to update lines");
+				notifyActionError(res, "Failed to update lines");
 			}
 		});
 	};

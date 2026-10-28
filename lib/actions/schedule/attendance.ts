@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import { attendanceLedger, clients,clientWallets } from "@/services/database/schema";
 import { HealthLog } from "@/services/database/schema";
@@ -29,7 +30,7 @@ export async function checkInClientAction(
 	clientId: string,
 	eventId: string,
 	slotType: JnaninEventType
-): Promise<{ success: boolean; message: string }> {
+): Promise<{ success: boolean; message: string; ref?: string }> {
 	try {
 		const message = await db.transaction(async (tx) => {
 			// Lock the client's wallets first: a double tap (or a second device)
@@ -105,8 +106,11 @@ export async function checkInClientAction(
 		if (error instanceof CheckInRefused) {
 			return { success: false, message: error.message };
 		}
-		console.error("Check-in failed:", error);
-		return { success: false, message: "Check-in failed. Please try again." };
+		return {
+			success: false,
+			message: "Check-in failed. Please try again.",
+			ref: logServerError("Check-in failed", error),
+		};
 	}
 }
 

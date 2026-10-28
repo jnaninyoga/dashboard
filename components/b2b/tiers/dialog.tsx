@@ -21,12 +21,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { createB2BTierAction, updateB2BTierAction } from "@/lib/actions/settings";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier } from "@/lib/types";
 import { type B2BTierFormValues,b2bTierSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 interface B2BTierDialogProps {
     open: boolean;
@@ -51,11 +51,11 @@ export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) 
 
     useEffect(() => {
         if (state?.success) {
-            toast.success(isEditing ? "Tier updated" : "Tier created");
+            notify.success(isEditing ? "Tier updated" : "Tier created");
             onOpenChange(false);
             if (!isEditing) form.reset();
         } else if (state?.error) {
-            toast.error(state.error);
+            notifyActionError(state, "Something went wrong");
         }
     }, [state, isEditing, onOpenChange, form]);
 

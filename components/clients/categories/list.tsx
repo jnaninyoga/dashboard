@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useConfirm } from "@/components/feedback/confirm";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -23,6 +24,7 @@ import {
 	deleteClientCategory,
 	restoreClientCategory,
 } from "@/lib/actions/settings";
+import { notify } from "@/lib/feedback/notify";
 import { type Category } from "@/lib/types";
 
 import {
@@ -46,28 +48,46 @@ export function CategoryList({
 	const activeCategories = initialCategories.filter((c) => !c.isArchived);
 	const archivedCategories = initialCategories.filter((c) => c.isArchived);
 
+	const confirm = useConfirm();
+
 	const handleDelete = async (id: string) => {
-		if (!confirm("Are you sure you want to delete this category?")) return;
+		const ok = await confirm({
+			title: "Delete this category?",
+			description: "This can't be undone. Archive it instead to keep it for existing clients.",
+			confirmLabel: "Delete",
+			destructive: true,
+		});
+		if (!ok) return;
 		try {
 			await deleteClientCategory(id);
-		} catch (e: unknown) {
-			const error = e as Error;
-			alert(error.message);
+			notify.success("Category deleted");
+		} catch (error) {
+			notify.error("Couldn't delete this category", { error });
 		}
 	};
 
 	const handleArchive = async (id: string) => {
-		if (
-			!confirm(
-				"Are you sure you want to archive this category? It won't be selectable for new clients.",
-			)
-		)
-			return;
-		await archiveClientCategory(id);
+		const ok = await confirm({
+			title: "Archive this category?",
+			description: "It won't be selectable for new clients. You can restore it later.",
+			confirmLabel: "Archive",
+		});
+		if (!ok) return;
+		try {
+			await archiveClientCategory(id);
+			notify.success("Category archived");
+		} catch (error) {
+			notify.error("Couldn't archive this category", { error });
+		}
 	};
 
 	const handleRestore = async (id: string) => {
-		await restoreClientCategory(id);
+		try {
+			await restoreClientCategory(id);
+			notify.success("Category restored");
+		} catch (error) {
+			notify.error("Couldn't restore this category", { error });
+		}
 	};
 
 	return (

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { B2BDocumentStatus, B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
 import { contactSchema, partnerSchema } from "@/lib/validators";
 import { db } from "@/services/database";
@@ -14,6 +15,8 @@ import { and, count, eq, exists, ilike, or } from "drizzle-orm";
 
 export type ActionState = {
 	error?: string;
+	/** Code the failure was logged under; shown in the error toast. */
+	ref?: string;
 	success?: boolean;
 	issues?: Record<string, string[]>;
 };
@@ -43,8 +46,7 @@ export async function createPartnerAction(
 		revalidatePath("/b2b/partners");
 		return { success: true };
 	} catch (error) {
-		console.error("Error creating partner:", error);
-		return { error: "Failed to create partner" };
+		return { error: "Failed to create partner", ref: logServerError("Error creating partner", error) };
 	}
 }
 
@@ -126,8 +128,7 @@ export async function createContactAction(
 		revalidatePath(`/b2b/partners/${partnerId}`);
 		return { success: true };
 	} catch (error) {
-		console.error("Error creating B2B contact:", error);
-		return { error: "Failed to create contact" };
+		return { error: "Failed to create contact", ref: logServerError("Error creating B2B contact", error) };
 	}
 }
 
@@ -162,8 +163,7 @@ export async function updatePartnerAction(
 		revalidatePath("/b2b/documents");
 		return { success: true };
 	} catch (error) {
-		console.error("Error updating partner:", error);
-		return { error: "Failed to update partner" };
+		return { error: "Failed to update partner", ref: logServerError("Error updating partner", error) };
 	}
 }
 
@@ -186,8 +186,7 @@ export async function deletePartnerAction(id: string): Promise<ActionState> {
 		revalidatePath("/b2b/partners");
 		return { success: true };
 	} catch (error) {
-		console.error("Error deleting partner:", error);
-		return { error: "Failed to delete partner" };
+		return { error: "Failed to delete partner", ref: logServerError("Error deleting partner", error) };
 	}
 }
 
@@ -195,7 +194,7 @@ export async function getPartnersAction(filters?: {
 	query?: string;
 	docType?: B2BDocumentType | "all";
 	docStatus?: B2BDocumentStatus | "all";
-}): Promise<{ partners?: PartnerWithRelations[]; error?: string }> {
+}): Promise<{ partners?: PartnerWithRelations[]; error?: string; ref?: string }> {
 
 	const { query, docType, docStatus } = filters || {};
 
@@ -268,8 +267,7 @@ export async function getPartnersAction(filters?: {
 
 		return { partners };
 	} catch (error) {
-		console.error("Error fetching partners:", error);
-		return { error: "Failed to fetch partners" };
+		return { error: "Failed to fetch partners", ref: logServerError("Error fetching partners", error) };
 	}
 }
 
@@ -292,8 +290,7 @@ export async function getPartnerByIdAction(id: string) {
 		return { partner };
 
 	} catch (error) {
-		console.error("Error fetching partner:", error);
-		return { error: "Failed to fetch partner" };
+		return { error: "Failed to fetch partner", ref: logServerError("Error fetching partner", error) };
 	}
 }
 
@@ -312,7 +309,6 @@ export async function deleteContactAction(id: string): Promise<ActionState> {
 		revalidatePath(`/b2b/partners/${contact.partnerId}`);
 		return { success: true };
 	} catch (error) {
-		console.error("Error deleting contact:", error);
-		return { error: "Failed to delete contact" };
+		return { error: "Failed to delete contact", ref: logServerError("Error deleting contact", error) };
 	}
 }

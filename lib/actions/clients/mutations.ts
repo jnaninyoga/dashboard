@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
+import { logServerError } from "@/lib/errors/server";
 import { Gender, type NewHealthLog } from "@/lib/types";
 import { clientSchema } from "@/lib/validators";
 import { db } from "@/services/database";
@@ -198,10 +199,12 @@ export async function createClientAction(
 		revalidatePath("/clients");
 		return { success: true };
 	} catch (err: unknown) {
-		console.error("Error creating client:", err);
-		const message =
-			err instanceof Error ? err.message : "Failed to create client";
-		return { error: message };
+		// The raw message (database or Google) means nothing to the operator;
+		// the code ties her report to the logged cause.
+		return {
+			error: "Couldn't create this client",
+			ref: logServerError("Error creating client", err),
+		};
 	}
 }
 
@@ -398,8 +401,7 @@ export async function updateClientAction(
 		revalidatePath("/clients");
 		return { success: true };
 	} catch (error) {
-		console.error("Error updating client:", error);
-		return { error: "Failed to update client" };
+		return { error: "Failed to update client", ref: logServerError("Error updating client", error) };
 	}
 }
 
@@ -438,8 +440,7 @@ export async function deleteClientAction(id: string) {
 		revalidatePath("/clients");
 		return { success: true };
 	} catch (error) {
-		console.error("Error deleting client:", error);
-		return { error: "Failed to delete client" };
+		return { error: "Failed to delete client", ref: logServerError("Error deleting client", error) };
 	}
 }
 

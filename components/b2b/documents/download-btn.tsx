@@ -3,10 +3,10 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { notify } from "@/lib/feedback/notify";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
 
 import { DocumentDownload } from "iconsax-reactjs";
-import { toast } from "sonner"; // Assuming you use sonner based on your action ribbon
 
 import { B2BDocumentPDF } from "./document-pdf";
 
@@ -51,7 +51,7 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 			URL.revokeObjectURL(url);
 		} catch (error) {
 			console.error("Error generating PDF:", error);
-			toast.error("Failed to generate PDF. Please try again.");
+			notify.error("Failed to generate PDF. Please try again.");
 		} finally {
 			setIsGenerating(false);
 		}

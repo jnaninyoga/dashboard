@@ -16,9 +16,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { cancelEventAction } from "@/lib/actions/schedule/events";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 
 import { CloseCircle, Danger, Refresh } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 export function CancelEventButton({
     eventId,
@@ -35,11 +35,11 @@ export function CancelEventButton({
         startTransition(async () => {
             const result = await cancelEventAction(eventId);
             if (result.success) {
-                toast.success("Session cancelled.");
+                notify.success("Session cancelled.");
                 setOpen(false);
                 router.refresh();
             } else {
-                toast.error(result.error ?? "Failed to cancel session.");
+                notifyActionError(result, "Failed to cancel session.");
             }
         });
     };

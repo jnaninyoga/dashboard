@@ -28,6 +28,7 @@ import {
 	outstandingOf,
 	type PaymentTarget,
 } from "@/lib/domain/billing/payments";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type DocumentWithRelations } from "@/lib/types/b2b";
 import { parseAmountInput } from "@/lib/utils/currency";
 import {
@@ -37,7 +38,6 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MoneySend, TickCircle, Wallet3 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 export type PaymentQueueEntry = PaymentTarget;
 
@@ -124,11 +124,11 @@ export function RecordPaymentDialog({
 			);
 
 			if (res.success) {
-				toast.success(isPartial ? "Partial payment recorded" : "Payment recorded");
+				notify.success(isPartial ? "Partial payment recorded" : "Payment recorded");
 				onOpenChange(false);
 				router.refresh();
 			} else {
-				toast.error(res.error || "Failed to record payment");
+				notifyActionError(res, "Failed to record payment");
 				setIsSubmitting(false);
 			}
 		});

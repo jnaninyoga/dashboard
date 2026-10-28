@@ -10,11 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { setWorkingHours } from "@/lib/actions/settings";
 import { DAYS, DEFAULT_HOURS } from "@/lib/config/schedule";
+import { notify } from "@/lib/feedback/notify";
 import { type WorkingHoursConfig } from "@/lib/types";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2, TickCircle as Save } from "iconsax-reactjs";
-import { toast } from "sonner";
 import * as z from "zod";
 
 const daySchema = z.object({
@@ -36,11 +36,11 @@ export function ScheduleForm({
 		async (_: unknown, data: WorkingHoursConfig) => {
 			try {
 				await setWorkingHours(data);
-				toast.success("Schedule updated successfully.");
+				notify.success("Schedule updated successfully.");
 				return { success: true };
 			} catch (error) {
 				console.error(error);
-				toast.error("Failed to update schedule.");
+				notify.error("Failed to update schedule.");
 				return { error: "Failed to update schedule." };
 			}
 		},

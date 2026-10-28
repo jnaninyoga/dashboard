@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useConfirm } from "@/components/feedback/confirm";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -13,10 +14,10 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deletePartnerAction } from "@/lib/actions/b2b/partners";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type PartnerWithRelations } from "@/lib/types/b2b";
 
 import { Buildings, Edit2, More, Trash } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 import { PartnerDialog } from "./dialog";
 
@@ -33,21 +34,24 @@ export function PartnerActions({
 	const [editOpen, setEditOpen] = useState(false);
 	const [isPending, startTransition] = useTransition();
 
-	const handleDelete = () => {
-		if (
-			!confirm(
-				`Delete ${partner.companyName}? This cannot be undone. Partners with quotes or invoices cannot be deleted — archive their documents first.`,
-			)
-		) {
-			return;
-		}
+	const confirm = useConfirm();
+
+	const handleDelete = async () => {
+		const ok = await confirm({
+			title: `Delete ${partner.companyName}?`,
+			description:
+				"This can't be undone. A partner with quotes or invoices can't be deleted.",
+			confirmLabel: "Delete",
+			destructive: true,
+		});
+		if (!ok) return;
 		startTransition(async () => {
 			const res = await deletePartnerAction(partner.id);
 			if (res.success) {
-				toast.success("Partner deleted");
+				notify.success("Partner deleted");
 				router.refresh();
 			} else {
-				toast.error(res.error || "Failed to delete partner");
+				notifyActionError(res, "Failed to delete partner");
 			}
 		});
 	};

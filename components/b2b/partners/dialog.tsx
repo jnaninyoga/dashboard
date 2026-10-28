@@ -20,10 +20,10 @@ import {
 	createPartnerAction,
 	updatePartnerAction,
 } from "@/lib/actions/b2b/partners";
+import { notify } from "@/lib/feedback/notify";
 import { type B2BPartner } from "@/lib/types/b2b";
 
 import { Buildings, Edit2, Refresh } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 interface PartnerDialogProps {
 	children?: React.ReactNode;
@@ -58,7 +58,7 @@ export function PartnerDialog({
 
 	useEffect(() => {
 		if (state?.success) {
-			toast.success(isEdit ? "Partner updated" : "Partner created");
+			notify.success(isEdit ? "Partner updated" : "Partner created");
 			startTransition(() => {
 				setOpen(false);
 				router.refresh();

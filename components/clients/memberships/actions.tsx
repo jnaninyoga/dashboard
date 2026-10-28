@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { MembershipForm } from "@/components/clients/memberships/form";
+import { useConfirm } from "@/components/feedback/confirm";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -24,6 +25,7 @@ import {
 	archiveMembershipProduct,
 	deleteMembershipProduct,
 } from "@/lib/actions/clients/memberships";
+import { notify } from "@/lib/feedback/notify";
 
 import {
 	AddCircle,
@@ -32,7 +34,6 @@ import {
 	More,
 	Trash,
 } from "iconsax-reactjs";
-// import { toast } from "sonner";
 
 type Product = {
 	id: string;
@@ -47,28 +48,36 @@ type Product = {
 export function MembershipActions({ product }: { product: Product }) {
 	const [isEditOpen, setIsEditOpen] = useState(false);
 
+	const confirm = useConfirm();
+
 	const handleArchive = async () => {
-		if (
-			confirm(
-				"Are you sure you want to archive this product? It will be hidden from new sales.",
-			)
-		) {
-			try {
-				await archiveMembershipProduct(product.id);
-			} catch {
-				alert("Failed to archive");
-			}
+		const ok = await confirm({
+			title: `Archive ${product.name}?`,
+			description: "It will be hidden from new sales.",
+			confirmLabel: "Archive",
+		});
+		if (!ok) return;
+		try {
+			await archiveMembershipProduct(product.id);
+			notify.success("Membership archived");
+		} catch (error) {
+			notify.error("Couldn't archive this membership", { error });
 		}
 	};
 
 	const handleDelete = async () => {
-		if (confirm("Are you sure you want to PERMANENTLY delete this product?")) {
-			try {
-				await deleteMembershipProduct(product.id);
-			} catch (err: unknown) {
-				const error = err as Error;
-				alert(error.message);
-			}
+		const ok = await confirm({
+			title: `Delete ${product.name} permanently?`,
+			description: "This can't be undone. Archive it instead if cards were sold with it.",
+			confirmLabel: "Delete",
+			destructive: true,
+		});
+		if (!ok) return;
+		try {
+			await deleteMembershipProduct(product.id);
+			notify.success("Membership deleted");
+		} catch (error) {
+			notify.error("Couldn't delete this membership", { error });
 		}
 	};
 

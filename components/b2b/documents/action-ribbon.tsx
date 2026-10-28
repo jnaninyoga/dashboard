@@ -4,6 +4,7 @@ import { useState,useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useConfirm } from "@/components/feedback/confirm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
 import { isPayableInvoice, orderPaymentQueue } from "@/lib/domain/billing/payments";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
 import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
 
@@ -28,7 +30,6 @@ import {
 	Trash,
 	Warning2,
 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 import { ArchiveDocumentDialog } from "./archive-dialog";
 import { BackorderDialog } from "./backorder-dialog";
@@ -61,23 +62,31 @@ export function DocumentActionRibbon({
 				doc.partnerId,
 			);
 			if (res.success) {
-				toast.success(`Document marked as ${status}`);
+				notify.success(`Document marked as ${status}`);
 				router.refresh();
 			} else {
-				toast.error(res.error || "Failed to update document");
+				notifyActionError(res, "Failed to update document");
 			}
 		});
 	};
 
-	const handleDeleteDraft = () => {
-		if (!confirm("Delete this draft? This cannot be undone.")) return;
+	const confirm = useConfirm();
+
+	const handleDeleteDraft = async () => {
+		const ok = await confirm({
+			title: `Delete draft ${doc.documentNumber}?`,
+			description: "This can't be undone.",
+			confirmLabel: "Delete draft",
+			destructive: true,
+		});
+		if (!ok) return;
 		startTransition(async () => {
 			const res = await deleteDocumentAction(doc.id, doc.partnerId);
 			if (res.success) {
-				toast.success("Draft deleted");
+				notify.success("Draft deleted");
 				router.push("/b2b/documents");
 			} else {
-				toast.error(res.error || "Failed to delete draft");
+				notifyActionError(res, "Failed to delete draft");
 			}
 		});
 	};
@@ -86,11 +95,11 @@ export function DocumentActionRibbon({
 		startTransition(async () => {
 			const res = await archiveDocumentAction(doc.id, reason, doc.partnerId);
 			if (res.success) {
-				toast.success("Document archived");
+				notify.success("Document archived");
 				setIsArchiveOpen(false);
 				router.refresh();
 			} else {
-				toast.error(res.error || "Failed to archive");
+				notifyActionError(res, "Failed to archive");
 			}
 		});
 	};
@@ -271,10 +280,10 @@ export function DocumentActionRibbon({
 								startTransition(async () => {
 									const res = await confirmInvoiceWithBackorderAction(doc.id, createBackorder);
 									if (res.success) {
-										toast.success(createBackorder ? "Invoice confirmed and backorder created" : "Invoice confirmed");
+										notify.success(createBackorder ? "Invoice confirmed and backorder created" : "Invoice confirmed");
 										router.refresh();
 									} else {
-										toast.error(res.error || "Failed to confirm invoice");
+										notifyActionError(res, "Failed to confirm invoice");
 									}
 								});
 							}}
@@ -301,10 +310,10 @@ export function DocumentActionRibbon({
 							startTransition(async () => {
 								const res = await convertQuoteToInvoiceAction(doc.id);
 								if (res.success && res.id) {
-									toast.success("Draft invoice created");
+									notify.success("Draft invoice created");
 									router.push(`/b2b/documents/${res.id}`);
 								} else {
-									toast.error(res.error || "Failed to create draft invoice");
+									notifyActionError(res, "Failed to create draft invoice");
 								}
 							});
 						}}

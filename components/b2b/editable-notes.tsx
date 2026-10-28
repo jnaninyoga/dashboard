@@ -5,9 +5,9 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { updateDocumentNotesAction } from "@/lib/actions/b2b/documents";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 
 import { NoteText, Save2 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 interface EditableNotesProps {
 	documentId: string;
@@ -27,9 +27,9 @@ export function EditableNotes({
 		startTransition(async () => {
 			const res = await updateDocumentNotesAction(documentId, notes);
 			if (res.success) {
-				toast.success("Notes updated successfully");
+				notify.success("Notes updated successfully");
 			} else {
-				toast.error(res.error || "Failed to update notes");
+				notifyActionError(res, "Failed to update notes");
 			}
 		});
 	};

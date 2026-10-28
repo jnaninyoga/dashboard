@@ -8,6 +8,7 @@ import {
 	outstandingOf,
 	PAYABLE_INVOICE_STATUSES,
 } from "@/lib/domain/billing/payments";
+import { logServerError } from "@/lib/errors/server";
 import { B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
 import { parseAmountInput } from "@/lib/utils/currency";
 import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
@@ -68,6 +69,8 @@ const ALLOWED_STATUS_TRANSITIONS: Record<B2BDocumentStatus, B2BDocumentStatus[]>
 
 export type ActionState = {
 	error?: string;
+	/** Code the failure was logged under; shown in the error toast. */
+	ref?: string;
 	success?: boolean;
 	issues?: Record<string, string[] | undefined>;
 	id?: string;
@@ -193,8 +196,7 @@ export async function createDocumentAction(
 		// @ts-expect-error - newId is assigned in transaction
 		return { success: true, id: newId };
 	} catch (error) {
-		console.error("Error creating B2B document:", error);
-		return { error: "Failed to create document" };
+		return { error: "Failed to create document", ref: logServerError("Error creating B2B document", error) };
 	}
 }
 
@@ -238,8 +240,7 @@ export async function updateDocumentStatusAction(
 
 		return { success: true };
 	} catch (error) {
-		console.error("Error updating document status:", error);
-		return { error: "Failed to update status" };
+		return { error: "Failed to update status", ref: logServerError("Error updating document status", error) };
 	}
 }
 
@@ -277,8 +278,7 @@ export async function archiveDocumentAction(
 
 		return { success: true };
 	} catch (error) {
-		console.error("Error archiving document:", error);
-		return { error: "Failed to archive document" };
+		return { error: "Failed to archive document", ref: logServerError("Error archiving document", error) };
 	}
 }
 
@@ -304,8 +304,7 @@ export async function unarchiveDocumentAction(
 
 		return { success: true };
 	} catch (error) {
-		console.error("Error restoring document:", error);
-		return { error: "Failed to restore document" };
+		return { error: "Failed to restore document", ref: logServerError("Error restoring document", error) };
 	}
 }
 
@@ -315,7 +314,7 @@ export async function getDocumentsAction(filters?: {
 	status?: B2BDocumentStatus | "all";
 	isBackorder?: boolean | "all";
 	includeArchived?: boolean;
-}): Promise<{ documents?: DocumentWithRelations[]; error?: string }> {
+}): Promise<{ documents?: DocumentWithRelations[]; error?: string; ref?: string }> {
 	const { query, type, status, includeArchived } = filters || {};
 
 	try {
@@ -367,12 +366,11 @@ export async function getDocumentsAction(filters?: {
 		return { documents };
 
 	} catch (error) {
-		console.error("Error fetching documents:", error);
-		return { error: "Failed to fetch documents" };
+		return { error: "Failed to fetch documents", ref: logServerError("Error fetching documents", error) };
 	}
 }
 
-export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: DocumentWithRelations[], allRelatedInvoices?: DocumentWithRelations[], chainInvoices?: DocumentWithRelations[] }; error?: string }> {
+export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: DocumentWithRelations[], allRelatedInvoices?: DocumentWithRelations[], chainInvoices?: DocumentWithRelations[] }; error?: string; ref?: string }> {
 	try {
 		const document = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -452,8 +450,7 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 		};
 
 	} catch (error) {
-		console.error("Error fetching document:", error);
-		return { error: "Failed to fetch document" };
+		return { error: "Failed to fetch document", ref: logServerError("Error fetching document", error) };
 	}
 }
 
@@ -550,8 +547,7 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 		// @ts-expect-error - newId is assigned in transaction
 		return { success: true, id: newId };
 	} catch (error) {
-		console.error("Error converting quote to invoice:", error);
-		return { error: "Failed to create draft invoice" };
+		return { error: "Failed to create draft invoice", ref: logServerError("Error converting quote to invoice", error) };
 	}
 }
 
@@ -625,8 +621,7 @@ export async function createPartialInvoiceAction(
 		// @ts-expect-error - newId is assigned in transaction
 		return { success: true, id: newId };
 	} catch (error) {
-		console.error("Error creating partial invoice:", error);
-		return { error: "Failed to create partial invoice" };
+		return { error: "Failed to create partial invoice", ref: logServerError("Error creating partial invoice", error) };
 	}
 }
 
@@ -755,8 +750,7 @@ export async function recordDocumentPaymentAction(
 		) {
 			return { success: true };
 		}
-		console.error("Error recording payment:", error);
-		return { error: "Failed to record payment" };
+		return { error: "Failed to record payment", ref: logServerError("Error recording payment", error) };
 	}
 }
 
@@ -783,8 +777,7 @@ export async function deleteDocumentAction(id: string, partnerId?: string): Prom
 		revalidatePath("/b2b/documents");
 		return { success: true };
 	} catch (error) {
-		console.error("Error deleting document:", error);
-		return { error: "Failed to delete document" };
+		return { error: "Failed to delete document", ref: logServerError("Error deleting document", error) };
 	}
 }
 
@@ -806,8 +799,7 @@ export async function updateDocumentNotesAction(id: string, notes: string): Prom
 		revalidatePath(`/b2b/documents/${id}`);
 		return { success: true };
 	} catch (error) {
-		console.error("Error updating notes:", error);
-		return { error: "Failed to update notes" };
+		return { error: "Failed to update notes", ref: logServerError("Error updating notes", error) };
 	}
 }
 
@@ -873,8 +865,7 @@ export async function confirmInvoiceWithBackorderAction(
 		
 		return { success: true };
 	} catch (error) {
-		console.error("Error confirming invoice:", error);
-		return { error: "Failed to confirm invoice" };
+		return { error: "Failed to confirm invoice", ref: logServerError("Error confirming invoice", error) };
 	}
 }
 
@@ -926,7 +917,6 @@ export async function updateDocumentLinesAction(
 		revalidatePath(`/b2b/documents/${id}`);
 		return { success: true };
 	} catch (error) {
-		console.error("Error updating document lines:", error);
-		return { error: "Failed to update lines" };
+		return { error: "Failed to update lines", ref: logServerError("Error updating document lines", error) };
 	}
 }

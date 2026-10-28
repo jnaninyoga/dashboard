@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { createClientAction, updateClientAction } from "@/lib/actions/clients/mutations";
 import { HEALTH_TEMPLATE, type HealthSection } from "@/lib/config/health";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { 
     type Category, 
     type HealthLog 
@@ -20,7 +21,6 @@ import {
 import { type ClientFormValues, clientSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 
 const WIZARD_STEPS: WizardStep[] = [
 	{ id: "personal", title: "Personal Info", description: "Identity & Contact" },
@@ -138,7 +138,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
     // Handle server state
     useEffect(() => {
         if (state?.success) {
-            toast.success(mode === "create" ? "Client created successfully!" : "Client updated successfully!");
+            notify.success(mode === "create" ? "Client created successfully!" : "Client updated successfully!");
             localStorage.removeItem(STORAGE_KEY);
             router.push("/clients");
         } else if (state?.error) {
@@ -154,7 +154,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
                     }
                 });
             }
-            toast.error(state.error);
+            notifyActionError(state, "Something went wrong");
         }
     }, [state, mode, router, STORAGE_KEY, form]);
 
@@ -180,7 +180,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			if (fieldsToValidate.length > 0) {
 				const isValid = await form.trigger(fieldsToValidate);
 				if (!isValid) {
-					toast.error("Please fix the errors in the current step before proceeding.");
+					notify.error("Please fix the errors in the current step before proceeding.");
 					return;
 				}
 			}

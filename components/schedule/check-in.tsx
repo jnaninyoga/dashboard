@@ -5,11 +5,11 @@ import { useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { checkInClientAction } from "@/lib/actions/schedule/attendance";
 import { type AttendanceRecord } from "@/lib/actions/schedule/attendance";
+import { notify } from "@/lib/feedback/notify";
 import { type Client, type HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
 import { Location, People, SecurityUser, TickCircle,User } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 import { ClientSearch } from "../clients/search";
 
@@ -52,9 +52,9 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
         try {
             const res = await checkInClientAction(clientId, eventId, eventType as JnaninEventType);
             if (!res.success) {
-                toast.error(res.message);
+                notify.error(res.message, { code: res.ref });
             } else {
-                toast.success(res.message);
+                notify.success(res.message);
                 
                 const newRecord: AttendanceRecord = {
                     id: Math.random().toString(), 
@@ -71,7 +71,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
             }
         } catch (error: unknown) {
             const err = error as { message?: string };
-            toast.error(err.message || "Failed to check-in client.");
+            notify.error(err.message || "Failed to check-in client.");
         } finally {
             checkInInFlight.current = false;
             setIsCheckingIn(false);

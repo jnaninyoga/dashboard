@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
 
@@ -32,7 +33,6 @@ import { format, parse } from "date-fns";
 const todayStr = () => format(new Date(), "yyyy-MM-dd");
 const currentHourStr = () => format(new Date(), "HH:00");
 import { Refresh } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 export function NewSessionDialog({
 	open,
@@ -77,12 +77,12 @@ export function NewSessionDialog({
 
 	useEffect(() => {
 		if (state?.success) {
-			toast.success("Session scheduled successfully!");
+			notify.success("Session scheduled successfully!");
 			reset();
 			onOpenChange(false);
 			router.refresh();
 		} else if (state?.error) {
-			toast.error(state.error);
+			notifyActionError(state, "Something went wrong");
 		}
 	}, [state, reset, onOpenChange, router]);
 
@@ -165,7 +165,7 @@ export function NewSessionDialog({
 			});
 		} catch (error) {
 			console.error(error);
-			toast.error("An unexpected error occurred.");
+			notify.error("An unexpected error occurred.");
 		}
 	};
 

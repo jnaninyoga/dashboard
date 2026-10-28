@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useConfirm } from "@/components/feedback/confirm";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -22,6 +23,7 @@ import {
 	deleteB2BTierAction,
 	toggleArchiveB2BTierAction,
 } from "@/lib/actions/settings";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier } from "@/lib/types";
 
 import {
@@ -31,7 +33,6 @@ import {
 	RotateLeft,
 	Trash,
 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 import { B2BTierDialog } from "./dialog";
 
@@ -42,22 +43,30 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 	const activeTiers = initialTiers.filter((t) => !t.isArchived);
 	const archivedTiers = initialTiers.filter((t) => t.isArchived);
 
+	const confirm = useConfirm();
+
 	const handleDelete = async (id: string) => {
-		if (!confirm("Are you sure you want to delete this tier?")) return;
+		const ok = await confirm({
+			title: "Delete this tier?",
+			description: "This can't be undone. Archive it instead to keep it for reference.",
+			confirmLabel: "Delete",
+			destructive: true,
+		});
+		if (!ok) return;
 		const result = await deleteB2BTierAction(id);
 		if (result.error) {
-			toast.error(result.error);
+			notifyActionError(result, "Something went wrong");
 		} else {
-			toast.success("Tier deleted");
+			notify.success("Tier deleted");
 		}
 	};
 
 	const handleToggleArchive = async (tier: B2BTier) => {
 		const result = await toggleArchiveB2BTierAction(tier.id, tier.isArchived);
 		if (result.error) {
-			toast.error(result.error);
+			notifyActionError(result, "Something went wrong");
 		} else {
-			toast.success(tier.isArchived ? "Tier restored" : "Tier archived");
+			notify.success(tier.isArchived ? "Tier restored" : "Tier archived");
 		}
 	};
 

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import { clientWallets,membershipProducts } from "@/services/database/schema";
 
@@ -36,8 +37,7 @@ export async function createMembershipProduct(
         revalidatePath("/settings/memberships");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to create membership product" };
+        return { error: "Failed to create membership product", ref: logServerError("Failed to create membership product", error) };
     }
 }
 
@@ -65,8 +65,7 @@ export async function updateMembershipProduct(
         revalidatePath("/settings/memberships");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to update membership product" };
+        return { error: "Failed to update membership product", ref: logServerError("Failed to update membership product", error) };
     }
 }
 

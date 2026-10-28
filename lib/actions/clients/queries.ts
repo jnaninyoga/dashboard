@@ -1,5 +1,6 @@
 "use server";
 
+import { logServerError } from "@/lib/errors/server";
 import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
 import { db } from "@/services/database";
 import {
@@ -133,8 +134,7 @@ export async function getClientsAction(
 
 		return { success: true, data };
 	} catch (error) {
-		console.error("Error fetching clients:", error);
-		return { error: "Failed to fetch clients" };
+		return { error: "Failed to fetch clients", ref: logServerError("Error fetching clients", error) };
 	}
 }
 
@@ -179,8 +179,7 @@ export async function getClientByIdAction(id: string) {
 			},
 		};
 	} catch (error) {
-		console.error("Error fetching client:", error);
-		return { error: "Failed to fetch client" };
+		return { error: "Failed to fetch client", ref: logServerError("Error fetching client", error) };
 	}
 }
 

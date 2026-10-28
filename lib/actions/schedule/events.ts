@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
 import { cancelStudioEvent, checkAvailability, createStudioEvent } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
@@ -87,8 +88,7 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 
 		return { success: true, event: newEvent };
 	} catch (error) {
-		console.error("Failed to schedule event:", error);
-		return { error: "Failed to create the event in Google Calendar." };
+		return { error: "Failed to create the event in Google Calendar.", ref: logServerError("Failed to schedule event", error) };
 	}
 }
 
@@ -120,8 +120,7 @@ export async function cancelEventAction(eventId: string) {
 	try {
 		await cancelStudioEvent(accessToken, eventId);
 	} catch (error) {
-		console.error("Failed to cancel event:", error);
-		return { error: "Failed to cancel the event in Google Calendar." };
+		return { error: "Failed to cancel the event in Google Calendar.", ref: logServerError("Failed to cancel event", error) };
 	}
 
 	revalidatePath("/schedule");

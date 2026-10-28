@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { type StandardLegalLabel } from "@/lib/types/b2b";
 import { db } from "@/services/database";
 import { businessProfiles } from "@/services/database/schema";
@@ -75,7 +76,6 @@ export async function upsertBusinessProfileAction(
 		revalidatePath("/settings");
 		return { success: true };
 	} catch (error) {
-		console.error("Failed to upsert business profile:", error);
-		return { error: "Failed to save profile settings." };
+		return { error: "Failed to save profile settings.", ref: logServerError("Failed to upsert business profile", error) };
 	}
 }

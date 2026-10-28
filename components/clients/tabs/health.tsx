@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { addHealthLog, toggleHealthAlert } from "@/lib/actions/clients/health";
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { HealthCategory, HealthSeverity } from "@/lib/types/health";
 import { cn } from "@/lib/utils/ui";
 import { type Client, type HealthLog } from "@/services/database/schema";
@@ -84,15 +85,12 @@ export function HealthTab({ client }: HealthTabProps) {
 				setIsOpen(false);
 				setCondition("");
 				setSeverity(HealthSeverity.INFO);
-				// Router refresh handled by action revalidatePath, but client needs to refresh view?
-				// revalidatePath refreshes server data, but client router cache might hold old data?
-				// Usually Server Actions + revalidatePath updates the UI automatically if using standard navigation.
+				notify.success("Health note added");
 			} else {
-				console.error(result.error);
-				alert("Failed to add log");
+				notifyActionError(result, "Couldn't add this health note");
 			}
 		} catch (error) {
-			console.error(error);
+			notify.error("Couldn't add this health note", { error });
 		} finally {
 			setIsSubmitting(false);
 		}

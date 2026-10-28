@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import {clients, clientWallets, membershipProducts } from "@/services/database/schema";
 import { createClient } from "@/services/supabase/server";
@@ -76,8 +77,7 @@ export async function assignProductToClient(clientId: string, productId: string)
         
 		return { success: true };
 	} catch (error) {
-		console.error("Error assigning product:", error);
-		return { error: "Failed to assign product" };
+		return { error: "Failed to assign product", ref: logServerError("Error assigning product", error) };
 	}
 }
 
@@ -99,7 +99,6 @@ export async function getMembershipProductsAction() {
         });
 		return { success: true, products };
 	} catch (error) {
-		console.error("Error fetching products:", error);
-		return { error: "Failed to fetch products" };
+		return { error: "Failed to fetch products", ref: logServerError("Error fetching products", error) };
 	}
 }

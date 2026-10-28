@@ -22,12 +22,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClientCategory, updateClientCategory } from "@/lib/actions/settings";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type Category } from "@/lib/types";
 import { type CategoryFormValues,categorySchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 interface CategoryDialogProps {
     open: boolean;
@@ -55,11 +55,11 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
 
     useEffect(() => {
         if (state?.success) {
-            toast.success(isEditing ? "Category updated" : "Category created");
+            notify.success(isEditing ? "Category updated" : "Category created");
             onOpenChange(false);
             if (!isEditing) form.reset();
         } else if (state?.error) {
-            toast.error(state.error);
+            notifyActionError(state, "Something went wrong");
         }
     }, [state, isEditing, onOpenChange, form]);
 

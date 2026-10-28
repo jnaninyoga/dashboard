@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import { appSettings, b2bPricingTiers, clientCategories, clients } from "@/services/database/schema";
 
@@ -71,8 +72,7 @@ export async function createClientCategory(
         revalidatePath("/settings/categories");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to create category" };
+        return { error: "Failed to create category", ref: logServerError("Failed to create category", error) };
     }
 }
 
@@ -96,8 +96,7 @@ export async function updateClientCategory(
         revalidatePath("/settings/categories");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to update category" };
+        return { error: "Failed to update category", ref: logServerError("Failed to update category", error) };
     }
 }
 
@@ -159,8 +158,7 @@ export async function createB2BTierAction(_prevState: unknown, formData: FormDat
         revalidatePath("/settings/b2b");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to create B2B tier" };
+        return { error: "Failed to create B2B tier", ref: logServerError("Failed to create B2B tier", error) };
     }
 }
 
@@ -186,8 +184,7 @@ export async function updateB2BTierAction(id: string, _prevState: unknown, formD
         revalidatePath("/settings/b2b");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to update B2B tier" };
+        return { error: "Failed to update B2B tier", ref: logServerError("Failed to update B2B tier", error) };
     }
 }
 
@@ -197,8 +194,7 @@ export async function deleteB2BTierAction(id: string) {
         revalidatePath("/settings/b2b");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to delete B2B tier" };
+        return { error: "Failed to delete B2B tier", ref: logServerError("Failed to delete B2B tier", error) };
     }
 }
 
@@ -210,7 +206,6 @@ export async function toggleArchiveB2BTierAction(id: string, isArchived: boolean
         revalidatePath("/settings/b2b");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { error: "Failed to update archive status" };
+        return { error: "Failed to update archive status", ref: logServerError("Failed to update archive status", error) };
     }
 }

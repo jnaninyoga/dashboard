@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/table";
 import { createDocumentAction } from "@/lib/actions/b2b/documents";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import {
 	type B2BContact,
 	type B2BPartner,
@@ -56,7 +57,6 @@ import {
 	Save2,
 	Trash,
 } from "iconsax-reactjs";
-import { toast } from "sonner";
 import { type z } from "zod";
 
 import { DescriptionAutocomplete } from "./description-autocomplete";
@@ -122,10 +122,10 @@ export function NewQuoteForm({
 		if (!state || handledStateRef.current === state) return;
 		handledStateRef.current = state;
 		if (state.success && state.id) {
-			toast.success("Quote created");
+			notify.success("Quote created");
 			router.push(`/b2b/documents/${state.id}`);
 		} else if (state.error) {
-			toast.error(state.error);
+			notifyActionError(state, "Something went wrong");
 		}
 	}, [state, router]);
 

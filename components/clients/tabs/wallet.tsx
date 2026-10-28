@@ -21,6 +21,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { assignProductToClient } from "@/lib/actions/clients/wallets";
+import { notify } from "@/lib/feedback/notify";
 import { cn } from "@/lib/utils/ui";
 import { type ClientWallet, type MembershipProduct } from "@/services/database/schema";
 
@@ -54,11 +55,12 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 			if (result.success) {
 				setIsOpen(false);
 				setSelectedProductId("");
+				notify.success("Card sold");
 			} else {
-				alert("Failed to assign product");
+				notify.error("Couldn't sell this card");
 			}
 		} catch (error) {
-			console.error(error);
+			notify.error("Couldn't sell this card", { error });
 		} finally {
 			setIsSubmitting(false);
 		}

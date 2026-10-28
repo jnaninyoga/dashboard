@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { createMembershipProduct, updateMembershipProduct } from "@/lib/actions/clients/memberships";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type MembershipProduct } from "@/lib/types";
 import { 
 	type MembershipProductFormValues, 
@@ -22,7 +23,6 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Refresh as Loader2 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 type MembershipFormProps = {
 	initialData?: MembershipProduct;
@@ -49,10 +49,10 @@ export function MembershipForm({ initialData, onSuccess }: MembershipFormProps) 
 
     useEffect(() => {
         if (state?.success) {
-            toast.success(isEditing ? "Product updated" : "Product created");
+            notify.success(isEditing ? "Product updated" : "Product created");
             onSuccess();
         } else if (state?.error) {
-            toast.error(state.error);
+            notifyActionError(state, "Something went wrong");
         }
     }, [state, isEditing, onSuccess]);
 

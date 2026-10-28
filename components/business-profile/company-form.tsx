@@ -32,6 +32,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { upsertBusinessProfileAction } from "@/lib/actions/business-profile";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import type { BusinessProfile } from "@/lib/types/b2b";
 import { cn } from "@/lib/utils/ui";
 
@@ -51,7 +52,6 @@ import {
 	SecuritySafe,
 	Trash,
 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
@@ -90,9 +90,9 @@ export function CompanyProfileForm({
 
 	useEffect(() => {
 		if (state?.success) {
-			toast.success("Profile saved successfully");
+			notify.success("Profile saved successfully");
 		} else if (state?.error) {
-			toast.error(state.error);
+			notifyActionError(state, "Something went wrong");
 		}
 	}, [state]);
 
