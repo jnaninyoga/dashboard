@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Great_Vibes,Philosopher, Plus_Jakarta_Sans } from "next/font/google";
 
+import { ConfirmProvider } from "@/components/feedback/confirm";
+import { FeedbackToaster } from "@/components/feedback/toaster";
 import { OfflineDetector } from "@/components/offline-detector";
 import { SerwistRegistration } from "@/components/serwist-registration";
-
-import { Toaster } from "sonner";
 
 import "./globals.css";
 
@@ -71,15 +71,9 @@ export default function RootLayout({
 			<body
 				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} selection:bg-primary/20 font-sans antialiased`}
 			>
-				{children}
+				<ConfirmProvider>{children}</ConfirmProvider>
 				<SerwistRegistration />
-				<Toaster
-					richColors
-					position="top-center"
-					toastOptions={{
-						className: "!rounded-2xl !shadow-lg !border-0",
-					}}
-				/>
+				<FeedbackToaster />
 				<OfflineDetector />
 			</body>
 		</html>

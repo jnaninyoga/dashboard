@@ -1,0 +1,137 @@
+"use client";
+
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+
+import { BloomingBlossoms } from "@/components/ui/blooming-blossoms";
+import { Button } from "@/components/ui/button";
+import {
+	buildErrorReport,
+	errorReportMailto,
+	formatErrorReport,
+} from "@/lib/errors/report";
+import { cn } from "@/lib/utils/ui";
+
+import { Copy, CopySuccess, Refresh2, Sms } from "iconsax-reactjs";
+
+const noop = () => () => {};
+
+type ErrorScreenProps = {
+	error: Error & { digest?: string };
+	reset: () => void;
+	/** Covers the whole window (global error). Otherwise it fills the page
+	 *  area and the sidebar stays usable. */
+	fullScreen?: boolean;
+};
+
+/**
+ * What the operator sees when a page breaks: calm, with one clear way forward,
+ * and a report she can copy or email so the developer can find the cause.
+ */
+export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenProps) {
+	// The report reads the URL and device and mints a code, so it is only
+	// built in the browser; the server render shows the digest, if any.
+	const inBrowser = useSyncExternalStore(noop, () => true, () => false);
+	const report = useMemo(
+		() => (inBrowser ? buildErrorReport({ error }) : null),
+		[inBrowser, error],
+	);
+	const [copied, setCopied] = useState(false);
+
+	useEffect(() => {
+		if (report) console.error(`[${report.code}] Page error:`, error);
+	}, [report, error]);
+
+	const code = report?.code ?? error.digest;
+	const mailto = report ? errorReportMailto(report) : null;
+
+	const copy = async () => {
+		if (!report) return;
+		try {
+			await navigator.clipboard.writeText(formatErrorReport(report));
+			setCopied(true);
+			setTimeout(() => setCopied(false), 2500);
+		} catch {
+			// Clipboard blocked: the code stays on screen to read out instead.
+		}
+	};
+
+	return (
+		<div
+			role="alert"
+			className={cn(
+				"relative flex w-full items-center justify-center overflow-hidden px-5 py-10",
+				fullScreen ? "bg-background fixed inset-0 z-100 min-h-dvh" : "min-h-[70vh]",
+			)}
+		>
+			<BloomingBlossoms />
+			<div className="bg-destructive/10 pointer-events-none absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full opacity-60 blur-3xl" />
+			<div className="bg-secondary/15 pointer-events-none absolute bottom-[-15%] left-[-10%] h-[400px] w-[400px] rounded-full blur-3xl" />
+
+			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-6 text-center">
+				<div className="space-y-3">
+					<h1 className="font-heading text-foreground text-4xl font-bold sm:text-5xl">
+						Something drifted away
+					</h1>
+					<p className="text-muted-foreground leading-relaxed">
+						This page ran into a problem. What you saved is safe. Try again,
+						and if it keeps happening, send the report below to your developer.
+					</p>
+				</div>
+
+				{code ? (
+					<div className="bg-card zen-shadow flex flex-col items-center rounded-2xl border px-6 py-3">
+						<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+							Error code
+						</span>
+						<span className="font-mono text-lg font-bold tracking-wider select-all">
+							{code}
+						</span>
+					</div>
+				) : null}
+
+				<Button
+					onClick={() => reset()}
+					className="zen-glow-teal h-14 w-full max-w-xs gap-3 rounded-2xl text-base font-semibold"
+				>
+					<Refresh2 size={22} variant="Bold" />
+					Try again
+				</Button>
+
+				<div className="flex w-full max-w-xs flex-wrap justify-center gap-2">
+					<Button
+						variant="outline"
+						onClick={copy}
+						disabled={!report}
+						className="h-11 flex-1 gap-2 rounded-xl"
+					>
+						{copied ? <CopySuccess size={18} /> : <Copy size={18} />}
+						{copied ? "Copied" : "Copy report"}
+					</Button>
+					{mailto ? (
+						<Button variant="outline" asChild className="h-11 flex-1 gap-2 rounded-xl">
+							<a href={mailto}>
+								<Sms size={18} />
+								Email developer
+							</a>
+						</Button>
+					) : null}
+				</div>
+
+				{report ? (
+					<details className="w-full text-left">
+						<summary className="text-muted-foreground cursor-pointer text-center text-xs font-medium">
+							Technical details
+						</summary>
+						<pre className="bg-muted/60 mt-3 max-h-56 overflow-auto rounded-xl p-3 text-[11px] leading-relaxed whitespace-pre-wrap">
+							{formatErrorReport(report)}
+						</pre>
+					</details>
+				) : null}
+
+				<p className="font-vibes text-muted-foreground/60 max-w-sm text-xl">
+					In the midst of movement and chaos, keep stillness inside of you.
+				</p>
+			</div>
+		</div>
+	);
+}

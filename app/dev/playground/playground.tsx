@@ -57,6 +57,8 @@ import {
 
 import { Buildings } from "iconsax-reactjs";
 
+import { FeedbackDemo } from "./feedback-demo";
+
 export function Playground() {
 	const [sheetOpen, setSheetOpen] = useState(false);
 	const [saved, setSaved] = useState<string | null>(null);
@@ -110,6 +112,8 @@ export function Playground() {
 					</FormSheet>
 					<p data-testid="saved">Saved: {saved ?? "nothing yet"}</p>
 				</section>
+
+				<FeedbackDemo />
 
 				<section className="bg-card flex flex-wrap items-center gap-3 rounded-3xl border p-6">
 					<Dialog>

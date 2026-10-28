@@ -255,6 +255,21 @@
 	}
 }
 
+/* ─── Toasts (sileo) in the studio palette ───
+   sileo injects its own :root defaults after this file, so the overrides sit
+   on its viewport element, which every toast inherits from. */
+[data-sileo-viewport] {
+	--sileo-state-success: oklch(0.547 0.087 211.6); /* primary teal */
+	--sileo-state-error: oklch(0.569 0.174 24.5); /* destructive */
+	--sileo-state-warning: oklch(0.769 0.165 70.1); /* warning amber */
+	--sileo-state-info: oklch(0.623 0.188 259.8); /* info blue */
+}
+/* Sentence case like the rest of the app ("Payment recorded"), not sileo's
+   Title Case. */
+[data-sileo-viewport] [data-sileo-title] {
+	text-transform: none;
+}
+
 /* ─── Zen Utility Classes ─── */
 @layer utilities {
 	/* Soft depth shadows — replaces borders */

@@ -2,34 +2,32 @@
 
 import { useEffect, useRef } from "react";
 
-import { toast } from "sonner";
+import { notify } from "@/lib/feedback/notify";
 
 export function OfflineDetector() {
-	const toastId = useRef<string | number | null>(null);
+	const toastId = useRef<string | null>(null);
 
 	useEffect(() => {
 		const handleOffline = () => {
 			// Dismiss any previous reconnection toast
-			if (toastId.current) toast.dismiss(toastId.current);
+			if (toastId.current) notify.dismiss(toastId.current);
 
-			toastId.current = toast.error("You are offline", {
-				description: "Waiting for connection to restore…",
-				duration: Infinity,
-				id: "offline-toast",
-			});
+			// Stays up (no timeout) until the connection comes back.
+			toastId.current = notify.warning(
+				"You are offline",
+				"Waiting for connection to restore…",
+				null,
+			);
 		};
 
 		const handleOnline = () => {
 			// Dismiss the offline toast
 			if (toastId.current) {
-				toast.dismiss(toastId.current);
+				notify.dismiss(toastId.current);
 				toastId.current = null;
 			}
 
-			toast.success("Back online", {
-				description: "Connection restored.",
-				duration: 3000,
-			});
+			notify.success("Back online", "Connection restored.");
 		};
 
 		// Check initial state
