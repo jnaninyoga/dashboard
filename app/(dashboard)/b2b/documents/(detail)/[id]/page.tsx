@@ -5,8 +5,8 @@ import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
 import { ChainStrip } from "@/components/b2b/documents/chain-strip";
 import { DocumentTotals } from "@/components/b2b/documents/document-totals";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
+import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { EditableNotes } from "@/components/b2b/editable-notes";
-import { Badge } from "@/components/ui/badge";
 import {
 	Table,
 	TableBody,
@@ -27,13 +27,9 @@ import {
 	ArrowLeft,
 	Buildings,
 	Calendar,
-	Clock,
-	CloseCircle,
 	DocumentText,
-	Edit2,
 	MoneyTime,
 	ReceiptText,
-	TickCircle,
 } from "iconsax-reactjs";
 
 type Params = Promise<{ id: string }>;
@@ -59,51 +55,6 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 	const profile = await getBusinessProfileAction();
 
 	const chainInvoices = accountSummary?.chainInvoices || [];
-
-	const getStatusProps = (status: string) => {
-		const s = status.toLowerCase();
-		switch (s) {
-			case "paid":
-				return {
-					variant: "success" as const,
-					icon: <TickCircle size={14} variant="Bold" />,
-					label: "Paid",
-				};
-			case "partially_paid":
-				return {
-					variant: "info" as const,
-					icon: <MoneyTime size={14} variant="Bold" />,
-					label: "Partially Paid",
-				};
-			case "accepted":
-				return {
-					variant: "success" as const,
-					icon: <ReceiptText size={14} variant="Bold" />,
-					label: "Accepted",
-				};
-			case "sent":
-				return {
-					variant: "info" as const,
-					icon: <Clock size={14} variant="Bold" />,
-					label: "Sent",
-				};
-			case "cancelled":
-				return {
-					variant: "destructive" as const,
-					icon: <CloseCircle size={14} variant="Bold" />,
-					label: "Cancelled",
-				};
-			case "draft":
-			default:
-				return {
-					variant: "muted" as const,
-					icon: <Edit2 size={14} variant="Bold" />,
-					label: "Draft",
-				};
-		}
-	};
-
-	const status = getStatusProps(document.status);
 
 	// Financial Calculations
 	const isQuote = document.type === "quote";
@@ -152,13 +103,10 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 								<h1 className="font-heading text-foreground text-3xl font-black tracking-tight">
 									{document.documentNumber}
 								</h1>
-								<Badge
-									variant={status.variant}
-									className="flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase transition-all"
-								>
-									{status.icon}
-									{status.label}
-								</Badge>
+								<DocumentStatusBadge
+									status={document.status}
+									className="rounded-lg"
+								/>
 							</div>
 							<p className="text-muted-foreground/60 text-xs font-bold tracking-wider uppercase">
 								B2B {document.type}

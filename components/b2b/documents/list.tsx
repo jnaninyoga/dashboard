@@ -5,12 +5,6 @@ import Link from "next/link";
 import { DocumentCard } from "@/components/b2b/documents/card";
 import { Button } from "@/components/ui/button";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
 	Table,
 	TableBody,
 	TableCell,
@@ -21,14 +15,7 @@ import {
 import { type DocumentWithContact } from "@/lib/types";
 
 import { format } from "date-fns";
-import {
-	ArchiveBook,
-	CloseCircle,
-	DocumentDownload,
-	DocumentText,
-	More,
-	ReceiptText,
-} from "iconsax-reactjs";
+import { ArrowRight2, DocumentText, ReceiptText } from "iconsax-reactjs";
 
 import DocumentNotFound from "./not-found";
 import { DocumentStatusBadge } from "./status-badge";
@@ -114,44 +101,17 @@ export function DocumentList({ documents }: DocumentListProps) {
 									MAD
 								</TableCell>
 								<TableCell className="px-4 py-3 pr-6 text-right">
-									<DropdownMenu>
-										<DropdownMenuTrigger asChild>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="hover:bg-secondary/20 h-9 w-9 rounded-xl transition-colors"
-											>
-												<More
-													size={18}
-													className="text-muted-foreground rotate-90"
-												/>
-											</Button>
-										</DropdownMenuTrigger>
-										<DropdownMenuContent
-											align="end"
-											className="border-secondary/10 w-48 rounded-2xl border shadow-2xl"
-										>
-											<DropdownMenuItem className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
-												<ReceiptText className="size-5" variant="Bulk" /> View
-												Details
-											</DropdownMenuItem>
-											<DropdownMenuItem className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
-												<DocumentDownload className="size-5" variant="Bulk" />{" "}
-												Download PDF
-											</DropdownMenuItem>
-											<DropdownMenuItem className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
-												<ArchiveBook className="size-5" variant="Bulk" />{" "}
-												Archive
-											</DropdownMenuItem>
-											<DropdownMenuItem
-												variant="destructive"
-												className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase"
-											>
-												<CloseCircle className="size-5" variant="Bulk" /> Cancel
-												Document
-											</DropdownMenuItem>
-										</DropdownMenuContent>
-									</DropdownMenu>
+									{/* PDF, payment and archive live on the detail page. */}
+									<Button
+										asChild
+										variant="ghost"
+										className="hover:bg-secondary/20 h-11 gap-1.5 rounded-xl px-3 text-xs font-bold"
+									>
+										<Link href={`/b2b/documents/${doc.id}`}>
+											Open
+											<ArrowRight2 size={16} />
+										</Link>
+									</Button>
 								</TableCell>
 							</TableRow>
 						))}
