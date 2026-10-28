@@ -7,17 +7,19 @@ import { B2BDocumentStatus, B2BDocumentType, type PartnerWithRelations } from "@
 import { contactSchema, partnerSchema } from "@/lib/validators";
 import { db } from "@/services/database";
 import { b2bContacts, b2bDocuments, b2bPartners } from "@/services/database/schema";
-import { syncPartnerContactToGoogle } from "@/services/google";
+import { syncPartnerContactToGoogle, updatePartnerContactInGoogle } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, count, eq, exists, ilike, or } from "drizzle-orm";
+import { and, count, eq, exists, ilike, ne, or } from "drizzle-orm";
 
 export type ActionState = {
 	error?: string;
 	/** Code the failure was logged under; shown in the error toast. */
 	ref?: string;
 	success?: boolean;
+	/** Saved, but a side effect (e.g. Google sync) didn't go through. */
+	warning?: string;
 	issues?: Record<string, string[]>;
 };
 
@@ -113,22 +115,118 @@ export async function createContactAction(
 			console.error("Google Sync failed for B2B contact:", e);
 		}
 
-		// 3. Insert into database
-		await db.insert(b2bContacts).values({
-			partnerId,
-			fullName,
-			role,
-			email,
-			phone,
-			isPrimary,
-			googleContactResourceName: googleResourceName,
-			googleEtag: googleEtag,
+		// 3. Insert into database. One primary contact per partner: a new
+		// primary demotes the previous one.
+		await db.transaction(async (tx) => {
+			if (isPrimary) {
+				await tx
+					.update(b2bContacts)
+					.set({ isPrimary: false, updatedAt: new Date() })
+					.where(eq(b2bContacts.partnerId, partnerId));
+			}
+			await tx.insert(b2bContacts).values({
+				partnerId,
+				fullName,
+				role,
+				email,
+				phone,
+				isPrimary,
+				googleContactResourceName: googleResourceName,
+				googleEtag: googleEtag,
+			});
 		});
 
 		revalidatePath(`/b2b/partners/${partnerId}`);
 		return { success: true };
 	} catch (error) {
 		return { error: "Failed to create contact", ref: logServerError("Error creating B2B contact", error) };
+	}
+}
+
+export async function updateContactAction(
+	id: string,
+	prevState: ActionState | null,
+	formData: FormData,
+): Promise<ActionState> {
+	const validated = contactSchema.safeParse({
+		partnerId: formData.get("partnerId"),
+		fullName: formData.get("fullName"),
+		role: formData.get("role") || null,
+		email: formData.get("email") || null,
+		phone: formData.get("phone") || null,
+		isPrimary: formData.get("isPrimary") === "on",
+	});
+	if (!validated.success) {
+		return {
+			error: "Validation failed",
+			issues: validated.error.flatten().fieldErrors,
+		};
+	}
+
+	const supabase = await createClient();
+	const { data: { user } } = await supabase.auth.getUser();
+	if (!user) {
+		return { error: "Not authenticated" };
+	}
+
+	try {
+		const { fullName, role, email, phone, isPrimary } = validated.data;
+		const existing = await db.query.b2bContacts.findFirst({
+			where: eq(b2bContacts.id, id),
+			with: { partner: true },
+		});
+		if (!existing) {
+			return { error: "Contact not found" };
+		}
+
+		await db.transaction(async (tx) => {
+			// One primary contact per partner: choosing this one demotes the rest.
+			if (isPrimary) {
+				await tx
+					.update(b2bContacts)
+					.set({ isPrimary: false, updatedAt: new Date() })
+					.where(
+						and(
+							eq(b2bContacts.partnerId, existing.partnerId),
+							ne(b2bContacts.id, id),
+						),
+					);
+			}
+			await tx
+				.update(b2bContacts)
+				.set({ fullName, role, email, phone, isPrimary, updatedAt: new Date() })
+				.where(eq(b2bContacts.id, id));
+		});
+
+		revalidatePath(`/b2b/partners/${existing.partnerId}`);
+
+		// Keep the Google contact (what WhatsApp shows) in step. The edit is
+		// saved either way; a failed sync is reported, not fatal.
+		if (existing.googleContactResourceName) {
+			try {
+				const accessToken = await getValidAccessToken(user.id);
+				const etag = await updatePartnerContactInGoogle(
+					accessToken,
+					existing.googleContactResourceName,
+					{ fullName, role, email, phone },
+					existing.partner.companyName,
+				);
+				await db
+					.update(b2bContacts)
+					.set({ googleEtag: etag })
+					.where(eq(b2bContacts.id, id));
+			} catch (error) {
+				logServerError("Google sync failed for B2B contact update", error);
+				return {
+					success: true,
+					warning: "Saved, but Google Contacts couldn't be updated.",
+				};
+			}
+		}
+
+		return { success: true };
+	} catch (error) {
+		return { error: "Failed to update contact", ref: logServerError("Error updating B2B contact", error) };
 	}
 }
 
@@ -176,8 +274,10 @@ export async function deletePartnerAction(id: string): Promise<ActionState> {
 			.where(eq(b2bDocuments.partnerId, id));
 
 		if (docsCount[0].value > 0) {
-			return { 
-				error: "Cannot delete partner. They have associated documents (Quotes/Invoices). Delete those first." 
+			// Issued documents can only be archived, never deleted (audit trail),
+			// so there is nothing for the operator to clear first.
+			return {
+				error: "This partner has quotes or invoices, so it can't be deleted.",
 			};
 		}
 

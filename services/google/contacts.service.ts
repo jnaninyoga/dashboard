@@ -339,6 +339,47 @@ export async function syncPartnerContactToGoogle(
 	return { resourceName, etag };
 }
 
+/**
+ * Pushes an edited partner contact to its Google contact. Fields emptied in
+ * the app are cleared in Google too (People API clears listed fields that
+ * are absent). Returns the new etag.
+ */
+export async function updatePartnerContactInGoogle(
+	accessToken: string,
+	resourceName: string,
+	data: {
+		fullName: string;
+		phone?: string | null;
+		email?: string | null;
+		role?: string | null;
+	},
+	companyName: string,
+): Promise<string | null> {
+	const google = getGoogleClient(accessToken);
+
+	// The current etag is required for the update (optimistic locking).
+	const current = await google.people.people.get({
+		resourceName,
+		personFields: "metadata",
+	});
+
+	const updateRes = await google.people.people.updateContact({
+		resourceName,
+		updatePersonFields: "names,phoneNumbers,emailAddresses,organizations",
+		requestBody: {
+			etag: current.data.etag,
+			names: [{ givenName: data.fullName, displayName: data.fullName }],
+			phoneNumbers: data.phone ? [{ value: data.phone }] : [],
+			emailAddresses: data.email ? [{ value: data.email }] : [],
+			organizations: [
+				{ name: companyName, title: data.role || undefined, type: "work" },
+			],
+		},
+	});
+
+	return updateRes.data.etag ?? null;
+}
+
 export async function deleteContact(
 	accessToken: string,
 	resourceName: string,

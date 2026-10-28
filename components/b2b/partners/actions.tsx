@@ -24,11 +24,15 @@ import { PartnerDialog } from "./dialog";
 interface PartnerActionsProps {
 	partner: PartnerWithRelations;
 	triggerClassName?: string;
+	/** Where to go after a delete. On the partner's own page, refreshing
+	 *  would land on a page that no longer exists. */
+	afterDelete?: string;
 }
 
 export function PartnerActions({
 	partner,
 	triggerClassName,
+	afterDelete,
 }: PartnerActionsProps) {
 	const router = useRouter();
 	const [editOpen, setEditOpen] = useState(false);
@@ -49,7 +53,8 @@ export function PartnerActions({
 			const res = await deletePartnerAction(partner.id);
 			if (res.success) {
 				notify.success("Partner deleted");
-				router.refresh();
+				if (afterDelete) router.push(afterDelete);
+				else router.refresh();
 			} else {
 				notifyActionError(res, "Failed to delete partner");
 			}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { CopyableTaxId } from "@/components/b2b/copyable-tax-id";
+import { PartnerActions } from "@/components/b2b/partners/actions";
 import { ProfileTabs } from "@/components/b2b/partners/profile-tabs";
 import { Separator } from "@/components/ui/separator";
 import { getPartnerByIdAction } from "@/lib/actions/b2b/partners";
@@ -45,8 +46,11 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 				<div className="text-primary absolute -top-10 right-0 p-8 opacity-10  ">
 					<Buildings size={230} variant="Bulk" />
 				</div>
+				<div className="absolute top-4 right-4 z-20">
+					<PartnerActions partner={partner} afterDelete="/b2b/partners" />
+				</div>
 				<div className="relative z-10 flex flex-col gap-4">
-					<div className="flex items-center gap-4">
+					<div className="flex items-center gap-4 pr-12">
 						<div className="border-primary/20 bg-primary/10 text-primary flex size-16 min-h-16 min-w-16 items-center justify-center rounded-2xl border shadow-inner">
 							<Buildings size={32} variant="Bulk" />
 						</div>

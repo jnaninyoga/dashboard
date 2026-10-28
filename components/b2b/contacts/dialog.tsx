@@ -9,44 +9,76 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { createContactAction } from "@/lib/actions/b2b/partners";
+import { createContactAction, updateContactAction } from "@/lib/actions/b2b/partners";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
+import { type Contact } from "@/lib/types";
 
-import { Refresh, UserAdd } from "iconsax-reactjs";
+import { Edit2, Refresh, UserAdd } from "iconsax-reactjs";
 
-export function ContactDialog({ partnerId, children }: { partnerId: string, children: React.ReactNode }) {
+interface ContactDialogProps {
+	partnerId: string;
+	children?: React.ReactNode;
+	// Edit mode: pass an existing contact.
+	contact?: Contact;
+	// Controlled mode (used when the trigger lives inside a dropdown menu).
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+}
+
+export function ContactDialog({
+	partnerId,
+	children,
+	contact,
+	open: controlledOpen,
+	onOpenChange: controlledOnOpenChange,
+}: ContactDialogProps) {
 	const formId = useId();
-	const [open, setOpen] = useState(false);
-	const [phone, setPhone] = useState<string>("");
-	const [state, action, isPending] = useActionState(createContactAction, null);
+	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+	const isControlled = controlledOpen !== undefined;
+	const open = isControlled ? controlledOpen : uncontrolledOpen;
+	const setOpen = isControlled
+		? controlledOnOpenChange ?? (() => {})
+		: setUncontrolledOpen;
+
+	const isEdit = !!contact;
+	const boundAction = isEdit
+		? updateContactAction.bind(null, contact.id)
+		: createContactAction;
+	const [state, action, isPending] = useActionState(boundAction, null);
+	const [phone, setPhone] = useState<string>(contact?.phone ?? "");
 	// Only show an error for a submit made since the sheet was opened.
 	const [submitted, setSubmitted] = useState(false);
 
 	useEffect(() => {
 		if (state?.success) {
-			notify.success("Contact added");
-			startTransition(() => {
-				setOpen(false);
-				setPhone("");
-			});
+			if (state.warning) notify.warning(isEdit ? "Contact updated" : "Contact added", state.warning);
+			else notify.success(isEdit ? "Contact updated" : "Contact added");
+			startTransition(() => setOpen(false));
 		} else if (state?.ref) {
-			notifyActionError(state, "Couldn't add this contact");
+			notifyActionError(state, isEdit ? "Couldn't update this contact" : "Couldn't add this contact");
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [state]);
 
 	return (
 		<FormSheet
 			open={open}
 			onOpenChange={(next) => {
-				if (next) setSubmitted(false);
-				else setPhone("");
+				if (next) {
+					setSubmitted(false);
+					setPhone(contact?.phone ?? "");
+				}
 				setOpen(next);
 			}}
 			trigger={children}
 			busy={isPending}
-			icon={<UserAdd size={28} variant="Bulk" />}
-			title="New Contact"
-			description="Automatically synced with Google Contacts."
+			icon={isEdit ? <Edit2 size={26} variant="Bulk" /> : <UserAdd size={28} variant="Bulk" />}
+			title={isEdit ? "Edit Contact" : "New Contact"}
+			description={
+				isEdit
+					? "Changes are pushed to Google Contacts too."
+					: "Automatically synced with Google Contacts."
+			}
 			footer={
 				<Button
 					type="submit"
@@ -55,7 +87,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 					className="h-11 rounded-xl font-bold shadow-sm transition-all active:scale-95"
 				>
 					{isPending ? <Refresh size={16} className="mr-2 animate-spin" /> : null}
-					Create Contact
+					{isEdit ? "Save Changes" : "Create Contact"}
 				</Button>
 			}
 		>
@@ -72,6 +104,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 						id={`${formId}-fullName`}
 						name="fullName"
 						placeholder="ex: Jean Dupont"
+						defaultValue={contact?.fullName ?? ""}
 						required
 						className="bg-secondary/5 focus-visible:ring-primary/20 border"
 					/>
@@ -84,6 +117,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 						id={`${formId}-role`}
 						name="role"
 						placeholder="ex: Manager, Front Desk"
+						defaultValue={contact?.role ?? ""}
 						className="bg-secondary/5 focus-visible:ring-primary/20 border"
 					/>
 				</div>
@@ -96,6 +130,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 						name="email"
 						type="email"
 						placeholder="email@exemple.com"
+						defaultValue={contact?.email ?? ""}
 						className="bg-secondary/5 focus-visible:ring-primary/20 border"
 					/>
 				</div>
@@ -107,7 +142,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 						defaultCountry="MA"
 						countries={getCountries().filter((country) => country !== "IL" && country !== "EH")}
 						value={phone}
-						onChange={setPhone}
+						onChange={(value) => setPhone(value ?? "")}
 						disabled={isPending}
 						className="h-10"
 					/>
@@ -116,6 +151,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 					<Checkbox
 						id={`${formId}-isPrimary`}
 						name="isPrimary"
+						defaultChecked={contact?.isPrimary ?? false}
 						className="border-primary/80 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
 					/>
 					<div className="grid gap-1 leading-none">
@@ -123,7 +159,7 @@ export function ContactDialog({ partnerId, children }: { partnerId: string, chil
 							Primary Contact
 						</Label>
 						<p className="text-secondary-foreground text-[11px] leading-tight font-medium">
-							This contact will be the default recipient for documents.
+							The default recipient for documents. Only one per partner.
 						</p>
 					</div>
 				</div>

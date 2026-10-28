@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 
+import { ContactDialog } from "@/components/b2b/contacts/dialog";
 import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	AlertDialog,
@@ -27,6 +28,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { deleteContactAction } from "@/lib/actions/b2b/partners";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type Contact } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
 
@@ -61,14 +63,16 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
 function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 	const [isPending, startTransition] = useTransition();
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [editOpen, setEditOpen] = useState(false);
 
 	const handleDelete = async () => {
 		startTransition(async () => {
 			const res = await deleteContactAction(contact.id);
 			if (res.error) {
-				console.error(res.error);
+				notifyActionError(res, "Couldn't delete this contact");
 			} else {
 				setShowDeleteDialog(false);
+				notify.success("Contact deleted");
 			}
 		});
 	};
@@ -167,7 +171,10 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 								align="end"
 								className="w-44 rounded-xl border"
 							>
-								<DropdownMenuItem className="cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase">
+								<DropdownMenuItem
+									onClick={() => setEditOpen(true)}
+									className="cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase"
+								>
 									<Edit className="mr-2 size-4" variant="Outline" />
 									Edit
 								</DropdownMenuItem>
@@ -183,6 +190,13 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 					</div>
 				</div>
 			</div>
+
+			<ContactDialog
+				partnerId={contact.partnerId}
+				contact={contact}
+				open={editOpen}
+				onOpenChange={setEditOpen}
+			/>
 
 			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent className="rounded-3xl border-0 shadow-2xl">
