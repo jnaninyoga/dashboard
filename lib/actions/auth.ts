@@ -25,7 +25,7 @@ export async function loginWithGoogle() {
 
 	if (error) {
 		console.error(error);
-		redirect("/error");
+		redirect("/login?error=auth");
 	}
 
 	if (data.url) {
