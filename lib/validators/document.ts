@@ -1,3 +1,5 @@
+import { parseAmountInput } from "@/lib/utils/currency";
+
 import { z } from "zod";
 
 import { numericStr } from "./shared";
@@ -26,6 +28,7 @@ export const documentSchema = z.object({
 		"draft",
 		"sent",
 		"accepted",
+		"unpaid",
 		"partially_paid",
 		"paid",
 		"cancelled",
@@ -52,7 +55,7 @@ export const createDocumentWithLinesSchema = z.object({
 
 // --- RECORD PAYMENT SCHEMA ---
 export const recordPaymentSchema = z.object({
-	amountPaid: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+	amountPaid: z.string().refine((val) => parseAmountInput(val) > 0, {
 		message: "Enter a positive amount",
 	}),
 });

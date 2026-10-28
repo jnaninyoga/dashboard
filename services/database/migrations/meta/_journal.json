@@ -50,6 +50,13 @@
       "when": 1777288106843,
       "tag": "0006_audit_lock_archive",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793186466328,
+      "tag": "0007_add_unpaid_document_status",
+      "breakpoints": true
     }
   ]
 }
