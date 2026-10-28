@@ -1,15 +1,12 @@
 import { CockpitClient } from "@/components/dashboard/cockpit/client";
+import { Greeting } from "@/components/dashboard/greeting";
 import { CalendarEvent } from "@/lib/types";
 import { getUserProfile } from "@/lib/utils/user";
 import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { format } from "date-fns";
-
 export default async function Home() {
-	const todayStr = format(new Date(), "EEEE, MMMM do, yyyy");
-
 	const supabase = await createClient();
 	const { data: { user } } = await supabase.auth.getUser();
 	const firstName = user ? getUserProfile(user).firstName : "";
@@ -29,14 +26,9 @@ export default async function Home() {
 	return (
 		<main className="flex flex-1 flex-col gap-6 p-6">
 			<header className="flex flex-col items-start justify-between space-y-2 sm:flex-row sm:items-center sm:space-y-0">
-				<div className="block space-y-1">
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
-						{firstName ? `Bonjour, ${firstName}` : "Bonjour"}
-					</h1>
-					<p className="text-md text-muted-foreground">{todayStr}</p>
-				</div>
+				<Greeting firstName={firstName} now={new Date().toISOString()} />
 			</header>
-			
+
 			<CockpitClient initialEvents={events} initialError={errorMsg} />
 		</main>
 	);
