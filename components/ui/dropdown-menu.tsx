@@ -4,7 +4,10 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils/ui";
 
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
+// Plain Radix (CSS-animated), not @animate-ui: its DropdownMenu renders a
+// different tree on the server than on the client (2.4.1), so every trigger's
+// id mismatches on hydration. Revisit when animate-ui fixes it.
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { ArrowRight2, Record, TickCircle } from "iconsax-reactjs";
 
 function DropdownMenu({

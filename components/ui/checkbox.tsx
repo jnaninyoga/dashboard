@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils/ui";
 
 import { TickSquare as CheckIcon } from "iconsax-reactjs";
-import { Checkbox as CheckboxPrimitive } from "radix-ui";
+import { Checkbox as CheckboxPrimitive } from "@animate-ui/react/primitives/radix-ui";
 
 function Checkbox({
 	className,
