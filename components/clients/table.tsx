@@ -36,6 +36,7 @@ import {
 } from "iconsax-reactjs";
 
 import { ClientActions } from "./actions";
+import { ClientCard } from "./client-card";
 
 export type ClientWithRelations = Client & {
     category?: ClientCategory | null;
@@ -286,55 +287,8 @@ export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 						description="Adjust your filters, or add a new client."
 					/>
 				}
-				renderCard={(client) => {
-					const alerts = alertsOf(client);
-					return (
-						<div className="flex flex-col gap-3">
-							<div className="flex items-start justify-between gap-2">
-								<Link href={`/clients/${client.id}`} className="flex min-w-0 items-center gap-3">
-									<div className="relative shrink-0">
-										<ClientAvatar client={client} />
-										{client.checkedInToday ? (
-											<span className="absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 border-white bg-green-500" />
-										) : null}
-									</div>
-									<div className="min-w-0">
-										<p className="text-foreground truncate text-sm font-bold">{client.fullName}</p>
-										<p className="text-muted-foreground truncate text-xs">{client.category?.name || "No category"}</p>
-									</div>
-								</Link>
-								<ClientActions client={client} />
-							</div>
-							{/* On a phone there is no hover: alerts are written out, not hidden in a tooltip. */}
-							{alerts.length ? (
-								<div className="bg-destructive/10 text-destructive flex items-start gap-2 rounded-xl px-3 py-2 text-xs font-semibold">
-									<Danger size={16} variant="Bulk" className="mt-px shrink-0" />
-									<span>{alerts.map((a) => a.condition).join(" · ")}</span>
-								</div>
-							) : null}
-							<div className="border-secondary/15 flex items-center justify-between gap-2 border-t pt-3">
-								<MembershipBadge client={client} />
-								<div className="flex items-center gap-2">
-									<Link
-										href={whatsappHref(client.phone)}
-										target="_blank"
-										aria-label={`WhatsApp ${client.fullName}`}
-										className="flex size-10 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366]"
-									>
-										<Whatsapp size={20} variant="Bold" />
-									</Link>
-									<Link
-										href={`tel:${client.phone}`}
-										aria-label={`Call ${client.fullName}`}
-										className="bg-primary/10 text-primary flex size-10 items-center justify-center rounded-xl"
-									>
-										<Phone size={20} variant="Bold" />
-									</Link>
-								</div>
-							</div>
-						</div>
-					);
-				}}
+				renderCard={(client) => <ClientCard client={client} />}
+				cardIsSelfContained
 			/>
 		</TooltipProvider>
 	);

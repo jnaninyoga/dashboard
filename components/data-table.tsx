@@ -41,6 +41,8 @@ type DataTableProps<TData, TValue> = {
 	getRowHref?: (row: TData) => string;
 	/** How one row looks on phones. Without it, phones get the table. */
 	renderCard?: (row: TData) => React.ReactNode;
+	/** The card draws its own frame and handles its own taps (links, buttons). */
+	cardIsSelfContained?: boolean;
 	/** Filters/search shown above the list. */
 	toolbar?: React.ReactNode;
 	/** Lets the operator hide optional columns on desktop. */
@@ -67,6 +69,7 @@ export function DataTable<TData, TValue>({
 	empty,
 	getRowHref,
 	renderCard,
+	cardIsSelfContained = false,
 	toolbar,
 	columnToggle = false,
 	initialSorting = [],
@@ -148,10 +151,12 @@ export function DataTable<TData, TValue>({
 							{rows.map((row) => (
 								<li
 									key={row.id}
-									onClick={open(row.original)}
+									onClick={cardIsSelfContained ? undefined : open(row.original)}
 									className={cn(
-										"bg-card border-secondary/20 min-w-0 rounded-3xl border p-4 shadow-sm transition-all",
-										getRowHref && "active:bg-primary/5 cursor-pointer",
+										"min-w-0",
+										!cardIsSelfContained &&
+											"bg-card border-secondary/20 rounded-3xl border p-4 shadow-sm transition-all",
+										!cardIsSelfContained && getRowHref && "active:bg-primary/5 cursor-pointer",
 									)}
 								>
 									{renderCard(row.original)}
