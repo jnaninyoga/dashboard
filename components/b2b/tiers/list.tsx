@@ -111,10 +111,10 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 											</DropdownMenuItem>
 											<DropdownMenuItem
 												onClick={() => handleDelete(tier.id)}
-												className="focus:bg-secondary text-red-600 focus:text-red-600 focus:[&_svg]:text-red-600"
+												className="focus:bg-secondary text-destructive focus:text-destructive focus:[&_svg]:text-destructive"
 											>
 												<Trash
-													className="mr-2 h-4 w-4 text-red-600"
+													className="text-destructive mr-2 h-4 w-4"
 													variant="Outline"
 												/>
 												Delete

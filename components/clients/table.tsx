@@ -58,7 +58,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 						{client.checkedInToday ? (
 							<span
 								aria-hidden
-								className="border-card absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2 bg-green-500"
+								className="border-card bg-success absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2"
 							/>
 						) : null}
 					</div>
@@ -86,8 +86,8 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 			const c = row.original;
 			if (c.checkedInToday) {
 				return (
-					<span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-green-100 px-2.5 text-sm font-medium text-green-800 dark:bg-green-500/15 dark:text-green-300">
-						<span aria-hidden className="size-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+					<span className="bg-success/10 text-success inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium">
+						<span aria-hidden className="bg-success size-1.5 rounded-full" />
 						{c.activeSessionName ? `Here · ${c.activeSessionName}` : "Here today"}
 					</span>
 				);
@@ -110,7 +110,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 					<span
 						className={cn(
 							"font-semibold tabular-nums",
-							credits.tone === "low" && "text-amber-700 dark:text-amber-400",
+							credits.tone === "low" && "text-warning",
 						)}
 					>
 						{credits.count}

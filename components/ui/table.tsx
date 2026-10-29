@@ -33,7 +33,9 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
 		<thead
 			data-slot="table-header"
 			className={cn(
-				"bg-muted/40 [&_tr]:border-b",
+				// A blush band, like the footer and the sidebar's current page: the
+				// header reads apart from the stone page around the table.
+				"bg-secondary/70 [&_tr]:border-secondary-2/40 [&_tr]:border-b",
 				className,
 			)}
 			{...props}
@@ -82,7 +84,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 		<th
 			data-slot="table-head"
 			className={cn(
-				"text-muted-foreground h-11 px-2 text-left align-middle text-sm font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+				"text-secondary-foreground/85 h-11 px-2 text-left align-middle text-sm font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
 				className,
 			)}
 			{...props}

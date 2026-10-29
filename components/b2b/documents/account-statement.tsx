@@ -91,7 +91,7 @@ export function ChainInvoiceCards({ rows }: { rows: ChainRow[] }) {
 									"flex size-9 shrink-0 items-center justify-center rounded-xl",
 									{
 										"bg-primary/15": isCurrent,
-										"bg-green-500/10": isFullyPaid,
+										"bg-success/10": isFullyPaid,
 										"bg-secondary-2/20 group-hover:bg-primary/10 transition-colors":
 											!isCurrent && !isFullyPaid,
 									},
@@ -102,7 +102,7 @@ export function ChainInvoiceCards({ rows }: { rows: ChainRow[] }) {
 									variant="Bulk"
 									className={cn("transition-colors", {
 										"text-primary": isCurrent,
-										"text-green-600": isFullyPaid,
+										"text-success": isFullyPaid,
 										"text-secondary-3 group-hover:text-primary transition-colors":
 											!isCurrent && !isFullyPaid,
 									})}
@@ -132,7 +132,7 @@ export function ChainInvoiceCards({ rows }: { rows: ChainRow[] }) {
 								</span>
 							) : null}
 							{isFullyPaid ? (
-								<span className="flex items-center gap-1 rounded-full bg-green-500/15 px-2 py-0.5 text-[9px] font-bold tracking-wider text-green-700 uppercase">
+								<span className="bg-success/15 text-success flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-wider uppercase">
 									<TickCircle size={10} variant="Bold" />
 									Paid
 								</span>
@@ -165,7 +165,7 @@ export function ChainInvoiceCards({ rows }: { rows: ChainRow[] }) {
 								</span>
 								<span
 									className={cn("font-heading text-xs font-bold tabular-nums", {
-										"text-green-600": paid > 0,
+										"text-success": paid > 0,
 										"text-muted-foreground/60": paid === 0,
 									})}
 								>
@@ -250,7 +250,7 @@ export function ChainSummaryFooter({
 					<span className="text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase">
 						Paid
 					</span>
-					<span className="font-heading text-base font-bold text-green-600 tabular-nums">
+					<span className="font-heading text-success text-base font-bold tabular-nums">
 						{formatMoney(chainPaid)}
 					</span>
 				</div>
@@ -263,7 +263,7 @@ export function ChainSummaryFooter({
 					className={cn(
 						"font-heading text-2xl font-bold tracking-tight tabular-nums",
 						{
-							"text-green-600": chainCleared,
+							"text-success": chainCleared,
 							"text-primary": !chainCleared,
 						},
 					)}

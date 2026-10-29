@@ -168,9 +168,9 @@ export function StepPersonalDetails({
 									<SelectContent>
 										<SelectItem
 											value={Gender.MALE}
-											className="focus:text-white focus:[&_svg]:text-blue-500"
+											className="focus:[&_svg]:text-info focus:text-white"
 										>
-											<User className="size-3.5 text-blue-500" variant="Bulk" />
+											<User className="text-info size-3.5" variant="Bulk" />
 											<span className="text-foreground capitalize">Male</span>
 										</SelectItem>
 										<SelectItem

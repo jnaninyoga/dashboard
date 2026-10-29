@@ -153,7 +153,7 @@ export function NewSessionDialog({
 							)}
 						/>
 						{errors.title ? (
-							<p className="text-sm text-red-500">{errors.title.message}</p>
+							<p className="text-destructive text-sm">{errors.title.message}</p>
 						) : null}
 					</div>
 
@@ -203,7 +203,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.outdoorPrice ? (
-								<p className="text-sm text-red-500">
+								<p className="text-destructive text-sm">
 									{errors.outdoorPrice.message}
 								</p>
 							) : null}
@@ -237,7 +237,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.b2bTierId ? (
-								<p className="text-sm text-red-500">
+								<p className="text-destructive text-sm">
 									{errors.b2bTierId.message}
 								</p>
 							) : null}
@@ -254,7 +254,7 @@ export function NewSessionDialog({
 							)}
 						/>
 						{errors.dateStr ? (
-							<p className="text-sm text-red-500">{errors.dateStr.message}</p>
+							<p className="text-destructive text-sm">{errors.dateStr.message}</p>
 						) : null}
 					</div>
 
@@ -273,7 +273,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.startTimeStr ? (
-								<p className="text-sm text-red-500">
+								<p className="text-destructive text-sm">
 									{errors.startTimeStr.message}
 								</p>
 							) : null}
@@ -286,7 +286,7 @@ export function NewSessionDialog({
 								render={({ field }) => <Input type="time" {...field} />}
 							/>
 							{errors.endTimeStr ? (
-								<p className="text-sm text-red-500">
+								<p className="text-destructive text-sm">
 									{errors.endTimeStr.message}
 								</p>
 							) : null}

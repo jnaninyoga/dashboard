@@ -181,7 +181,7 @@ export function MembershipSheet({ open, onOpenChange, initialData, trigger }: Me
 									/>
 								</FormControl>
                             {initialData ? (
-                                <FormDescription className="text-xs font-medium text-amber-600">
+                                <FormDescription className="text-warning text-xs font-medium">
                                     Note: Changing credits will only affect future sales. Active client wallets are preserved.
                                 </FormDescription>
                             ) : null}

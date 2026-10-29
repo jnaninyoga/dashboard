@@ -82,7 +82,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 					{/* Address Row */}
 					{client.address ? (
 						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-start gap-4 rounded-2xl border border-transparent p-3 transition-all">
-							<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-colors group-hover:bg-blue-100">
+							<div className="bg-info/10 text-info group-hover:bg-info/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors">
 								<MapPin className="h-5 w-5" variant="Bold" />
 							</div>
 							<div className="flex flex-col">
@@ -144,7 +144,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 						<div className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all">
 							<div className="flex items-center gap-2">
 								<Profile2User
-									className="text-secondary-2 h-4 w-4"
+									className="text-secondary-3 h-4 w-4"
 									variant="Bold"
 								/>
 								<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-60">

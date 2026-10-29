@@ -66,7 +66,7 @@ export function ChainStrip({
 						className={cn(
 							"flex size-9 shrink-0 items-center justify-center rounded-xl",
 							chainCleared
-								? "bg-green-500/15 text-green-600"
+								? "bg-success/15 text-success"
 								: "bg-primary/15 text-primary",
 						)}
 					>
@@ -94,7 +94,7 @@ export function ChainStrip({
 										? "ring-primary/40 size-2.5 ring-2 ring-offset-1 ring-offset-transparent"
 										: "size-2",
 									isFullyPaid
-										? "bg-green-500"
+										? "bg-success"
 										: isCurrent
 											? "bg-primary"
 											: "bg-muted-foreground/25",
@@ -107,7 +107,7 @@ export function ChainStrip({
 
 				<div className="flex shrink-0 items-center gap-2">
 					{chainCleared ? (
-						<span className="font-heading text-sm font-bold tracking-wider text-green-600 uppercase">
+						<span className="font-heading text-success text-sm font-bold tracking-wider uppercase">
 							Cleared
 						</span>
 					) : (
@@ -142,7 +142,7 @@ export function ChainStrip({
 									className={cn(
 										"flex size-10 items-center justify-center rounded-2xl",
 										chainCleared
-											? "bg-green-500/15 text-green-600"
+											? "bg-success/15 text-success"
 											: "bg-primary/15 text-primary",
 									)}
 								>
@@ -159,11 +159,11 @@ export function ChainStrip({
 								</div>
 							</div>
 							{chainCleared ? (
-								<Badge className="border-green-500/20 bg-green-500/10 text-[9px] font-bold text-green-600">
+								<Badge className="border-success/20 bg-success/10 text-success text-[9px] font-bold">
 									Cleared
 								</Badge>
 							) : (
-								<Badge className="border-amber-500/20 bg-amber-500/10 text-[9px] font-bold text-amber-600">
+								<Badge className="border-warning/20 bg-warning/10 text-warning text-[9px] font-bold">
 									Outstanding
 								</Badge>
 							)}

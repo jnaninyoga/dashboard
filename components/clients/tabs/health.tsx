@@ -116,7 +116,7 @@ export function HealthTab({ client }: HealthTabProps) {
 			{activeAlerts.length > 0 ? (
 				<Card className="border-secondary/30 border-none shadow-sm">
 					<CardHeader className="pb-4">
-						<CardTitle className="text-secondary-2 flex items-center gap-2 text-lg">
+						<CardTitle className="text-secondary-foreground flex items-center gap-2 text-lg">
 							<Health className="h-5 w-5" variant="Bulk" />
 							Active Health Alerts
 						</CardTitle>
@@ -134,20 +134,20 @@ export function HealthTab({ client }: HealthTabProps) {
 										className={cn(
 											"group flex items-center justify-between gap-4 rounded-2xl border p-4 transition-all active:scale-[0.98]",
 											isCritical &&
-												"hover:zen-glow-blush border-red-200 bg-red-100/40 hover:bg-red-100",
+												"hover:zen-glow-blush border-destructive/25 bg-destructive/5 hover:bg-destructive/10",
 											isWarning &&
-												"hover:zen-glow-teal border-yellow-200 bg-yellow-100/40 hover:bg-yellow-100",
+												"hover:zen-glow-teal border-warning/25 bg-warning/5 hover:bg-warning/10",
 											isInfo &&
-												"hover:zen-glow-teal border-blue-200 bg-blue-100/40 hover:bg-blue-100",
+												"hover:zen-glow-teal border-info/25 bg-info/5 hover:bg-info/10",
 										)}
 									>
 										<div className="flex items-center gap-4">
 											<div
 												className={cn(
 													"flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-													isCritical && "bg-red-300 text-red-600",
-													isWarning && "bg-yellow-300 text-yellow-600",
-													isInfo && "bg-blue-300 text-blue-600",
+													isCritical && "bg-destructive/70 text-destructive",
+													isWarning && "bg-warning/70 text-warning",
+													isInfo && "bg-info/70 text-info",
 												)}
 											>
 												{isCritical || isWarning ? (
@@ -161,9 +161,9 @@ export function HealthTab({ client }: HealthTabProps) {
 													<Badge
 														className={cn(
 															"text-[10px] font-bold tracking-wider uppercase",
-															isCritical && "bg-red-600 text-white",
-															isWarning && "bg-yellow-600 text-white",
-															isInfo && "bg-blue-600 text-white",
+															isCritical && "bg-destructive text-destructive-foreground",
+															isWarning && "bg-warning text-warning-foreground",
+															isInfo && "bg-info text-info-foreground",
 														)}
 													>
 														{log.severity}
@@ -175,9 +175,9 @@ export function HealthTab({ client }: HealthTabProps) {
 												<span
 													className={cn(
 														"text-lg leading-tight font-bold",
-														isCritical && "text-red-900",
-														isWarning && "text-yellow-900",
-														isInfo && "text-blue-900",
+														isCritical && "text-destructive",
+														isWarning && "text-warning",
+														isInfo && "text-info",
 													)}
 												>
 													{log.condition}
@@ -185,7 +185,7 @@ export function HealthTab({ client }: HealthTabProps) {
 											</div>
 										</div>
 										<div className="flex items-center gap-3">
-											<span className="hidden text-[10px] font-bold tracking-wider text-green-600 uppercase opacity-0 transition-opacity group-hover:opacity-100 sm:inline">
+											<span className="text-success hidden text-[10px] font-bold tracking-wider uppercase opacity-0 transition-opacity group-hover:opacity-100 sm:inline">
 												Resolve
 											</span>
 											<Checkbox
@@ -193,7 +193,7 @@ export function HealthTab({ client }: HealthTabProps) {
 												onCheckedChange={() =>
 													handleToggleAlert(log.id, log.isAlert)
 												}
-												className="bg-card size-8 rounded-xl border-2 border-green-600/20 transition-all hover:border-green-600 active:scale-90 data-[state=checked]:border-green-600 data-[state=checked]:bg-green-600"
+												className="bg-card border-success/20 hover:border-success data-[state=checked]:border-success data-[state=checked]:bg-success size-8 rounded-xl border-2 transition-all active:scale-90"
 												title="Mark as Resolved"
 											/>
 										</div>
@@ -393,17 +393,17 @@ export function HealthTab({ client }: HealthTabProps) {
 									<div className="flex items-start gap-4">
 										<div className="mt-1">
 											{log.severity === "info" ? (
-												<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-500">
+												<div className="bg-info/10 text-info flex h-10 w-10 items-center justify-center rounded-xl">
 													<InfoCircle className="h-5 w-5" variant="Bold" />
 												</div>
 											) : null}
 											{log.severity === "warning" ? (
-												<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-yellow-50 text-yellow-600">
+												<div className="bg-warning/10 text-warning flex h-10 w-10 items-center justify-center rounded-xl">
 													<Danger className="h-5 w-5" variant="Bold" />
 												</div>
 											) : null}
 											{log.severity === "critical" ? (
-												<div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600">
+												<div className="bg-destructive/10 text-destructive flex h-10 w-10 items-center justify-center rounded-xl">
 													<CloseCircle className="h-5 w-5" variant="Bold" />
 												</div>
 											) : null}

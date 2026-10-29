@@ -142,7 +142,7 @@ export function EventCard({ event }: { event: CalendarEvent }) {
 			className={cn(
 				"group border-border/70 relative flex flex-col justify-between overflow-hidden rounded-3xl border transition-all duration-300 ease-out md:flex-row md:items-center",
 				isLive
-					? "bg-card zen-shadow-md hover:zen-shadow-lg ring-1 ring-green-500/50 hover:-translate-y-0.5"
+					? "bg-card zen-shadow-md hover:zen-shadow-lg ring-success/50 ring-1 hover:-translate-y-0.5"
 					: isPast
 						? "bg-card zen-shadow opacity-70 grayscale-40 hover:opacity-95"
 						: "bg-card zen-shadow hover:zen-shadow-md hover:-translate-y-0.5",
@@ -201,10 +201,10 @@ export function EventCard({ event }: { event: CalendarEvent }) {
 						</span>
 					)}
 					{isLive ? (
-						<span className="inline-flex items-center gap-1.5 rounded-full border border-green-500/20 bg-green-500/10 px-2.5 py-1 text-green-600 shadow-sm backdrop-blur-sm">
+						<span className="border-success/20 bg-success/10 text-success inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 shadow-sm backdrop-blur-sm">
 							<span className="relative flex h-2 w-2">
-								<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-								<span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+								<span className="bg-success/70 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+								<span className="bg-success relative inline-flex h-2 w-2 rounded-full"></span>
 							</span>
 							<span className="text-[10px] font-bold tracking-wider uppercase">
 								Live

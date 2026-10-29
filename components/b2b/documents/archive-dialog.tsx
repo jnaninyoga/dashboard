@@ -37,7 +37,7 @@ export function ArchiveDocumentDialog({
 			<DialogContent className="zen-shadow-lg overflow-hidden rounded-3xl border-none p-0 sm:max-w-[440px]">
 				<DialogHeader className="bg-card border-b p-8 pb-6">
 					<div className="flex items-center gap-4">
-						<div className="flex size-12 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10 text-amber-600">
+						<div className="border-warning/20 bg-warning/10 text-warning flex size-12 items-center justify-center rounded-2xl border">
 							<ArchiveBook size={24} variant="Bulk" />
 						</div>
 						<div>
@@ -80,7 +80,7 @@ export function ArchiveDocumentDialog({
 					<Button
 						onClick={() => onConfirm(reason)}
 						disabled={pending}
-						className="gap-2 rounded-xl bg-amber-600 font-bold text-white hover:bg-amber-700"
+						className="bg-warning text-warning-foreground hover:bg-warning/90 gap-2 rounded-xl font-bold"
 					>
 						<Archive size={18} variant="Bold" />
 						{pending ? "Archiving…" : "Archive Document"}

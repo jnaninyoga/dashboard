@@ -150,22 +150,22 @@ export function StepHealthWellness({
 																Info
 															</FormLabel>
 														</FormItem>
-														<FormItem className="flex items-center space-y-0 space-x-1 text-amber-600">
+														<FormItem className="text-warning flex items-center space-y-0 space-x-1">
 															<FormControl>
 																<RadioGroupItem
 																	value={HealthSeverity.WARNING}
-																	className="border-amber-600 text-amber-600"
+																	className="border-warning text-warning"
 																/>
 															</FormControl>
 															<FormLabel className="text-xs font-normal">
 																Warning
 															</FormLabel>
 														</FormItem>
-														<FormItem className="flex items-center space-y-0 space-x-1 text-red-600">
+														<FormItem className="text-destructive flex items-center space-y-0 space-x-1">
 															<FormControl>
 																<RadioGroupItem
 																	value={HealthSeverity.CRITICAL}
-																	className="border-red-600 text-red-600"
+																	className="border-destructive text-destructive"
 																/>
 															</FormControl>
 															<FormLabel className="text-xs font-normal">

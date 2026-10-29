@@ -108,14 +108,14 @@ export function DocumentTotals({
 						<>
 							<Separator />
 							<div className="flex w-full items-center justify-between">
-								<span className="font-heading text-xs font-bold tracking-[0.2em] text-green-700 uppercase">
+								<span className="font-heading text-success text-xs font-bold tracking-[0.2em] uppercase">
 									Fully Paid
 								</span>
-								<div className="flex size-7 items-center justify-center rounded-full bg-green-500/15">
+								<div className="bg-success/15 flex size-7 items-center justify-center rounded-full">
 									<TickCircle
 										size={18}
 										variant="Bold"
-										className="text-green-600"
+										className="text-success"
 									/>
 								</div>
 							</div>

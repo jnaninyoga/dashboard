@@ -219,7 +219,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 								handleDelete();
 							}}
 							disabled={isPending}
-							className="bg-destructive hover:bg-destructive/90 shadow-destructive/20 rounded-xl font-bold shadow-lg transition-all hover:scale-105 active:scale-95"
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-destructive/20 rounded-xl font-bold shadow-lg transition-all hover:scale-105 active:scale-95"
 						>
 							{isPending ? "Deleting..." : "Delete Contact"}
 						</AlertDialogAction>

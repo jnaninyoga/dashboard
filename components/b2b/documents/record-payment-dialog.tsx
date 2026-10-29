@@ -148,7 +148,7 @@ export function RecordPaymentDialog({
 			<DialogContent className="zen-shadow-lg overflow-y-auto rounded-3xl border-none p-0 sm:max-w-[460px]">
 				<DialogHeader className="bg-card border-b p-8 pb-6">
 					<div className="flex items-center gap-4">
-						<div className="flex size-12 items-center justify-center rounded-2xl border border-green-500/20 bg-green-500/10 text-green-600">
+						<div className="border-success/20 bg-success/10 text-success flex size-12 items-center justify-center rounded-2xl border">
 							<Wallet3 size={24} variant="Bulk" />
 						</div>
 						<div>
@@ -222,8 +222,8 @@ export function RecordPaymentDialog({
 												className={`font-mono text-sm font-bold ${
 													a.applied > 0
 														? a.becomesPaid
-															? "text-green-600"
-															: "text-amber-600"
+															? "text-success"
+															: "text-warning"
 														: "text-muted-foreground/40"
 												}`}
 											>
@@ -256,8 +256,8 @@ export function RecordPaymentDialog({
 								disabled={submitDisabled}
 								className={`h-11 w-full gap-2 rounded-xl font-black ${
 									isPartial
-										? "bg-amber-600 hover:bg-amber-700"
-										: "bg-green-600 hover:bg-green-700"
+										? "bg-warning text-warning-foreground hover:bg-warning/90"
+										: "bg-success text-success-foreground hover:bg-success/90"
 								}`}
 							>
 								{isPending || isSubmitting ? (

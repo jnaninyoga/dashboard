@@ -69,7 +69,7 @@ export function PartnerPickerList({ partners }: { partners: B2BPartner[] }) {
 												ICE {p.taxId}
 											</span>
 										) : (
-											<span className="font-mono text-[10px] text-amber-700/70">
+											<span className="text-warning/70 font-mono text-[10px]">
 												ICE missing
 											</span>
 										)}

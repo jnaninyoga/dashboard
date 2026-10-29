@@ -44,18 +44,18 @@ export function PaymentHistorySummary({
 			<button
 				type="button"
 				onClick={() => setOpen(true)}
-				className="animate-in fade-in slide-in-from-top-1 group mt-4 flex w-full items-center justify-between rounded-xl border border-dashed border-green-500/40 py-3 pr-3 pl-2 transition-colors hover:bg-green-500/5"
+				className="animate-in fade-in slide-in-from-top-1 group border-success/40 hover:bg-success/5 mt-4 flex w-full items-center justify-between rounded-xl border border-dashed py-3 pr-3 pl-2 transition-colors"
 			>
 				<div className="flex items-center gap-2">
-					<div className="flex size-7 items-center justify-center rounded-full bg-green-500/10">
+					<div className="bg-success/10 flex size-7 items-center justify-center rounded-full">
 						<TickCircle
 							size={14}
 							variant="Bold"
-							className="text-green-600"
+							className="text-success"
 						/>
 					</div>
 					<div className="flex flex-col items-start leading-tight">
-						<span className="text-xs font-bold text-emerald-700 italic">
+						<span className="text-success text-xs font-bold italic">
 							Paid
 						</span>
 						<span className="text-muted-foreground/70 text-[10px] font-medium tracking-wider uppercase">
@@ -65,13 +65,13 @@ export function PaymentHistorySummary({
 					</div>
 				</div>
 				<div className="flex items-center gap-2">
-					<span className="font-heading font-bold text-green-600 tabular-nums">
+					<span className="font-heading text-success font-bold tabular-nums">
 						- {formatMoney(totalPaid)}
 						<span className="ml-1 text-xs font-normal opacity-60">MAD</span>
 					</span>
 					<ArrowRight
 						size={14}
-						className="text-muted-foreground/40 transition-colors group-hover:text-green-600"
+						className="text-muted-foreground/40 group-hover:text-success transition-colors"
 					/>
 				</div>
 			</button>
@@ -80,7 +80,7 @@ export function PaymentHistorySummary({
 				<DialogContent className="zen-shadow-lg gap-0 overflow-hidden rounded-3xl border-none p-0 sm:max-w-120">
 					<DialogHeader className="bg-card m-0 border-b p-8 pb-6">
 						<div className="flex items-center gap-4">
-							<div className="flex size-12 items-center justify-center rounded-2xl border border-green-500/20 bg-green-500/10 text-green-600">
+							<div className="border-success/20 bg-success/10 text-success flex size-12 items-center justify-center rounded-2xl border">
 								<Receipt2 size={24} variant="Bulk" />
 							</div>
 							<div className="min-w-0">
@@ -96,16 +96,16 @@ export function PaymentHistorySummary({
 					</DialogHeader>
 
 					<div className="space-y-5 px-8 py-6">
-						<div className="flex items-end justify-between rounded-2xl border border-green-500/20 bg-green-500/10 px-5 py-4">
+						<div className="border-success/20 bg-success/10 flex items-end justify-between rounded-2xl border px-5 py-4">
 							<div className="flex flex-col leading-tight">
-								<span className="text-[10px] font-bold tracking-widest text-green-600 uppercase">
+								<span className="text-success text-[10px] font-bold tracking-widest uppercase">
 									Total Paid
 								</span>
-								<span className="text-[10px] font-medium text-green-600">
+								<span className="text-success text-[10px] font-medium">
 									Across {count} payment{count > 1 ? "s" : ""}
 								</span>
 							</div>
-							<span className="font-heading text-2xl font-bold tracking-tight text-green-600 tabular-nums">
+							<span className="font-heading text-success text-2xl font-bold tracking-tight tabular-nums">
 								{formatMoney(totalPaid)}
 								<span className="ml-1.5 text-xs font-semibold opacity-60">
 									MAD
@@ -137,7 +137,7 @@ export function PaymentHistorySummary({
 													"MMM dd, yyyy",
 												)}
 											</span>
-											<span className="font-heading text-lg font-bold text-green-600 tabular-nums">
+											<span className="font-heading text-success text-lg font-bold tabular-nums">
 												{formatMoney(parseFloat(payment.amount))}
 												<span className="ml-1 text-[10px] font-semibold opacity-60">
 													MAD

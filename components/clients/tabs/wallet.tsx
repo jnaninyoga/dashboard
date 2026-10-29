@@ -175,7 +175,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 										className={cn(
 											"flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm",
 											wallet.status === "active"
-												? "bg-green-100/50 text-green-600"
+												? "bg-success/5 text-success"
 												: "bg-secondary-3/10 text-secondary-3",
 										)}
 									>
@@ -187,7 +187,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 												{wallet.product?.name || "Member Pack"}
 											</span>
 											{wallet.status === "active" ? (
-												<div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+												<div className="bg-success h-2 w-2 animate-pulse rounded-full" />
 											) : null}
 										</div>
 										<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-40">
@@ -205,7 +205,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 											className={cn(
 												"text-2xl font-black",
 												(wallet.remainingCredits || 0) <= 2
-													? "text-red-500"
+													? "text-destructive"
 													: "text-primary",
 											)}
 										>
@@ -222,7 +222,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 										className={cn(
 											"mt-1 px-1.5 py-0 text-[9px] font-bold tracking-tighter uppercase",
 											wallet.status === "active" &&
-												"border-green-200 bg-green-50 text-green-700",
+												"border-success/25 bg-success/10 text-success",
 										)}
 									>
 										{wallet.status}

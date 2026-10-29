@@ -166,7 +166,7 @@ export function DocumentActionRibbon({
 										<Link href={`/b2b/documents/${child.id}`}>
 											<Badge
 												variant="outline"
-												className={`text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200 ${child.status === 'paid' ? 'bg-green-500/10' : ''}`}
+												className={`text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200 ${child.status === 'paid' ? 'bg-success/10' : ''}`}
 											>
 												{child.documentNumber}
 											</Badge>
@@ -187,7 +187,7 @@ export function DocumentActionRibbon({
 				{doc.archivedAt ? (
 					<Badge
 						variant="outline"
-						className="gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-amber-700 uppercase"
+						className="border-warning/30 bg-warning/10 text-warning gap-1.5 rounded-xl px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase"
 					>
 						<Archive size={12} variant="Bold" />
 						Archived
@@ -197,11 +197,11 @@ export function DocumentActionRibbon({
 				{!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce ? (
 					<Link
 						href={`/b2b/partners/${doc.partnerId}`}
-						className="text-amber-700 hover:underline"
+						className="text-warning hover:underline"
 					>
 						<Badge
 							variant="outline"
-							className="gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-amber-700 uppercase"
+							className="border-warning/30 bg-warning/10 text-warning gap-1.5 rounded-xl px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase"
 						>
 							<Warning2 size={12} variant="Bold" />
 							Partner ICE missing
@@ -296,7 +296,7 @@ export function DocumentActionRibbon({
 					<Button
 						onClick={() => handleStatusUpdate("accepted")}
 						disabled={isPending}
-						className="gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm hover:bg-green-700"
+						className="bg-success text-success-foreground hover:bg-success/90 gap-2 rounded-xl font-bold shadow-sm"
 					>
 						<TickCircle size={18} variant="Bold" />
 						Accept Quote
@@ -332,7 +332,7 @@ export function DocumentActionRibbon({
                         <Button
                             onClick={() => setIsPaymentOpen(true)}
                             disabled={isPending}
-                            className="gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm hover:bg-green-700"
+                            className="bg-success text-success-foreground hover:bg-success/90 gap-2 rounded-xl font-bold shadow-sm"
                         >
                             <MoneySend size={18} variant="Bold" />
                             Record Payment
@@ -366,7 +366,7 @@ export function DocumentActionRibbon({
 							onClick={() => setIsArchiveOpen(true)}
 							disabled={isPending}
 							variant="ghost"
-							className="text-muted-foreground gap-2 rounded-xl font-medium hover:bg-amber-500/10 hover:text-amber-700"
+							className="text-muted-foreground hover:bg-warning/10 hover:text-warning gap-2 rounded-xl font-medium"
 						>
 							<Archive size={18} />
 							Archive

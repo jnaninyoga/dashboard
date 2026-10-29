@@ -116,15 +116,15 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                                     <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">{checkedInClient.fullName[0]}</AvatarFallback>
                                 </Avatar>
                                 <div className="bg-card zen-shadow absolute right-2 bottom-2 rounded-full p-1">
-                                    <TickCircle className="h-8 w-8 text-emerald-500" variant="Bulk" />
+                                    <TickCircle className="text-success h-8 w-8" variant="Bulk" />
                                 </div>
                             </div>
                             <div className="flex flex-col gap-1 text-center">
                                 <h2 className="font-heading text-foreground text-3xl font-bold">{checkedInClient.fullName}</h2>
-                                <span className="mx-auto mt-2 flex w-max items-center justify-center gap-1.5 rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-semibold tracking-wide text-emerald-600 uppercase">
+                                <span className="bg-success/10 text-success mx-auto mt-2 flex w-max items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold tracking-wide uppercase">
                                     <span className="relative flex size-2.5">
-                                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
-                                      <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500"></span>
+                                      <span className="bg-success/70 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
+                                      <span className="bg-success relative inline-flex size-2.5 rounded-full"></span>
                                     </span>
                                     Successfully Checked In
                                 </span>
@@ -133,7 +133,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
 
                         <div className="flex flex-col gap-4">
                             <h3 className="font-heading text-foreground flex items-center gap-2 text-xl font-bold">
-                                <SecurityUser className="h-6 w-6 text-amber-500" variant="Outline" />
+                                <SecurityUser className="text-warning h-6 w-6" variant="Outline" />
                                 Health Guardrails
                             </h3>
                             <div className="bg-muted max-h-[45vh] overflow-y-auto rounded-2xl p-5 md:p-6">
@@ -144,7 +144,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                                                 <div className="flex items-start justify-between">
                                                     <strong className="text-foreground block text-lg font-bold capitalize">{log.category}</strong>
                                                     <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                                                        log.severity === 'critical' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
+                                                        log.severity === 'critical' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
                                                     }`}>{log.severity}</span>
                                                 </div>
                                                 <p className="text-muted-foreground mt-2 font-medium">{log.condition}</p>
@@ -158,8 +158,8 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                                     </ul>
                                 ) : (
                                     <div className="text-muted-foreground flex flex-col items-center justify-center py-8">
-                                        <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-emerald-50">
-                                            <TickCircle className="h-6 w-6 text-emerald-500" variant="Bulk" />
+                                        <div className="bg-success/10 mb-3 flex size-12 items-center justify-center rounded-full">
+                                            <TickCircle className="text-success h-6 w-6" variant="Bulk" />
                                         </div>
                                         <p className="font-medium">No active health alerts.</p>
                                     </div>
@@ -195,7 +195,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                 <div className="border-muted mb-8 flex items-center justify-between border-b pb-4">
                     <h2 className="font-heading text-foreground flex items-center gap-3 text-lg font-bold md:text-xl">
                         {eventType === "outdoor" ? (
-                            <div className="rounded-2xl bg-emerald-50 p-2"><Location className="h-5 w-5 text-emerald-600" variant="Outline" /></div>
+                            <div className="bg-success/10 rounded-2xl p-2"><Location className="text-success h-5 w-5" variant="Outline" /></div>
                         ) : (
                             <div className="bg-primary/10 rounded-2xl p-2"><People className="text-primary h-5 w-5" variant="Outline" /></div>
                         )}
@@ -237,7 +237,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                                         <AvatarFallback className="bg-muted text-muted-foreground text-lg font-bold">{record.client.fullName[0]}</AvatarFallback>
                                     </Avatar>
                                     <div className="bg-card absolute -right-1 -bottom-1 rounded-full p-0.5 shadow-sm">
-                                        <TickCircle className="h-5 w-5 text-emerald-500" variant="Bulk" />
+                                        <TickCircle className="text-success h-5 w-5" variant="Bulk" />
                                     </div>
                                 </div>
                                 <div className="flex min-w-0 flex-1 flex-col">

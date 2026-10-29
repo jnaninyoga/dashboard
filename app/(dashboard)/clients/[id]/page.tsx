@@ -116,7 +116,7 @@ async function ProfileContent({ id }: { id: string }) {
                         {/* Status Badges */}
                         <div className="mt-3 flex items-center gap-2">
                             <Badge 
-                                className={`px-3 py-1 text-sm ${totalCredits > 2 ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                                className={`px-3 py-1 text-sm ${totalCredits > 2 ? 'bg-success text-success-foreground hover:bg-success/90' : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'}`}
                             >
                                 <Tag className="mr-1 h-3 w-3" variant="Bulk" />
                                 {totalCredits} Credits

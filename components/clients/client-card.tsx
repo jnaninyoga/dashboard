@@ -46,7 +46,7 @@ export function ClientAvatar({ client, className }: { client: Client; className?
 			<AvatarFallback
 				className={cn(
 					"text-xl font-semibold",
-					blush ? "bg-secondary text-secondary-3 dark:text-foreground/85" : "bg-primary/10 text-primary",
+					blush ? "bg-secondary text-secondary-3" : "bg-primary/10 text-primary",
 				)}
 			>
 				{client.fullName.charAt(0)}
@@ -80,15 +80,15 @@ export function ClientCard({ client }: { client: Client }) {
 							{client.checkedInToday ? (
 								<span
 									aria-hidden
-									className="border-card absolute -right-0.5 -bottom-0.5 size-4 rounded-full border-2 bg-green-500"
+									className="border-card bg-success absolute -right-0.5 -bottom-0.5 size-4 rounded-full border-2"
 								/>
 							) : null}
 						</>
 					}
 				>
 					{client.checkedInToday ? (
-						<span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-green-100 px-2.5 text-sm font-medium text-green-800 dark:bg-green-500/15 dark:text-green-300">
-							<span aria-hidden className="size-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+						<span className="bg-success/10 text-success inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium">
+							<span aria-hidden className="bg-success size-1.5 rounded-full" />
 							{client.activeSessionName ? `Here · ${client.activeSessionName}` : "Here today"}
 						</span>
 					) : (

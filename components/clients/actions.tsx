@@ -74,9 +74,9 @@ export function ClientActions({
 					) : null}
 					<DropdownMenuItem
 						onClick={() => setShowDeleteDialog(true)}
-						className="focus:bg-secondary text-red-600 focus:text-red-600 focus:[&_svg]:text-red-600"
+						className="focus:bg-secondary text-destructive focus:text-destructive focus:[&_svg]:text-destructive"
 					>
-						<Trash className="mr-2 h-4 w-4 text-red-600" variant="Outline" />
+						<Trash className="text-destructive mr-2 h-4 w-4" variant="Outline" />
 						Delete
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -97,7 +97,7 @@ export function ClientActions({
 								e.preventDefault();
 								handleDelete();
 							}}
-							className="bg-red-600 hover:bg-red-700"
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							disabled={isPending}
 						>
 							{isPending ? (

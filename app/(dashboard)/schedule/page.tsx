@@ -24,7 +24,7 @@ export default async function SchedulePage() {
             </header>
             
             {errorMsg ? (
-                <div className="rounded-md border border-red-200 bg-red-50 p-4 text-red-600">
+                <div className="border-destructive/25 bg-destructive/10 text-destructive rounded-md border p-4">
                     {errorMsg}
                 </div>
             ) : (

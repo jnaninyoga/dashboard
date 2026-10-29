@@ -111,7 +111,7 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: Clie
 										<span className="text-muted-foreground truncate text-sm">{client.phone} • {client.email}</span>
 									</div>
 									{(client.healthLogs || []).some((l) => l.isAlert) ? (
-										<div className="shrink-0 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+										<div className="bg-destructive/10 text-destructive shrink-0 rounded-full px-3 py-1 text-xs font-bold">
 											Alerts
 										</div>
 									) : null}

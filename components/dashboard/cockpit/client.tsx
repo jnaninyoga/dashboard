@@ -26,7 +26,7 @@ export function CockpitClient({ initialEvents, initialError }: { initialEvents: 
             </div>
 
             {initialError ? (
-                <div className="zen-shadow rounded-2xl bg-red-50 p-5 font-medium text-red-700">
+                <div className="zen-shadow bg-destructive/10 text-destructive rounded-2xl p-5 font-medium">
                     {initialError}
                 </div>
             ) : null}

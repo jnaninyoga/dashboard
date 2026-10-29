@@ -193,7 +193,7 @@ export function DataTable<TData, TValue>({
 						<Table containerClassName="overflow-x-auto border-secondary/20">
 							<TableHeader>
 								{table.getHeaderGroups().map((group) => (
-									<TableRow key={group.id} className="border-b-secondary/20 hover:bg-transparent">
+									<TableRow key={group.id} className="hover:bg-transparent">
 										{group.headers.map((header) => {
 											const sorted = header.column.getIsSorted();
 											return (

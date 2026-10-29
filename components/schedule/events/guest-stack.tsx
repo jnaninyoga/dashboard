@@ -443,7 +443,7 @@ function ParticipantsDialog({
 															</TooltipTrigger>
 															<TooltipContent
 																sideOffset={6}
-																className="zen-shadow-sm z-50 rounded-lg border-0 bg-emerald-50 px-2 py-1 text-[11px] font-bold text-emerald-700"
+																className="zen-shadow-sm bg-success/10 text-success z-50 rounded-lg border-0 px-2 py-1 text-[11px] font-bold"
 															>
 																WhatsApp: {guest.phone}
 															</TooltipContent>

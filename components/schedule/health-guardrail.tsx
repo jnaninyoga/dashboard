@@ -35,12 +35,12 @@ export function HealthGuardrailDialog({
 		<Dialog open={isOpen} onOpenChange={(open) => !open && !isPending && onCancel()}>
 			<DialogContent className="zen-shadow-lg bg-card max-h-[90vh] overflow-hidden rounded-3xl border-0 p-0 sm:max-w-md">
 				{/* Red top accent bar */}
-				<div className="h-1.5 w-full rounded-t-3xl bg-linear-to-r from-red-500 to-orange-400" />
+				<div className="from-destructive to-warning h-1.5 w-full rounded-t-3xl bg-linear-to-r" />
 				
 				<div className="px-6 pt-5 pb-2">
 					<DialogHeader>
 						<DialogTitle className="text-destructive font-heading flex items-center gap-2 text-xl font-bold">
-							<div className="rounded-full bg-red-100 p-2">
+							<div className="bg-destructive/10 rounded-full p-2">
 								<Danger className="h-5 w-5" variant="Bulk" />
 							</div>
 							Health Guardrails
@@ -54,12 +54,12 @@ export function HealthGuardrailDialog({
 				<div className="flex max-h-[50vh] flex-col gap-4 overflow-y-auto px-6 py-2">
 					{alerts.length > 0 ? (
 						alerts.map((log) => (
-							<Alert key={log.id} variant="destructive" className="zen-shadow rounded-2xl border-0 bg-red-50 p-5">
-								<Danger className="h-5 w-5 text-red-600" variant="Bulk" />
-								<AlertTitle className="ml-2 font-bold text-red-800 capitalize">
+							<Alert key={log.id} variant="destructive" className="zen-shadow bg-destructive/10 rounded-2xl border-0 p-5">
+								<Danger className="text-destructive h-5 w-5" variant="Bulk" />
+								<AlertTitle className="text-destructive ml-2 font-bold capitalize">
                                     {log.category === 'physical' ? 'Body' : log.category === 'mental' ? 'Mind' : 'Lifestyle'} Issue - {log.severity}
                                 </AlertTitle>
-								<AlertDescription className="mt-2 ml-2 text-base text-red-900">
+								<AlertDescription className="text-destructive mt-2 ml-2 text-base">
 									<div className="mb-1"><strong className="font-semibold">Condition:</strong> {log.condition}</div>
 									{log.treatment ? (
                                         <div><strong className="font-semibold">Treatment/Notes:</strong> {log.treatment}</div>

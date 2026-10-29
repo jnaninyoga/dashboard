@@ -60,7 +60,7 @@ export function DocumentRowCard({ doc, subtitle }: { doc: CardDocument; subtitle
 					<p className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
 						{showDue ? "Amount due" : "Total"}
 					</p>
-					<p className={showDue ? "text-sm font-black text-orange-500 tabular-nums" : "text-primary text-sm font-black tabular-nums"}>
+					<p className={showDue ? "text-warning text-sm font-black tabular-nums" : "text-primary text-sm font-black tabular-nums"}>
 						{formatMAD(showDue ? due : Number(doc.totalAmount))} MAD
 					</p>
 				</div>
@@ -198,7 +198,7 @@ export function DocumentDashboardTable({
 				const amountDue = Math.max(0, totalAmount - totalPayments);
 				
 				return (
-					<span className="text-sm font-bold text-orange-500 tabular-nums">
+					<span className="text-warning text-sm font-bold tabular-nums">
 						{amountDue.toLocaleString("en-US", {
 							minimumFractionDigits: 2,
 							maximumFractionDigits: 2,

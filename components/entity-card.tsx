@@ -101,7 +101,7 @@ export function Figure({
 						tone === "muted"
 							? "text-muted-foreground text-base font-medium"
 							: "text-2xl leading-none font-semibold tabular-nums",
-						tone === "low" && "text-amber-700 dark:text-amber-400",
+						tone === "low" && "text-warning",
 					)}
 				>
 					{value}
