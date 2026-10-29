@@ -8,7 +8,7 @@ import { attendanceLedger, clients, clientWallets, healthLogs } from "@/services
 import { HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 
 export interface AttendanceRecord {
 	id: string;
@@ -139,7 +139,13 @@ export async function getEventAttendanceAction(eventId: string): Promise<Attenda
 		? await db
 				.select()
 				.from(healthLogs)
-				.where(and(inArray(healthLogs.clientId, clientIds), eq(healthLogs.isAlert, true)))
+				.where(
+					and(
+						inArray(healthLogs.clientId, clientIds),
+						eq(healthLogs.isAlert, true),
+						isNull(healthLogs.endDate), // the app's rule for "active"
+					),
+				)
 		: [];
 
 	return records.map((r) => ({

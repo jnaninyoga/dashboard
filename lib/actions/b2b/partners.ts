@@ -12,7 +12,7 @@ import { syncPartnerContactToGoogle, updatePartnerContactInGoogle } from "@/serv
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, count, eq, exists, ilike, inArray, ne, or } from "drizzle-orm";
+import { and, count, eq, exists, ilike, inArray, isNull, ne, or } from "drizzle-orm";
 
 export type ActionState = {
 	error?: string;
@@ -354,6 +354,7 @@ export async function getPartnersAction(filters?: {
 											? and(
 													eq(b2bDocuments.type, "invoice"),
 													inArray(b2bDocuments.status, [...PAYABLE_INVOICE_STATUSES]),
+													isNull(b2bDocuments.archivedAt),
 												)
 											: eq(b2bDocuments.status, docStatus),
 									)

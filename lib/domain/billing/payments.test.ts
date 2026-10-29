@@ -86,9 +86,10 @@ describe("owedSummary", () => {
 		const summary = owedSummary([
 			{ totalAmount: "1000.10", payments: [{ amount: "400.05" }] },
 			{ totalAmount: 600, payments: [] },
+			// Settled to the centime: owes nothing, so it isn't counted.
 			{ totalAmount: "0.30", payments: [{ amount: "0.10" }, { amount: "0.20" }] },
 		]);
-		expect(summary).toEqual({ amount: 1200.05, count: 3 });
+		expect(summary).toEqual({ amount: 1200.05, count: 2 });
 	});
 
 	it("never counts an overpaid invoice as negative", () => {

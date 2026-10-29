@@ -90,11 +90,13 @@ type InvoiceWithPayments = {
 	payments?: { amount: string | number }[] | null;
 };
 
-/** What a set of invoices still owes in total, from their totals and recorded payments. */
+/** What a set of invoices still owes in total, and how many still owe anything. */
 export function owedSummary(invoices: InvoiceWithPayments[]): { amount: number; count: number } {
-	const cents = invoices.reduce((acc, invoice) => {
-		const paid = (invoice.payments ?? []).reduce((sum, p) => sum + toCents(Number(p.amount)), 0);
-		return acc + Math.max(0, toCents(Number(invoice.totalAmount)) - paid);
-	}, 0);
-	return { amount: fromCents(cents), count: invoices.length };
+	const owing = invoices
+		.map((invoice) => {
+			const paid = (invoice.payments ?? []).reduce((sum, p) => sum + toCents(Number(p.amount)), 0);
+			return Math.max(0, toCents(Number(invoice.totalAmount)) - paid);
+		})
+		.filter((cents) => cents > 0);
+	return { amount: fromCents(owing.reduce((a, b) => a + b, 0)), count: owing.length };
 }
