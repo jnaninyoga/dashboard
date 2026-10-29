@@ -59,6 +59,7 @@ import { Buildings } from "iconsax-reactjs";
 
 import { FeedbackDemo } from "./feedback-demo";
 import { FormsDemo } from "./forms-demo";
+import { MenusDemo } from "./menus-demo";
 
 export function Playground() {
 	const [sheetOpen, setSheetOpen] = useState(false);
@@ -116,6 +117,7 @@ export function Playground() {
 
 				<FeedbackDemo />
 				<FormsDemo />
+				<MenusDemo />
 
 				<section className="bg-card flex flex-wrap items-center gap-3 rounded-3xl border p-6">
 					<Dialog>

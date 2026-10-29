@@ -42,7 +42,9 @@ export function PartnerGrid({
 						animationFillMode: "both",
 					}}
 				>
-					<div className="absolute top-4 right-4 z-10">
+					{/* Above the card body (also z-10, later in the DOM), or the body
+					    swallows every tap on the menu button. */}
+					<div className="absolute top-4 right-4 z-20">
 						<PartnerActions
 							partner={partner}
 							triggerClassName="bg-background/50 backdrop-blur-sm"
