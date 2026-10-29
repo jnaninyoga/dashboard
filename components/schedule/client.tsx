@@ -52,9 +52,9 @@ export function ScheduleClient({ initialEvents }: { initialEvents: CalendarEvent
     return (
         <div className="space-y-8">
             <div className="mb-4 flex justify-end">
-                <Button onClick={() => setIsDialogOpen(true)}>
-                    <Add className="mr-2 h-4 w-4" variant="Outline" />
-                    Nouveau Session
+                <Button onClick={() => setIsDialogOpen(true)} className="zen-glow-teal min-h-[48px] rounded-full px-6 font-semibold">
+                    <Add className="h-5 w-5 text-white" variant="Outline" />
+                    New session
                 </Button>
             </div>
 

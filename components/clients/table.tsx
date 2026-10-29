@@ -14,6 +14,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
+import { whatsappHref } from "@/lib/utils/contact";
 import { 
     type Client, 
     type ClientCategory, 
@@ -40,6 +41,7 @@ export type ClientWithRelations = Client & {
     category?: ClientCategory | null;
     wallets?: (ClientWallet & { product?: MembershipProduct | null })[];
     healthLogs?: HealthLog[];
+    checkedInToday?: boolean;
     activeSessionName?: string;
 };
 
@@ -70,7 +72,6 @@ function ClientAvatar({ client }: { client: ClientWithRelations }) {
 }
 
 const alertsOf = (client: ClientWithRelations) => client.healthLogs?.filter((l) => l.isAlert) || [];
-const whatsappHref = (phone: string) => `https://wa.me/${phone.replace(/[^0-9]/g, "")}`;
 
 function LiveBadge({ name }: { name: string }) {
 	return (
@@ -114,7 +115,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 				<div className="flex items-center gap-4">
 					<Link href={`/clients/${client.id}`} className="group/avatar relative shrink-0">
 						<ClientAvatar client={client} />
-						{client.activeSessionName ? (
+						{client.checkedInToday ? (
 							<span className="absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 border-white bg-green-500 shadow-sm" />
 						) : null}
 					</Link>
@@ -125,7 +126,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 						>
 							{client.fullName}
 						</Link>
-						{client.activeSessionName ? <LiveBadge name={client.activeSessionName} /> : null}
+						{client.checkedInToday ? <LiveBadge name={client.activeSessionName ?? "Checked in"} /> : null}
 					</div>
 				</div>
 			);
@@ -293,7 +294,7 @@ export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 								<Link href={`/clients/${client.id}`} className="flex min-w-0 items-center gap-3">
 									<div className="relative shrink-0">
 										<ClientAvatar client={client} />
-										{client.activeSessionName ? (
+										{client.checkedInToday ? (
 											<span className="absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 border-white bg-green-500" />
 										) : null}
 									</div>

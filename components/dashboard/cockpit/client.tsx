@@ -17,11 +17,11 @@ export function CockpitClient({ initialEvents, initialError }: { initialEvents: 
             <div className="bg-card zen-shadow flex items-center justify-between rounded-3xl p-5">
                 <div className="flex flex-col gap-0.5">
                     <h2 className="font-heading text-foreground text-lg font-semibold tracking-tight">Today&apos;s Agenda</h2>
-                    <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">{initialEvents.length} Sessions</span>
+                    <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">{initialEvents.length} {initialEvents.length === 1 ? "session" : "sessions"}</span>
                 </div>
                 <Button onClick={() => setIsDialogOpen(true)} className="zen-glow-teal min-h-[48px] rounded-full px-6 font-semibold" variant="default">
                     <Add className="h-5 w-5 text-white" variant="Outline" />
-                    New Session
+                    New session
                 </Button>
             </div>
 

@@ -18,6 +18,9 @@ export type ClientWithRelations = Client & {
         product: MembershipProduct | null;
     })[];
     healthLogs?: HealthLog[];
+    /** Checked in today (from the attendance records). */
+    checkedInToday?: boolean;
+    /** Today's session she checked in to, when Google can name it. */
     activeSessionName?: string;
 
 };

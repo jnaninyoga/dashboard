@@ -116,17 +116,24 @@ export async function getClientsAction(
                 )
                 .orderBy(desc(attendanceLedger.checkInTime));
 
+            // Checked in today is a fact in our records; Google only adds the
+            // session's name, and the badge says "Checked in" without it.
+            const clientsToday = data as (Client & { checkedInToday?: boolean; activeSessionName?: string })[];
+            for (const client of clientsToday) {
+                client.checkedInToday = recentLedgers.some((l) => l.clientId === client.id);
+            }
+
             if (recentLedgers.length > 0 && accessToken) {
                 try {
                     const todayEvents = await getTodayEvents(accessToken);
                     const eventMap = new Map(todayEvents.map(e => [e.id, e.summary]));
 
-                    (data as (Client & { activeSessionName?: string })[]).forEach((client) => {
+                    for (const client of clientsToday) {
                         const latestLedger = recentLedgers.find(l => l.clientId === client.id);
-                        if (latestLedger && latestLedger.googleEventId) {
-                            client.activeSessionName = eventMap.get(latestLedger.googleEventId) || "Unknown Session";
+                        if (latestLedger?.googleEventId) {
+                            client.activeSessionName = eventMap.get(latestLedger.googleEventId) ?? undefined;
                         }
-                    });
+                    }
                 } catch (e) {
                     console.error("Failed to fetch today events for live status", e);
                 }

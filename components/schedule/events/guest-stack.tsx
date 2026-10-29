@@ -21,6 +21,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { getClientsByEmailsAction } from "@/lib/actions/clients/queries";
+import { whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
 
 import type { calendar_v3 } from "googleapis";
@@ -433,7 +434,7 @@ function ParticipantsDialog({
 														<Tooltip>
 															<TooltipTrigger asChild>
 																<Link
-																	href={`https://wa.me/${guest.phone.replace(/[^0-9]/g, "")}`}
+																	href={whatsappHref(guest.phone)}
 																	target="_blank"
 																	className="flex size-7 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366] transition-all hover:scale-105 hover:bg-[#25D366] hover:text-white active:scale-95"
 																>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
 	Tooltip,
 	TooltipContent,
@@ -14,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
 import { type ClientWithRelations as Client } from "@/lib/types";
+import { whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
 
 import { Call, Danger, Sms, TickCircle, User, Whatsapp } from "iconsax-reactjs";
@@ -22,7 +24,7 @@ import { ClientActions } from "./actions";
 
 // Helper to check if client is online (checked in today)
 function isClientOnline(client: Client) {
-	return !!client.activeSessionName;
+	return !!client.checkedInToday;
 }
 
 function CreditBattery({
@@ -151,7 +153,7 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 													<span className="relative inline-flex h-2 w-2 rounded-full bg-green-500"></span>
 												</span>
 												<span className="max-w-[120px] truncate text-[10px] font-bold tracking-wider uppercase">
-													{client.activeSessionName || "Live"}
+													{client.activeSessionName || "Checked in"}
 												</span>
 											</div>
 										</TooltipTrigger>
@@ -325,9 +327,9 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 													tabIndex={client.email ? 0 : -1}
 													onClick={(e) => !client.email && e.preventDefault()}
 													aria-disabled={!client.email}
-													className="bg-secondary-2/40 hover:text-primary hover:bg-primary/15 aria-disabled:text-muted-foreground aria-disabled:bg-muted aria-disabled:hover:text-muted-foreground/60 flex items-center justify-center rounded-full p-2 transition-colors hover:scale-110 active:scale-95"
+													className="bg-secondary-2/40 hover:text-primary hover:bg-primary/15 aria-disabled:text-muted-foreground aria-disabled:bg-muted aria-disabled:hover:text-muted-foreground/60 flex size-10 items-center justify-center rounded-full transition-colors hover:scale-110 active:scale-95"
 												>
-													<Sms className="h-4 w-4" variant="Bulk" />
+													<Sms className="size-5" variant="Bulk" />
 												</Link>
 											</TooltipTrigger>
 											<TooltipContent
@@ -341,11 +343,11 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 										<Tooltip>
 											<TooltipTrigger asChild>
 												<Link
-													href={`https://wa.me/${client.phone}`}
+													href={whatsappHref(client.phone)}
 													target="_blank"
-													className="bg-secondary-2/40 flex items-center justify-center rounded-full p-2 transition-colors hover:scale-110 hover:bg-[#25D366]/15 hover:text-[#25D366] active:scale-95"
+													className="bg-secondary-2/40 flex size-10 items-center justify-center rounded-full transition-colors hover:scale-110 hover:bg-[#25D366]/15 hover:text-[#25D366] active:scale-95"
 												>
-													<Whatsapp className="h-4 w-4" variant="Bulk" />
+													<Whatsapp className="size-5" variant="Bulk" />
 												</Link>
 											</TooltipTrigger>
 											<TooltipContent
@@ -360,9 +362,9 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 											<TooltipTrigger asChild>
 												<Link
 													href={`tel:${client.phone}`}
-													className="bg-secondary-2/40 hover:text-primary hover:bg-primary/15 flex items-center justify-center rounded-full p-2 transition-colors hover:scale-110 active:scale-95"
+													className="bg-secondary-2/40 hover:text-primary hover:bg-primary/15 flex size-10 items-center justify-center rounded-full transition-colors hover:scale-110 active:scale-95"
 												>
-													<Call className="h-4 w-4" variant="Bulk" />
+													<Call className="size-5" variant="Bulk" />
 												</Link>
 											</TooltipTrigger>
 											<TooltipContent
@@ -377,52 +379,52 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 									{/* Right Section: Health Status Indicator */}
 									<div className="flex min-w-[35%] shrink-0 items-center justify-center px-4">
 										{alerts.length > 0 ? (
-											<Tooltip>
-												<TooltipTrigger asChild>
-													<div className="text-destructive group/health relative flex animate-pulse cursor-help items-center rounded-full bg-red-200 p-2 font-bold hover:animate-none hover:bg-red-600 hover:text-white">
-														<Danger className="size-4" variant="Bulk" />
+											// A tooltip never opens on a phone: tap to read the alerts.
+											<Popover>
+												<PopoverTrigger asChild>
+													<button
+														type="button"
+														aria-label={`${alerts.length} health ${alerts.length === 1 ? "alert" : "alerts"}`}
+														className="text-destructive relative flex size-10 items-center justify-center rounded-full bg-red-200 font-bold transition-colors hover:bg-red-600 hover:text-white"
+													>
+														<Danger className="size-5" variant="Bulk" />
 														<span
-															aria-hidden={alerts.length <= 1}
-															className="absolute top-0 right-0 flex h-3 w-3 items-center justify-center rounded-full bg-red-600 text-[8px] font-bold tracking-tighter text-white transition-all duration-200 group-hover/health:border group-hover/health:border-red-600 group-hover/health:bg-white group-hover/health:text-red-600"
+															aria-hidden
+															className="absolute -top-0.5 -right-0.5 flex size-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white"
 														>
 															{alerts.length}
 														</span>
-													</div>
-												</TooltipTrigger>
-												<TooltipContent
+													</button>
+												</PopoverTrigger>
+												<PopoverContent
+													side="top"
 													sideOffset={6}
-													className="zen-shadow-lg z-50 max-w-xs rounded-xl border-0 bg-red-50 p-3 text-[11px] text-red-900"
+													className="zen-shadow-lg w-auto max-w-xs rounded-xl border-0 bg-red-50 p-3 text-sm text-red-900"
 												>
 													<div className="flex flex-col gap-2">
 														<div className="flex items-center gap-1.5 border-b border-red-200 pb-1 font-bold text-red-700">
-															<Danger className="size-3.5" variant="Bulk" />
-															Active Health Alerts
+															<Danger className="size-4" variant="Bulk" />
+															Active health alerts
 														</div>
 														{alerts.map((log, idx) => (
-															<div key={idx} className="flex flex-col gap-0.5">
-																<div className="flex items-center gap-1.5">
-																	<span
-																		className={cn(
-																			"size-1.5 shrink-0 rounded-full",
-																			log.severity === "critical"
-																				? "bg-red-600"
-																				: "bg-orange-400",
-																		)}
-																	/>
-																	<span className="font-bold">
-																		{log.condition}
-																	</span>
-																</div>
+															<div key={idx} className="flex items-center gap-1.5">
+																<span
+																	className={cn(
+																		"size-1.5 shrink-0 rounded-full",
+																		log.severity === "critical" ? "bg-red-600" : "bg-orange-400",
+																	)}
+																/>
+																<span className="font-semibold">{log.condition}</span>
 															</div>
 														))}
 													</div>
-												</TooltipContent>
-											</Tooltip>
+												</PopoverContent>
+											</Popover>
 										) : (
 											<Tooltip>
 												<TooltipTrigger asChild>
-													<div className="flex cursor-help items-center gap-2 rounded-full bg-green-200 p-2 font-bold text-green-600 opacity-80 transition-opacity hover:opacity-100">
-														<TickCircle className="size-4" variant="Bulk" />
+													<div className="flex size-10 cursor-help items-center justify-center rounded-full bg-green-200 font-bold text-green-600 opacity-80 transition-opacity hover:opacity-100">
+														<TickCircle className="size-5" variant="Bulk" />
 													</div>
 												</TooltipTrigger>
 												<TooltipContent

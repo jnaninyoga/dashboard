@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { whatsappHref } from "@/lib/utils/contact";
 import { type Client } from "@/services/database/schema";
 
 import {
@@ -50,7 +51,7 @@ export function ProfileTab({ client }: ProfileTabProps) {
 							</div>
 						</div>
 						<Link
-							href={`https://wa.me/${client.phone.replace(/[^0-9]/g, "")}`}
+							href={whatsappHref(client.phone)}
 							target="_blank"
 							className="group/wa flex h-10 w-10 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366] transition-all hover:scale-110 hover:bg-[#25D366] hover:text-white active:scale-95"
 						>
