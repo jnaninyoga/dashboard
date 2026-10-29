@@ -1,4 +1,9 @@
+import { fromStudioTime } from "@/lib/utils/time";
+
 import { z } from "zod";
+
+// Morocco's offsets are whole hours, so flooring in UTC floors the studio hour too.
+export const currentHourStart = () => new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000);
 
 // --- SESSION SCHEMA (Booking flow) ---
 export const sessionSchema = z
@@ -22,15 +27,14 @@ export const sessionSchema = z
 	)
 	.refine(
 		(data) => {
-			// Events can only start from the current hour onwards.
-			const eventStart = new Date(`${data.dateStr}T${data.startTimeStr}:00`);
+			// Events can only start from the current hour onwards, on the
+			// studio's clock (not the phone's or the server's).
+			const eventStart = fromStudioTime(data.dateStr, data.startTimeStr);
 			if (isNaN(eventStart.getTime())) return true; // format issues handled elsewhere
-			const hourFloor = new Date();
-			hourFloor.setMinutes(0, 0, 0);
-			return eventStart >= hourFloor;
+			return eventStart >= currentHourStart();
 		},
 		{
-			message: "Cannot schedule events in the past",
+			message: "This time has already passed. Pick a later start.",
 			path: ["startTimeStr"],
 		},
 	)

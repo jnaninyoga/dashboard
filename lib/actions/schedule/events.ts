@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 
 import { logServerError } from "@/lib/errors/server";
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
+import { fromStudioTime, studioIsoString, weekdayOf } from "@/lib/utils/time";
+import { currentHourStart } from "@/lib/validators/session";
 import { cancelStudioEvent, checkAvailability, createStudioEvent } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
@@ -31,11 +33,14 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 		return { error: "Not authenticated" };
 	}
 
+	// The times are the studio's wall clock; the phone's zone doesn't matter.
+	const isoStart = studioIsoString(data.dateStr, data.startTimeStr);
+	const isoEnd = studioIsoString(data.dateStr, data.endTimeStr);
+	const weekday = weekdayOf(data.dateStr);
+
 	// RULE 0: Reject past events. Events must start from the current hour onwards.
-	const hourFloor = new Date();
-	hourFloor.setMinutes(0, 0, 0);
-	if (new Date(data.isoStart) < hourFloor) {
-		return { error: "Cannot schedule events in the past." };
+	if (fromStudioTime(data.dateStr, data.startTimeStr) < currentHourStart()) {
+		return { error: "This time has already passed. Pick a later start." };
 	}
 
 	// RULE 1: Shop Hours Verification — only enforced for in-studio event types.
@@ -47,7 +52,7 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 			workingHours = DEFAULT_HOURS;
 		}
 
-		const dayConfig = workingHours[data.weekday.toString()];
+		const dayConfig = workingHours[weekday.toString()];
 		if (!dayConfig || !dayConfig.isOpen) {
 			return { error: "Studio is closed on this day." };
 		}
@@ -69,7 +74,7 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 	}
 
 	// RULE 2: Anti-Conflict Verification (Google Calendar FreeBusy API)
-	const isFree = await checkAvailability(accessToken, data.isoStart, data.isoEnd);
+	const isFree = await checkAvailability(accessToken, isoStart, isoEnd);
 	if (!isFree) {
 		return { error: "Slot is already booked. Conflict detected." };
 	}
@@ -78,8 +83,8 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 	try {
 		const newEvent = await createStudioEvent(accessToken, {
 			title: data.title,
-			startTime: data.isoStart,
-			endTime: data.isoEnd,
+			startTime: isoStart,
+			endTime: isoEnd,
 			type: data.type,
 			outdoorPrice: data.outdoorPrice,
 			b2bPrice: data.b2bPrice,

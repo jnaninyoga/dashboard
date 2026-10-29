@@ -20,24 +20,31 @@ import { getB2BPricingTiers } from "@/lib/actions/settings";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { studioDateString, toStudioTime } from "@/lib/utils/time";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, parse } from "date-fns";
 import { CalendarAdd, Refresh } from "iconsax-reactjs";
 
-const todayStr = () => format(new Date(), "yyyy-MM-dd");
-const currentHourStr = () => format(new Date(), "HH:00");
+const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+const currentHourStr = () => hour(toStudioTime().getHours());
 
-const freshSession = (): SessionFormValues => ({
-	title: "",
-	dateStr: todayStr(),
-	startTimeStr: "08:00",
-	endTimeStr: "09:00",
-	type: "group",
-	outdoorPrice: "",
-	b2bTierId: "",
-});
+// A new session starts at the next full hour on the studio's clock; late in
+// the evening, at 08:00 the next morning.
+const freshSession = (): SessionFormValues => {
+	const next = toStudioTime().getHours() + 1;
+	const tomorrow = next > 21;
+	const start = tomorrow ? 8 : next;
+	return {
+		title: "",
+		dateStr: studioDateString(tomorrow ? new Date(Date.now() + 86_400_000) : new Date()),
+		startTimeStr: hour(start),
+		endTimeStr: hour(start + 1),
+		type: "group",
+		outdoorPrice: "",
+		b2bTierId: "",
+	};
+};
 
 export function NewSessionDialog({
 	open,
@@ -88,22 +95,10 @@ export function NewSessionDialog({
 
 	const selectedType = useWatch({ control, name: "type" });
 	const selectedDate = useWatch({ control, name: "dateStr" });
-	const isToday = selectedDate === todayStr();
+	const isToday = selectedDate === studioDateString();
 
 	const onSubmit = async (data: SessionFormValues) => {
 		try {
-			const startDateTime = parse(
-				`${data.dateStr} ${data.startTimeStr}`,
-				"yyyy-MM-dd HH:mm",
-				new Date(),
-			);
-			const endDateTime = parse(
-				`${data.dateStr} ${data.endTimeStr}`,
-				"yyyy-MM-dd HH:mm",
-				new Date(),
-			);
-
-			const weekday = startDateTime.getDay();
 			const parsePrice =
 				data.type === "outdoor" && data.outdoorPrice
 					? Number(data.outdoorPrice)
@@ -120,40 +115,11 @@ export function NewSessionDialog({
 				}
 			}
 
-			const formatIsoWithOffset = (date: Date) => {
-				const tzOffset = -date.getTimezoneOffset();
-				const diff = tzOffset >= 0 ? "+" : "-";
-				const pad = (num: number) => {
-					const norm = Math.floor(Math.abs(num));
-					return (norm < 10 ? "0" : "") + norm;
-				};
-				return (
-					date.getFullYear() +
-					"-" +
-					pad(date.getMonth() + 1) +
-					"-" +
-					pad(date.getDate()) +
-					"T" +
-					pad(date.getHours()) +
-					":" +
-					pad(date.getMinutes()) +
-					":" +
-					pad(date.getSeconds()) +
-					diff +
-					pad(tzOffset / 60) +
-					":" +
-					pad(tzOffset % 60)
-				);
-			};
-
 			const payload: ScheduleEventInput = {
 				title: data.title,
 				dateStr: data.dateStr,
 				startTimeStr: data.startTimeStr,
 				endTimeStr: data.endTimeStr,
-				isoStart: formatIsoWithOffset(startDateTime),
-				isoEnd: formatIsoWithOffset(endDateTime),
-				weekday,
 				type: data.type,
 				outdoorPrice: parsePrice,
 				b2bPrice,
@@ -292,7 +258,7 @@ export function NewSessionDialog({
 							control={control}
 							name="dateStr"
 							render={({ field }) => (
-								<Input type="date" min={todayStr()} {...field} />
+								<Input type="date" min={studioDateString()} {...field} />
 							)}
 						/>
 						{errors.dateStr ? (
