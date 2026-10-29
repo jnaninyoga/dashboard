@@ -1,5 +1,7 @@
-// The studio runs on Marrakech time whatever the server's clock says
-// (production servers run in UTC, an hour off for most of the year).
+// The studio runs on Marrakech time whatever the server's clock says.
+// Morocco's offset changes by decree (Ramadan; UTC+1 → UTC+0 on 20 Sep 2026),
+// so always go through the zone database, never a fixed offset, and keep
+// Node current: its bundled tz data decides what "now in Marrakech" is.
 export const STUDIO_TIME_ZONE = "Africa/Casablanca";
 
 const wallClockParts = new Intl.DateTimeFormat("en-US", {

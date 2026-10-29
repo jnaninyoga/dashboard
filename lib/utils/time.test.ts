@@ -2,15 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import { getDayPeriod, toStudioTime } from "./time";
 
+// Morocco's offset is set by decree (Ramadan, and the move to UTC+0 on
+// 20 Sep 2026), so these use dates every current tz database agrees on
+// rather than "today's" offset.
 describe("toStudioTime", () => {
 	it("reads the clock in Marrakech, not the server's zone", () => {
-		// Casablanca is UTC+1 outside Ramadan: 11:30 UTC is 12:30 at the studio.
-		expect(toStudioTime(new Date("2026-10-28T11:30:00Z")).getHours()).toBe(12);
+		// June 2026: UTC+1, so 11:30 UTC is 12:30 at the studio.
+		expect(toStudioTime(new Date("2026-06-15T11:30:00Z")).getHours()).toBe(12);
 	});
 
 	it("rolls the date over at the studio's midnight", () => {
-		const late = toStudioTime(new Date("2026-10-28T23:30:00Z"));
-		expect(late.getDate()).toBe(29);
+		const late = toStudioTime(new Date("2026-06-15T23:30:00Z"));
+		expect(late.getDate()).toBe(16);
 		expect(late.getHours()).toBe(0);
 	});
 
