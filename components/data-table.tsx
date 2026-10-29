@@ -33,6 +33,15 @@ import {
 } from "@tanstack/react-table";
 import { ArrowDown2, ArrowLeft2, ArrowRight2, ArrowUp2, Category } from "iconsax-reactjs";
 
+declare module "@tanstack/react-table" {
+	// The declaration must repeat the library's type parameters to merge with it.
+	// eslint-disable-next-line unused-imports/no-unused-vars
+	interface ColumnMeta<TData, TValue> {
+		/** Classes for the column's header and cells (width, alignment). */
+		className?: string;
+	}
+}
+
 type DataTableProps<TData, TValue> = {
 	data: TData[];
 	columns: ColumnDef<TData, TValue>[];
@@ -193,7 +202,10 @@ export function DataTable<TData, TValue>({
 													aria-sort={
 														sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined
 													}
-													className="px-3 whitespace-nowrap first:pl-5 last:pr-5"
+													className={cn(
+														"px-3 whitespace-nowrap first:pl-5 last:pr-5",
+														header.column.columnDef.meta?.className,
+													)}
 												>
 													{header.isPlaceholder ? null : header.column.getCanSort() ? (
 														<button
@@ -228,7 +240,13 @@ export function DataTable<TData, TValue>({
 										)}
 									>
 										{row.getVisibleCells().map((cell) => (
-											<TableCell key={cell.id} className="px-3 py-3 whitespace-nowrap first:pl-5 last:pr-5">
+											<TableCell
+												key={cell.id}
+												className={cn(
+													"px-3 py-3 whitespace-nowrap first:pl-5 last:pr-5",
+													cell.column.columnDef.meta?.className,
+												)}
+											>
 												{flexRender(cell.column.columnDef.cell, cell.getContext())}
 											</TableCell>
 										))}

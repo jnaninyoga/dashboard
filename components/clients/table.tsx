@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { creditsSummary, lastVisitLabel } from "@/lib/domain/clients/card";
@@ -31,6 +33,9 @@ export type ClientWithRelations = Client & {
 	activeSessionName?: string;
 };
 
+// The figure columns keep the card's breathing room between them.
+const figureColumn = "px-5";
+
 const contactButton =
 	"flex size-9 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95";
 
@@ -41,10 +46,13 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 		id: "client",
 		accessorKey: "fullName",
 		header: "Client",
+		// The client column takes the spare width; the name shortens only when
+		// the table has no room left.
+		meta: { className: "w-full max-w-0" },
 		cell: ({ row }) => {
 			const client = row.original;
 			return (
-				<div className="flex items-center gap-3">
+				<div className="flex min-w-52 items-center gap-3">
 					<div className="relative shrink-0">
 						<ClientAvatar client={client} className="size-10" />
 						{client.checkedInToday ? (
@@ -54,15 +62,21 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 							/>
 						) : null}
 					</div>
-					<span title={client.fullName} className="text-foreground max-w-48 truncate font-medium 2xl:max-w-56">
+					{/* A real link, so the profile is reachable by keyboard too. */}
+					<Link
+						href={`/clients/${client.id}`}
+						title={client.fullName}
+						className="text-foreground hover:text-primary focus-visible:ring-ring truncate rounded-sm font-medium transition-colors outline-none focus-visible:ring-2"
+					>
 						{client.fullName}
-					</span>
+					</Link>
 				</div>
 			);
 		},
 	},
 	{
 		id: "lastVisit",
+		meta: { className: figureColumn },
 		header: "Last visit",
 		// Here today sorts first, then the most recent visits.
 		accessorFn: (c) =>
@@ -85,6 +99,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 	},
 	{
 		id: "credits",
+		meta: { className: figureColumn },
 		header: "Credits left",
 		accessorFn: (c) => c.wallets?.[0]?.remainingCredits ?? -1,
 		cell: ({ row }) => {
@@ -107,6 +122,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 	},
 	{
 		id: "visits",
+		meta: { className: figureColumn },
 		header: "This month",
 		accessorFn: (c) => c.visitsThisMonth ?? 0,
 		sortDescFirst: true,
