@@ -1,0 +1,81 @@
+import { describe, expect, it } from "vitest";
+
+import {
+	allocatePayment,
+	isPayableInvoice,
+	orderPaymentQueue,
+	outstandingOf,
+} from "./payments";
+
+const inv = (id: string, documentNumber: string, totalAmount: number, amountPaid = 0) => ({
+	id,
+	documentNumber,
+	totalAmount,
+	amountPaid,
+});
+
+describe("isPayableInvoice", () => {
+	it("accepts issued invoices that still owe money, including 'unpaid'", () => {
+		for (const status of ["sent", "unpaid", "partially_paid"]) {
+			expect(isPayableInvoice({ type: "invoice", status })).toBe(true);
+		}
+	});
+
+	it("rejects quotes, drafts, paid, cancelled and archived invoices", () => {
+		expect(isPayableInvoice({ type: "quote", status: "sent" })).toBe(false);
+		expect(isPayableInvoice({ type: "invoice", status: "draft" })).toBe(false);
+		expect(isPayableInvoice({ type: "invoice", status: "paid" })).toBe(false);
+		expect(isPayableInvoice({ type: "invoice", status: "cancelled" })).toBe(false);
+		expect(isPayableInvoice({ type: "invoice", status: "sent", archivedAt: new Date() })).toBe(false);
+	});
+});
+
+describe("orderPaymentQueue", () => {
+	it("puts the invoice being viewed first, then the rest oldest number first", () => {
+		const queue = orderPaymentQueue("b", [
+			inv("c", "FAC-2026-003", 100),
+			inv("a", "FAC-2026-001", 100),
+			inv("b", "FAC-2026-002", 100),
+		]);
+		expect(queue.map((q) => q.id)).toEqual(["b", "a", "c"]);
+	});
+});
+
+describe("allocatePayment", () => {
+	it("pays the viewed invoice first and spills the excess onto the next", () => {
+		const queue = orderPaymentQueue("b", [inv("a", "FAC-1", 1000), inv("b", "FAC-2", 600)]);
+		const result = allocatePayment(queue, 800);
+		expect(result.map((r) => [r.id, r.applied, r.becomesPaid])).toEqual([
+			["b", 600, true],
+			["a", 200, false],
+		]);
+	});
+
+	it("takes earlier payments into account", () => {
+		const [only] = allocatePayment([inv("a", "FAC-1", 1000, 400)], 600);
+		expect(only).toMatchObject({ due: 600, applied: 600, becomesPaid: true });
+	});
+
+	it("settles in centimes, so 0.1 + 0.2 style drift can't leave a cent owing", () => {
+		const [only] = allocatePayment([inv("a", "FAC-1", 0.3, 0.1)], 0.2);
+		expect(only.becomesPaid).toBe(true);
+	});
+
+	it("never applies more than what is owed, nor anything for zero or negative amounts", () => {
+		expect(allocatePayment([inv("a", "FAC-1", 100)], 250)[0].applied).toBe(100);
+		expect(allocatePayment([inv("a", "FAC-1", 100)], 0)[0].applied).toBe(0);
+		expect(allocatePayment([inv("a", "FAC-1", 100)], -5)[0].applied).toBe(0);
+	});
+
+	it("skips invoices that are already settled", () => {
+		const result = allocatePayment([inv("a", "FAC-1", 100, 100), inv("b", "FAC-2", 50)], 50);
+		expect(result.map((r) => r.applied)).toEqual([0, 50]);
+		expect(result[0].becomesPaid).toBe(false);
+	});
+});
+
+describe("outstandingOf", () => {
+	it("sums what is still owed across the queue, ignoring overpaid rows", () => {
+		expect(outstandingOf([inv("a", "FAC-1", 1000, 400), inv("b", "FAC-2", 600), inv("c", "FAC-3", 100, 150)])).toBe(1200);
+	});
+});
