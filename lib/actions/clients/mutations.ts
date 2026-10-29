@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
 import { logServerError } from "@/lib/errors/server";
 import { Gender, type NewHealthLog } from "@/lib/types";
+import { studioDateString } from "@/lib/utils/time";
 import { clientSchema } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
@@ -158,7 +159,7 @@ export async function createClientAction(
 			const newClientId = clientWithId[0].id;
 
 			const logsToInsert: NewHealthLog[] = [];
-			const nowStr = new Date().toISOString().split("T")[0];
+			const nowStr = studioDateString();
 
 			if (parsed.data.healthLogs && parsed.data.healthLogs.length > 0) {
 				parsed.data.healthLogs.forEach((log) => {
@@ -197,7 +198,7 @@ export async function createClientAction(
 		});
 
 		revalidatePath("/clients");
-		return { success: true };
+		return { success: true, id: clientWithId[0]?.id };
 	} catch (err: unknown) {
 		// The raw message (database or Google) means nothing to the operator;
 		// the code ties her report to the logged cause.
@@ -276,7 +277,7 @@ export async function updateClientAction(
 				where: eq(healthLogs.clientId, id),
 			});
 
-			const nowStr = new Date().toISOString().split("T")[0];
+			const nowStr = studioDateString();
 
 			if (submittedLogs && submittedLogs.length > 0) {
 				const submittedConditions = new Set(
