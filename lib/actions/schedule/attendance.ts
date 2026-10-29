@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
-import { attendanceLedger, clients,clientWallets } from "@/services/database/schema";
+import { attendanceLedger, clients, clientWallets, healthLogs } from "@/services/database/schema";
 import { HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
@@ -132,10 +132,20 @@ export async function getEventAttendanceAction(eventId: string): Promise<Attenda
 		.where(eq(attendanceLedger.googleEventId, eventId))
 		.orderBy(desc(attendanceLedger.checkInTime));
 
-	// Convert Date to ISO string for consistency in the frontend if needed
-	return records.map(r => ({
+	// Active alerts travel with each attendee, so the health panel is right
+	// after a reload too, not only right after the check-in.
+	const clientIds = [...new Set(records.map((r) => r.client.id))];
+	const alerts = clientIds.length
+		? await db
+				.select()
+				.from(healthLogs)
+				.where(and(inArray(healthLogs.clientId, clientIds), eq(healthLogs.isAlert, true)))
+		: [];
+
+	return records.map((r) => ({
 		...r,
 		checkInTime: r.checkInTime.toISOString(),
-		slotType: r.slotType as JnaninEventType
+		slotType: r.slotType as JnaninEventType,
+		client: { ...r.client, healthLogs: alerts.filter((log) => log.clientId === r.client.id) },
 	}));
 }
