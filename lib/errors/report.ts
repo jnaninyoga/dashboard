@@ -38,7 +38,9 @@ export function buildErrorReport({
 		code: code ?? digest ?? newErrorCode(),
 		message: err.message || "Unknown error",
 		page: inBrowser ? window.location.pathname + window.location.search : "",
-		time: `${new Date().toLocaleString("en-GB", { timeZone: STUDIO_TIME_ZONE })} (Marrakech)`,
+		// The UTC stamp is exact whatever the browser's tz data says (some still
+		// put Marrakech at UTC+1), and it's what server logs use.
+		time: `${new Date().toLocaleString("en-GB", { timeZone: STUDIO_TIME_ZONE })} Marrakech (${new Date().toISOString().slice(0, 19).replace("T", " ")} UTC)`,
 		version: process.env.NEXT_PUBLIC_APP_VERSION || "dev",
 		device: inBrowser ? navigator.userAgent : "",
 		stack: err.stack?.split("\n").slice(0, 12).join("\n"),

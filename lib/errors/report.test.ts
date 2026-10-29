@@ -30,10 +30,11 @@ describe("buildErrorReport", () => {
 describe("report text and email", () => {
 	const report = buildErrorReport({ error: new Error("Failed to record payment"), code: "JY-7K2Q9M" });
 
-	it("contains the code and what happened", () => {
+	it("contains the code, what happened and an exact UTC time", () => {
 		const text = formatErrorReport(report);
 		expect(text).toContain("Error code: JY-7K2Q9M");
 		expect(text).toContain("What happened: Failed to record payment");
+		expect(text).toMatch(/When: .+ Marrakech \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} UTC\)/);
 	});
 
 	it("offers no email link when no developer address is configured", () => {

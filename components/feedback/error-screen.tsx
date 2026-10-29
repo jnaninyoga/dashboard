@@ -43,6 +43,11 @@ export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenPro
 
 	const code = report?.code ?? error.digest;
 	const mailto = report ? errorReportMailto(report) : null;
+	// A response cut off mid-way (weak signal, server restart): Firefox says
+	// "Error in input stream", Chrome "Failed to fetch", Safari "Load failed".
+	const lostConnection = /input stream|failed to fetch|load failed|networkerror|network error/i.test(
+		error.message,
+	);
 
 	const copy = async () => {
 		if (!report) return;
@@ -73,8 +78,9 @@ export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenPro
 						Something drifted away
 					</h1>
 					<p className="text-muted-foreground leading-relaxed">
-						This page ran into a problem. What you saved is safe. Try again,
-						and if it keeps happening, send the report below to your developer.
+						{lostConnection
+							? "The page stopped loading halfway: the connection or the server dropped. What you saved is safe. Try again; if it keeps happening, send the report below to your developer."
+							: "This page ran into a problem. What you saved is safe. Try again, and if it keeps happening, send the report below to your developer."}
 					</p>
 				</div>
 
