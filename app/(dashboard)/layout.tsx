@@ -38,7 +38,7 @@ export default async function DashboardLayout({
 		<SidebarProvider>
 			<AppSidebar user={getUserProfile(user)} />
 			<SidebarInset>
-				<header className="bg-background/80 border-border/50 sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur-xl sm:px-6 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+				<header className="bg-background/80 border-border/50 sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-6">
 					<div className="flex items-center gap-2">
 						<SidebarTrigger className="-ml-1 min-h-[48px] min-w-[48px]" />
 					</div>
