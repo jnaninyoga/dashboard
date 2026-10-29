@@ -4,7 +4,7 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
 
 ## Phase 1: client card
 
-- [ ] **Task 1: Compact client card in the grid, with health alerts in a toast** (M)
+- [x] **Task 1: Compact client card in the grid, with health alerts in a toast** (M)
   - Acceptance:
     - At 390×844, at least four cards fit on one screen.
     - The card shows the photo or initial (green dot when checked in today), the name, one line with credits ("6 credits left", amber at 2 or fewer, "No active card" muted) and the session name when checked in. Then a health button (when there are alerts), WhatsApp and call, all 40px; email moves to the ⋮ menu.
@@ -12,13 +12,13 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
   - Verify: unit tests for the credits line and alert ordering; browser audit at 390 (sizes, text, no sideways scroll); a screenshot.
   - Files: `components/clients/client-card.tsx` (new), `components/clients/grid.tsx`, `components/clients/actions.tsx`, `lib/domain/clients/card.ts` (new) and its test.
 
-- [ ] **Task 2: The table's phone view uses the same card** (S)
+- [x] **Task 2: The table's phone view uses the same card** (S)
   - Acceptance: on a phone, the table view shows the same card as the grid; the desktop table is unchanged.
   - Verify: browser at 390 and 1366, `?view=table`.
   - Files: `components/clients/table.tsx`.
 
 ### Checkpoint A
-- [ ] Tests, type-check and lint pass. Show the owner the card at phone width.
+- [x] Tests, type-check and lint pass. Show the owner the card at phone width.
 
 ## Phase 2: navigation
 
