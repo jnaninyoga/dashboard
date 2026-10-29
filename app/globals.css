@@ -229,10 +229,11 @@
 }
 
 /* ─── Lotus pond: backdrop of the login, error and not-found screens ───
-   A lotus resting on still water and sending out rings, petals tumbling
-   down, light glinting on the surface, and dawn light breathing in (4s) and
-   out (6s). Transform/opacity only; each element
-   reads its own timing from --custom properties set by the component. */
+   Dawn over the High Atlas with a lotus pond in front: the sun rising behind
+   three ranges and laying its path on the water, pads in perspective, rings
+   around the lotus, tumbling petals, reeds, drifting haze and passing birds.
+   Transform/opacity only; each element reads its own timing from --custom
+   properties set by the component. */
 @keyframes petal-fall {
 	0% {
 		transform: translate3d(0, -12vh, 0);
@@ -288,15 +289,15 @@
 		transform: translateY(-4px) rotate(1.2deg);
 	}
 }
-@keyframes glint {
+@keyframes shimmer {
 	0%,
 	100% {
-		transform: translateX(-3vw) scaleX(0.6);
-		opacity: 0;
+		transform: translateX(-50%) scaleX(0.65);
+		opacity: 0.2;
 	}
 	50% {
-		transform: translateX(3vw) scaleX(1);
-		opacity: 0.85;
+		transform: translateX(-50%) scaleX(1);
+		opacity: 0.95;
 	}
 }
 @keyframes dawn-breath {
@@ -310,6 +311,49 @@
 		opacity: 0.95;
 	}
 }
+@keyframes glow-breath {
+	0%,
+	100% {
+		transform: translate(-50%, -50%) scale(1);
+		opacity: 0.7;
+	}
+	40% {
+		transform: translate(-50%, -50%) scale(1.08);
+		opacity: 1;
+	}
+}
+@keyframes haze-drift {
+	from {
+		transform: translateX(-4vw);
+	}
+	to {
+		transform: translateX(4vw);
+	}
+}
+@keyframes bird-cross {
+	from {
+		transform: translate3d(-8vw, 0, 0);
+	}
+	to {
+		transform: translate3d(108vw, -5vh, 0);
+	}
+}
+@keyframes bird-flap {
+	from {
+		transform: scaleY(1);
+	}
+	to {
+		transform: scaleY(0.35);
+	}
+}
+@keyframes reed-sway {
+	from {
+		transform: rotate(-2.5deg);
+	}
+	to {
+		transform: rotate(2deg);
+	}
+}
 
 @layer components {
 	.lotus-pond {
@@ -318,6 +362,10 @@
 		z-index: 0;
 		overflow: hidden;
 		pointer-events: none;
+
+		--horizon: 60%;
+		--range-h: clamp(110px, 28vh, 300px);
+		--sun-size: clamp(64px, 10vmin, 128px);
 
 		--pond-petal: var(--color-secondary);
 		--pond-petal-tip: color-mix(in oklab, var(--color-secondary-3) 70%, var(--color-secondary));
@@ -333,16 +381,29 @@
 		--pond-leaf: color-mix(in oklab, var(--color-primary) 30%, var(--color-accent));
 		--pond-leaf-deep: color-mix(in oklab, var(--color-primary) 62%, var(--color-accent));
 		--pond-vein: color-mix(in oklab, white 35%, transparent);
-		--pond-water: color-mix(in oklab, var(--color-accent) 45%, transparent);
-		--pond-ring: color-mix(in oklab, var(--color-primary) 70%, transparent);
-		--pond-glint: color-mix(in oklab, var(--color-primary) 30%, white);
+		--pond-ring: color-mix(in oklab, var(--color-primary) 60%, transparent);
+		--pond-glint: color-mix(in oklab, var(--color-secondary) 50%, white);
 		--pond-mist: color-mix(in oklab, var(--color-accent) 55%, color-mix(in oklab, var(--color-primary) 25%, transparent));
-		--pond-dawn: color-mix(in oklab, var(--color-secondary-2) 60%, transparent);
 		--pond-glow: color-mix(in oklab, var(--color-secondary-2) 70%, transparent);
+		--pond-sky: color-mix(in oklab, var(--color-secondary-2) 55%, transparent);
+		--pond-sun: color-mix(in oklab, var(--color-secondary-2) 75%, white);
+		--pond-sun-core: color-mix(in oklab, white 80%, var(--color-secondary));
+		--pond-sun-glow: color-mix(in oklab, var(--color-secondary-2) 60%, transparent);
+		--pond-range-far: color-mix(in oklab, var(--color-accent) 45%, color-mix(in oklab, var(--color-secondary) 45%, var(--color-background)));
+		--pond-range-mid: color-mix(in oklab, var(--color-primary) 20%, color-mix(in oklab, var(--color-accent) 50%, var(--color-background)));
+		--pond-range-near: color-mix(in oklab, var(--color-primary) 34%, var(--color-accent));
+		--pond-haze: color-mix(in oklab, white 70%, transparent);
+		--pond-water-top: color-mix(in oklab, var(--color-accent) 55%, var(--color-background));
+		--pond-water-deep: color-mix(in oklab, var(--color-primary) 34%, var(--color-accent));
+		--pond-reflection: 0.3;
+		--pond-streak: color-mix(in oklab, white 65%, transparent);
+		--pond-bird: color-mix(in oklab, var(--color-foreground) 45%, transparent);
+		--pond-reed: color-mix(in oklab, var(--color-primary) 55%, var(--color-accent));
 		--pond-dim: 1;
 	}
 	/* By night the theme's blush turns to deep maroon, which would make the
-	   lotus muddy; the pond keeps pale petals glowing over dark leaves. */
+	   lotus muddy: the pond keeps pale petals glowing over dark leaves, and
+	   the sun becomes a moon over dark ranges. */
 	.dark .lotus-pond {
 		--pond-petal: #f3c9c2;
 		--pond-petal-tip: #d98e8a;
@@ -357,26 +418,122 @@
 		--pond-leaf: #24606b;
 		--pond-leaf-deep: #123840;
 		--pond-vein: color-mix(in oklab, #8cc9d2 30%, transparent);
-		--pond-ring: color-mix(in oklab, var(--color-primary) 45%, transparent);
-		--pond-glint: color-mix(in oklab, #cfe9ed 70%, transparent);
-		--pond-mist: color-mix(in oklab, var(--color-accent) 60%, transparent);
+		--pond-ring: color-mix(in oklab, var(--color-primary) 40%, transparent);
+		--pond-glint: color-mix(in oklab, #e9eef0 80%, transparent);
+		--pond-mist: color-mix(in oklab, var(--color-accent) 50%, transparent);
 		--pond-glow: color-mix(in oklab, #d98e8a 28%, transparent);
+		--pond-sky: color-mix(in oklab, #1d5c6a 45%, transparent);
+		--pond-sun: #dfe8ea;
+		--pond-sun-core: #f7fafa;
+		--pond-sun-glow: color-mix(in oklab, #cfe9ed 22%, transparent);
+		--pond-range-far: #1a3a41;
+		--pond-range-mid: #122a30;
+		--pond-range-near: #0c1d21;
+		--pond-haze: color-mix(in oklab, #8cc9d2 14%, transparent);
+		--pond-water-top: #12292e;
+		--pond-water-deep: #0a181b;
+		--pond-reflection: 0.45;
+		--pond-streak: color-mix(in oklab, #8cc9d2 22%, transparent);
+		--pond-bird: color-mix(in oklab, #cfe9ed 40%, transparent);
+		--pond-reed: #1c464e;
 		--pond-dim: 0.8;
+	}
+	.lotus-pond .sky {
+		position: absolute;
+		inset: 0 0 auto 0;
+		height: var(--horizon);
+		background: linear-gradient(to bottom, transparent 25%, var(--pond-sky));
 	}
 	.lotus-pond .dawn {
 		position: absolute;
 		border-radius: 9999px;
 		animation: dawn-breath 10s ease-in-out infinite;
 	}
+	/* The sun sits low behind the ranges, half hidden by them. */
+	.lotus-pond .sun,
+	.lotus-pond .sun-glow {
+		position: absolute;
+		top: calc(var(--horizon) - var(--range-h) * 0.62);
+		border-radius: 9999px;
+		transform: translate(-50%, -50%);
+	}
+	.lotus-pond .sun {
+		width: var(--sun-size);
+		height: var(--sun-size);
+		background: radial-gradient(circle, var(--pond-sun-core) 0 38%, var(--pond-sun) 66%, transparent 71%);
+	}
+	.lotus-pond .sun-glow {
+		width: calc(var(--sun-size) * 7);
+		height: calc(var(--sun-size) * 7);
+		background: radial-gradient(circle, var(--pond-sun-glow), transparent 62%);
+		animation: glow-breath 10s ease-in-out infinite;
+	}
+	.lotus-pond .bird {
+		position: absolute;
+		left: 0;
+		animation: bird-cross linear infinite;
+	}
+	.lotus-pond .bird svg {
+		display: block;
+		stroke: var(--pond-bird);
+		animation: bird-flap 0.8s ease-in-out infinite alternate;
+	}
+	.lotus-pond .ranges,
+	.lotus-pond .reflection {
+		position: absolute;
+		inset-inline: 0;
+		height: var(--range-h);
+	}
+	.lotus-pond .ranges {
+		bottom: calc(100% - var(--horizon));
+	}
+	.lotus-pond .haze {
+		position: absolute;
+		inset-inline: -10%;
+		top: calc(var(--horizon) - 6vh);
+		height: 12vh;
+		background: radial-gradient(farthest-side, var(--pond-haze), transparent);
+		animation: haze-drift 40s ease-in-out infinite alternate;
+	}
 	.lotus-pond .water {
 		position: absolute;
-		inset: auto 0 0 0;
-		height: 42%;
-		background: linear-gradient(
-			to top,
-			var(--pond-water),
-			transparent
-		);
+		inset: var(--horizon) 0 0 0;
+		background: linear-gradient(to bottom, var(--pond-water-top), var(--pond-water-deep));
+	}
+	/* The ranges mirrored in the water, fading with depth. */
+	.lotus-pond .reflection {
+		top: var(--horizon);
+		opacity: var(--pond-reflection);
+		filter: blur(1px);
+		mask-image: linear-gradient(to bottom, black, transparent 85%);
+	}
+	.lotus-pond .reflection svg {
+		transform: scaleY(-1);
+	}
+	.lotus-pond .sun-reflection {
+		position: absolute;
+		top: var(--horizon);
+		width: calc(var(--sun-size) * 1.6);
+		height: 34%;
+		transform: translateX(-50%);
+		background: radial-gradient(ellipse at top, var(--pond-sun-glow), transparent 70%);
+	}
+	.lotus-pond .glint {
+		position: absolute;
+		height: 2px;
+		border-radius: 9999px;
+		background: linear-gradient(90deg, transparent, var(--pond-glint), transparent);
+		opacity: 0;
+		transform: translateX(-50%);
+		animation: shimmer 6s ease-in-out infinite;
+	}
+	/* Faint wind lines that give the open water a surface. */
+	.lotus-pond .streak {
+		position: absolute;
+		height: 1px;
+		transform: translateX(-50%);
+		background: linear-gradient(90deg, transparent, var(--pond-streak), transparent);
+		animation: haze-drift 30s ease-in-out infinite alternate;
 	}
 	.lotus-pond .ripple {
 		position: absolute;
@@ -387,19 +544,6 @@
 		opacity: 0;
 		animation: pond-ripple var(--ripple-time) cubic-bezier(0.2, 0.6, 0.3, 1) var(--ripple-delay) infinite;
 	}
-	.lotus-pond .glint {
-		position: absolute;
-		height: 2px;
-		border-radius: 9999px;
-		background: linear-gradient(
-			90deg,
-			transparent,
-			var(--pond-glint),
-			transparent
-		);
-		opacity: 0;
-		animation: glint 10s ease-in-out infinite;
-	}
 	/* Anchored at the pad's centre on the water line (y=92 of 120). */
 	.lotus-pond .lily {
 		position: absolute;
@@ -408,16 +552,38 @@
 	.lotus-pond .lily > div {
 		animation: lily-bob 8s ease-in-out infinite alternate;
 	}
+	/* Distant pads are seen at a shallower angle. */
+	.lotus-pond .lily .pad {
+		transform: scaleY(var(--pad-squash, 1));
+		transform-box: fill-box;
+		transform-origin: center;
+	}
 	.lotus-pond .lily .halo {
 		position: absolute;
 		inset: -45% -25% -10%;
 		border-radius: 9999px;
-		background: radial-gradient(
-			closest-side,
-			var(--pond-glow),
-			transparent
-		);
+		background: radial-gradient(closest-side, var(--pond-glow), transparent);
 		animation: dawn-breath 10s ease-in-out infinite;
+	}
+	.lotus-pond .reeds {
+		position: absolute;
+		bottom: -4px;
+		/* Phones are tall and narrow: size by width too, or they crowd the lotus. */
+		height: clamp(120px, min(30vh, 38vw), 320px);
+		aspect-ratio: 120 / 260;
+		overflow: visible;
+	}
+	.lotus-pond .reeds.left {
+		left: -12px;
+	}
+	.lotus-pond .reeds.right {
+		right: -12px;
+		transform: scaleX(-1);
+	}
+	.lotus-pond .reeds .blade {
+		transform-box: fill-box;
+		transform-origin: 50% 100%;
+		animation: reed-sway 7s ease-in-out infinite alternate;
 	}
 	.lotus-pond .petal {
 		position: absolute;
@@ -435,7 +601,7 @@
 		transform-style: preserve-3d;
 		animation: petal-flutter var(--petal-flutter-time) ease-in-out var(--petal-delay) infinite alternate;
 	}
-	/* Reduced motion: a still pond, petals resting where they are. */
+	/* Reduced motion: a still scene, everything resting where it is. */
 	@media (prefers-reduced-motion: reduce) {
 		.lotus-pond * {
 			animation: none !important;
@@ -450,6 +616,12 @@
 		.lotus-pond .ripple {
 			opacity: calc(var(--ripple-opacity) * 0.45);
 			transform: translate(-50%, -50%) scale(var(--ripple-rest));
+		}
+		.lotus-pond .glint {
+			opacity: 0.6;
+		}
+		.lotus-pond .bird {
+			transform: translateX(var(--bird-rest));
 		}
 	}
 }
