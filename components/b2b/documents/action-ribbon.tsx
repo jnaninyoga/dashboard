@@ -13,6 +13,7 @@ import {
 	deleteDocumentAction,
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
+import { isPayableInvoice, orderPaymentQueue } from "@/lib/domain/billing/payments";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
 import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
 
@@ -104,46 +105,24 @@ export function DocumentActionRibbon({
 	const partnerIceValid = partnerIceDigits.length > 0;
 	const blockSendForMissingIce = isInvoice && !partnerIceValid;
 
-	// FIFO queue for the payment dialog: every open invoice in the same scope as
-	// the server, sorted by document number so the preview matches what
-	// recordDocumentPaymentAction will actually do.
-	const paymentQueue: PaymentQueueEntry[] = (() => {
-		const docPaid = (doc.payments || []).reduce(
-			(s, p) => s + Number(p.amount),
-			0,
-		);
-		const self =
-			isInvoice && (doc.status === "sent" || doc.status === "partially_paid")
-				? [
-						{
-							id: doc.id,
-							documentNumber: doc.documentNumber,
-							totalAmount: Number(doc.totalAmount),
-							amountPaid: docPaid,
-						},
-					]
-				: [];
-		const siblings = previousInvoices
-			.filter(
-				(inv) =>
-					inv &&
-					inv.id !== doc.id &&
-					!inv.archivedAt &&
-					(inv.status === "sent" || inv.status === "partially_paid"),
-			)
+	const canRecordPayment = isPayableInvoice(doc);
+
+	// Same scope and order as recordDocumentPaymentAction, so the dialog's
+	// preview is exactly what the server will do.
+	const paymentQueue: PaymentQueueEntry[] = orderPaymentQueue(
+		doc.id,
+		[doc, ...previousInvoices.filter((inv) => inv.id !== doc.id)]
+			.filter(isPayableInvoice)
 			.map((inv) => ({
-				id: inv.id as string,
-				documentNumber: inv.documentNumber as string,
+				id: inv.id,
+				documentNumber: inv.documentNumber,
 				totalAmount: Number(inv.totalAmount),
 				amountPaid: (inv.payments || []).reduce(
-					(s: number, p: { amount: string | number }) => s + Number(p.amount),
+					(s, p) => s + Number(p.amount),
 					0,
 				),
-			}));
-		return [...self, ...siblings].sort((a, b) =>
-			a.documentNumber.localeCompare(b.documentNumber),
-		);
-	})();
+			})),
+	);
 
 	return (
 		<div className="animate-slide-up bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
@@ -338,8 +317,8 @@ export function DocumentActionRibbon({
 					</Button>
 				) : null}
 
-				{/* Invoice Specific: Sent/Partially Paid -> Record Payment */}
-				{!doc.archivedAt && isInvoice && (doc.status === "sent" || doc.status === "partially_paid") ? (
+				{/* Invoice Specific: any issued, not fully paid invoice -> Record Payment */}
+				{canRecordPayment ? (
 					<>
                         <Button
                             onClick={() => setIsPaymentOpen(true)}

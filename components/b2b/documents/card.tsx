@@ -1,28 +1,22 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { 
-	DropdownMenu, 
-	DropdownMenuContent, 
-	DropdownMenuItem, 
-	DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import Link from "next/link";
+
 import { type DocumentWithContact } from "@/lib/types";
 
 import { format } from "date-fns";
-import { 
-	ArchiveBook,
-	CloseCircle,
-	DocumentDownload,
-	More,
-	ReceiptText,
-} from "iconsax-reactjs";
+import { ArrowRight2, ReceiptText } from "iconsax-reactjs";
 
 import { DocumentStatusBadge } from "./status-badge";
 
+// The whole card opens the document; its actions (PDF, payment, archive)
+// live on the detail page.
 export function DocumentCard({ doc }: { doc: DocumentWithContact }) {
 	return (
-		<div className="group border-secondary/10 bg-card hover:zen-shadow-md relative flex flex-col gap-4 overflow-hidden rounded-3xl border p-5 transition-all duration-300">
+		<Link
+			href={`/b2b/documents/${doc.id}`}
+			className="group border-secondary/10 bg-card hover:zen-shadow-md focus-visible:ring-ring relative flex flex-col gap-4 overflow-hidden rounded-3xl border p-5 transition-all duration-300 focus-visible:ring-2 focus-visible:outline-none"
+		>
 			<div className="flex items-start justify-between">
 				<div className="flex items-center gap-3">
 					<div className="bg-primary/5 text-primary group-hover:bg-primary shadow-primary/10 group-hover:text-primary-foreground flex h-11 w-11 items-center justify-center rounded-2xl transition-all group-hover:shadow-lg">
@@ -36,30 +30,10 @@ export function DocumentCard({ doc }: { doc: DocumentWithContact }) {
 					</div>
 				</div>
 
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="ghost" size="icon" className="hover:bg-secondary h-8 w-8 rounded-xl transition-all">
-							<More size={18} className="rotate-90" />
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end" className="border-secondary/10 w-48 rounded-2xl shadow-xl">
-						<DropdownMenuItem className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
-							<ReceiptText size={16} variant="Bulk" /> View Details
-						</DropdownMenuItem>
-						<DropdownMenuItem className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
-							<DocumentDownload size={16} variant="Bulk" /> Download PDF
-						</DropdownMenuItem>
-						<DropdownMenuItem className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase">
-							<ArchiveBook size={16} variant="Bulk" /> Archive
-						</DropdownMenuItem>
-						<DropdownMenuItem
-							variant="destructive"
-							className="cursor-pointer gap-2 p-3 text-[10px] font-bold tracking-widest uppercase"
-						>
-							<CloseCircle size={16} variant="Bulk" /> Cancel
-						</DropdownMenuItem>
-					</DropdownMenuContent>
-				</DropdownMenu>
+				<ArrowRight2
+					size={18}
+					className="text-muted-foreground mt-3 transition-transform group-hover:translate-x-0.5"
+				/>
 			</div>
 
 			<div className="flex flex-col gap-1 px-1">
@@ -89,6 +63,6 @@ export function DocumentCard({ doc }: { doc: DocumentWithContact }) {
 					</div>
 				</div>
 			</div>
-		</div>
+		</Link>
 	);
 }

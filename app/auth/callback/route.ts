@@ -37,7 +37,8 @@ export async function GET(request: Request) {
     }
   }
 
-  // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  // Back to the login page, which explains the sign-in didn't complete
+  const siteUrl = await getSiteUrl();
+  return NextResponse.redirect(`${siteUrl}/login?error=auth`);
 }
 

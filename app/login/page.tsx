@@ -5,7 +5,13 @@ import { loginWithGoogle } from "@/lib/actions/auth";
 
 import { Google } from "iconsax-reactjs";
 
-export default function LoginPage() {
+export default async function LoginPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ error?: string }>;
+}) {
+	const { error } = await searchParams;
+
 	return (
 		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
 			{/* Blooming Blossoms Animation */}
@@ -55,6 +61,15 @@ export default function LoginPage() {
 							</p>
 						</div>
 					</div> */}
+
+					{error ? (
+						<p
+							role="alert"
+							className="bg-destructive/5 text-destructive border-destructive/20 rounded-2xl border p-4 text-center text-sm font-medium"
+						>
+							Sign-in didn&apos;t complete. Please try again.
+						</p>
+					) : null}
 
 					{/* Sign In Button */}
 					<form action={loginWithGoogle}>

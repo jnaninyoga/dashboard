@@ -234,7 +234,7 @@ export async function updateClientAction(
 		address: getString(formData, "address"),
 		profession: getString(formData, "profession"),
 		birthDate: getString(formData, "birthDate"),
-		category: getString(formData, "category"),
+		categoryId: getString(formData, "categoryId"),
 		gender: getString(formData, "gender"),
 		referralSource: getString(formData, "referralSource"),
 		consultationReason: getString(formData, "consultationReason"),

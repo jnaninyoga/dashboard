@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { checkInClientAction } from "@/lib/actions/schedule/attendance";
@@ -41,11 +41,19 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
         }
     };
 
+    // Synchronous latch: state updates land a render late, so a fast double
+    // tap would otherwise fire two check-ins.
+    const checkInInFlight = useRef(false);
+
     const performCheckIn = async (clientId: string, clientData?: ClientWithLogs) => {
+        if (checkInInFlight.current) return;
+        checkInInFlight.current = true;
         setIsCheckingIn(true);
         try {
             const res = await checkInClientAction(clientId, eventId, eventType as JnaninEventType);
-            if (res.success) {
+            if (!res.success) {
+                toast.error(res.message);
+            } else {
                 toast.success(res.message);
                 
                 const newRecord: AttendanceRecord = {
@@ -65,6 +73,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
             const err = error as { message?: string };
             toast.error(err.message || "Failed to check-in client.");
         } finally {
+            checkInInFlight.current = false;
             setIsCheckingIn(false);
             setShowGuardrail(false);
             setSelectedClient(null);
