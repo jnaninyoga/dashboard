@@ -5,15 +5,15 @@ import { useEffect, useState } from "react";
 import { EntityCard, EntityCardFigures, EntityCardHeader, Figure } from "@/components/entity-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
-import { alertChipLabel, alertsSummary, creditsSummary, lastVisitLabel } from "@/lib/domain/clients/card";
-import { notify } from "@/lib/feedback/notify";
+import { creditsSummary, lastVisitLabel } from "@/lib/domain/clients/card";
 import { type Client as BaseClient, type HealthLog } from "@/lib/types";
 import { whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
 
-import { Call, Danger, Whatsapp } from "iconsax-reactjs";
+import { Call, Whatsapp } from "iconsax-reactjs";
 
 import { ClientActions } from "./actions";
+import { HealthAlertButton } from "./health-alert-button";
 
 /** What the card reads: the grid's and the list's client shapes both provide it. */
 type Client = BaseClient & {
@@ -66,8 +66,6 @@ export function ClientCard({ client }: { client: Client }) {
 	const visits = client.visitsThisMonth ?? 0;
 	// The list only loads active alerts.
 	const alerts = client.healthLogs ?? [];
-	const showAlerts = () =>
-		notify.warning(`Health alerts for ${client.fullName}`, alertsSummary(alerts), 8000);
 
 	return (
 		<EntityCard
@@ -105,23 +103,7 @@ export function ClientCard({ client }: { client: Client }) {
 					aside={
 						alerts.length > 0 ? (
 							// One clear signal with the client's figures; tap for the full list.
-							<button
-								type="button"
-								onClick={showAlerts}
-								title={alertChipLabel(alerts)}
-								aria-label={`Health alerts for ${client.fullName}: ${alertsSummary(alerts)}`}
-								className="relative flex size-11 items-center justify-center rounded-full bg-red-100 text-red-600 ring-4 ring-red-50 transition-colors hover:bg-red-200 active:scale-95 dark:bg-red-500/20 dark:text-red-300 dark:ring-red-500/10"
-							>
-								<Danger size={22} variant="Bold" />
-								{alerts.length > 1 ? (
-									<span
-										aria-hidden
-										className="ring-card absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white ring-2"
-									>
-										{alerts.length}
-									</span>
-								) : null}
-							</button>
+							<HealthAlertButton clientName={client.fullName} alerts={alerts} />
 						) : (
 							// The slot stays when there are no alerts, so the figures and the
 							// alert sit in the same place on every card.
