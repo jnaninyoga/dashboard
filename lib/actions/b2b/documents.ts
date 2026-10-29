@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import {
 	allocatePayment,
+	type DocumentStatusFilter,
 	orderPaymentQueue,
 	outstandingOf,
+	OWED_FILTER,
 	PAYABLE_INVOICE_STATUSES,
 } from "@/lib/domain/billing/payments";
 import { logServerError } from "@/lib/errors/server";
@@ -311,7 +313,7 @@ export async function unarchiveDocumentAction(
 export async function getDocumentsAction(filters?: {
 	query?: string;
 	type?: B2BDocumentType | "all";
-	status?: B2BDocumentStatus | "all";
+	status?: DocumentStatusFilter;
 	isBackorder?: boolean | "all";
 	includeArchived?: boolean;
 }): Promise<{ documents?: DocumentWithRelations[]; error?: string; ref?: string }> {
@@ -339,8 +341,13 @@ export async function getDocumentsAction(filters?: {
 					conditions.push(eq(docs.type, type));
 				}
 
-				if (status && status !== "all") {
-					conditions.push(eq(docs.status, status as B2BDocumentStatus));
+				if (status === OWED_FILTER) {
+					conditions.push(
+						eq(docs.type, "invoice"),
+						inArray(docs.status, [...PAYABLE_INVOICE_STATUSES]),
+					);
+				} else if (status && status !== "all") {
+					conditions.push(eq(docs.status, status));
 				}
 
 				if (filters?.isBackorder && filters.isBackorder !== "all") {

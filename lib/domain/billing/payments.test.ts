@@ -5,6 +5,7 @@ import {
 	isPayableInvoice,
 	orderPaymentQueue,
 	outstandingOf,
+	owedSummary,
 } from "./payments";
 
 const inv = (id: string, documentNumber: string, totalAmount: number, amountPaid = 0) => ({
@@ -77,5 +78,20 @@ describe("allocatePayment", () => {
 describe("outstandingOf", () => {
 	it("sums what is still owed across the queue, ignoring overpaid rows", () => {
 		expect(outstandingOf([inv("a", "FAC-1", 1000, 400), inv("b", "FAC-2", 600), inv("c", "FAC-3", 100, 150)])).toBe(1200);
+	});
+});
+
+describe("owedSummary", () => {
+	it("adds up what each invoice still owes after its payments, to the centime", () => {
+		const summary = owedSummary([
+			{ totalAmount: "1000.10", payments: [{ amount: "400.05" }] },
+			{ totalAmount: 600, payments: [] },
+			{ totalAmount: "0.30", payments: [{ amount: "0.10" }, { amount: "0.20" }] },
+		]);
+		expect(summary).toEqual({ amount: 1200.05, count: 3 });
+	});
+
+	it("never counts an overpaid invoice as negative", () => {
+		expect(owedSummary([{ totalAmount: 100, payments: [{ amount: 150 }] }]).amount).toBe(0);
 	});
 });

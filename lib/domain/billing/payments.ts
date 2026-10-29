@@ -8,6 +8,11 @@ export const PAYABLE_INVOICE_STATUSES = [
 	"partially_paid",
 ] as const satisfies readonly B2BDocumentStatus[];
 
+// Filter value for "every invoice that can still receive money", whatever
+// its exact status (an invoice confirmed directly stays "sent").
+export const OWED_FILTER = "owed";
+export type DocumentStatusFilter = B2BDocumentStatus | typeof OWED_FILTER | "all";
+
 export function isPayableInvoice(doc: {
 	type: string;
 	status: string;
@@ -78,4 +83,18 @@ export function allocatePayment<T extends PaymentTarget>(
 			becomesPaid: dueCents > 0 && appliedCents === dueCents,
 		};
 	});
+}
+
+type InvoiceWithPayments = {
+	totalAmount: string | number;
+	payments?: { amount: string | number }[] | null;
+};
+
+/** What a set of invoices still owes in total, from their totals and recorded payments. */
+export function owedSummary(invoices: InvoiceWithPayments[]): { amount: number; count: number } {
+	const cents = invoices.reduce((acc, invoice) => {
+		const paid = (invoice.payments ?? []).reduce((sum, p) => sum + toCents(Number(p.amount)), 0);
+		return acc + Math.max(0, toCents(Number(invoice.totalAmount)) - paid);
+	}, 0);
+	return { amount: fromCents(cents), count: invoices.length };
 }

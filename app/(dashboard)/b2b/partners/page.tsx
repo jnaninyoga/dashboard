@@ -5,8 +5,9 @@ import { PartnerTable } from "@/components/b2b/partners/table";
 import { PartnerViewToggle } from "@/components/b2b/partners/view-toggle";
 import { Button } from "@/components/ui/button";
 import { getPartnersAction } from "@/lib/actions/b2b/partners";
+import { type DocumentStatusFilter } from "@/lib/domain/billing/payments";
 import { View } from "@/lib/types";
-import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
+import { B2BDocumentType } from "@/lib/types/b2b";
 
 import { AddCircle } from "iconsax-reactjs";
 
@@ -14,7 +15,7 @@ type SearchParams = Promise<{
 	view: View;
 	query?: string;
 	docType?: B2BDocumentType;
-	docStatus?: B2BDocumentStatus;
+	docStatus?: DocumentStatusFilter;
 }>;
 
 export default async function PartnersPage(props: {

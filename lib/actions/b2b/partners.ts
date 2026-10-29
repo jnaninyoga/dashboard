@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 
+import { type DocumentStatusFilter, OWED_FILTER, PAYABLE_INVOICE_STATUSES } from "@/lib/domain/billing/payments";
 import { logServerError } from "@/lib/errors/server";
-import { B2BDocumentStatus, B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
+import { B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
 import { contactSchema, partnerSchema } from "@/lib/validators";
 import { db } from "@/services/database";
 import { b2bContacts, b2bDocuments, b2bPartners } from "@/services/database/schema";
@@ -11,7 +12,7 @@ import { syncPartnerContactToGoogle, updatePartnerContactInGoogle } from "@/serv
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, count, eq, exists, ilike, ne, or } from "drizzle-orm";
+import { and, count, eq, exists, ilike, inArray, ne, or } from "drizzle-orm";
 
 export type ActionState = {
 	error?: string;
@@ -293,7 +294,7 @@ export async function deletePartnerAction(id: string): Promise<ActionState> {
 export async function getPartnersAction(filters?: {
 	query?: string;
 	docType?: B2BDocumentType | "all";
-	docStatus?: B2BDocumentStatus | "all";
+	docStatus?: DocumentStatusFilter;
 }): Promise<{ partners?: PartnerWithRelations[]; error?: string; ref?: string }> {
 
 	const { query, docType, docStatus } = filters || {};
@@ -349,7 +350,12 @@ export async function getPartnersAction(filters?: {
 								.where(
 									and(
 										eq(b2bDocuments.partnerId, partners.id),
-										eq(b2bDocuments.status, docStatus)
+										docStatus === OWED_FILTER
+											? and(
+													eq(b2bDocuments.type, "invoice"),
+													inArray(b2bDocuments.status, [...PAYABLE_INVOICE_STATUSES]),
+												)
+											: eq(b2bDocuments.status, docStatus),
 									)
 								)
 						)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeDecimalInput, parseAmountInput } from "./currency";
+import { formatMoney, normalizeDecimalInput, parseAmountInput } from "./currency";
 
 describe("parseAmountInput", () => {
 	it("reads French notation, with any kind of space as thousands separator", () => {
@@ -34,5 +34,12 @@ describe("normalizeDecimalInput", () => {
 	it("drops letters, spaces and currency text", () => {
 		expect(normalizeDecimalInput("12 MAD")).toBe("12");
 		expect(normalizeDecimalInput("abc")).toBe("");
+	});
+});
+
+describe("formatMoney", () => {
+	it("writes French notation with two decimals, which parseAmountInput reads back", () => {
+		expect(formatMoney(1234.5)).toBe("1\u202f234,50 MAD");
+		expect(parseAmountInput(formatMoney(1234.5).replace(" MAD", ""))).toBe(1234.5);
 	});
 });

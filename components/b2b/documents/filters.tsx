@@ -16,6 +16,8 @@ import { useDebounce } from "@/lib/hooks/use-debounce";
 
 import { SearchNormal1 } from "iconsax-reactjs";
 
+import { DocumentStatusBadge } from "./status-badge";
+
 export function DocumentFilters() {
 	const router = useRouter();
 	const pathname = usePathname();
@@ -122,61 +124,27 @@ export function DocumentFilters() {
 						<SelectItem value="all">
 							All Status
 						</SelectItem>
+						<SelectItem value="owed">Owed (any unpaid invoice)</SelectItem>
 						<SelectItem value="draft">
-							<Badge
-								variant="muted"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Draft
-							</Badge>
+							<DocumentStatusBadge status="draft" />
 						</SelectItem>
 						<SelectItem value="sent">
-							<Badge
-								variant="info"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Sent
-							</Badge>
+							<DocumentStatusBadge status="sent" />
 						</SelectItem>
 						<SelectItem value="accepted">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Accepted
-							</Badge>
+							<DocumentStatusBadge status="accepted" />
 						</SelectItem>
 						<SelectItem value="unpaid">
-							<Badge
-								variant="destructive"
-								className="bg-red-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-red-800 uppercase hover:bg-red-100"
-							>
-								Unpaid
-							</Badge>
+							<DocumentStatusBadge status="unpaid" />
 						</SelectItem>
 						<SelectItem value="partially_paid">
-							<Badge
-								variant="outline"
-								className="border-orange-500 px-2 py-0.5 text-[10px] font-bold tracking-widest text-orange-500 uppercase"
-							>
-								Partially Paid
-							</Badge>
+							<DocumentStatusBadge status="partially_paid" />
 						</SelectItem>
 						<SelectItem value="paid">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Paid
-							</Badge>
+							<DocumentStatusBadge status="paid" />
 						</SelectItem>
 						<SelectItem value="cancelled">
-							<Badge
-								variant="destructive"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Cancelled
-							</Badge>
+							<DocumentStatusBadge status="cancelled" />
 						</SelectItem>
 					</SelectContent>
 				</Select>

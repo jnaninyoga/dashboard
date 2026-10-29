@@ -17,6 +17,16 @@ export function parseAmountInput(input: string | number | null | undefined): num
 	return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
 }
 
+const money = new Intl.NumberFormat("fr-FR", {
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2,
+});
+
+/** "1 234,50 MAD": amounts shown the way she types them. */
+export function formatMoney(amount: number): string {
+	return `${money.format(amount)} MAD`;
+}
+
 /**
  * Live filter for decimal text fields: digits and decimal marks only, with a
  * comma (French keyboards: "500,50") read as the decimal mark. It used to be

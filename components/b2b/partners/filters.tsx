@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -75,45 +75,27 @@ export function PartnerFilters() {
 						<SelectItem value="all" className="font-bold">
 							All Statuses
 						</SelectItem>
+						<SelectItem value="owed">Owed (any unpaid invoice)</SelectItem>
 						<SelectItem value="draft">
-							<Badge
-								variant="muted"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Draft
-							</Badge>
+							<DocumentStatusBadge status="draft" />
 						</SelectItem>
 						<SelectItem value="sent">
-							<Badge
-								variant="info"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Sent
-							</Badge>
+							<DocumentStatusBadge status="sent" />
 						</SelectItem>
 						<SelectItem value="accepted">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Accepted
-							</Badge>
+							<DocumentStatusBadge status="accepted" />
+						</SelectItem>
+						<SelectItem value="unpaid">
+							<DocumentStatusBadge status="unpaid" />
+						</SelectItem>
+						<SelectItem value="partially_paid">
+							<DocumentStatusBadge status="partially_paid" />
 						</SelectItem>
 						<SelectItem value="paid">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Paid
-							</Badge>
+							<DocumentStatusBadge status="paid" />
 						</SelectItem>
 						<SelectItem value="cancelled">
-							<Badge
-								variant="destructive"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Cancelled
-							</Badge>
+							<DocumentStatusBadge status="cancelled" />
 						</SelectItem>
 					</SelectContent>
 				</Select>
