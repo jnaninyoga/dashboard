@@ -1,22 +1,47 @@
 import { describe, expect, it } from "vitest";
 
-import { alertsSummary, creditsLine, sortAlerts } from "./card";
+import { alertsSummary, clientSinceLabel, creditsSummary, lastVisitLabel, sortAlerts } from "./card";
 
-describe("creditsLine", () => {
-	it("says how many credits are left on the active card", () => {
-		expect(creditsLine({ remainingCredits: 6 })).toEqual({ text: "6 credits left", tone: "ok" });
-		expect(creditsLine({ remainingCredits: 1 })).toEqual({ text: "1 credit left", tone: "low" });
+describe("creditsSummary", () => {
+	it("says how many credits are left out of the card's total", () => {
+		expect(creditsSummary({ remainingCredits: 6, product: { defaultCredits: 10 } })).toEqual({ value: "6 of 10", tone: "ok" });
+		expect(creditsSummary({ remainingCredits: 6, product: null })).toEqual({ value: "6", tone: "ok" });
 	});
 
 	it("warns when two or fewer are left, or none", () => {
-		expect(creditsLine({ remainingCredits: 2 }).tone).toBe("low");
-		expect(creditsLine({ remainingCredits: 3 }).tone).toBe("ok");
-		expect(creditsLine({ remainingCredits: 0 })).toEqual({ text: "No credits left", tone: "low" });
+		expect(creditsSummary({ remainingCredits: 2, product: { defaultCredits: 10 } }).tone).toBe("low");
+		expect(creditsSummary({ remainingCredits: 3, product: { defaultCredits: 10 } }).tone).toBe("ok");
+		expect(creditsSummary({ remainingCredits: 0, product: { defaultCredits: 10 } })).toEqual({ value: "0 of 10", tone: "low" });
 	});
 
 	it("says so when there is no active card", () => {
-		expect(creditsLine(undefined)).toEqual({ text: "No active card", tone: "none" });
-		expect(creditsLine(null)).toEqual({ text: "No active card", tone: "none" });
+		expect(creditsSummary(undefined)).toEqual({ value: "No active card", tone: "none" });
+		expect(creditsSummary(null)).toEqual({ value: "No active card", tone: "none" });
+	});
+});
+
+// Thursday 29 October 2026, early afternoon at the studio.
+const now = new Date("2026-10-29T13:00:00Z");
+
+describe("lastVisitLabel", () => {
+	it("speaks of today and yesterday in the studio's days", () => {
+		expect(lastVisitLabel(new Date("2026-10-29T09:30:00Z"), now)).toBe("Today");
+		expect(lastVisitLabel(new Date("2026-10-28T18:00:00Z"), now)).toBe("Yesterday");
+	});
+
+	it("names the day for earlier visits, with the year when it isn't this year", () => {
+		expect(lastVisitLabel(new Date("2026-10-27T10:00:00Z"), now)).toBe("Tue 27 Oct");
+		expect(lastVisitLabel(new Date("2025-12-30T10:00:00Z"), now)).toBe("30 Dec 2025");
+	});
+
+	it("says so when the client hasn't come yet", () => {
+		expect(lastVisitLabel(undefined, now)).toBe("Not yet");
+	});
+});
+
+describe("clientSinceLabel", () => {
+	it("is the day the client was added, in the studio's calendar", () => {
+		expect(clientSinceLabel(new Date("2024-01-06T10:00:00Z"))).toBe("6 Jan 2024");
 	});
 });
 

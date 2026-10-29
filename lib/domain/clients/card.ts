@@ -1,17 +1,50 @@
 // What a client card says at a glance. Kept apart from the component so the
 // rules are tested and the same everywhere the card appears.
 
+import { STUDIO_TIME_ZONE, studioDateString } from "@/lib/utils/time";
+
 export type CreditsTone = "ok" | "low" | "none";
 
 /** Two or fewer credits left is worth noticing at the door. */
 const LOW_CREDITS = 2;
 
-/** The card's credits line, from the client's active membership card. */
-export function creditsLine(wallet: { remainingCredits: number } | null | undefined): { text: string; tone: CreditsTone } {
-	if (!wallet) return { text: "No active card", tone: "none" };
-	const left = wallet.remainingCredits;
-	if (left <= 0) return { text: "No credits left", tone: "low" };
-	return { text: `${left} ${left === 1 ? "credit" : "credits"} left`, tone: left <= LOW_CREDITS ? "low" : "ok" };
+/** Credits left on the client's active membership card: "6 of 10". */
+export function creditsSummary(
+	wallet: { remainingCredits: number; product?: { defaultCredits: number } | null } | null | undefined,
+): { value: string; tone: CreditsTone } {
+	if (!wallet) return { value: "No active card", tone: "none" };
+	const left = Math.max(0, wallet.remainingCredits);
+	const total = wallet.product?.defaultCredits;
+	return { value: total ? `${left} of ${total}` : `${left}`, tone: left <= LOW_CREDITS ? "low" : "ok" };
+}
+
+// Dates are read in the studio's calendar, assembled from parts so the text
+// doesn't depend on a browser's punctuation ("Tue 27 Oct", "6 Jan 2024").
+const dateParts = new Intl.DateTimeFormat("en-GB", {
+	timeZone: STUDIO_TIME_ZONE,
+	weekday: "short",
+	day: "numeric",
+	month: "short",
+	year: "numeric",
+});
+const partsOf = (instant: Date) =>
+	Object.fromEntries(dateParts.formatToParts(instant).map(({ type, value }) => [type, value]));
+
+/** When the client last came: "Today", "Yesterday", "Tue 27 Oct", or "30 Dec 2025" for another year. */
+export function lastVisitLabel(lastCheckIn: Date | string | null | undefined, now: Date = new Date()): string {
+	if (!lastCheckIn) return "Not yet";
+	const visit = new Date(lastCheckIn);
+	const day = studioDateString(visit);
+	if (day === studioDateString(now)) return "Today";
+	if (day === studioDateString(new Date(now.getTime() - 86_400_000))) return "Yesterday";
+	const p = partsOf(visit);
+	return p.year === partsOf(now).year ? `${p.weekday} ${p.day} ${p.month}` : `${p.day} ${p.month} ${p.year}`;
+}
+
+/** The day the client was added: "6 Jan 2024". */
+export function clientSinceLabel(createdAt: Date | string): string {
+	const p = partsOf(new Date(createdAt));
+	return `${p.day} ${p.month} ${p.year}`;
 }
 
 type Alert = { condition: string; severity: "info" | "warning" | "critical"; startDate: string };

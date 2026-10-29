@@ -68,18 +68,18 @@ Today, cancelling a session deletes the event from Google Calendar, so it vanish
 
 ## Module: `client-card`
 
-Today a card is about 350px tall for one client. It gives as much room to gender and "category discount" as to what she uses: credits left, today's check-in, a health warning, WhatsApp.
+Today a card is about 350px tall for one client. It gives as much room to gender and "category discount" as to what she uses: credits left, today's check-in, a health warning, WhatsApp. A first compact version (118px) was too cramped. The owner asked for a premium card with room to breathe (2026-10-29), so density gives way to clarity.
 
-- **A compact card**, about 96px tall. From left to right:
-  - the photo or initial, with a green dot when the client checked in today;
-  - the name, then one line: "6 credits left", or "No active card", with the session's name when checked in today;
-  - a health warning button when the client has active alerts, then WhatsApp, call and the ⋮ menu, all 40px. A client is someone she messages and phones, so both stay one tap away.
-- **Tapping the card** opens the profile.
-- **Tapping the health warning** raises a sileo warning toast, "Health alerts for {name}", listing the conditions with the critical ones first. No popover or tooltip.
-- **Low credits** (2 or fewer) show in amber; no active card shows muted.
-- **Moved off the card:** gender, category and category discount (the profile, with the membership card's details), and email (into the ⋮ menu).
-- **One component** serves the grid view and the table's phone cards, so a client looks the same everywhere.
-- When membership cards get an expiry date (a separate, promised change), the second line adds "ends 12 Nov".
+- **Header:** the photo (56px) with a green dot when checked in today, the name in large type, and one status chip ("Checked in · {session}") when it applies.
+- **A tinted panel** with the two numbers she needs at the door:
+  - **Credits left:** "6 of 10" (amber when 2 or fewer), or "No active card".
+  - **Last visit:** "Today", "Yesterday" or "Tue 28 Oct", in Marrakech time.
+- **Health:** a soft red "1 health alert" chip when there are active alerts. Tapping it raises a sileo warning toast, "Health alerts for {name}", listing the conditions with the critical ones first.
+- **One detail row:** client since (date).
+- **Actions:** a round ⋮ (edit, email, delete), a round call button and a wide WhatsApp pill as the main action; all at least 44px.
+- **Tapping the card** opens the profile; its buttons don't.
+- **One component** serves the grid view and the table's phone cards.
+- Gender, category and membership details stay on the profile. When membership cards get an expiry date (a separate, promised change), the panel adds it.
 
 ## Module: `navigation`
 
@@ -155,10 +155,10 @@ Navigation:
 
 Client cards:
 
-9. At 390px wide, at least four client cards fit on one screen.
+9. At 390px wide, a card shows the name in full (wrapping if long), the credits and last visit at a glance, and its actions without crowding: controls at least 44px, padding at least 20px.
 10. Tapping the health warning raises a sileo toast listing that client's active alerts, critical first.
 11. The grid and the table's phone view use the same card; tapping a card opens the profile, and its buttons don't.
-12. Every control on the card is at least 40px and every text at least 12px.
+12. Every control on the card is at least 44px and every text at least 12px.
 
 ## Decisions (owner, 2026-10-29)
 

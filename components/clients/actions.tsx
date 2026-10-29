@@ -28,9 +28,12 @@ import { Edit2, Refresh, Sms, Trash } from "iconsax-reactjs";
 export function ClientActions({
 	client,
 	showEdit = true,
+	triggerClassName,
 }: {
 	client: Client;
 	showEdit?: boolean;
+	/** Restyles the ⋮ button (the client card shows it as a round button). */
+	triggerClassName?: string;
 }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
@@ -53,7 +56,7 @@ export function ClientActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<RowActionsTrigger label={`Actions for ${client.fullName}`} />
+					<RowActionsTrigger label={`Actions for ${client.fullName}`} className={triggerClassName} />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					{showEdit ? (
