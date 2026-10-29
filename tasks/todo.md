@@ -22,14 +22,14 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
 
 ## Phase 2: navigation
 
-- [ ] **Task 3: Sections in her words, with quick actions** (M)
+- [x] **Task 3: Sections in her words, with quick actions** (M)
   - Acceptance:
     - The sidebar shows Today (Dashboard, Check-in), Studio (Schedule, Clients), Billing (Partners, Documents) and Settings (collapsed by default, remembers its state).
     - A "New" button opens the quick actions: new session (opens the sheet on Schedule), add client, sell a card (Clients for now), new quotation.
   - Verify: browser at 1366; keyboard through the menu; the session sheet opens from `/schedule?new=session`.
   - Files: `lib/config/dashboard.ts`, `components/app-sidebar.tsx`, `components/quick-actions.tsx` (new), `components/schedule/client.tsx`.
 
-- [ ] **Task 4: Sidebar identity and icon motion** (M)
+- [x] **Task 4: Sidebar identity and icon motion** (M)
   - Acceptance:
     - A still Atlas-and-water scene behind the logo, whose only motion is the sun's breathing glow.
     - Icons move briefly on hover and press, and the current page shows the filled icon with a soft accent. Settings opens and closes smoothly.

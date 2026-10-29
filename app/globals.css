@@ -177,6 +177,8 @@
 	--animate-float: float 6s ease-in-out infinite;
 	--animate-breathe: breathe 4s ease-in-out infinite;
 	--animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+	/* The current page's icon settling into its filled style. */
+	--animate-nav-pop: nav-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes float {
@@ -207,6 +209,18 @@
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+@keyframes nav-pop {
+	0% {
+		scale: 0.8;
+	}
+	55% {
+		scale: 1.14;
+	}
+	100% {
+		scale: 1;
 	}
 }
 
@@ -682,6 +696,100 @@
 		}
 		.lotus-pond .bird {
 			transform: translateX(var(--bird-rest));
+		}
+	}
+}
+
+/* ─── Sidebar scene ───
+   The sign-in dawn, small and still, behind the sidebar's logo: sky, the sun
+   rising in a valley of the Atlas, the ranges and a strip of water. Only the
+   sun's glow breathes. The sun sits at the valley the ridgelines show at the
+   sidebar's width (81% across, 41px up). */
+@layer components {
+	.sidebar-scene {
+		--scene-sky-top: color-mix(in oklab, var(--secondary) 45%, var(--card));
+		--scene-sky-low: color-mix(in oklab, var(--secondary-2) 60%, var(--card));
+		--scene-sun: color-mix(in oklab, var(--secondary-2) 55%, white);
+		--scene-sun-core: color-mix(in oklab, var(--secondary) 30%, white);
+		--scene-sun-glow: color-mix(in oklab, var(--secondary-2) 80%, transparent);
+		--scene-range-far: color-mix(in oklab, var(--accent) 50%, color-mix(in oklab, var(--secondary) 55%, var(--card)));
+		--scene-range-mid: color-mix(in oklab, var(--primary) 20%, color-mix(in oklab, var(--accent) 65%, var(--card)));
+		--scene-range-near: color-mix(in oklab, var(--primary) 45%, var(--accent));
+		--scene-water-top: color-mix(in oklab, var(--accent) 75%, var(--card));
+		--scene-water-deep: color-mix(in oklab, var(--primary) 32%, var(--accent));
+		--scene-glint: color-mix(in oklab, white 80%, transparent);
+		--scene-sun-x: 81%;
+		--scene-sun-y: 41px;
+		position: absolute;
+		inset: 0;
+		overflow: hidden;
+		background: linear-gradient(to bottom, var(--scene-sky-top), var(--scene-sky-low) 78%);
+	}
+	/* Before sunrise in dark mode: the sign-in scene's night palette. */
+	.dark .sidebar-scene {
+		--scene-sky-top: var(--sidebar);
+		--scene-sky-low: color-mix(in oklab, #1d5c6a 40%, var(--sidebar));
+		--scene-sun: #dfe8ea;
+		--scene-sun-core: #f7fafa;
+		--scene-sun-glow: color-mix(in oklab, #cfe9ed 22%, transparent);
+		--scene-range-far: #1a3a41;
+		--scene-range-mid: #122a30;
+		--scene-range-near: #0c1d21;
+		--scene-water-top: #12292e;
+		--scene-water-deep: #0a181b;
+		--scene-glint: color-mix(in oklab, #8cc9d2 30%, transparent);
+	}
+	.sidebar-scene .sun,
+	.sidebar-scene .sun-glow {
+		position: absolute;
+		left: var(--scene-sun-x);
+		top: calc(100% - var(--scene-sun-y));
+		border-radius: 9999px;
+		transform: translate(-50%, -50%);
+	}
+	.sidebar-scene .sun {
+		width: 26px;
+		height: 26px;
+		background: radial-gradient(circle, var(--scene-sun-core) 0 40%, var(--scene-sun) 68%, transparent 72%);
+	}
+	.sidebar-scene .sun-glow {
+		width: 150px;
+		height: 150px;
+		background: radial-gradient(circle, var(--scene-sun-glow), transparent 62%);
+		animation: glow-breath 10s ease-in-out infinite;
+	}
+	.sidebar-scene .ranges {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 14px;
+		width: 100%;
+		height: 52px;
+	}
+	.sidebar-scene .water {
+		position: absolute;
+		inset-inline: 0;
+		bottom: 0;
+		height: 14px;
+		background: linear-gradient(to bottom, var(--scene-water-top), var(--scene-water-deep));
+	}
+	/* The sun's light laid on the water below it. */
+	.sidebar-scene .sun-path {
+		position: absolute;
+		left: var(--scene-sun-x);
+		top: 0;
+		width: 34px;
+		height: 100%;
+		transform: translateX(-50%);
+		background: radial-gradient(ellipse at top, var(--scene-sun-glow), transparent 75%);
+	}
+	.sidebar-scene .glint {
+		position: absolute;
+		height: 1px;
+		background: linear-gradient(90deg, transparent, var(--scene-glint), transparent);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.sidebar-scene .sun-glow {
+			animation: none;
 		}
 	}
 }
