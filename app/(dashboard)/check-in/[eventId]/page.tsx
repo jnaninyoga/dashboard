@@ -3,8 +3,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { CheckInManager } from "@/components/schedule/check-in";
 import { getEventAttendanceAction } from "@/lib/actions/schedule/attendance";
-import { getEventById, type JnaninEventType } from "@/services/google";
-import { getValidAccessToken } from "@/services/google";
+import { getEventById, type JnaninEventType, withGoogle } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 import { format } from "date-fns";
@@ -24,22 +23,28 @@ export default async function CheckInPage({ params }: PageProps) {
 
     const { eventId } = await params;
 
-    let accessToken: string;
-    let eventDetails: unknown = null;
-    
-    try {
-        accessToken = await getValidAccessToken(user.id);
-        eventDetails = await getEventById(accessToken, eventId);
-    } catch (error) {
-        console.error("Failed to fetch event:", error);
+    const event = await withGoogle(user.id, "Google Calendar", (token) => getEventById(token, eventId));
+
+    // Google couldn't be reached: say so, and keep the way back. Only an event
+    // Google says doesn't exist is a "not found".
+    if (event.error) {
+        return (
+            <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-5 py-10">
+                <p role="alert" className="bg-card zen-shadow rounded-2xl border p-5 text-sm leading-relaxed">
+                    {event.error}
+                </p>
+                <Link href="/check-in" className="text-primary min-h-[44px] font-semibold">
+                    Back to today&apos;s sessions
+                </Link>
+            </div>
+        );
+    }
+
+    if (!event.data) {
         notFound();
     }
 
-    if (!eventDetails) {
-        notFound();
-    }
-
-    const details = eventDetails as {
+    const details = event.data as {
         summary?: string;
         start?: { dateTime?: string; date?: string };
         end?: { dateTime?: string; date?: string };

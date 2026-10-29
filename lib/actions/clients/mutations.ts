@@ -51,8 +51,11 @@ export async function createClientAction(
 	try {
 		accessToken = await getValidAccessToken(user.id);
 	} catch (error) {
+		// Only an expired connection means signing in again; an outage just
+		// means trying again, with what she typed still in the form.
+		if (needsReauth(error)) redirect("/login?reason=google");
 		console.error("Token retrieval failed:", error);
-		redirect("/login");
+		return { error: googleErrorMessage(error, "Google Contacts") };
 	}
 
 	const intakeDataRaw: Record<string, string> = {};
@@ -455,11 +458,12 @@ export async function getGoogleContactPhotoAction(
 
 	if (!user) return { error: "Not authenticated" };
 
+	// A missing photo is never worth signing her out: without Google, no photo.
 	let accessToken: string;
 	try {
 		accessToken = await getValidAccessToken(user.id);
 	} catch {
-		redirect("/login");
+		return { success: true, url: undefined };
 	}
 
 	let phone: string | undefined;

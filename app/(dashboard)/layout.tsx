@@ -7,7 +7,7 @@ import {
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { getUserProfile } from "@/lib/utils/user";
-import { getValidAccessToken, needsReauth } from "@/services/google";
+import { getValidAccessToken, isGoogleAccessError, needsReauth } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 export default async function DashboardLayout({
@@ -31,6 +31,9 @@ export default async function DashboardLayout({
 		await getValidAccessToken(user.id);
 	} catch (error) {
 		if (needsReauth(error)) redirect("/login?reason=google");
+		// Anything that isn't Google's doing (the database being down) goes to
+		// the error screen rather than being blamed on Google.
+		if (!isGoogleAccessError(error)) throw error;
 		console.error("Dashboard guard: Google unreachable", error);
 		googleUnreachable = true;
 	}

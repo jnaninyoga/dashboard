@@ -8,9 +8,9 @@ import { Google } from "iconsax-reactjs";
 export default async function LoginPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ error?: string; reason?: string }>;
+	searchParams: Promise<{ error?: string; reason?: string; ref?: string }>;
 }) {
-	const { error, reason } = await searchParams;
+	const { error, reason, ref } = await searchParams;
 
 	return (
 		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
@@ -68,7 +68,9 @@ export default async function LoginPage({
 							role="alert"
 							className="bg-destructive/5 text-destructive border-destructive/20 rounded-2xl border p-4 text-center text-sm font-medium"
 						>
-							Sign-in didn&apos;t complete. Please try again.
+							{error === "connection"
+								? `You're signed in, but your Google connection couldn't be saved. Try again in a moment${ref ? ` (code ${ref})` : ""}.`
+								: "Sign-in didn't complete. Please try again."}
 						</p>
 					) : null}
 

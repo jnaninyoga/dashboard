@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { logServerError } from "@/lib/errors/server";
 import { getSiteUrl } from "@/lib/utils/site-url";
 import { storeUserTokens } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
@@ -7,8 +8,10 @@ import { createClient } from "@/services/supabase/server";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get("code");
-  // if "next" is in param, use it as the redirect URL
-  const next = searchParams.get("next") ?? "/";
+  // Where to go after signing in: only a path inside the app ("/clients"),
+  // never another site ("//x", "@x", "https://x").
+  const requested = searchParams.get("next") ?? "/";
+  const next = /^\/(?![\/\\])/.test(requested) ? requested : "/";
 
   if (code) {
     const supabase = await createClient();
@@ -28,7 +31,11 @@ export async function GET(request: Request) {
             session.expires_in || 3600
           );
         } catch (e) {
-          console.error("Failed to store user tokens:", e);
+          // Without the saved connection the dashboard can't reach Google, so
+          // this is not a finished sign-in: say so on the login page.
+          const ref = logServerError("Failed to store Google tokens", e);
+          const siteUrl = await getSiteUrl();
+          return NextResponse.redirect(`${siteUrl}/login?error=connection&ref=${ref}`);
         }
       }
 

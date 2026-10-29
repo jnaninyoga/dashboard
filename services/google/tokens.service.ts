@@ -1,11 +1,15 @@
-"use server";
-
 import { db } from "@/services/database";
 import { userTokens } from "@/services/database/schema";
 
 import { eq } from "drizzle-orm";
 
-import { GOOGLE_UNAVAILABLE, REAUTH_REQUIRED } from "./errors";
+import {
+	classifyRefreshFailure,
+	GOOGLE_UNAVAILABLE,
+	googleErrorMessage,
+	isGoogleAccessError,
+	REAUTH_REQUIRED,
+} from "./errors";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 
@@ -42,15 +46,10 @@ export async function storeUserTokens(
 }
 
 export async function getValidAccessToken(userId: string): Promise<string> {
-	let storedToken;
-	try {
-		storedToken = await db.query.userTokens.findFirst({
-			where: eq(userTokens.userId, userId),
-		});
-	} catch (error) {
-		console.error("Couldn't read the stored Google token:", error);
-		throw new Error(GOOGLE_UNAVAILABLE);
-	}
+	// A database failure here is ours, not Google's: let it surface as one.
+	const storedToken = await db.query.userTokens.findFirst({
+		where: eq(userTokens.userId, userId),
+	});
 
 	if (!storedToken) {
 		console.error("No stored tokens found in database for user:", userId);
@@ -85,10 +84,7 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 	if (!response.ok) {
 		const errorText = await response.text().catch(() => "");
 		console.error(`Google API Token Refresh Failed (${response.status}): ${errorText}`);
-		// Only a refused refresh token (revoked, or expired after 7 days while
-		// the Google app is in testing) needs a new sign-in.
-		const refused = response.status === 400 || response.status === 401;
-		throw new Error(refused && errorText.includes("invalid_grant") ? REAUTH_REQUIRED : GOOGLE_UNAVAILABLE);
+		throw new Error(classifyRefreshFailure(response.status, errorText));
 	}
 
 	const data: TokenResponse = await response.json();
@@ -102,4 +98,31 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 	).catch((error) => console.error("Couldn't store the refreshed Google token:", error));
 
 	return data.access_token;
+}
+
+export type GoogleResult<T> = { data: T; error?: undefined } | { data?: undefined; error: string };
+
+/**
+ * Runs a Google call for this user and reports Google's failures (expired
+ * connection, outage) as a message the page can show. Failures that are not
+ * Google's, such as the database being down, are thrown to the error screen.
+ */
+export async function withGoogle<T>(
+	userId: string,
+	service: string,
+	call: (accessToken: string) => Promise<T>,
+): Promise<GoogleResult<T>> {
+	let accessToken: string;
+	try {
+		accessToken = await getValidAccessToken(userId);
+	} catch (error) {
+		if (isGoogleAccessError(error)) return { error: googleErrorMessage(error, service) };
+		throw error;
+	}
+	try {
+		return { data: await call(accessToken) };
+	} catch (error) {
+		console.error(`${service} call failed:`, error);
+		return { error: googleErrorMessage(error, service) };
+	}
 }

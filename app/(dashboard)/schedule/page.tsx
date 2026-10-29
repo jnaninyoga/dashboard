@@ -1,7 +1,6 @@
 import { ScheduleClient } from "@/components/schedule/client";
 import { CalendarEvent } from "@/lib/types";
-import { getUpcomingEvents } from "@/services/google";
-import { getValidAccessToken } from "@/services/google";
+import { getUpcomingEvents, withGoogle } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 export default async function SchedulePage() {
@@ -12,12 +11,9 @@ export default async function SchedulePage() {
     let errorMsg: string | null = null;
 
     if (user) {
-        try {
-            const token = await getValidAccessToken(user.id);
-            events = await getUpcomingEvents(token, 7); // Fetch next 7 days
-        } catch {
-            errorMsg = "Please reconnect Google Calendar to view the schedule.";
-        }
+        const week = await withGoogle(user.id, "Google Calendar", (token) => getUpcomingEvents(token, 7));
+        events = week.data ?? [];
+        errorMsg = week.error ?? null;
     }
 
     return (

@@ -202,7 +202,8 @@ export async function cancelStudioEvent(
 /**
  * Fetches a specific event by its ID.
  */
-export async function getEventById(accessToken: string, eventId: string): Promise<CalendarEvent> {
+/** The event, or null when Google says it doesn't exist (or was deleted). */
+export async function getEventById(accessToken: string, eventId: string): Promise<CalendarEvent | null> {
 	const google = getGoogleClient(accessToken);
 
 	try {
@@ -213,6 +214,8 @@ export async function getEventById(accessToken: string, eventId: string): Promis
 
 		return response.data;
 	} catch (error) {
+		const status = (error as { response?: { status?: number } }).response?.status;
+		if (status === 404 || status === 410) return null;
 		console.error("Error fetching event by ID:", error);
 		throw new Error("Failed to fetch event from Google Calendar.");
 	}

@@ -2,8 +2,7 @@ import { CockpitClient } from "@/components/dashboard/cockpit/client";
 import { Greeting } from "@/components/dashboard/greeting";
 import { CalendarEvent } from "@/lib/types";
 import { getUserProfile } from "@/lib/utils/user";
-import { getTodayEvents } from "@/services/google";
-import { getValidAccessToken } from "@/services/google";
+import { getTodayEvents, withGoogle } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 export default async function Home() {
@@ -15,12 +14,9 @@ export default async function Home() {
 	let errorMsg: string | null = null;
 
 	if (user) {
-		try {
-			const token = await getValidAccessToken(user.id);
-			events = await getTodayEvents(token);
-		} catch {
-			errorMsg = "Please reconnect Google Calendar to view today's schedule.";
-		}
+		const today = await withGoogle(user.id, "Google Calendar", getTodayEvents);
+		events = today.data ?? [];
+		errorMsg = today.error ?? null;
 	}
 
 	return (
