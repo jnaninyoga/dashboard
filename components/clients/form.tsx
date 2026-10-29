@@ -58,6 +58,14 @@ type Draft = { values: Partial<ClientFormValues>; step: number };
 const noop = () => () => {};
 const draftKey = (mode: ClientFormProps["mode"], id?: string) => `client-form-progress-${mode}-${id || "new"}`;
 
+function forgetDraft(key: string) {
+	try {
+		localStorage.removeItem(key);
+	} catch {
+		// Blocked storage: there is no draft to forget.
+	}
+}
+
 function readDraft(key: string): Draft | null {
 	try {
 		const saved = JSON.parse(localStorage.getItem(key) ?? "null");
@@ -136,20 +144,28 @@ function ClientFormBody({
 
 
 	const watchedValues = useWatch({ control: form.control });
+	// Read during render: react-hook-form only tracks what render reads.
+	const { isDirty } = form.formState;
+
+	// Edits never keep a draft; drop any left from before (they hold health notes).
+	useEffect(() => {
+		if (!keepsDraft && draftReady) forgetDraft(STORAGE_KEY);
+	}, [keepsDraft, draftReady, STORAGE_KEY]);
 
 	// Keep the draft as she types; never before the saved one has been read.
 	useEffect(() => {
-		if (!keepsDraft || !draftReady) return;
+		// Nothing typed yet: keep whatever draft there is (or none).
+		if (!keepsDraft || !draftReady || !isDirty) return;
 		try {
 			localStorage.setItem(STORAGE_KEY, JSON.stringify({ values: watchedValues, step: currentStep }));
 		} catch {
 			// Storage full or blocked: the form still works, just without a draft.
 		}
-	}, [keepsDraft, draftReady, watchedValues, currentStep, STORAGE_KEY]);
+	}, [keepsDraft, draftReady, isDirty, watchedValues, currentStep, STORAGE_KEY]);
 
 	const cancel = async () => {
 		if (
-			(form.formState.isDirty || draft !== null) &&
+			(isDirty || draft !== null) &&
 			!(await confirm({
 				title: mode === "create" ? "Discard this new client?" : "Discard your changes?",
 				description: "What you typed here will be lost.",
@@ -160,7 +176,7 @@ function ClientFormBody({
 		) {
 			return;
 		}
-		if (keepsDraft) localStorage.removeItem(STORAGE_KEY);
+		if (keepsDraft) forgetDraft(STORAGE_KEY);
 		router.push(mode === "create" ? "/clients" : doneHref(initialData?.id));
 	};
 
@@ -169,7 +185,7 @@ function ClientFormBody({
     useEffect(() => {
         if (state?.success) {
             notify.success(mode === "create" ? "Client added" : "Changes saved");
-            if (keepsDraft) localStorage.removeItem(STORAGE_KEY);
+            if (keepsDraft) forgetDraft(STORAGE_KEY);
             router.push(doneHref("id" in state && typeof state.id === "string" ? state.id : initialData?.id));
         } else if (state?.error) {
             if (state.issues) {

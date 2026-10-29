@@ -6,6 +6,7 @@ import { ContactDialog } from "@/components/b2b/contacts/dialog";
 import { PartnerDialog } from "@/components/b2b/partners/dialog";
 import { B2BTierDialog } from "@/components/b2b/tiers/dialog";
 import { CategoryDialog } from "@/components/clients/categories/dialog";
+import { ClientForm } from "@/components/clients/form";
 import { CreateMembershipDialog } from "@/components/clients/memberships/actions";
 import { HealthTab } from "@/components/clients/tabs/health";
 import { WalletTab } from "@/components/clients/tabs/wallet";
@@ -24,6 +25,7 @@ export function FormsDemo() {
 	const [tierOpen, setTierOpen] = useState(false);
 	const [categoryOpen, setCategoryOpen] = useState(false);
 	const [sessionOpen, setSessionOpen] = useState(false);
+	const [clientFormShown, setClientFormShown] = useState(false);
 
 	return (
 		<section className="bg-card grid gap-4 rounded-3xl border p-6">
@@ -45,7 +47,15 @@ export function FormsDemo() {
 				<Button variant="outline" onClick={() => setSessionOpen(true)}>
 					Session
 				</Button>
+				<Button variant="outline" onClick={() => setClientFormShown((shown) => !shown)}>
+					Client form
+				</Button>
 			</div>
+			{clientFormShown ? (
+				<div data-testid="client-form">
+					<ClientForm mode="create" categories={[]} />
+				</div>
+			) : null}
 			<B2BTierDialog open={tierOpen} onOpenChange={setTierOpen} />
 			<CategoryDialog open={categoryOpen} onOpenChange={setCategoryOpen} />
 			<NewSessionDialog open={sessionOpen} onOpenChange={setSessionOpen} />
