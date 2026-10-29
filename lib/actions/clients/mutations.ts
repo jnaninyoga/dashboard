@@ -20,7 +20,7 @@ import {
 	syncClientToGoogleContacts,
 	updateClientInGoogleContacts,
 } from "@/services/google";
-import { getValidAccessToken } from "@/services/google";
+import { getValidAccessToken, googleErrorMessage, needsReauth } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 import { and, eq, isNull } from "drizzle-orm";
@@ -386,8 +386,8 @@ export async function updateClientAction(
 			} catch (e: unknown) {
 				console.error("Failed to sync update to Google Contacts:", e);
 				const err = e as { message?: string; code?: number };
-				if (err.message === "REAUTH_REQUIRED") {
-					return { error: "Session expired. Please refresh the page." };
+				if (needsReauth(e)) {
+					return { error: googleErrorMessage(e, "Google Contacts") };
 				}
 				if (err.code === 404) {
 					// skip
@@ -430,9 +430,8 @@ export async function deleteClientAction(id: string) {
 				);
 			} catch (e: unknown) {
 				console.error("Failed to sync delete to Google Contacts:", e);
-				const err = e as { message?: string };
-				if (err.message === "REAUTH_REQUIRED") {
-					return { error: "Session expired. Please refresh the page." };
+				if (needsReauth(e)) {
+					return { error: googleErrorMessage(e, "Google Contacts") };
 				}
 			}
 		}

@@ -6,7 +6,7 @@ import { logServerError } from "@/lib/errors/server";
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
 import { fromStudioTime, studioIsoString, weekdayOf } from "@/lib/utils/time";
 import { currentHourStart } from "@/lib/validators/session";
-import { cancelStudioEvent, checkAvailability, createStudioEvent } from "@/services/google";
+import { cancelStudioEvent, checkAvailability, createStudioEvent, googleErrorMessage } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
@@ -69,8 +69,8 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 	let accessToken: string;
 	try {
 		accessToken = await getValidAccessToken(user.id);
-	} catch {
-		return { error: "Session expired or disconnected. Please relogin to sync with Google Calendar." };
+	} catch (error) {
+		return { error: googleErrorMessage(error, "Google Calendar") };
 	}
 
 	// RULE 2: Anti-Conflict Verification (Google Calendar FreeBusy API)
@@ -118,8 +118,8 @@ export async function cancelEventAction(eventId: string) {
 	let accessToken: string;
 	try {
 		accessToken = await getValidAccessToken(user.id);
-	} catch {
-		return { error: "Session expired or disconnected. Please relogin to sync with Google Calendar." };
+	} catch (error) {
+		return { error: googleErrorMessage(error, "Google Calendar") };
 	}
 
 	try {

@@ -8,9 +8,9 @@ import { Google } from "iconsax-reactjs";
 export default async function LoginPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ error?: string }>;
+	searchParams: Promise<{ error?: string; reason?: string }>;
 }) {
-	const { error } = await searchParams;
+	const { error, reason } = await searchParams;
 
 	return (
 		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
@@ -56,6 +56,12 @@ export default async function LoginPage({
 							</p>
 						</div>
 					</div> */}
+
+					{reason === "google" && !error ? (
+						<p role="status" className="bg-accent/50 text-foreground rounded-2xl p-4 text-center text-sm font-medium">
+							Your Google connection expired. Sign in again to reconnect your calendar and contacts.
+						</p>
+					) : null}
 
 					{error ? (
 						<p
