@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { logServerError } from "@/lib/errors/server";
 import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
-import { fromStudioTime, studioIsoString, weekdayOf } from "@/lib/utils/time";
-import { currentHourStart } from "@/lib/validators/session";
+import { currentHourStart, fromStudioTime, STUDIO_TIME_ZONE, studioIsoString, weekdayOf } from "@/lib/utils/time";
 import { cancelStudioEvent, checkAvailability, createStudioEvent, googleErrorMessage } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
@@ -22,6 +21,14 @@ const DEFAULT_HOURS: WorkingHoursConfig = {
 	"0": { isOpen: false, start: "08:00", end: "20:00" },
 };
 
+// Node bundles its own time-zone data; builds older than 2026e still put
+// Morocco on UTC+1, which would check the wrong hour against the calendar.
+if (process.versions.tz && process.versions.tz < "2026e") {
+	console.warn(
+		`Node's time-zone data (${process.versions.tz}) predates Morocco's move to UTC+0; update Node.`,
+	);
+}
+
 export async function scheduleNewEventAction(data: ScheduleEventInput) {
 	// Authentication
 	const supabase = await createClient();
@@ -31,6 +38,14 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 
 	if (!user) {
 		return { error: "Not authenticated" };
+	}
+
+	if (
+		!/^\d{4}-\d{2}-\d{2}$/.test(data.dateStr) ||
+		!/^\d{2}:\d{2}$/.test(data.startTimeStr) ||
+		!/^\d{2}:\d{2}$/.test(data.endTimeStr)
+	) {
+		return { error: "Pick a date and a start and end time." };
 	}
 
 	// The times are the studio's wall clock; the phone's zone doesn't matter.
@@ -83,8 +98,10 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 	try {
 		const newEvent = await createStudioEvent(accessToken, {
 			title: data.title,
-			startTime: isoStart,
-			endTime: isoEnd,
+			// Google places the event with its own, always current, zone data.
+			startTime: `${data.dateStr}T${data.startTimeStr}:00`,
+			endTime: `${data.dateStr}T${data.endTimeStr}:00`,
+			timeZone: STUDIO_TIME_ZONE,
 			type: data.type,
 			outdoorPrice: data.outdoorPrice,
 			b2bPrice: data.b2bPrice,

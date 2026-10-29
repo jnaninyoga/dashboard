@@ -49,8 +49,10 @@ export type JnaninEventType = "group" | "private" | "outdoor" | "b2b";
 
 interface CreateEventData {
 	title: string;
-	startTime: string; // ISO string
-	endTime: string; // ISO string
+	/** Wall-clock "YYYY-MM-DDTHH:mm:ss" in `timeZone`; Google works out the offset. */
+	startTime: string;
+	endTime: string;
+	timeZone: string;
 	type: JnaninEventType;
 	outdoorPrice?: number | null;
 	b2bPrice?: number | null;
@@ -104,9 +106,11 @@ export async function createStudioEvent(
 				summary: data.title,
 				start: {
 					dateTime: data.startTime,
+					timeZone: data.timeZone,
 				},
 				end: {
 					dateTime: data.endTime,
+					timeZone: data.timeZone,
 				},
 				colorId,
 				extendedProperties,

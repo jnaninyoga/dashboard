@@ -1,9 +1,24 @@
-import { fromStudioTime } from "@/lib/utils/time";
+import { currentHourStart, fromStudioTime, studioDateString, toStudioTime } from "@/lib/utils/time";
 
 import { z } from "zod";
 
-// Morocco's offsets are whole hours, so flooring in UTC floors the studio hour too.
-export const currentHourStart = () => new Date(Math.floor(Date.now() / 3_600_000) * 3_600_000);
+const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+
+/**
+ * Where a new session starts by default: the next full hour on the studio's
+ * clock, no earlier than 08:00 and no later than 19:00; after that, 08:00 the
+ * next morning. One hour long.
+ */
+export function defaultSessionSlot(now: Date = new Date()) {
+	const next = toStudioTime(now).getHours() + 1;
+	const tomorrow = next > 19;
+	const start = tomorrow ? 8 : Math.max(8, next);
+	return {
+		dateStr: studioDateString(tomorrow ? new Date(now.getTime() + 86_400_000) : now),
+		startTimeStr: hour(start),
+		endTimeStr: hour(start + 1),
+	};
+}
 
 // --- SESSION SCHEMA (Booking flow) ---
 export const sessionSchema = z

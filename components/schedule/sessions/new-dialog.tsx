@@ -22,6 +22,7 @@ import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
 import { studioDateString, toStudioTime } from "@/lib/utils/time";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
+import { defaultSessionSlot } from "@/lib/validators/session";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarAdd, Refresh } from "iconsax-reactjs";
@@ -29,22 +30,13 @@ import { CalendarAdd, Refresh } from "iconsax-reactjs";
 const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
 const currentHourStr = () => hour(toStudioTime().getHours());
 
-// A new session starts at the next full hour on the studio's clock; late in
-// the evening, at 08:00 the next morning.
-const freshSession = (): SessionFormValues => {
-	const next = toStudioTime().getHours() + 1;
-	const tomorrow = next > 21;
-	const start = tomorrow ? 8 : next;
-	return {
-		title: "",
-		dateStr: studioDateString(tomorrow ? new Date(Date.now() + 86_400_000) : new Date()),
-		startTimeStr: hour(start),
-		endTimeStr: hour(start + 1),
-		type: "group",
-		outdoorPrice: "",
-		b2bTierId: "",
-	};
-};
+const freshSession = (): SessionFormValues => ({
+	title: "",
+	...defaultSessionSlot(),
+	type: "group",
+	outdoorPrice: "",
+	b2bTierId: "",
+});
 
 export function NewSessionDialog({
 	open,

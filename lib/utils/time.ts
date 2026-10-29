@@ -21,12 +21,14 @@ const wallClockParts = new Intl.DateTimeFormat("en-US", {
  * never to store or compare instants.
  */
 export function toStudioTime(instant: Date = new Date()): Date {
-	const p = Object.fromEntries(
-		wallClockParts
-			.formatToParts(instant)
-			.map(({ type, value }) => [type, Number(value)]),
-	);
+	const p = wallClock(instant);
 	return new Date(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+}
+
+function wallClock(instant: Date): Record<string, number> {
+	return Object.fromEntries(
+		wallClockParts.formatToParts(instant).map(({ type, value }) => [type, Number(value)]),
+	);
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -39,16 +41,16 @@ export function studioDateString(instant: Date = new Date()): string {
 
 /** The studio's offset from UTC in minutes at that instant (60 in June 2026, 0 in Ramadan). */
 export function studioOffsetMinutes(instant: Date): number {
-	const wall = toStudioTime(instant);
-	const wallAsUtc = Date.UTC(
-		wall.getFullYear(),
-		wall.getMonth(),
-		wall.getDate(),
-		wall.getHours(),
-		wall.getMinutes(),
-		wall.getSeconds(),
-	);
+	// Straight from the zone's parts to UTC: no detour through the process's
+	// own time zone, which can skip or repeat an hour of its own.
+	const p = wallClock(instant);
+	const wallAsUtc = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
 	return Math.round((wallAsUtc - instant.getTime()) / 60_000);
+}
+
+/** The start of the current hour. Morocco's offsets are whole hours, so flooring in UTC floors the studio hour too. */
+export function currentHourStart(now: Date = new Date()): Date {
+	return new Date(Math.floor(now.getTime() / 3_600_000) * 3_600_000);
 }
 
 /**

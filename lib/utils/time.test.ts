@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	currentHourStart,
 	fromStudioTime,
 	getDayPeriod,
 	studioDateString,
@@ -38,6 +39,18 @@ describe("studio dates and times", () => {
 	it("turns a studio wall-clock time into the right instant", () => {
 		expect(fromStudioTime("2026-06-15", "10:00").toISOString()).toBe("2026-06-15T09:00:00.000Z");
 		expect(fromStudioTime("2026-03-05", "10:00").toISOString()).toBe("2026-03-05T10:00:00.000Z");
+	});
+
+	it("follows the clock either side of the 2026 Ramadan changes", () => {
+		// UTC+1 before Ramadan, UTC+0 during it, UTC+1 again after.
+		expect(fromStudioTime("2026-02-10", "12:00").toISOString()).toBe("2026-02-10T11:00:00.000Z");
+		expect(fromStudioTime("2026-02-20", "12:00").toISOString()).toBe("2026-02-20T12:00:00.000Z");
+		expect(fromStudioTime("2026-03-17", "12:00").toISOString()).toBe("2026-03-17T12:00:00.000Z");
+		expect(fromStudioTime("2026-03-27", "12:00").toISOString()).toBe("2026-03-27T11:00:00.000Z");
+	});
+
+	it("floors to the start of the hour", () => {
+		expect(currentHourStart(new Date("2026-06-15T09:37:12Z")).toISOString()).toBe("2026-06-15T09:00:00.000Z");
 	});
 
 	it("writes the studio's offset into the ISO string", () => {
