@@ -68,18 +68,13 @@ Today, cancelling a session deletes the event from Google Calendar, so it vanish
 
 ## Module: `client-card`
 
-Today a card is about 350px tall for one client. It gives as much room to gender and "category discount" as to what she uses: credits left, today's check-in, a health warning, WhatsApp. A first compact version (118px) was too cramped. The owner asked for a premium card with room to breathe (2026-10-29), so density gives way to clarity.
+The client card (and the partner card) use the dashboard's one card language, `EntityCard`, refined with the owner (2026-10-29):
 
-- **Header:** the photo (56px) with a green dot when checked in today, the name in large type, and one status chip ("Checked in · {session}") when it applies.
-- **A tinted panel** with the two numbers she needs at the door:
-  - **Credits left:** "6 of 10" (amber when 2 or fewer), or "No active card".
-  - **Last visit:** "Today", "Yesterday" or "Tue 28 Oct", in Marrakech time.
-- **Health:** a soft red "1 health alert" chip when there are active alerts. Tapping it raises a sileo warning toast, "Health alerts for {name}", listing the conditions with the critical ones first.
-- **One detail row:** client since (date).
-- **Actions:** a round ⋮ (edit, email, delete), a round call button and a wide WhatsApp pill as the main action; all at least 44px.
-- **Tapping the card** opens the profile; its buttons don't.
-- **One component** serves the grid view and the table's phone cards.
-- Gender, category and membership details stay on the profile. When membership cards get an expiry date (a separate, promised change), the panel adds it.
+- **Shell:** a quiet surface with no gradient, the ⋮ menu in the top-right corner, then three sections that line up across a row of cards: header, figures, actions. Titles cap at two lines.
+- **Header:** the photo (56px) with a green dot when checked in today, the name, and presence: "Here today" (with the session's name) or "Last visit Mon 26 Oct".
+- **Figures panel:** credits left ("6 of 10", amber at 2 or fewer, "No card") and visits this month, then a fixed slot for health. When there are active alerts it holds one round ⚠ button with a count when more than one; tapping it raises a sileo toast listing the conditions, critical first. The slot stays empty otherwise, so every card's figures sit in the same place.
+- **Actions:** call and a WhatsApp pill, at least 44px.
+- Tapping the card opens the profile; its buttons don't. Gender, category and membership details live on the profile.
 
 ## Module: `navigation`
 

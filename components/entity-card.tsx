@@ -67,9 +67,17 @@ export function EntityCardHeader({
 	);
 }
 
-/** The figures panel: two figures side by side on a soft neutral surface. */
-export function EntityCardFigures({ children }: { children: React.ReactNode }) {
-	return <dl className="bg-muted/60 grid grid-cols-2 gap-4 rounded-2xl px-4 py-3.5">{children}</dl>;
+/**
+ * The figures panel: two figures side by side on a soft neutral surface, and
+ * an optional status control at its end (the client's health alerts).
+ */
+export function EntityCardFigures({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
+	return (
+		<div className="bg-muted/60 flex items-center gap-3 rounded-2xl px-4 py-3.5">
+			<dl className="grid min-w-0 flex-1 grid-cols-2 gap-4">{children}</dl>
+			{aside ? <div className="relative z-10 shrink-0">{aside}</div> : null}
+		</div>
+	);
 }
 
 /** One figure: a label, a large number and its unit. */

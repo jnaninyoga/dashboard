@@ -98,23 +98,39 @@ export function ClientCard({ client }: { client: Client }) {
 							{client.lastVisitAt ? `Last visit ${lastVisitLabel(client.lastVisitAt)}` : "No visits yet"}
 						</span>
 					)}
-					{alerts.length > 0 ? (
-						<button
-							type="button"
-							onClick={showAlerts}
-							aria-label={`Health alerts for ${client.fullName}: ${alertsSummary(alerts)}`}
-							className="relative z-10 inline-flex h-7 max-w-full items-center gap-1 rounded-full bg-red-50 px-2.5 text-sm font-medium text-red-700 ring-1 ring-red-200 transition-colors ring-inset hover:bg-red-100 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/30"
-						>
-							<Danger size={14} variant="Bold" className="shrink-0" />
-							<span className="truncate">{alertChipLabel(alerts)}</span>
-						</button>
-					) : null}
 				</EntityCardHeader>
 			}
 			figures={
-				<EntityCardFigures>
+				<EntityCardFigures
+					aside={
+						alerts.length > 0 ? (
+							// One clear signal with the client's figures; tap for the full list.
+							<button
+								type="button"
+								onClick={showAlerts}
+								title={alertChipLabel(alerts)}
+								aria-label={`Health alerts for ${client.fullName}: ${alertsSummary(alerts)}`}
+								className="relative flex size-11 items-center justify-center rounded-full bg-red-100 text-red-600 ring-4 ring-red-50 transition-colors hover:bg-red-200 active:scale-95 dark:bg-red-500/20 dark:text-red-300 dark:ring-red-500/10"
+							>
+								<Danger size={22} variant="Bold" />
+								{alerts.length > 1 ? (
+									<span
+										aria-hidden
+										className="ring-card absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white ring-2"
+									>
+										{alerts.length}
+									</span>
+								) : null}
+							</button>
+						) : (
+							// The slot stays when there are no alerts, so the figures and the
+							// alert sit in the same place on every card.
+							<span aria-hidden className="block size-11" />
+						)
+					}
+				>
 					{credits.count === null ? (
-						<Figure label="Credits left" value="No active card" tone="muted" />
+						<Figure label="Credits left" value="No card" tone="muted" />
 					) : (
 						<Figure
 							label="Credits left"
