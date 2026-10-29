@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 
-import { BloomingBlossoms } from "@/components/ui/blooming-blossoms";
 import { Button } from "@/components/ui/button";
+import { LotusPond } from "@/components/ui/lotus-pond";
 import {
 	buildErrorReport,
 	errorReportMailto,
@@ -68,9 +68,7 @@ export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenPro
 				fullScreen ? "bg-background fixed inset-0 z-100 min-h-dvh" : "min-h-[70vh]",
 			)}
 		>
-			<BloomingBlossoms />
-			<div className="bg-destructive/10 pointer-events-none absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full opacity-60 blur-3xl" />
-			<div className="bg-secondary/15 pointer-events-none absolute bottom-[-15%] left-[-10%] h-[400px] w-[400px] rounded-full blur-3xl" />
+			<LotusPond />
 
 			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-6 text-center">
 				<div className="space-y-3">

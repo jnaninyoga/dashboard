@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { BloomingBlossoms } from "@/components/ui/blooming-blossoms";
+import { LotusPond } from "@/components/ui/lotus-pond";
 import { loginWithGoogle } from "@/lib/actions/auth";
 
 import { Google } from "iconsax-reactjs";
@@ -14,13 +14,8 @@ export default async function LoginPage({
 
 	return (
 		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
-			{/* Blooming Blossoms Animation */}
-			<BloomingBlossoms />
+			<LotusPond />
 
-			{/* Ambient background blobs */}
-			<div className="bg-primary/8 pointer-events-none absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full blur-3xl" />
-			<div className="bg-secondary/15 pointer-events-none absolute bottom-[-15%] left-[-10%] h-[400px] w-[400px] rounded-full blur-3xl" />
-			
 			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-10">
 				{/* Logo & Brand */}
 				<div className="flex flex-col items-center gap-4">

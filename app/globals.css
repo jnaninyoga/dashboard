@@ -78,8 +78,6 @@
 	--animate-float: float 6s ease-in-out infinite;
 	--animate-breathe: breathe 4s ease-in-out infinite;
 	--animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-	--animate-drift: drift 20s linear infinite;
-	--animate-sway: sway 8s ease-in-out infinite;
 }
 
 @keyframes float {
@@ -98,46 +96,6 @@
 		opacity: 0.6;
 	}
 	50% {
-		opacity: 1;
-	}
-}
-
-@keyframes drift {
-	from {
-		transform: translate(0, 0) rotate(0deg);
-	}
-	to {
-		transform: translate(150px, 150px) rotate(360deg);
-	}
-}
-
-@keyframes fall {
-	0% {
-		transform: translateY(-15vh);
-	}
-	100% {
-		transform: translateY(115vh);
-	}
-}
-
-@keyframes sway {
-	0%,
-	100% {
-		transform: translateX(-35px) rotate(-12deg);
-	}
-	50% {
-		transform: translateX(35px) rotate(12deg);
-	}
-}
-
-/* The blooming effect when the particle first enters the DOM */
-@keyframes lotus-bloom {
-	0% {
-		transform: scale(0) translateY(20px);
-		opacity: 0;
-	}
-	100% {
-		transform: scale(1) translateY(0);
 		opacity: 1;
 	}
 }
@@ -268,6 +226,232 @@
    Title Case. */
 [data-sileo-viewport] [data-sileo-title] {
 	text-transform: none;
+}
+
+/* ─── Lotus pond: backdrop of the login, error and not-found screens ───
+   A lotus resting on still water and sending out rings, petals tumbling
+   down, light glinting on the surface, and dawn light breathing in (4s) and
+   out (6s). Transform/opacity only; each element
+   reads its own timing from --custom properties set by the component. */
+@keyframes petal-fall {
+	0% {
+		transform: translate3d(0, -12vh, 0);
+		opacity: 0;
+	}
+	10%,
+	86% {
+		opacity: calc(var(--petal-opacity) * var(--pond-dim));
+	}
+	100% {
+		transform: translate3d(var(--petal-wind), 112vh, 0);
+		opacity: 0;
+	}
+}
+@keyframes petal-sway {
+	from {
+		transform: translateX(calc(var(--petal-sway) * -1));
+	}
+	to {
+		transform: translateX(var(--petal-sway));
+	}
+}
+/* Rocking about two axes while turning slowly: a petal, not confetti. */
+@keyframes petal-flutter {
+	0% {
+		transform: rotateX(12deg) rotateY(-28deg) rotateZ(var(--petal-tilt));
+	}
+	50% {
+		transform: rotateX(68deg) rotateY(18deg) rotateZ(calc(var(--petal-tilt) + 28deg));
+	}
+	100% {
+		transform: rotateX(20deg) rotateY(-12deg) rotateZ(calc(var(--petal-tilt) + 56deg));
+	}
+}
+@keyframes pond-ripple {
+	0% {
+		transform: translate(-50%, -50%) scale(0.08);
+		opacity: 0;
+	}
+	14% {
+		opacity: var(--ripple-opacity);
+	}
+	100% {
+		transform: translate(-50%, -50%) scale(1);
+		opacity: 0;
+	}
+}
+@keyframes lily-bob {
+	from {
+		transform: translateY(0) rotate(-1.2deg);
+	}
+	to {
+		transform: translateY(-4px) rotate(1.2deg);
+	}
+}
+@keyframes glint {
+	0%,
+	100% {
+		transform: translateX(-3vw) scaleX(0.6);
+		opacity: 0;
+	}
+	50% {
+		transform: translateX(3vw) scaleX(1);
+		opacity: 0.85;
+	}
+}
+@keyframes dawn-breath {
+	0%,
+	100% {
+		transform: scale(1);
+		opacity: 0.55;
+	}
+	40% {
+		transform: scale(1.07);
+		opacity: 0.95;
+	}
+}
+
+@layer components {
+	.lotus-pond {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		overflow: hidden;
+		pointer-events: none;
+
+		--pond-petal: var(--color-secondary);
+		--pond-petal-tip: color-mix(in oklab, var(--color-secondary-3) 70%, var(--color-secondary));
+		--pond-petal-base: color-mix(in oklab, white 70%, var(--color-secondary));
+		--pond-petal-mid: var(--color-secondary-2);
+		--pond-petal-deep: var(--color-secondary-3);
+		--pond-petal-vein: color-mix(in oklab, var(--color-secondary-3) 40%, transparent);
+		--pond-heart: color-mix(in oklab, var(--color-secondary-3) 80%, var(--color-foreground));
+		--pond-teal: var(--color-accent);
+		--pond-teal-tip: color-mix(in oklab, var(--color-primary) 55%, var(--color-accent));
+		--pond-teal-base: color-mix(in oklab, white 70%, var(--color-accent));
+		--pond-teal-vein: color-mix(in oklab, var(--color-primary) 35%, transparent);
+		--pond-leaf: color-mix(in oklab, var(--color-primary) 30%, var(--color-accent));
+		--pond-leaf-deep: color-mix(in oklab, var(--color-primary) 62%, var(--color-accent));
+		--pond-vein: color-mix(in oklab, white 35%, transparent);
+		--pond-water: color-mix(in oklab, var(--color-accent) 45%, transparent);
+		--pond-ring: color-mix(in oklab, var(--color-primary) 70%, transparent);
+		--pond-glint: color-mix(in oklab, var(--color-primary) 30%, white);
+		--pond-mist: color-mix(in oklab, var(--color-accent) 55%, color-mix(in oklab, var(--color-primary) 25%, transparent));
+		--pond-dawn: color-mix(in oklab, var(--color-secondary-2) 60%, transparent);
+		--pond-glow: color-mix(in oklab, var(--color-secondary-2) 70%, transparent);
+		--pond-dim: 1;
+	}
+	/* By night the theme's blush turns to deep maroon, which would make the
+	   lotus muddy; the pond keeps pale petals glowing over dark leaves. */
+	.dark .lotus-pond {
+		--pond-petal: #f3c9c2;
+		--pond-petal-tip: #d98e8a;
+		--pond-petal-base: #fbe7e3;
+		--pond-petal-mid: #e9aaa5;
+		--pond-petal-deep: #c97370;
+		--pond-petal-vein: color-mix(in oklab, #a85a58 50%, transparent);
+		--pond-heart: #a85a58;
+		--pond-teal: #8cc9d2;
+		--pond-teal-tip: #5fa9b4;
+		--pond-teal-base: #cfe9ed;
+		--pond-leaf: #24606b;
+		--pond-leaf-deep: #123840;
+		--pond-vein: color-mix(in oklab, #8cc9d2 30%, transparent);
+		--pond-ring: color-mix(in oklab, var(--color-primary) 45%, transparent);
+		--pond-glint: color-mix(in oklab, #cfe9ed 70%, transparent);
+		--pond-mist: color-mix(in oklab, var(--color-accent) 60%, transparent);
+		--pond-glow: color-mix(in oklab, #d98e8a 28%, transparent);
+		--pond-dim: 0.8;
+	}
+	.lotus-pond .dawn {
+		position: absolute;
+		border-radius: 9999px;
+		animation: dawn-breath 10s ease-in-out infinite;
+	}
+	.lotus-pond .water {
+		position: absolute;
+		inset: auto 0 0 0;
+		height: 42%;
+		background: linear-gradient(
+			to top,
+			var(--pond-water),
+			transparent
+		);
+	}
+	.lotus-pond .ripple {
+		position: absolute;
+		width: var(--ripple-size);
+		aspect-ratio: 3 / 1;
+		border-radius: 50%;
+		border: 1.5px solid var(--pond-ring);
+		opacity: 0;
+		animation: pond-ripple var(--ripple-time) cubic-bezier(0.2, 0.6, 0.3, 1) var(--ripple-delay) infinite;
+	}
+	.lotus-pond .glint {
+		position: absolute;
+		height: 2px;
+		border-radius: 9999px;
+		background: linear-gradient(
+			90deg,
+			transparent,
+			var(--pond-glint),
+			transparent
+		);
+		opacity: 0;
+		animation: glint 10s ease-in-out infinite;
+	}
+	/* Anchored at the pad's centre on the water line (y=92 of 120). */
+	.lotus-pond .lily {
+		position: absolute;
+		transform: translate(-50%, -76.7%);
+	}
+	.lotus-pond .lily > div {
+		animation: lily-bob 8s ease-in-out infinite alternate;
+	}
+	.lotus-pond .lily .halo {
+		position: absolute;
+		inset: -45% -25% -10%;
+		border-radius: 9999px;
+		background: radial-gradient(
+			closest-side,
+			var(--pond-glow),
+			transparent
+		);
+		animation: dawn-breath 10s ease-in-out infinite;
+	}
+	.lotus-pond .petal {
+		position: absolute;
+		top: 0;
+		opacity: 0;
+		animation: petal-fall var(--petal-fall) linear var(--petal-delay) infinite;
+	}
+	.lotus-pond .petal > span {
+		display: block;
+		perspective: 240px;
+		animation: petal-sway var(--petal-sway-time) ease-in-out var(--petal-delay) infinite alternate;
+	}
+	.lotus-pond .petal svg {
+		display: block;
+		transform-style: preserve-3d;
+		animation: petal-flutter var(--petal-flutter-time) ease-in-out var(--petal-delay) infinite alternate;
+	}
+	/* Reduced motion: a still pond, petals resting where they are. */
+	@media (prefers-reduced-motion: reduce) {
+		.lotus-pond * {
+			animation: none !important;
+		}
+		.lotus-pond .petal {
+			top: var(--petal-rest);
+			opacity: calc(var(--petal-opacity) * var(--pond-dim));
+		}
+		.lotus-pond .petal svg {
+			transform: rotateX(35deg) rotateZ(var(--petal-tilt));
+		}
+		.lotus-pond .ripple {
+			opacity: calc(var(--ripple-opacity) * 0.45);
+			transform: translate(-50%, -50%) scale(var(--ripple-rest));
+		}
+	}
 }
 
 /* ─── Zen Utility Classes ─── */

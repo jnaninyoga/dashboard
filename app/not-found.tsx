@@ -1,19 +1,14 @@
 import Link from "next/link";
 
-import { BloomingBlossoms } from "@/components/ui/blooming-blossoms";
+import { LotusPond } from "@/components/ui/lotus-pond";
 
 import { Home2 } from "iconsax-reactjs";
 
 export default function NotFound() {
 	return (
 		<div className="bg-background fixed inset-0 z-100 flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
-			{/* Blooming Blossoms Animation */}
-			<BloomingBlossoms />
+			<LotusPond />
 
-			{/* Ambient background blobs (same as login/page.tsx) */}
-			<div className="bg-primary/8 pointer-events-none absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full blur-3xl" />
-			<div className="bg-secondary/15 pointer-events-none absolute bottom-[-15%] left-[-10%] h-[400px] w-[400px] rounded-full blur-3xl" />
-			
 			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-8 text-center">
 				{/* 404 visual */}
 				<div className="flex flex-col items-center">
