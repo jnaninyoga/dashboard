@@ -37,8 +37,9 @@ export default async function ClientsPage(props: {
 		gender,
 	});
 
+	// The shared error screen gives the operator a code to report.
 	if (error) {
-		return <div className="p-8 text-red-500">Error: {error}</div>;
+		throw new Error(error);
 	}
 
 	return (
