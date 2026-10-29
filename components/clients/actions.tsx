@@ -23,7 +23,7 @@ import {
 import { deleteClientAction } from "@/lib/actions/clients/mutations";
 import { type Client } from "@/lib/types";
 
-import { Edit2, Refresh, Trash } from "iconsax-reactjs";
+import { Edit2, Refresh, Sms, Trash } from "iconsax-reactjs";
 
 export function ClientActions({
 	client,
@@ -62,6 +62,14 @@ export function ClientActions({
 						>
 							<Edit2 className="mr-2 h-4 w-4 text-current" variant="Outline" />
 							Edit
+						</DropdownMenuItem>
+					) : null}
+					{client.email ? (
+						<DropdownMenuItem asChild>
+							<a href={`mailto:${client.email}`}>
+								<Sms className="mr-2 h-4 w-4 text-current" variant="Outline" />
+								Email
+							</a>
 						</DropdownMenuItem>
 					) : null}
 					<DropdownMenuItem
