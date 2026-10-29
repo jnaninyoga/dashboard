@@ -17,11 +17,57 @@ interface DocumentDashboardTableProps {
 	documents: DocumentWithRelations[];
 }
 
-const paidOf = (doc: DocumentWithRelations) =>
-	doc.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
-
 const formatMAD = (n: number) =>
 	n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+type CardDocument = {
+	id: string;
+	type: string;
+	status: string;
+	documentNumber: string;
+	issueDate: string;
+	totalAmount: string;
+	payments?: { amount: string }[] | null;
+};
+
+/** A document as a phone card, shared by every document list. */
+export function DocumentRowCard({ doc, subtitle }: { doc: CardDocument; subtitle: string }) {
+	const paid = doc.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+	const due = Math.max(0, Number(doc.totalAmount) - paid);
+	const showDue = doc.type === "invoice" && due > 0;
+	return (
+		<div className="flex flex-col gap-3">
+			{/* Number and who it's for get the full width (the number is what
+			    she scans for); status and amount share the line below. */}
+			<Link href={`/b2b/documents/${doc.id}`} className="flex min-w-0 items-center gap-3">
+				<div className="bg-secondary/40 text-secondary-3 flex size-10 shrink-0 items-center justify-center rounded-xl">
+					{doc.type === "invoice" ? (
+						<ReceiptText size={20} variant="Bulk" />
+					) : (
+						<DocumentText size={20} variant="Bulk" />
+					)}
+				</div>
+				<div className="min-w-0">
+					<p className="text-foreground truncate text-sm font-bold">{doc.documentNumber}</p>
+					<p className="text-muted-foreground truncate text-xs">
+						{subtitle} · {format(new Date(doc.issueDate), "dd MMM yyyy")}
+					</p>
+				</div>
+			</Link>
+			<div className="border-secondary/15 flex flex-wrap items-end justify-between gap-x-3 gap-y-2 border-t pt-3">
+				<DocumentStatusBadge status={doc.status} />
+				<div className="shrink-0 text-right">
+					<p className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+						{showDue ? "Amount due" : "Total"}
+					</p>
+					<p className={showDue ? "text-sm font-black text-orange-500 tabular-nums" : "text-primary text-sm font-black tabular-nums"}>
+						{formatMAD(showDue ? due : Number(doc.totalAmount))} MAD
+					</p>
+				</div>
+			</div>
+		</div>
+	);
+}
 
 export function DocumentDashboardTable({
 	documents,
@@ -196,42 +242,9 @@ export function DocumentDashboardTable({
 					description="Nothing matches these filters. Try another search, or create a quotation."
 				/>
 			}
-			renderCard={(doc) => {
-				const due = Math.max(0, Number(doc.totalAmount) - paidOf(doc));
-				const showDue = doc.type === "invoice" && due > 0;
-				return (
-					<div className="flex flex-col gap-3">
-						{/* Number and partner get the full width (the number is what
-						    she scans for); status and amount share the line below. */}
-						<Link href={`/b2b/documents/${doc.id}`} className="flex min-w-0 items-center gap-3">
-							<div className="bg-secondary/40 text-secondary-3 flex size-10 shrink-0 items-center justify-center rounded-xl">
-								{doc.type === "invoice" ? (
-									<ReceiptText size={20} variant="Bulk" />
-								) : (
-									<DocumentText size={20} variant="Bulk" />
-								)}
-							</div>
-							<div className="min-w-0">
-								<p className="text-foreground truncate text-sm font-bold">{doc.documentNumber}</p>
-								<p className="text-muted-foreground truncate text-xs">
-									{doc.partner?.companyName ?? "—"} · {format(new Date(doc.issueDate), "dd MMM yyyy")}
-								</p>
-							</div>
-						</Link>
-						<div className="border-secondary/15 flex flex-wrap items-end justify-between gap-x-3 gap-y-2 border-t pt-3">
-							<DocumentStatusBadge status={doc.status} />
-							<div className="shrink-0 text-right">
-								<p className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
-									{showDue ? "Amount due" : "Total"}
-								</p>
-								<p className={showDue ? "text-sm font-black text-orange-500 tabular-nums" : "text-primary text-sm font-black tabular-nums"}>
-									{formatMAD(showDue ? due : Number(doc.totalAmount))} MAD
-								</p>
-							</div>
-						</div>
-					</div>
-				);
-			}}
+			renderCard={(doc) => (
+				<DocumentRowCard doc={doc} subtitle={doc.partner?.companyName ?? "—"} />
+			)}
 		/>
 	);
 }
