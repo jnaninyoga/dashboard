@@ -7,13 +7,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
 import { alertsSummary, creditsLine } from "@/lib/domain/clients/card";
 import { notify } from "@/lib/feedback/notify";
-import { type ClientWithRelations as Client } from "@/lib/types";
+import { type Client as BaseClient, type HealthLog } from "@/lib/types";
 import { whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
 
 import { Call, Danger, Whatsapp } from "iconsax-reactjs";
 
 import { ClientActions } from "./actions";
+
+/** What the card reads: the grid's and the list's client shapes both provide it. */
+type Client = BaseClient & {
+	wallets?: { remainingCredits: number }[];
+	healthLogs?: HealthLog[];
+	checkedInToday?: boolean;
+	activeSessionName?: string;
+};
 
 /** The client's photo from Google Contacts, fetched once and cached; their initial until then. */
 export function ClientAvatar({ client, className }: { client: Client; className?: string }) {
