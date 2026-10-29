@@ -60,6 +60,7 @@ import { Buildings } from "iconsax-reactjs";
 import { FeedbackDemo } from "./feedback-demo";
 import { FormsDemo } from "./forms-demo";
 import { MenusDemo } from "./menus-demo";
+import { TablesDemo } from "./tables-demo";
 
 export function Playground() {
 	const [sheetOpen, setSheetOpen] = useState(false);
@@ -67,7 +68,7 @@ export function Playground() {
 
 	return (
 		<TooltipProvider>
-			<main className="bg-background mx-auto grid max-w-3xl gap-6 p-4 sm:p-8">
+			<main className="bg-background mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 p-4 sm:p-8">
 				<h1 className="text-3xl">UI playground</h1>
 
 				<section className="bg-card grid gap-3 rounded-3xl border p-6">
@@ -118,6 +119,7 @@ export function Playground() {
 				<FeedbackDemo />
 				<FormsDemo />
 				<MenusDemo />
+				<TablesDemo />
 
 				<section className="bg-card flex flex-wrap items-center gap-3 rounded-3xl border p-6">
 					<Dialog>

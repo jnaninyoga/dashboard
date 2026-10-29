@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { DocumentDashboardTable } from "@/components/b2b/documents/dashboard-table";
-import DocumentNotFound from "@/components/b2b/documents/not-found";
 import { Button } from "@/components/ui/button";
 import { getDocumentsAction } from "@/lib/actions/b2b/documents";
 import { B2BDocumentStatus, B2BDocumentType, DocumentWithRelations } from "@/lib/types/b2b";
@@ -54,13 +53,7 @@ export default async function DocumentsPage(props: {
 				</Link>
 			</div>
 
-
-
 			<DocumentDashboardTable documents={(documents as DocumentWithRelations[]) || []} />
-
-			{!documents?.length ? (
-				<DocumentNotFound message="Try adjusting your filters or search query." />
-			) : null}
 		</>
 	);
 }

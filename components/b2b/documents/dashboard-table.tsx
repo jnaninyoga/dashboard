@@ -1,43 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
-import {
-	DropdownMenu,
-	DropdownMenuCheckboxItem,
-	DropdownMenuContent,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/data-table";
+import { EmptyState } from "@/components/empty-state";
 import { DocumentWithRelations } from "@/lib/types/b2b";
 
-import {
-	ColumnDef,
-	flexRender,
-	getCoreRowModel,
-	getPaginationRowModel,
-	getSortedRowModel,
-	SortingState,
-	useReactTable,
-} from "@tanstack/react-table";
+import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
-import {
-	ArrowDown2,
-	ArrowUp2,
-	Category,
-	DocumentText,
-	ReceiptText,
-} from "iconsax-reactjs";
+import { DocumentText, ReceiptText } from "iconsax-reactjs";
 
 import { DocumentFilters } from "./filters";
 import { DocumentStatusBadge } from "./status-badge";
@@ -46,13 +17,15 @@ interface DocumentDashboardTableProps {
 	documents: DocumentWithRelations[];
 }
 
+const paidOf = (doc: DocumentWithRelations) =>
+	doc.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+
+const formatMAD = (n: number) =>
+	n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 export function DocumentDashboardTable({
 	documents,
 }: DocumentDashboardTableProps) {
-	const [sorting, setSorting] = useState<SortingState>([]);
-	const [columnVisibility, setColumnVisibility] = useState({});
-	const router = useRouter();
-
 	const columns: ColumnDef<DocumentWithRelations>[] = [
 		{
 			accessorKey: "type",
@@ -149,6 +122,7 @@ export function DocumentDashboardTable({
 			accessorFn: (row) =>
 				row.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0,
 			cell: ({ row }) => {
+				if (row.original.type === "quote") return <span className="text-muted-foreground text-xs">—</span>;
 				const totalPayments =
 					row.original.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
 				return (
@@ -171,6 +145,7 @@ export function DocumentDashboardTable({
 				return Number(row.totalAmount) - totalPayments;
 			},
 			cell: ({ row }) => {
+				if (row.original.type === "quote") return <span className="text-muted-foreground text-xs">—</span>;
 				const totalAmount = Number(row.original.totalAmount);
 				const totalPayments =
 					row.original.payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
@@ -206,147 +181,57 @@ export function DocumentDashboardTable({
 
 	];
 
-	// eslint-disable-next-line react-hooks/incompatible-library
-	const table = useReactTable({
-		data: documents,
-		columns,
-		getCoreRowModel: getCoreRowModel(),
-		getPaginationRowModel: getPaginationRowModel(),
-		getSortedRowModel: getSortedRowModel(),
-		onSortingChange: setSorting,
-		onColumnVisibilityChange: setColumnVisibility,
-		state: {
-			sorting,
-			columnVisibility,
-		},
-	});
-
 	return (
-		<div className="animate-slide-up flex flex-col gap-4 delay-150">
-			<div className="flex flex-col gap-4 md:flex-row md:items-center">
-				<DocumentFilters />
-				<DropdownMenu>
-					<DropdownMenuTrigger asChild>
-						<Button variant="outline" className="ml-auto flex items-center gap-2">
-							<Category size={16} />
-							Columns
-						</Button>
-					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						{table
-							.getAllColumns()
-							.filter((column) => column.getCanHide())
-							.map((column) => {
-								return (
-									<DropdownMenuCheckboxItem
-										key={column.id}
-										className="capitalize"
-										checked={column.getIsVisible()}
-										onCheckedChange={(value) => column.toggleVisibility(!!value)}
-									>
-										{column.id.replace(/([A-Z])/g, " $1").trim()}
-									</DropdownMenuCheckboxItem>
-								);
-							})}
-					</DropdownMenuContent>
-				</DropdownMenu>
-			</div>
-
-			<Table containerClassName="overflow-x-auto border-secondary/20">
-					<TableHeader>
-						{table.getHeaderGroups().map((headerGroup) => (
-							<TableRow
-								key={headerGroup.id}
-								className="border-b-secondary/20 transition-colors hover:bg-transparent"
-							>
-								{headerGroup.headers.map((header) => {
-									return (
-										<TableHead
-											key={header.id}
-											className="px-4 whitespace-nowrap first:pl-6 last:pr-6"
-										>
-											{header.isPlaceholder ? null : (
-												<div
-													className={
-														header.column.getCanSort()
-															? "flex cursor-pointer items-center gap-2 select-none"
-															: ""
-													}
-													onClick={header.column.getToggleSortingHandler()}
-												>
-													{flexRender(
-														header.column.columnDef.header,
-														header.getContext()
-													)}
-													{{
-														asc: <ArrowUp2 size={14} />,
-														desc: <ArrowDown2 size={14} />,
-													}[header.column.getIsSorted() as string] ?? null}
-												</div>
-											)}
-										</TableHead>
-									);
-								})}
-							</TableRow>
-						))}
-					</TableHeader>
-					<TableBody className="divide-secondary/15 divide-y">
-						{table.getRowModel().rows?.length ? (
-							table.getRowModel().rows.map((row) => (
-								<TableRow
-									key={row.id}
-									className="hover:bg-primary/5 group cursor-pointer border-none transition-colors"
-									onClick={() => router.push(`/b2b/documents/${row.original.id}`)}
-								>
-									{row.getVisibleCells().map((cell) => (
-										<TableCell
-											key={cell.id}
-											className="px-4 py-3 whitespace-nowrap first:pl-6 last:pr-6"
-										>
-											{flexRender(
-												cell.column.columnDef.cell,
-												cell.getContext()
-											)}
-										</TableCell>
-									))}
-								</TableRow>
-							))
-						) : (
-							<TableRow>
-								<TableCell
-									colSpan={columns.length}
-									className="text-muted-foreground h-24 text-center"
-								>
-									No results.
-								</TableCell>
-							</TableRow>
-						)}
-					</TableBody>
-				</Table>
-
-			<div className="flex items-center justify-between pt-2">
-				<div className="text-muted-foreground pl-2 text-sm font-medium">
-					Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1} to {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, table.getFilteredRowModel().rows.length)} of {table.getFilteredRowModel().rows.length} entries
-				</div>
-				<div className="flex items-center space-x-2">
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.previousPage()}
-						disabled={!table.getCanPreviousPage()}
-					>
-						Previous
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => table.nextPage()}
-						disabled={!table.getCanNextPage()}
-					>
-						Next
-					</Button>
-				</div>
-			</div>
-		</div>
+		<DataTable
+			data={documents}
+			columns={columns}
+			toolbar={<DocumentFilters />}
+			columnToggle
+			noun={{ one: "document", many: "documents" }}
+			getRowHref={(doc) => `/b2b/documents/${doc.id}`}
+			empty={
+				<EmptyState
+					icon={<DocumentText size={40} variant="Bulk" />}
+					title="No documents"
+					description="Nothing matches these filters. Try another search, or create a quotation."
+				/>
+			}
+			renderCard={(doc) => {
+				const due = Math.max(0, Number(doc.totalAmount) - paidOf(doc));
+				const showDue = doc.type === "invoice" && due > 0;
+				return (
+					<div className="flex flex-col gap-3">
+						{/* Number and partner get the full width (the number is what
+						    she scans for); status and amount share the line below. */}
+						<Link href={`/b2b/documents/${doc.id}`} className="flex min-w-0 items-center gap-3">
+							<div className="bg-secondary/40 text-secondary-3 flex size-10 shrink-0 items-center justify-center rounded-xl">
+								{doc.type === "invoice" ? (
+									<ReceiptText size={20} variant="Bulk" />
+								) : (
+									<DocumentText size={20} variant="Bulk" />
+								)}
+							</div>
+							<div className="min-w-0">
+								<p className="text-foreground truncate text-sm font-bold">{doc.documentNumber}</p>
+								<p className="text-muted-foreground truncate text-xs">
+									{doc.partner?.companyName ?? "—"} · {format(new Date(doc.issueDate), "dd MMM yyyy")}
+								</p>
+							</div>
+						</Link>
+						<div className="border-secondary/15 flex flex-wrap items-end justify-between gap-x-3 gap-y-2 border-t pt-3">
+							<DocumentStatusBadge status={doc.status} />
+							<div className="shrink-0 text-right">
+								<p className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+									{showDue ? "Amount due" : "Total"}
+								</p>
+								<p className={showDue ? "text-sm font-black text-orange-500 tabular-nums" : "text-primary text-sm font-black tabular-nums"}>
+									{formatMAD(showDue ? due : Number(doc.totalAmount))} MAD
+								</p>
+							</div>
+						</div>
+					</div>
+				);
+			}}
+		/>
 	);
 }

@@ -86,13 +86,15 @@ export function DocumentFilters() {
 					disabled={isPending}
 				/>
 			</div>
-			<div className="flex items-center gap-2">
+			{/* Three equal, shrinkable columns on phones (the row of fixed-width
+			    selects used to push the page sideways); a row from sm up. */}
+			<div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
 				<Select
 					defaultValue={searchParams.get("type") || "all"}
 					onValueChange={handleTypeChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all sm:w-48">
 						<SelectValue placeholder="Type" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
@@ -113,7 +115,7 @@ export function DocumentFilters() {
 					onValueChange={handleStatusChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all sm:w-48">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
@@ -184,7 +186,7 @@ export function DocumentFilters() {
 					onValueChange={handleBackorderChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all sm:w-48">
 						<SelectValue placeholder="Backorder" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
