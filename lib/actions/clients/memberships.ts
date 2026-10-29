@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import { clientWallets,membershipProducts } from "@/services/database/schema";
@@ -9,6 +10,7 @@ import { clientWallets,membershipProducts } from "@/services/database/schema";
 import {desc, eq } from "drizzle-orm";
 
 export async function getMembershipProducts() {
+	await requireUser();
 	return await db
 		.select()
 		.from(membershipProducts)
@@ -26,6 +28,7 @@ export async function createMembershipProduct(
         durationMonths: number;
     }
 ) {
+	await requireUser();
     try {
         await db.insert(membershipProducts).values({
             name: data.name,
@@ -51,6 +54,7 @@ export async function updateMembershipProduct(
 		durationMonths: number;
 	},
 ) {
+	await requireUser();
     try {
         await db
             .update(membershipProducts)
@@ -70,6 +74,7 @@ export async function updateMembershipProduct(
 }
 
 export async function archiveMembershipProduct(id: string) {
+	await requireUser();
 	await db
 		.update(membershipProducts)
 		.set({ isArchived: true })
@@ -79,6 +84,7 @@ export async function archiveMembershipProduct(id: string) {
 }
 
 export async function deleteMembershipProduct(id: string) {
+	await requireUser();
 	// Check if the product is in use
 	const wallets = await db
 		.select()

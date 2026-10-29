@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import { attendanceLedger, clients, clientWallets, healthLogs } from "@/services/database/schema";
@@ -31,6 +32,7 @@ export async function checkInClientAction(
 	eventId: string,
 	slotType: JnaninEventType
 ): Promise<{ success: boolean; message: string; ref?: string }> {
+	await requireUser();
 	try {
 		const message = await db.transaction(async (tx) => {
 			// Lock the client's wallets first: a double tap (or a second device)
@@ -115,6 +117,7 @@ export async function checkInClientAction(
 }
 
 export async function getEventAttendanceAction(eventId: string): Promise<AttendanceRecord[]> {
+	await requireUser();
 	const records = await db
 		.select({
 			id: attendanceLedger.id,

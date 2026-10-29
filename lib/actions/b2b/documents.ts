@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
 import {
 	allocatePayment,
 	type DocumentStatusFilter,
@@ -127,6 +128,7 @@ async function reserveNextDocumentNumber(
 export async function peekNextDocumentNumber(
 	type: B2BDocumentType,
 ): Promise<string> {
+	await requireUser();
 	const prefix = type === "quote" ? "QUO" : "INV";
 	const year = new Date().getFullYear();
 
@@ -145,6 +147,7 @@ export async function createDocumentAction(
 	_prevState: ActionState | null,
 	data: unknown
 ): Promise<ActionState> {
+	await requireUser();
 	const validated = createDocumentWithLinesSchema.safeParse(data);
 
 	if (!validated.success) {
@@ -207,6 +210,7 @@ export async function updateDocumentStatusAction(
 	status: B2BDocumentStatus,
 	partnerId?: string
 ): Promise<ActionState> {
+	await requireUser();
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -255,6 +259,7 @@ export async function archiveDocumentAction(
 	reason?: string,
 	partnerId?: string,
 ): Promise<ActionState> {
+	await requireUser();
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -288,6 +293,7 @@ export async function unarchiveDocumentAction(
 	id: string,
 	partnerId?: string,
 ): Promise<ActionState> {
+	await requireUser();
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -317,6 +323,7 @@ export async function getDocumentsAction(filters?: {
 	isBackorder?: boolean | "all";
 	includeArchived?: boolean;
 }): Promise<{ documents?: DocumentWithRelations[]; error?: string; ref?: string }> {
+	await requireUser();
 	const { query, type, status, includeArchived } = filters || {};
 
 	try {
@@ -378,6 +385,7 @@ export async function getDocumentsAction(filters?: {
 }
 
 export async function getDocumentByIdAction(id: string): Promise<{ document?: DocumentWithRelations; accountSummary?: { previousInvoices: DocumentWithRelations[], allRelatedInvoices?: DocumentWithRelations[], chainInvoices?: DocumentWithRelations[] }; error?: string; ref?: string }> {
+	await requireUser();
 	try {
 		const document = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -462,6 +470,7 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 }
 
 export async function convertQuoteToInvoiceAction(quoteId: string): Promise<ActionState> {
+	await requireUser();
 	try {
 		const quote = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, quoteId),
@@ -566,6 +575,7 @@ export async function createPartialInvoiceAction(
 		notes?: string;
 	}
 ): Promise<ActionState> {
+	await requireUser();
 	try {
 		const quote = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, quoteId),
@@ -638,6 +648,7 @@ export async function recordDocumentPaymentAction(
 	partnerId?: string,
 	requestId?: string,
 ): Promise<ActionState> {
+	await requireUser();
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -770,6 +781,7 @@ class OverpaymentError extends Error {
 }
 
 export async function deleteDocumentAction(id: string, partnerId?: string): Promise<ActionState> {
+	await requireUser();
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -789,6 +801,7 @@ export async function deleteDocumentAction(id: string, partnerId?: string): Prom
 }
 
 export async function updateDocumentNotesAction(id: string, notes: string): Promise<ActionState> {
+	await requireUser();
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
@@ -817,6 +830,7 @@ export async function confirmInvoiceWithBackorderAction(
 	invoiceId: string,
 	createBackorder: boolean
 ): Promise<ActionState> {
+	await requireUser();
 	try {
 		const invoice = (await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, invoiceId),
@@ -880,6 +894,7 @@ export async function updateDocumentLinesAction(
 	id: string,
 	data: { lines: DocumentLineFormValues[]; taxRate: string }
 ): Promise<ActionState> {
+	await requireUser();
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),

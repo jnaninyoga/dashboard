@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
 import { type DocumentStatusFilter, OWED_FILTER, PAYABLE_INVOICE_STATUSES } from "@/lib/domain/billing/payments";
 import { logServerError } from "@/lib/errors/server";
 import { B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
@@ -28,6 +29,7 @@ export async function createPartnerAction(
 	prevState: ActionState | null,
 	formData: FormData
 ): Promise<ActionState> {
+	await requireUser();
 	const rawData = {
 		companyName: formData.get("companyName"),
 		address: formData.get("address") || null,
@@ -236,6 +238,7 @@ export async function updatePartnerAction(
 	prevState: ActionState | null,
 	formData: FormData,
 ): Promise<ActionState> {
+	await requireUser();
 	const rawData = {
 		companyName: formData.get("companyName"),
 		address: formData.get("address") || null,
@@ -267,6 +270,7 @@ export async function updatePartnerAction(
 }
 
 export async function deletePartnerAction(id: string): Promise<ActionState> {
+	await requireUser();
 	try {
 		// Check for associated documents (prevent deleting partner if they have quotes/invoices)
 		const docsCount = await db
@@ -296,6 +300,7 @@ export async function getPartnersAction(filters?: {
 	docType?: B2BDocumentType | "all";
 	docStatus?: DocumentStatusFilter;
 }): Promise<{ partners?: PartnerWithRelations[]; error?: string; ref?: string }> {
+	await requireUser();
 
 	const { query, docType, docStatus } = filters || {};
 
@@ -379,6 +384,7 @@ export async function getPartnersAction(filters?: {
 }
 
 export async function getPartnerByIdAction(id: string) {
+	await requireUser();
 	try {
 		const partner = (await db.query.b2bPartners.findFirst({
 			where: eq(b2bPartners.id, id),
@@ -402,6 +408,7 @@ export async function getPartnerByIdAction(id: string) {
 }
 
 export async function deleteContactAction(id: string): Promise<ActionState> {
+	await requireUser();
 	try {
 		const contact = await db.query.b2bContacts.findFirst({
 			where: eq(b2bContacts.id, id),

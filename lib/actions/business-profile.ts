@@ -2,12 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { type StandardLegalLabel } from "@/lib/types/b2b";
 import { db } from "@/services/database";
 import { businessProfiles } from "@/services/database/schema";
 
 export async function getBusinessProfileAction() {
+	await requireUser();
 	const result = await db.query.businessProfiles.findFirst();
 	return result || null;
 }
@@ -16,6 +18,7 @@ export async function upsertBusinessProfileAction(
 	prevState: unknown,
 	formData: FormData,
 ) {
+	await requireUser();
 	try {
 		const id = formData.get("id") as string | null;
 		const companyName = formData.get("companyName") as string;

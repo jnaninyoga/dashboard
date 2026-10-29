@@ -1,5 +1,6 @@
 "use server";
 
+import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
 import { db } from "@/services/database";
@@ -191,6 +192,7 @@ export async function getClientByIdAction(id: string) {
 export async function getClientsByEmailsAction(
 	emails: string[],
 ): Promise<{ email: string; clientId: string; fullName: string; photoUrl: string | null; phone: string | null }[]> {
+	await requireUser();
 	if (emails.length === 0) return [];
 
 	try {

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import { appSettings, b2bPricingTiers, clientCategories, clients } from "@/services/database/schema";
@@ -11,6 +12,7 @@ import { asc, eq } from "drizzle-orm";
 // --- App Settings (Legacy/General) ---
 
 export async function getAppSettings() {
+	await requireUser();
     const settings = await db.select().from(appSettings);
     // Convert to object for easier consumption
     return settings.reduce((acc, curr) => {
@@ -22,6 +24,7 @@ export async function getAppSettings() {
 import { type WorkingHoursConfig } from "@/lib/types";
 
 export async function getWorkingHours(): Promise<WorkingHoursConfig | null> {
+	await requireUser();
     const setting = await db.query.appSettings.findFirst({
         where: eq(appSettings.key, "working_hours")
     });
@@ -35,6 +38,7 @@ export async function getWorkingHours(): Promise<WorkingHoursConfig | null> {
 }
 
 export async function setWorkingHours(config: WorkingHoursConfig) {
+	await requireUser();
     const valueStr = JSON.stringify(config);
     await db.insert(appSettings).values({
         key: "working_hours",
@@ -50,6 +54,7 @@ export async function setWorkingHours(config: WorkingHoursConfig) {
 // --- Dynamic Categories ---
 
 export async function getClientCategories() {
+	await requireUser();
     return await db.query.clientCategories.findMany({
         orderBy: (categories, { asc }) => [asc(categories.name)],
     });
@@ -63,6 +68,7 @@ export async function createClientCategory(
         discountValue: number;
     }
 ) {
+	await requireUser();
     try {
         await db.insert(clientCategories).values({
             name: data.name,
@@ -85,6 +91,7 @@ export async function updateClientCategory(
         discountValue: number;
     }
 ) {
+	await requireUser();
     try {
         await db.update(clientCategories)
             .set({
@@ -101,6 +108,7 @@ export async function updateClientCategory(
 }
 
 export async function archiveClientCategory(id: string) {
+	await requireUser();
     await db.update(clientCategories)
         .set({ isArchived: true })
         .where(eq(clientCategories.id, id));
@@ -108,6 +116,7 @@ export async function archiveClientCategory(id: string) {
 }
 
 export async function restoreClientCategory(id: string) {
+	await requireUser();
     await db.update(clientCategories)
         .set({ isArchived: false })
         .where(eq(clientCategories.id, id));
@@ -115,6 +124,7 @@ export async function restoreClientCategory(id: string) {
 }
 
 export async function deleteClientCategory(id: string) {
+	await requireUser();
     // Check if in use
     const used = await db.query.clients.findFirst({
         where: eq(clients.categoryId, id)
@@ -131,6 +141,7 @@ export async function deleteClientCategory(id: string) {
 // --- B2B Pricing Tiers ---
 
 export async function getB2BPricingTiers() {
+	await requireUser();
     return await db.query.b2bPricingTiers.findMany({
         orderBy: [asc(b2bPricingTiers.name)],
     });
@@ -139,6 +150,7 @@ export async function getB2BPricingTiers() {
 import { b2bTierSchema } from "@/lib/validators";
 
 export async function createB2BTierAction(_prevState: unknown, formData: FormData) {
+	await requireUser();
     const rawData = {
         name: formData.get("name") as string,
         price: formData.get("price") as string,
@@ -163,6 +175,7 @@ export async function createB2BTierAction(_prevState: unknown, formData: FormDat
 }
 
 export async function updateB2BTierAction(id: string, _prevState: unknown, formData: FormData) {
+	await requireUser();
     const rawData = {
         name: formData.get("name") as string,
         price: formData.get("price") as string,
@@ -189,6 +202,7 @@ export async function updateB2BTierAction(id: string, _prevState: unknown, formD
 }
 
 export async function deleteB2BTierAction(id: string) {
+	await requireUser();
     try {
         await db.delete(b2bPricingTiers).where(eq(b2bPricingTiers.id, id));
         revalidatePath("/settings/b2b");
@@ -199,6 +213,7 @@ export async function deleteB2BTierAction(id: string) {
 }
 
 export async function toggleArchiveB2BTierAction(id: string, isArchived: boolean) {
+	await requireUser();
     try {
         await db.update(b2bPricingTiers)
             .set({ isArchived: !isArchived })
