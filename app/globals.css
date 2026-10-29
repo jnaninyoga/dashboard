@@ -147,6 +147,8 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 .dark {
+	/* Native controls (scrollbars, date pickers) follow the dark theme too. */
+	color-scheme: dark;
 	--color-background: #0d0b0a;
 	--color-foreground: #f7f3f0;
 	--color-card: #1a1614;

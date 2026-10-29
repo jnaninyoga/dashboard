@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { EntityCardGrid } from "@/components/entity-card";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -43,6 +44,8 @@ type DataTableProps<TData, TValue> = {
 	renderCard?: (row: TData) => React.ReactNode;
 	/** The card draws its own frame and handles its own taps (links, buttons). */
 	cardIsSelfContained?: boolean;
+	/** Below which width the cards replace the table: phones only, or until the table has room. */
+	cardsBelow?: "md" | "xl";
 	/** Filters/search shown above the list. */
 	toolbar?: React.ReactNode;
 	/** Lets the operator hide optional columns on desktop. */
@@ -63,6 +66,9 @@ const fromInteractive = (target: EventTarget | null) =>
  * The one list component: a table on desktop, cards on phones, the same
  * empty state, sorting and paging everywhere.
  */
+const CARDS_ONLY_BELOW = { md: "md:hidden", xl: "xl:hidden" } as const;
+const TABLE_FROM = { md: "hidden md:block", xl: "hidden xl:block" } as const;
+
 export function DataTable<TData, TValue>({
 	data,
 	columns,
@@ -70,6 +76,7 @@ export function DataTable<TData, TValue>({
 	getRowHref,
 	renderCard,
 	cardIsSelfContained = false,
+	cardsBelow = "md",
 	toolbar,
 	columnToggle = false,
 	initialSorting = [],
@@ -144,19 +151,26 @@ export function DataTable<TData, TValue>({
 				empty
 			) : (
 				<>
-					{/* Phones: one card per row. grid-cols-1 lets cards shrink to the
+					{/* Self-contained cards (EntityCard) get the card grid, aligned across
+					    rows; others one per row. grid-cols-1 lets cards shrink to the
 					    screen; an implicit grid column grows to the widest card. */}
-					{renderCard ? (
-						<ul className="grid grid-cols-1 gap-3 md:hidden">
+					{renderCard && cardIsSelfContained ? (
+						<div className={CARDS_ONLY_BELOW[cardsBelow]}>
+							<EntityCardGrid>
+								{rows.map((row) => (
+									<Fragment key={row.id}>{renderCard(row.original)}</Fragment>
+								))}
+							</EntityCardGrid>
+						</div>
+					) : renderCard ? (
+						<ul className={cn("grid grid-cols-1 gap-3", CARDS_ONLY_BELOW[cardsBelow])}>
 							{rows.map((row) => (
 								<li
 									key={row.id}
-									onClick={cardIsSelfContained ? undefined : open(row.original)}
+									onClick={open(row.original)}
 									className={cn(
-										"min-w-0",
-										!cardIsSelfContained &&
-											"bg-card border-secondary/20 rounded-3xl border p-4 shadow-sm transition-all",
-										!cardIsSelfContained && getRowHref && "active:bg-primary/5 cursor-pointer",
+										"bg-card border-secondary/20 min-w-0 rounded-3xl border p-4 shadow-sm transition-all",
+										getRowHref && "active:bg-primary/5 cursor-pointer",
 									)}
 								>
 									{renderCard(row.original)}
@@ -166,7 +180,7 @@ export function DataTable<TData, TValue>({
 					) : null}
 
 					{/* Desktop (and phones when there is no card layout) */}
-					<div className={cn(renderCard && "hidden md:block")}>
+					<div className={cn(renderCard && TABLE_FROM[cardsBelow])}>
 						<Table containerClassName="overflow-x-auto border-secondary/20">
 							<TableHeader>
 								{table.getHeaderGroups().map((group) => (
@@ -179,7 +193,7 @@ export function DataTable<TData, TValue>({
 													aria-sort={
 														sorted === "asc" ? "ascending" : sorted === "desc" ? "descending" : undefined
 													}
-													className="px-4 whitespace-nowrap first:pl-6 last:pr-6"
+													className="px-3 whitespace-nowrap first:pl-5 last:pr-5"
 												>
 													{header.isPlaceholder ? null : header.column.getCanSort() ? (
 														<button
@@ -214,7 +228,7 @@ export function DataTable<TData, TValue>({
 										)}
 									>
 										{row.getVisibleCells().map((cell) => (
-											<TableCell key={cell.id} className="px-4 py-3 whitespace-nowrap first:pl-6 last:pr-6">
+											<TableCell key={cell.id} className="px-3 py-3 whitespace-nowrap first:pl-5 last:pr-5">
 												{flexRender(cell.column.columnDef.cell, cell.getContext())}
 											</TableCell>
 										))}

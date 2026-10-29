@@ -41,7 +41,8 @@ export default async function DashboardLayout({
 	return (
 		<SidebarProvider>
 			<AppSidebar user={getUserProfile(user)} />
-			<SidebarInset>
+			{/* min-w-0: wide content (tables) scrolls inside its frame instead of widening the page. */}
+			<SidebarInset className="min-w-0">
 				<header className="bg-background/80 border-border/50 sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-6">
 					<div className="flex items-center gap-2">
 						<SidebarTrigger className="-ml-1 min-h-[48px] min-w-[48px]" />

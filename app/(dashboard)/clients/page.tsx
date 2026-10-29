@@ -56,7 +56,7 @@ export default async function ClientsPage(props: {
 				</Link>
 			</div>
 
-			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-center md:justify-between">
+			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-start md:justify-between">
 				<ClientFilters categories={categories || []} />
 				<ClientViewToggle />
 			</div>

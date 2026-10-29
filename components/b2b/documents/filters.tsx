@@ -74,7 +74,7 @@ export function DocumentFilters() {
 	};
 
 	return (
-		<div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
+		<div className="flex min-w-0 flex-1 flex-col gap-3 xl:flex-row xl:items-center">
 			<div className="relative flex-1">
 				<SearchNormal1
 					size={18}
@@ -90,13 +90,13 @@ export function DocumentFilters() {
 			</div>
 			{/* Three equal, shrinkable columns on phones (the row of fixed-width
 			    selects used to push the page sideways); a row from sm up. */}
-			<div className="grid grid-cols-3 gap-2 sm:flex sm:items-center">
+			<div className="grid grid-cols-3 gap-2 xl:flex xl:items-center">
 				<Select
 					defaultValue={searchParams.get("type") || "all"}
 					onValueChange={handleTypeChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all sm:w-48">
+					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all xl:w-44">
 						<SelectValue placeholder="Type" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
@@ -117,7 +117,7 @@ export function DocumentFilters() {
 					onValueChange={handleStatusChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all sm:w-48">
+					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all xl:w-44">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
@@ -154,7 +154,7 @@ export function DocumentFilters() {
 					onValueChange={handleBackorderChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all sm:w-48">
+					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all xl:w-44">
 						<SelectValue placeholder="Backorder" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
