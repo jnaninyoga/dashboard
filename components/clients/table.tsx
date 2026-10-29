@@ -42,6 +42,9 @@ export type ClientWithRelations = Client & {
     category?: ClientCategory | null;
     wallets?: (ClientWallet & { product?: MembershipProduct | null })[];
     healthLogs?: HealthLog[];
+    /** Check-ins since the start of the studio's month, and the latest one. */
+    visitsThisMonth?: number;
+    lastVisitAt?: Date | string;
     checkedInToday?: boolean;
     activeSessionName?: string;
 };

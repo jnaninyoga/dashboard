@@ -45,18 +45,13 @@ export default async function ClientsPage(props: {
 	return (
 		<>
 			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<header className="space-y-1">
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
-						Clients
-					</h1>
-					<p className="text-md text-muted-foreground">
-						Manage your client base and view their progress.
-					</p>
-				</header>
+				<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+					Clients
+				</h1>
 				<Link href="/clients/add">
 					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
 						<Add className="mr-2 h-4 w-4" variant="Outline" />
-						Add Client
+						Add client
 					</Button>
 				</Link>
 			</div>

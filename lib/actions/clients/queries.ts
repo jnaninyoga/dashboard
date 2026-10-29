@@ -3,6 +3,7 @@
 import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
+import { studioDayStart, studioMonthStart } from "@/lib/utils/time";
 import { db } from "@/services/database";
 import {
 	attendanceLedger,
@@ -14,7 +15,7 @@ import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, desc, eq, gte, ilike, inArray, isNull, or } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 
 export async function getClientsAction(
 	page = 1,
@@ -95,11 +96,33 @@ export async function getClientsAction(
 
 
         // 2. Add Live Session Info if checked in today
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
+        // The studio's day and month, not the server's (which runs on UTC).
+        const startOfToday = studioDayStart();
+        const startOfMonth = studioMonthStart();
 
         if (data.length > 0) {
             const clientIds = data.map(c => c.id);
+
+            // Visits this month and the last visit, across all of a client's cards.
+            const visits = await db
+                .select({
+                    clientId: clientWallets.clientId,
+                    // gte() converts the date the way the column expects; a bare Date in raw SQL fails.
+                    thisMonth: sql<number>`count(*) filter (where ${gte(attendanceLedger.checkInTime, startOfMonth)})`.mapWith(Number),
+                    // Mapped through the column, so the raw timestamp becomes the same Date a normal select gives.
+                    lastVisitAt: sql<Date>`max(${attendanceLedger.checkInTime})`.mapWith(attendanceLedger.checkInTime),
+                })
+                .from(attendanceLedger)
+                .innerJoin(clientWallets, eq(attendanceLedger.walletId, clientWallets.id))
+                .where(inArray(clientWallets.clientId, clientIds))
+                .groupBy(clientWallets.clientId);
+            const visitsByClient = new Map(visits.map((v) => [v.clientId, v]));
+            for (const client of data as (Client & { visitsThisMonth?: number; lastVisitAt?: Date })[]) {
+                const v = visitsByClient.get(client.id);
+                client.visitsThisMonth = v?.thisMonth ?? 0;
+                client.lastVisitAt = v?.lastVisitAt ?? undefined;
+            }
+
             const recentLedgers = await db
                 .select({
                     clientId: clientWallets.clientId,

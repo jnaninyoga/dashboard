@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
 	currentHourStart,
 	fromStudioTime,
+	studioDayStart,
+	studioMonthStart,
 	getDayPeriod,
 	studioDateString,
 	studioIsoString,
@@ -47,6 +49,17 @@ describe("studio dates and times", () => {
 		expect(fromStudioTime("2026-02-20", "12:00").toISOString()).toBe("2026-02-20T12:00:00.000Z");
 		expect(fromStudioTime("2026-03-17", "12:00").toISOString()).toBe("2026-03-17T12:00:00.000Z");
 		expect(fromStudioTime("2026-03-27", "12:00").toISOString()).toBe("2026-03-27T11:00:00.000Z");
+	});
+
+	it("starts the studio's day and month at its own midnight", () => {
+		// June 2026 is UTC+1: 10:00 UTC on the 15th is the studio's 15th, which began at 23:00 UTC on the 14th.
+		const june = new Date("2026-06-15T10:00:00Z");
+		expect(studioDayStart(june).toISOString()).toBe("2026-06-14T23:00:00.000Z");
+		expect(studioMonthStart(june).toISOString()).toBe("2026-05-31T23:00:00.000Z");
+		// Ramadan 2026 is UTC+0.
+		const ramadan = new Date("2026-03-05T10:00:00Z");
+		expect(studioDayStart(ramadan).toISOString()).toBe("2026-03-05T00:00:00.000Z");
+		expect(studioMonthStart(ramadan).toISOString()).toBe("2026-03-01T00:00:00.000Z");
 	});
 
 	it("floors to the start of the hour", () => {

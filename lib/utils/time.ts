@@ -66,6 +66,16 @@ export function fromStudioTime(date: string, time: string): Date {
 	return new Date(asUtc - studioOffsetMinutes(first) * 60_000);
 }
 
+/** The instant the studio's current day began (its own midnight, not the server's). */
+export function studioDayStart(now: Date = new Date()): Date {
+	return fromStudioTime(studioDateString(now), "00:00");
+}
+
+/** The instant the studio's current month began. */
+export function studioMonthStart(now: Date = new Date()): Date {
+	return fromStudioTime(`${studioDateString(now).slice(0, 8)}01`, "00:00");
+}
+
 /** RFC 3339 with the studio's offset, e.g. "2026-06-15T10:00:00+01:00". */
 export function studioIsoString(date: string, time: string): string {
 	const offset = studioOffsetMinutes(fromStudioTime(date, time));

@@ -1,22 +1,22 @@
 import { describe, expect, it } from "vitest";
 
-import { alertsSummary, clientSinceLabel, creditsSummary, lastVisitLabel, sortAlerts } from "./card";
+import { alertsSummary, creditsSummary, lastVisitLabel, sortAlerts } from "./card";
 
 describe("creditsSummary", () => {
-	it("says how many credits are left out of the card's total", () => {
-		expect(creditsSummary({ remainingCredits: 6, product: { defaultCredits: 10 } })).toEqual({ value: "6 of 10", tone: "ok" });
-		expect(creditsSummary({ remainingCredits: 6, product: null })).toEqual({ value: "6", tone: "ok" });
+	it("gives the credits left and the card's total", () => {
+		expect(creditsSummary({ remainingCredits: 6, product: { defaultCredits: 10 } })).toEqual({ count: 6, total: 10, tone: "ok" });
+		expect(creditsSummary({ remainingCredits: 6, product: null })).toEqual({ count: 6, total: null, tone: "ok" });
 	});
 
 	it("warns when two or fewer are left, or none", () => {
 		expect(creditsSummary({ remainingCredits: 2, product: { defaultCredits: 10 } }).tone).toBe("low");
 		expect(creditsSummary({ remainingCredits: 3, product: { defaultCredits: 10 } }).tone).toBe("ok");
-		expect(creditsSummary({ remainingCredits: 0, product: { defaultCredits: 10 } })).toEqual({ value: "0 of 10", tone: "low" });
+		expect(creditsSummary({ remainingCredits: 0, product: { defaultCredits: 10 } })).toEqual({ count: 0, total: 10, tone: "low" });
 	});
 
 	it("says so when there is no active card", () => {
-		expect(creditsSummary(undefined)).toEqual({ value: "No active card", tone: "none" });
-		expect(creditsSummary(null)).toEqual({ value: "No active card", tone: "none" });
+		expect(creditsSummary(undefined)).toEqual({ count: null, total: null, tone: "none" });
+		expect(creditsSummary(null)).toEqual({ count: null, total: null, tone: "none" });
 	});
 });
 
@@ -36,12 +36,6 @@ describe("lastVisitLabel", () => {
 
 	it("says so when the client hasn't come yet", () => {
 		expect(lastVisitLabel(undefined, now)).toBe("Not yet");
-	});
-});
-
-describe("clientSinceLabel", () => {
-	it("is the day the client was added, in the studio's calendar", () => {
-		expect(clientSinceLabel(new Date("2024-01-06T10:00:00Z"))).toBe("6 Jan 2024");
 	});
 });
 

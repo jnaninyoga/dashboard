@@ -8,14 +8,13 @@ export type CreditsTone = "ok" | "low" | "none";
 /** Two or fewer credits left is worth noticing at the door. */
 const LOW_CREDITS = 2;
 
-/** Credits left on the client's active membership card: "6 of 10". */
+/** Credits left on the client's active membership card, out of the card's total. */
 export function creditsSummary(
 	wallet: { remainingCredits: number; product?: { defaultCredits: number } | null } | null | undefined,
-): { value: string; tone: CreditsTone } {
-	if (!wallet) return { value: "No active card", tone: "none" };
-	const left = Math.max(0, wallet.remainingCredits);
-	const total = wallet.product?.defaultCredits;
-	return { value: total ? `${left} of ${total}` : `${left}`, tone: left <= LOW_CREDITS ? "low" : "ok" };
+): { count: number | null; total: number | null; tone: CreditsTone } {
+	if (!wallet) return { count: null, total: null, tone: "none" };
+	const count = Math.max(0, wallet.remainingCredits);
+	return { count, total: wallet.product?.defaultCredits ?? null, tone: count <= LOW_CREDITS ? "low" : "ok" };
 }
 
 // Dates are read in the studio's calendar, assembled from parts so the text
@@ -39,12 +38,6 @@ export function lastVisitLabel(lastCheckIn: Date | string | null | undefined, no
 	if (day === studioDateString(new Date(now.getTime() - 86_400_000))) return "Yesterday";
 	const p = partsOf(visit);
 	return p.year === partsOf(now).year ? `${p.weekday} ${p.day} ${p.month}` : `${p.day} ${p.month} ${p.year}`;
-}
-
-/** The day the client was added: "6 Jan 2024". */
-export function clientSinceLabel(createdAt: Date | string): string {
-	const p = partsOf(new Date(createdAt));
-	return `${p.day} ${p.month} ${p.year}`;
 }
 
 type Alert = { condition: string; severity: "info" | "warning" | "critical"; startDate: string };
