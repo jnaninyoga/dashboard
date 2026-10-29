@@ -13,15 +13,8 @@ import { More } from "iconsax-reactjs";
 export function RowActionsTrigger({
 	label,
 	className,
-	iconSize = 18,
-	iconVariant = "Linear",
 	...props
-}: React.ComponentProps<typeof Button> & {
-	label: string;
-	/** Larger, bolder dots where the button is a prominent circle (the client card). */
-	iconSize?: number;
-	iconVariant?: "Linear" | "Bold";
-}) {
+}: React.ComponentProps<typeof Button> & { label: string }) {
 	return (
 		<Button
 			variant="ghost"
@@ -33,8 +26,8 @@ export function RowActionsTrigger({
 			)}
 			{...props}
 		>
-			{/* "size-auto" opts out of the Button's 16px icon rule, so iconSize applies. */}
-			<More size={iconSize} variant={iconVariant} className="size-auto rotate-90" />
+			{/* "size-auto" opts out of the Button's 16px icon rule, so size={18} applies. */}
+			<More size={18} className="size-auto rotate-90" />
 		</Button>
 	);
 }

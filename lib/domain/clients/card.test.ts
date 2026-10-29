@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { alertsSummary, creditsSummary, lastVisitLabel, sortAlerts } from "./card";
+import { alertChipLabel, alertsSummary, creditsSummary, lastVisitLabel, sortAlerts } from "./card";
 
 describe("creditsSummary", () => {
 	it("gives the credits left and the card's total", () => {
@@ -68,5 +68,14 @@ describe("alertsSummary", () => {
 		expect(
 			alertsSummary([log("Asthma", "info", "2026-05-01"), log("Knee surgery", "critical", "2026-09-01")]),
 		).toBe("Knee surgery (critical), Asthma");
+	});
+});
+
+describe("alertChipLabel", () => {
+	it("names the most important condition, and how many more there are", () => {
+		expect(alertChipLabel([log("Asthma", "info", "2026-05-01")])).toBe("Asthma");
+		expect(
+			alertChipLabel([log("Asthma", "info", "2026-05-01"), log("Knee surgery", "critical", "2026-09-01"), log("Back pain", "warning", "2026-06-01")]),
+		).toBe("Knee surgery +2");
 	});
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { EmptyState } from "@/components/empty-state";
+import { EntityCardGrid } from "@/components/entity-card";
 import { type ClientWithRelations as Client } from "@/lib/types";
 
 import { People } from "iconsax-reactjs";
@@ -19,10 +20,10 @@ export function ClientsGrid({ clients }: { clients: Client[] }) {
 	}
 
 	return (
-		<div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-4">
+		<EntityCardGrid>
 			{clients.map((client) => (
 				<ClientCard key={client.id} client={client} />
 			))}
-		</div>
+		</EntityCardGrid>
 	);
 }

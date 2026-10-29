@@ -57,3 +57,9 @@ export function alertsSummary(alerts: Alert[]): string {
 		.map((a) => (a.severity === "critical" ? `${a.condition} (critical)` : a.condition))
 		.join(", ");
 }
+
+/** The alert chip on the card: the most important condition, and how many more ("Knee surgery +2"). */
+export function alertChipLabel(alerts: Alert[]): string {
+	const [first, ...rest] = sortAlerts(alerts);
+	return rest.length ? `${first.condition} +${rest.length}` : first.condition;
+}

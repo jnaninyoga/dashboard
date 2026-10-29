@@ -28,15 +28,9 @@ import { Edit2, Refresh, Sms, Trash } from "iconsax-reactjs";
 export function ClientActions({
 	client,
 	showEdit = true,
-	triggerClassName,
-	prominentTrigger = false,
 }: {
 	client: Client;
 	showEdit?: boolean;
-	/** Restyles the ⋮ button (the client card shows it as a round button). */
-	triggerClassName?: string;
-	/** The card's round ⋮ uses larger, bold dots. */
-	prominentTrigger?: boolean;
 }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
@@ -59,12 +53,7 @@ export function ClientActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<RowActionsTrigger
-						label={`Actions for ${client.fullName}`}
-						className={triggerClassName}
-						iconSize={prominentTrigger ? 22 : undefined}
-						iconVariant={prominentTrigger ? "Linear" : undefined}
-					/>
+					<RowActionsTrigger label={`Actions for ${client.fullName}`} />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					{showEdit ? (
