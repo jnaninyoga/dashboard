@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/empty-state";
 import { type PartnerWithRelations } from "@/lib/types";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { Buildings, Document, User } from "iconsax-reactjs";
+import { Buildings, Document, User, Warning2 } from "iconsax-reactjs";
 
 import { PartnerActions } from "./actions";
 
@@ -41,14 +41,15 @@ const columns: ColumnDef<PartnerWithRelations>[] = [
 	},
 	{
 		id: "taxId",
-		header: "ICE (Tax ID)",
+		header: "ICE",
 		enableSorting: false,
 		cell: ({ row }) =>
 			row.original.taxId ? (
-				<CopyableTaxId taxId={row.original.taxId} />
+				<CopyableTaxId taxId={row.original.taxId} label={false} />
 			) : (
-				<span className="bg-secondary/20 border-secondary/30 text-secondary-foreground rounded border px-2 py-1 font-mono text-xs font-medium">
-					N/A
+				<span className="text-warning flex items-center gap-1 text-sm">
+					<Warning2 size={14} variant="Bold" aria-hidden />
+					No ICE yet
 				</span>
 			),
 	},

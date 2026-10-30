@@ -2,22 +2,26 @@
 
 import { useState } from "react";
 
-import {
-	InputGroup,
-	InputGroupAddon,
-	InputGroupButton,
-	InputGroupInput,
-} from "@/components/ui/input-group";
 import { cn } from "@/lib/utils/ui";
 
-import { Copy, Hashtag, TickCircle } from "iconsax-reactjs";
+import { Copy, TickCircle } from "iconsax-reactjs";
 
-interface CopyableTaxIdProps {
+/**
+ * A partner's ICE (tax id) as a line of text, like the address beside it,
+ * so it lines up with the name above instead of sitting in a pill. The
+ * whole line copies it (a bigger target than a lone icon); the icon turns
+ * into a tick for two seconds.
+ */
+export function CopyableTaxId({
+	taxId,
+	label = true,
+	className,
+}: {
 	taxId: string;
+	/** "ICE " before the number; off where a column heading already says it. */
+	label?: boolean;
 	className?: string;
-}
-
-export function CopyableTaxId({ taxId, className }: CopyableTaxIdProps) {
+}) {
 	const [copied, setCopied] = useState(false);
 
 	const handleCopy = async () => {
@@ -31,35 +35,25 @@ export function CopyableTaxId({ taxId, className }: CopyableTaxIdProps) {
 	};
 
 	return (
-		<InputGroup
+		<button
+			type="button"
+			onClick={handleCopy}
+			aria-label={copied ? `ICE ${taxId} copied` : `Copy ICE ${taxId}`}
+			title="Copy ICE"
 			className={cn(
-				"bg-secondary/60 border-secondary-3/20 w-fit rounded-full",
+				"group/ice text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md text-left text-sm transition-colors outline-none focus-visible:ring-2",
 				className,
 			)}
 		>
-			<InputGroupAddon align="inline-start" className="pr-1.5">
-				<Hashtag size={14} variant="Bold" className="text-secondary-3" />
-			</InputGroupAddon>
-			<InputGroupInput
-				value={taxId}
-				readOnly
-				className="text-secondary-foreground w-fit px-0 font-mono text-sm font-medium"
-			/>
-			<InputGroupAddon align="inline-end" className="pl-1">
-				<InputGroupButton
-					aria-label="Copy Tax ID"
-					onClick={handleCopy}
-					size="icon-xs"
-					variant="ghost"
-					className="hover:bg-secondary/20 text-secondary-foreground/60 hover:text-secondary-foreground"
-				>
-					{copied ? (
-						<TickCircle size={14} variant="Bold" className="text-primary" />
-					) : (
-						<Copy size={14} variant="Outline" />
-					)}
-				</InputGroupButton>
-			</InputGroupAddon>
-		</InputGroup>
+			<span className="truncate tabular-nums">{label ? `ICE ${taxId}` : taxId}</span>
+			{copied ? (
+				<TickCircle size={14} variant="Bold" className="text-primary shrink-0" aria-hidden />
+			) : (
+				<Copy size={14} className="shrink-0 opacity-60 transition-opacity group-hover/ice:opacity-100" aria-hidden />
+			)}
+			<span aria-live="polite" className="sr-only">
+				{copied ? "Copied" : ""}
+			</span>
+		</button>
 	);
 }

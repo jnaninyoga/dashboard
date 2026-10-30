@@ -48,7 +48,8 @@ export function PartnerGrid({ partners }: { partners: PartnerWithRelations[] }) 
 									</div>
 								}
 							>
-								<span className="text-muted-foreground line-clamp-1 text-sm">
+								{/* Its own line, so the ICE below starts at the same edge as the name. */}
+								<span className="text-muted-foreground line-clamp-1 basis-full text-sm">
 									{partner.address || "No address yet"}
 								</span>
 								{partner.taxId ? (
