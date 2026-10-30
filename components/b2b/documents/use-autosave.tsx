@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils/ui";
 import { Refresh, TickCircle, Warning2 } from "iconsax-reactjs";
 
 import { useRegisterDraftFlush } from "./draft-save";
+import { NoticeAction, useNotice } from "./notices";
 
 export type SaveResult = { ok: true } | { ok: false; message: string; invalid?: boolean };
 
@@ -22,7 +23,12 @@ type SaveState =
  * happened; something not yet savable ("describe this line") waits and says
  * so, and a failure offers to retry. Leaving with unsaved changes asks first.
  */
-export function useAutosave(save: () => Promise<SaveResult>, delay = 900) {
+export function useAutosave(
+	save: () => Promise<SaveResult>,
+	/** Its problems go to the page's notices, named by `label` ("Line items"). */
+	notice: { id: string; label: string },
+	delay = 900,
+) {
 	const [state, setState] = useState<SaveState>({ kind: "saved" });
 	const dirty = useRef(false);
 	const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -73,17 +79,30 @@ export function useAutosave(save: () => Promise<SaveResult>, delay = 900) {
 		return () => window.removeEventListener("beforeunload", warn);
 	}, []);
 
+	const problem = state.kind === "invalid" || state.kind === "error" ? state : null;
+	useNotice(
+		`autosave-${notice.id}`,
+		problem
+			? {
+					tone: "error",
+					message: `${notice.label} not saved: ${problem.message}.`,
+					action: problem.kind === "error" ? <NoticeAction onClick={() => void run()}>Retry</NoticeAction> : undefined,
+				}
+			: null,
+		problem ? `${problem.kind}:${problem.message}` : "",
+	);
+
 	return { state, changed, retry: run };
 }
 
 /** Where saving stands, in a word: Saved, Saving…, or what's stopping it. */
 export function SaveStatus({
 	state,
-	retry,
 	className,
 }: {
 	state: ReturnType<typeof useAutosave>["state"];
-	retry: () => void;
+	/** Kept for callers; Retry lives in the page's notices. */
+	retry?: () => void;
 	className?: string;
 }) {
 	const problem = state.kind === "invalid" || state.kind === "error";
@@ -106,12 +125,7 @@ export function SaveStatus({
 				</>
 			) : (
 				<>
-					<Warning2 size={16} variant="Bold" /> Not saved: {state.message}
-					{state.kind === "error" ? (
-						<button type="button" onClick={() => void retry()} className="ml-1 font-semibold underline">
-							Retry
-						</button>
-					) : null}
+					<Warning2 size={16} variant="Bold" /> Not saved
 				</>
 			)}
 		</p>

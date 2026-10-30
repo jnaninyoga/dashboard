@@ -43,6 +43,7 @@ import {
 	type B2BPricingTier,
 } from "@/lib/types/b2b";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { cn } from "@/lib/utils/ui";
 import { createDocumentWithLinesSchema, withoutBlankLines } from "@/lib/validators/document";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,7 +55,6 @@ import {
 	DocumentText,
 	Edit2,
 	MoneyTime,
-	NoteText,
 	Refresh,
 	Save2,
 	Trash,
@@ -63,7 +63,10 @@ import {
 import { type z } from "zod";
 
 import { DescriptionAutocomplete } from "./description-autocomplete";
-import { blankLine, cellProps, useFluidLines } from "./fluid-lines";
+import { DocumentSection } from "./document-section";
+import { blankLine, cellProps, focusCell, useFluidLines } from "./fluid-lines";
+import { type DocumentNotice, DocumentNotices, NoticeAction } from "./notices";
+import { phoneLine } from "./phone-line";
 
 type CreateValues = z.input<typeof createDocumentWithLinesSchema>;
 
@@ -176,17 +179,8 @@ export function NewQuoteForm({
 	const submit = (event: React.FormEvent) => {
 		event.preventDefault();
 		form.setValue("lines", withoutBlankLines(form.getValues("lines")));
-		void form.handleSubmit(onSubmit, (errors) => {
-			const lineError = errors.lines?.root?.message ?? errors.lines?.message;
-			const first = Array.isArray(errors.lines) ? errors.lines.find(Boolean) : undefined;
-			const message =
-				lineError ??
-				first?.description?.message ??
-				first?.quantity?.message ??
-				first?.unitPrice?.message ??
-				errors.document?.issueDate?.message;
-			notify.warning("A few things are missing", message ? String(message) : undefined);
-		})();
+		// What's missing shows in the notices at the top (and on the line).
+		void form.handleSubmit(onSubmit)();
 	};
 
 	const onSubmit = (values: CreateValues) => {
@@ -202,6 +196,71 @@ export function NewQuoteForm({
 			},
 		}));
 	};
+
+	// Errors (after a create attempt), warnings and notes, all in one place.
+	const contactId = useWatch({ control: form.control, name: "document.contactId" });
+	const { errors, submitCount } = form.formState;
+	const notices: DocumentNotice[] = [];
+	if (submitCount > 0) {
+		if (errors.lines?.root?.message ?? errors.lines?.message) {
+			notices.push({
+				id: "no-lines",
+				tone: "error",
+				message: "Add at least one line before creating the quotation.",
+				action: <NoticeAction onClick={focusWaiting}>Add a line</NoticeAction>,
+			});
+		}
+		if (Array.isArray(errors.lines)) {
+			errors.lines.forEach((lineErrors, index) => {
+				if (!lineErrors) return;
+				const column = lineErrors.description ? "description" : lineErrors.quantity ? "quantity" : "unitPrice";
+				notices.push({
+					id: `line-${index}`,
+					tone: "error",
+					message:
+						column === "description"
+							? `Line ${index + 1} needs a description.`
+							: column === "quantity"
+								? `Line ${index + 1} needs a quantity.`
+								: `Line ${index + 1} needs a price.`,
+					action: <NoticeAction onClick={() => focusCell(index, column)}>Show</NoticeAction>,
+				});
+			});
+		}
+		if (errors.document?.issueDate) {
+			notices.push({ id: "issue-date", tone: "error", message: "Pick the issue date." });
+		}
+	}
+	if (!partner.taxId) {
+		notices.push({
+			id: "ice",
+			tone: "warning",
+			message: `${partner.companyName} has no ICE yet. You'll need it to issue their invoices.`,
+			action: (
+				<Link
+					href={`/b2b/partners/${partner.id}`}
+					className="text-primary inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold hover:underline"
+				>
+					Add it
+				</Link>
+			),
+		});
+	}
+	if (!contactId) {
+		notices.push({
+			id: "contact",
+			tone: "info",
+			message: `No contact: the quotation is addressed to ${partner.companyName}.`,
+			action: (
+				<ContactDialog partnerId={partner.id} onSaved={() => router.refresh()}>
+					<NoticeAction disabled={isPending}>
+						<UserAdd size={18} variant="Bulk" />
+						Add a contact
+					</NoticeAction>
+				</ContactDialog>
+			),
+		});
+	}
 
 	return (
 		<Form {...form}>
@@ -221,8 +280,10 @@ export function NewQuoteForm({
 					Back to {partner.companyName}
 				</Link>
 
+				<DocumentNotices notices={notices} />
+
 				{/* Hero card — mirrors the detail page so create / view share one mental model */}
-				<div className="animate-slide-up border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-8 shadow-sm md:flex-row">
+				<div className="animate-slide-up border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-6 shadow-sm sm:p-8 md:flex-row">
 					<div className="text-primary absolute -top-10 right-0 p-8 opacity-5">
 						<DocumentText size={240} variant="Bulk" />
 					</div>
@@ -232,9 +293,10 @@ export function NewQuoteForm({
 							<div className="border-primary/20 bg-primary/10 text-primary flex size-14 items-center justify-center rounded-2xl border shadow-inner">
 								<DocumentText size={28} variant="Bulk" />
 							</div>
-							<div className="space-y-1">
-								<div className="flex items-center gap-3">
-									<h1 className="font-heading text-foreground text-3xl font-black tracking-tight">
+							<div className="min-w-0 space-y-1">
+								{/* The number never breaks at its dashes; the status goes under it when there's no room. */}
+								<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+									<h1 className="font-heading text-foreground text-2xl font-black tracking-tight whitespace-nowrap sm:text-3xl">
 										{previewNumber}
 									</h1>
 									<Badge
@@ -357,21 +419,9 @@ export function NewQuoteForm({
 											</SelectContent>
 										</Select>
 									) : (
-										// No contact is fine: say so, instead of blocking the quotation.
-										<p className="text-muted-foreground text-sm">
-											No contact yet: the quotation is addressed to {partner.companyName}.
-										</p>
+										// The notice at the top says what this means, and offers to add one.
+										<p className="text-muted-foreground text-sm">No contact</p>
 									)}
-									<ContactDialog partnerId={partner.id} onSaved={() => router.refresh()}>
-										<button
-											type="button"
-											disabled={isPending}
-											className="text-primary focus-visible:ring-ring inline-flex min-h-10 w-fit items-center gap-1.5 rounded-full text-sm font-semibold outline-none hover:underline focus-visible:ring-2"
-										>
-											<UserAdd size={18} variant="Bulk" />
-											Add a contact
-										</button>
-									</ContactDialog>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -379,12 +429,11 @@ export function NewQuoteForm({
 					</div>
 				</div>
 
-				{/* Lines */}
-				<div className="animate-slide-up p-6 delay-100">
-					<div className="mb-4 flex items-center justify-between">
-						<h3 className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
-							Line Items
-						</h3>
+				<DocumentSection
+					id="line-items"
+					title="Line items"
+					className="animate-slide-up delay-100"
+					aside={
 						<Button
 							type="button"
 							size="sm"
@@ -397,11 +446,12 @@ export function NewQuoteForm({
 							<Add size={16} variant="Bold" />
 							Add item
 						</Button>
-					</div>
-
+					}
+				>
+					<div>
 					<div className="overflow-x-auto">
-						<Table>
-							<TableHeader>
+						<Table className={phoneLine.table}>
+							<TableHeader className={phoneLine.head}>
 								<TableRow className="border-b transition-colors hover:bg-transparent">
 									<TableHead className="px-4">Description</TableHead>
 									<TableHead className="w-[72px] px-2 text-center">Qty</TableHead>
@@ -412,12 +462,12 @@ export function NewQuoteForm({
 									<TableHead className="w-[40px] p-0" />
 								</TableRow>
 							</TableHeader>
-							<TableBody className="divide-secondary/15 divide-y">
+							<TableBody className={cn("divide-secondary/15 divide-y", phoneLine.body)}>
 								{fields.map((field, index) => {
 									const waiting = isWaiting(index);
 									return (
-									<TableRow key={field.id} className="hover:bg-primary/5 border-none">
-										<TableCell className="px-4 py-3 align-top">
+									<TableRow key={field.id} className={cn("hover:bg-primary/5 border-none", phoneLine.row)}>
+										<TableCell className={cn("px-4 py-3 align-top", phoneLine.description)}>
 											<FormField
 												control={form.control}
 												name={`lines.${index}.description`}
@@ -441,7 +491,7 @@ export function NewQuoteForm({
 																	onKeyDown: keyDown(index, "description"),
 																	...cellProps(index, "description"),
 																}}
-																inputClassName={waiting ? "border-dashed" : undefined}
+																inputClassName={cn(phoneLine.input, waiting && "border-dashed")}
 																onSelectTier={(tier) => {
 																	form.setValue(
 																		`lines.${index}.description`,
@@ -451,6 +501,7 @@ export function NewQuoteForm({
 																		`lines.${index}.unitPrice`,
 																		tier.price.toString(),
 																	);
+																	setTimeout(() => focusCell(index, "quantity"));
 																}}
 															/>
 														</FormControl>
@@ -459,7 +510,7 @@ export function NewQuoteForm({
 												)}
 											/>
 										</TableCell>
-										<TableCell className="px-2 py-3 align-top">
+										<TableCell className={cn("px-2 py-3 align-top", phoneLine.cell)}>
 											{waiting ? null : (
 												<FormField
 												control={form.control}
@@ -473,7 +524,7 @@ export function NewQuoteForm({
 														{...cellProps(index, "quantity")}
 														{...f}
 														value={f.value ?? ""}
-														className="bg-card h-8 w-full border text-center font-mono text-sm font-bold"
+														className={cn("bg-card h-8 w-full border text-center font-mono text-sm font-bold", phoneLine.input)}
 														disabled={isPending}
 														onChange={(e) => {
 															const val = normalizeDecimalInput(e.target.value);
@@ -490,13 +541,13 @@ export function NewQuoteForm({
 											/>
 										)}
 										</TableCell>
-										<TableCell className="px-2 py-3 align-top">
+										<TableCell className={cn("px-2 py-3 align-top", phoneLine.cell, phoneLine.price)}>
 											{waiting ? null : (
 												<FormField
 												control={form.control}
 												name={`lines.${index}.unitPrice`}
 												render={({ field: f }) => (
-													<div className="relative">
+													<div className="relative min-w-0 flex-1">
 														<Input
 															inputMode="decimal"
 															aria-label={`Unit price, line ${index + 1}`}
@@ -505,7 +556,7 @@ export function NewQuoteForm({
 															{...cellProps(index, "unitPrice")}
 															{...f}
 															value={f.value ?? ""}
-															className="bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold"
+															className={cn("bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold", phoneLine.input)}
 															disabled={isPending}
 															onChange={(e) => {
 																const val = normalizeDecimalInput(e.target.value);
@@ -526,7 +577,7 @@ export function NewQuoteForm({
 											/>
 										)}
 										</TableCell>
-										<TableCell className="px-2 py-4 text-right align-top">
+										<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
 											{waiting ? null : (
 											<span className="text-foreground font-mono text-sm font-black tabular-nums">
 												{(
@@ -539,14 +590,13 @@ export function NewQuoteForm({
 											</span>
 										)}
 										</TableCell>
-										<TableCell className="py-3 text-center align-top">
+										<TableCell className={cn("py-3 text-center align-top", phoneLine.cell)}>
 											{waiting ? null : (
 												<Button
 													type="button"
 													size="icon"
-													variant="ghost"
 													aria-label={`Remove line ${index + 1}`}
-													className="text-destructive hover:bg-destructive/10 h-8 w-8 rounded-xl"
+													className={cn("text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90", phoneLine.remove)}
 													onClick={() => removeLine(index)}
 													disabled={isPending}
 												>
@@ -637,16 +687,15 @@ export function NewQuoteForm({
 							</div>
 						</div>
 					</div>
-				</div>
-
-				{/* Notes — same card + MarkdownEditor as the document detail page */}
-				<div className="animate-slide-up bg-card rounded-3xl border p-6 shadow-sm delay-200">
-					<div className="mb-4 flex h-10 items-center gap-2">
-						<NoteText size={20} className="text-primary" variant="Bulk" />
-						<h3 className="text-primary text-sm font-bold tracking-widest uppercase">
-							Notes
-						</h3>
 					</div>
+				</DocumentSection>
+
+				{/* Notes: laid out as on the document's page */}
+				<DocumentSection
+					id="notes"
+					title="Notes"
+					className="animate-slide-up delay-200"
+				>
 					<FormField
 						control={form.control}
 						name="document.notes"
@@ -658,13 +707,12 @@ export function NewQuoteForm({
 										onChange={(e) => field.onChange(e.target.value)}
 										placeholder="Add terms, bank details, or internal remarks..."
 										disabled={isPending}
-										className="border-secondary/10"
 									/>
 								</FormControl>
 							</FormItem>
 						)}
 					/>
-				</div>
+				</DocumentSection>
 
 				{/* Sticky footer */}
 				<div className="bg-card sticky bottom-[calc(var(--bottom-bar)+1rem)] z-10 flex items-center justify-between gap-3 rounded-2xl border p-4 shadow-md backdrop-blur-sm md:bottom-4">

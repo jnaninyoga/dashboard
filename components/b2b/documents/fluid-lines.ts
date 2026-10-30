@@ -15,7 +15,7 @@ export const isBlankLine = (line?: Pick<Line, "description" | "unitPrice">) =>
 /** Marks a cell so the keyboard can move to it (data-line / data-col). */
 export const cellProps = (row: number, column: LineColumn) => ({ "data-line": row, "data-col": column });
 
-function focusCell(row: number, column: LineColumn) {
+export function focusCell(row: number, column: LineColumn) {
 	document.querySelector<HTMLInputElement>(`[data-line="${row}"][data-col="${column}"]`)?.focus();
 }
 

@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 
-import { SaveStatus, useAutosave } from "@/components/b2b/documents/use-autosave";
+import { DocumentSection } from "@/components/b2b/documents/document-section";
+import {
+	SaveStatus,
+	useAutosave,
+} from "@/components/b2b/documents/use-autosave";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { updateDocumentNotesAction } from "@/lib/actions/b2b/documents";
-
-import { NoteText } from "iconsax-reactjs";
 
 interface EditableNotesProps {
 	documentId: string;
@@ -15,27 +17,36 @@ interface EditableNotesProps {
 	readOnly?: boolean;
 }
 
-export function EditableNotes({ documentId, initialNotes, readOnly = false }: EditableNotesProps) {
+export function EditableNotes({
+	documentId,
+	initialNotes,
+	readOnly = false,
+}: EditableNotesProps) {
 	const [notes, setNotes] = useState(initialNotes || "");
 
 	// Notes save themselves as she types: no button to remember.
-	const { state, changed, retry } = useAutosave(async () => {
-		const res = await updateDocumentNotesAction(documentId, notes);
-		return res.success ? { ok: true } : { ok: false, message: (res.error ?? "couldn't reach the server").toLowerCase() };
-	});
+	const { state, changed, retry } = useAutosave(
+		async () => {
+			const res = await updateDocumentNotesAction(documentId, notes);
+			return res.success
+				? { ok: true }
+				: {
+						ok: false,
+						message: (res.error ?? "couldn't reach the server").toLowerCase(),
+					};
+		},
+		{ id: "notes", label: "Notes" },
+	);
 
 	if (readOnly && !notes) return null;
 
 	return (
-		<div className="animate-slide-up bg-card rounded-3xl border p-6 shadow-sm delay-200">
-			<div className="mb-4 flex h-10 items-center justify-between">
-				<div className="flex items-center gap-2">
-					<NoteText size={20} className="text-primary" variant="Bulk" />
-					<h3 className="text-primary text-sm font-bold tracking-widest uppercase">Notes</h3>
-				</div>
-				{readOnly ? null : <SaveStatus state={state} retry={retry} />}
-			</div>
-
+		<DocumentSection
+			id="notes"
+			title="Notes"
+			aside={readOnly ? null : <SaveStatus state={state} retry={retry} />}
+			className="animate-slide-up delay-200"
+		>
 			<MarkdownEditor
 				value={notes}
 				onChange={(e) => {
@@ -43,9 +54,8 @@ export function EditableNotes({ documentId, initialNotes, readOnly = false }: Ed
 					changed();
 				}}
 				placeholder="Add terms, bank details, or internal remarks..."
-				disabled={readOnly}
-				className="border-secondary/10"
+				readOnly={readOnly}
 			/>
-		</div>
+		</DocumentSection>
 	);
 }

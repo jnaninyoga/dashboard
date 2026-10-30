@@ -3,9 +3,12 @@ import { notFound } from "next/navigation";
 
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
 import { ChainStrip } from "@/components/b2b/documents/chain-strip";
+import { DocumentSection } from "@/components/b2b/documents/document-section";
 import { DocumentTotals } from "@/components/b2b/documents/document-totals";
 import { DraftSaveProvider } from "@/components/b2b/documents/draft-save";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
+import { DocumentNotices, NoticesProvider } from "@/components/b2b/documents/notices";
+import { phoneLine } from "@/components/b2b/documents/phone-line";
 import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import {
@@ -22,6 +25,7 @@ import {
 	type B2BDocumentLine,
 	type DocumentWithRelations,
 } from "@/lib/types/b2b";
+import { cn } from "@/lib/utils/ui";
 
 import { format } from "date-fns";
 import {
@@ -69,6 +73,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 	return (
 		// A draft's lines and notes save themselves; its actions wait for them.
 		<DraftSaveProvider>
+			<NoticesProvider>
 			{/* Breadcrumb */}
 			<Link
 				href="/b2b/documents"
@@ -81,8 +86,11 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				Back to Documents
 			</Link>
 
+			{/* Errors, warnings and notes about this document, in one place */}
+			<DocumentNotices />
+
 			{/* Header Zen Card */}
-			<div className="animate-slide-up border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-8 shadow-sm md:flex-row">
+			<div className="animate-slide-up border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-6 shadow-sm sm:p-8 md:flex-row">
 				<div className="text-primary absolute -top-10 right-0 p-8 opacity-5">
 					{document.type === "invoice" ? (
 						<ReceiptText size={240} variant="Bulk" />
@@ -100,9 +108,10 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 								<DocumentText size={28} variant="Bulk" />
 							)}
 						</div>
-						<div className="space-y-1">
-							<div className="flex items-center gap-3">
-								<h1 className="font-heading text-foreground text-3xl font-black tracking-tight">
+						<div className="min-w-0 space-y-1">
+							{/* The number never breaks at its dashes; the status goes under it when there's no room. */}
+							<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+								<h1 className="font-heading text-foreground text-2xl font-black tracking-tight whitespace-nowrap sm:text-3xl">
 									{document.documentNumber}
 								</h1>
 								<DocumentStatusBadge
@@ -229,9 +238,15 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					status={document.status}
 				/>
 			) : (
-				<>
-					<Table className="animate-slide-up delay-100">
-						<TableHeader>
+				<DocumentSection
+					id="line-items"
+					title="Line items"
+					className="animate-slide-up delay-100"
+				>
+					<div className="space-y-6">
+					{/* On a phone each line reads "2 × 450 MAD" under its description, its total on the right. */}
+					<Table className={phoneLine.table}>
+						<TableHeader className={phoneLine.head}>
 							<TableRow className="border-b transition-colors hover:bg-transparent">
 								<TableHead className="px-6">Description</TableHead>
 								<TableHead className="w-24 px-2 text-center">Qty</TableHead>
@@ -243,27 +258,29 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 								</TableHead>
 							</TableRow>
 						</TableHeader>
-						<TableBody className="divide-secondary/15 divide-y">
+						<TableBody
+							className={cn("divide-secondary/15 divide-y", phoneLine.body)}
+						>
 							{document.lines?.map((line: B2BDocumentLine) => (
 								<TableRow
 									key={line.id}
-									className="hover:bg-primary/5 border-none transition-colors"
+									className="hover:bg-primary/5 border-none transition-colors max-sm:flex max-sm:flex-wrap max-sm:items-baseline max-sm:gap-x-2 max-sm:gap-y-1 max-sm:px-4 max-sm:py-3"
 								>
-									<TableCell className="px-6 py-4">
+									<TableCell className="px-6 py-4 max-sm:basis-full max-sm:p-0 max-sm:whitespace-normal">
 										<p className="text-foreground text-sm font-bold">
 											{line.description}
 										</p>
 									</TableCell>
-									<TableCell className="text-center font-mono text-sm leading-none tabular-nums">
+									<TableCell className="text-center font-mono text-sm leading-none tabular-nums max-sm:p-0">
 										{line.quantity}
 									</TableCell>
-									<TableCell className="text-right font-mono text-sm leading-none tabular-nums">
+									<TableCell className="max-sm:before:text-muted-foreground text-right font-mono text-sm leading-none tabular-nums max-sm:p-0 max-sm:before:mr-2 max-sm:before:content-['×']">
 										{parseFloat(line.unitPrice).toLocaleString()}
 										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
 											MAD
 										</span>
 									</TableCell>
-									<TableCell className="pr-8 text-right font-mono text-sm font-black tabular-nums">
+									<TableCell className="pr-8 text-right font-mono text-sm font-black tabular-nums max-sm:ml-auto max-sm:p-0">
 										{parseFloat(line.totalPrice).toLocaleString()}
 										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
 											MAD
@@ -274,7 +291,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 						</TableBody>
 					</Table>
 
-					<div className="animate-slide-up flex w-full justify-end delay-200">
+					<div className="flex w-full justify-end">
 						<div className="w-full lg:max-w-md">
 							<DocumentTotals
 								document={document}
@@ -285,7 +302,8 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 							/>
 						</div>
 					</div>
-				</>
+					</div>
+				</DocumentSection>
 			)}
 
 			{/* Notes Section */}
@@ -294,6 +312,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				initialNotes={document.notes}
 				readOnly={!!document.archivedAt || document.status !== "draft"}
 			/>
+			</NoticesProvider>
 		</DraftSaveProvider>
 	);
 }

@@ -23,17 +23,17 @@ import {
 	type B2BPricingTier,
 } from "@/lib/types/b2b";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
-import {
-	documentLineSchema,
-	withoutBlankLines,
-} from "@/lib/validators";
+import { cn } from "@/lib/utils/ui";
+import { documentLineSchema, withoutBlankLines } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Add, Trash } from "iconsax-reactjs";
 import { z } from "zod";
 
 import { DescriptionAutocomplete } from "./description-autocomplete";
-import { cellProps, useFluidLines } from "./fluid-lines";
+import { DocumentSection } from "./document-section";
+import { cellProps, focusCell, useFluidLines } from "./fluid-lines";
+import { phoneLine } from "./phone-line";
 import { SaveStatus, useAutosave } from "./use-autosave";
 
 const linesFormSchema = z.object({
@@ -42,7 +42,6 @@ const linesFormSchema = z.object({
 });
 
 type LinesFormValues = z.infer<typeof linesFormSchema>;
-
 
 interface EditableDocumentLinesProps {
 	documentId: string;
@@ -91,13 +90,11 @@ export function EditableDocumentLines({
 	const taxRateWatcher = useWatch({ control: form.control, name: "taxRate" });
 
 	const subtotal = linesWatcher.reduce(
-		(acc, line) =>
-			acc + (Number(line.unitPrice) * Number(line.quantity) || 0),
+		(acc, line) => acc + (Number(line.unitPrice) * Number(line.quantity) || 0),
 		0,
 	);
 	const taxAmount = subtotal * (parseFloat(taxRateWatcher) / 100 || 0);
 	const totalAmount = subtotal + taxAmount;
-
 
 	const { isWaiting, removeLine, keyDown, focusWaiting } = useFluidLines({
 		count: fields.length,
@@ -119,33 +116,46 @@ export function EditableDocumentLines({
 	const lastSaved = useRef(JSON.stringify(payloadOf(form.getValues())));
 
 	// The lines save themselves as she types: no "Save" to remember.
-	const { state, changed, retry } = useAutosave(async () => {
-		const values = form.getValues();
-		const payload = payloadOf(values);
-		if (!payload.lines.length) return { ok: false, invalid: true, message: "add at least one line" };
-		const check = linesFormSchema.safeParse(payload);
-		if (!check.success) {
-			const issue = check.error.issues[0];
-			const kept = values.lines.map((line, i) => ({ line, i })).filter(({ line }) => withoutBlankLines([line]).length);
-			const row = typeof issue.path[1] === "number" ? (kept[issue.path[1]]?.i ?? 0) + 1 : null;
-			const field = issue.path[2];
-			const message =
-				field === "description"
-					? `line ${row} needs a description`
-					: field === "quantity"
-						? `line ${row} needs a quantity of at least 0.01`
-						: field === "unitPrice"
-							? `line ${row} needs a price`
-							: issue.message.toLowerCase();
-			return { ok: false, invalid: true, message };
-		}
-		const key = JSON.stringify(payload);
-		if (key === lastSaved.current) return { ok: true };
-		const res = await updateDocumentLinesAction(documentId, payload);
-		if (!res.success) return { ok: false, message: (res.error ?? "couldn't reach the server").toLowerCase() };
-		lastSaved.current = key;
-		return { ok: true };
-	});
+	const { state, changed, retry } = useAutosave(
+		async () => {
+			const values = form.getValues();
+			const payload = payloadOf(values);
+			if (!payload.lines.length)
+				return { ok: false, invalid: true, message: "add at least one line" };
+			const check = linesFormSchema.safeParse(payload);
+			if (!check.success) {
+				const issue = check.error.issues[0];
+				const kept = values.lines
+					.map((line, i) => ({ line, i }))
+					.filter(({ line }) => withoutBlankLines([line]).length);
+				const row =
+					typeof issue.path[1] === "number"
+						? (kept[issue.path[1]]?.i ?? 0) + 1
+						: null;
+				const field = issue.path[2];
+				const message =
+					field === "description"
+						? `line ${row} needs a description`
+						: field === "quantity"
+							? `line ${row} needs a quantity`
+							: field === "unitPrice"
+								? `line ${row} needs a price`
+								: issue.message.toLowerCase();
+				return { ok: false, invalid: true, message };
+			}
+			const key = JSON.stringify(payload);
+			if (key === lastSaved.current) return { ok: true };
+			const res = await updateDocumentLinesAction(documentId, payload);
+			if (!res.success)
+				return {
+					ok: false,
+					message: (res.error ?? "couldn't reach the server").toLowerCase(),
+				};
+			lastSaved.current = key;
+			return { ok: true };
+		},
+		{ id: "lines", label: "Line items" },
+	);
 
 	useEffect(() => {
 		const subscription = form.watch(() => changed());
@@ -159,12 +169,11 @@ export function EditableDocumentLines({
 
 	return (
 		<Form {...form}>
-			<form onSubmit={(event) => event.preventDefault()} className="space-y-6">
-				<div className="flex items-center justify-between">
-					<h3 className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
-						Line Items
-					</h3>
-					<div className="flex items-center gap-3">
+			<DocumentSection
+				id="line-items"
+				title="Line items"
+				aside={
+					<>
 						<SaveStatus state={state} retry={retry} />
 						<Button
 							type="button"
@@ -177,76 +186,217 @@ export function EditableDocumentLines({
 							<Add size={16} variant="Bold" />
 							Add item
 						</Button>
+					</>
+				}
+			>
+				<form
+					onSubmit={(event) => event.preventDefault()}
+					className="space-y-6"
+				>
+					<div className="overflow-x-auto">
+						<Table className={phoneLine.table}>
+							<TableHeader className={phoneLine.head}>
+								<TableRow className="border-b transition-colors hover:bg-transparent">
+									<TableHead className="px-4">Description</TableHead>
+									<TableHead className="w-[72px] px-2 text-center">
+										Qty
+									</TableHead>
+									<TableHead className="w-[104px] px-2 text-center">
+										Unit Price
+									</TableHead>
+									<TableHead className="w-[80px] px-2 text-right">
+										Total
+									</TableHead>
+									<TableHead className="w-[40px] p-0" />
+								</TableRow>
+							</TableHeader>
+							<TableBody className={cn("divide-secondary/15 divide-y", phoneLine.body)}>
+								{fields.map((field, index) => {
+									const waiting = isWaiting(index);
+									return (
+										<TableRow
+											key={field.id}
+											className={cn("hover:bg-primary/5 border-none transition-colors", phoneLine.row)}
+										>
+											<TableCell className={cn("px-4 py-3 align-top", phoneLine.description)}>
+												<FormField
+													control={form.control}
+													name={`lines.${index}.description`}
+													render={({ field: f }) => (
+														<FormItem className="space-y-0">
+															<FormControl>
+																<DescriptionAutocomplete
+																	value={f.value}
+																	onChange={f.onChange}
+																	placeholder={
+																		waiting ? "Add a line…" : "Description…"
+																	}
+																	inputProps={{
+																		"aria-label": waiting
+																			? "Add a line"
+																			: `Description, line ${index + 1}`,
+																		onKeyDown: keyDown(index, "description"),
+																		...cellProps(index, "description"),
+																	}}
+																	inputClassName={cn(phoneLine.input, waiting && "border-dashed")}
+																	onSelectTier={(tier) => {
+																		form.setValue(
+																			`lines.${index}.description`,
+																			tier.name,
+																			{ shouldDirty: true },
+																		);
+																		form.setValue(
+																			`lines.${index}.unitPrice`,
+																			tier.price.toString(),
+																			{ shouldDirty: true },
+																		);
+																		setTimeout(() =>
+																			focusCell(index, "quantity"),
+																		);
+																	}}
+																	pricingTiers={pricingTiers}
+																/>
+															</FormControl>
+														</FormItem>
+													)}
+												/>
+											</TableCell>
+											<TableCell className={cn("px-2 py-3 align-top", phoneLine.cell)}>
+												{waiting ? null : (
+													<FormField
+														control={form.control}
+														name={`lines.${index}.quantity`}
+														render={({ field: f }) => (
+															<Input
+																inputMode="decimal"
+																aria-label={`Quantity, line ${index + 1}`}
+																onKeyDown={keyDown(index, "quantity")}
+																onFocus={(event) =>
+																	event.currentTarget.select()
+																}
+																{...cellProps(index, "quantity")}
+																{...f}
+																value={f.value ?? ""}
+																className={cn("focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold", phoneLine.input)}
+																onChange={(e) => {
+																	const val = normalizeDecimalInput(
+																		e.target.value,
+																	);
+																	const parts = val.split(".");
+																	const sanitized =
+																		parts[0] +
+																		(parts.length > 1
+																			? "." + parts.slice(1).join("")
+																			: "");
+																	f.onChange(sanitized);
+																}}
+															/>
+														)}
+													/>
+												)}
+											</TableCell>
+											<TableCell className={cn("px-2 py-3 align-top", phoneLine.cell, phoneLine.price)}>
+												{waiting ? null : (
+													<FormField
+														control={form.control}
+														name={`lines.${index}.unitPrice`}
+														render={({ field: f }) => (
+															<div className="relative min-w-0 flex-1">
+																<Input
+																	inputMode="decimal"
+																	aria-label={`Unit price, line ${index + 1}`}
+																	onKeyDown={keyDown(index, "unitPrice")}
+																	onFocus={(event) =>
+																		event.currentTarget.select()
+																	}
+																	{...cellProps(index, "unitPrice")}
+																	{...f}
+																	value={f.value ?? ""}
+																	className={cn("focus-visible:ring-primary/20 bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold", phoneLine.input)}
+																	onChange={(e) => {
+																		// A French comma is the decimal mark ("450,50"), not dropped.
+																		const val = normalizeDecimalInput(
+																			e.target.value,
+																		);
+																		const parts = val.split(".");
+																		const sanitized =
+																			parts[0] +
+																			(parts.length > 1
+																				? "." + parts.slice(1).join("")
+																				: "");
+																		f.onChange(sanitized);
+																	}}
+																/>
+																<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">
+																	MAD
+																</span>
+															</div>
+														)}
+													/>
+												)}
+											</TableCell>
+											<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
+												{waiting ? null : (
+													<span className="text-foreground font-mono text-sm font-black tabular-nums">
+														{(
+															(Number(linesWatcher[index]?.quantity) || 0) *
+															(Number(linesWatcher[index]?.unitPrice) || 0)
+														).toLocaleString()}
+														<span className="text-foreground ml-1 text-xs font-normal">
+															MAD
+														</span>
+													</span>
+												)}
+											</TableCell>
+
+											<TableCell className={cn("py-3 text-center align-top", phoneLine.cell)}>
+												{waiting ? null : (
+													<Button
+														type="button"
+														size="icon"
+														aria-label={`Remove line ${index + 1}`}
+														className={cn("text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90", phoneLine.remove)}
+														onClick={() => removeLine(index)}
+													>
+														<Trash size={15} variant="Bold" />
+													</Button>
+												)}
+											</TableCell>
+										</TableRow>
+									);
+								})}
+							</TableBody>
+						</Table>
 					</div>
-				</div>
 
-				<div className="overflow-x-auto">
-					<Table>
-						<TableHeader>
-							<TableRow className="border-b transition-colors hover:bg-transparent">
-								<TableHead className="px-4">Description</TableHead>
-								<TableHead className="w-[72px] px-2 text-center">Qty</TableHead>
-								<TableHead className="w-[104px] px-2 text-center">
-									Unit Price
-								</TableHead>
-								<TableHead className="w-[80px] px-2 text-right">
-									Total
-								</TableHead>
-								<TableHead className="w-[40px] p-0" />
-							</TableRow>
-						</TableHeader>
-						<TableBody className="divide-secondary/15 divide-y">
-							{fields.map((field, index) => {
-								const waiting = isWaiting(index);
-								return (
-								<TableRow
-									key={field.id}
-									className="hover:bg-primary/5 border-none transition-colors"
-								>
-									<TableCell className="px-4 py-3 align-top">
+					<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
+						<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
+							<div className="flex w-full items-center justify-between gap-4">
+								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
+									Subtotal
+								</span>
+								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+									{subtotal.toLocaleString()}
+									<span className="text-muted-foreground ml-1 text-xs font-normal">
+										MAD
+									</span>
+								</span>
+							</div>
+							<div className="flex w-full items-center justify-between gap-4">
+								<div className="flex items-center gap-2.5">
+									<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
+										Tax Rate
+									</span>
+									<div className="bg-card flex items-center rounded-xl border px-2 py-1">
 										<FormField
 											control={form.control}
-											name={`lines.${index}.description`}
-											render={({ field: f }) => (
-												<FormItem className="space-y-0">
-													<FormControl>
-														<DescriptionAutocomplete
-															value={f.value}
-															onChange={f.onChange}
-															placeholder={waiting ? "Add a line…" : "Description…"}
-															inputProps={{
-																"aria-label": waiting ? "Add a line" : `Description, line ${index + 1}`,
-																onKeyDown: keyDown(index, "description"),
-																...cellProps(index, "description"),
-															}}
-															inputClassName={waiting ? "border-dashed" : undefined}
-															onSelectTier={(tier) => {
-																form.setValue(`lines.${index}.description`, tier.name, { shouldDirty: true });
-																form.setValue(`lines.${index}.unitPrice`, tier.price.toString(), { shouldDirty: true });
-
-															}}
-															pricingTiers={pricingTiers}
-														/>
-													</FormControl>
-												</FormItem>
-											)}
-										/>
-									</TableCell>
-									<TableCell className="px-2 py-3 align-top">
-										{waiting ? null : (
-										<FormField
-											control={form.control}
-											name={`lines.${index}.quantity`}
+											name="taxRate"
 											render={({ field: f }) => (
 												<Input
 													inputMode="decimal"
-													aria-label={`Quantity, line ${index + 1}`}
-													onKeyDown={keyDown(index, "quantity")}
-													onFocus={(event) => event.currentTarget.select()}
-													{...cellProps(index, "quantity")}
 													{...f}
-													value={f.value ?? ""}
-													className="focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold"
+													className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
+
 													onChange={(e) => {
 														const val = normalizeDecimalInput(e.target.value);
 														const parts = val.split(".");
@@ -260,150 +410,37 @@ export function EditableDocumentLines({
 												/>
 											)}
 										/>
-									)}
-									</TableCell>
-									<TableCell className="px-2 py-3 align-top">
-										{waiting ? null : (
-										<FormField
-											control={form.control}
-											name={`lines.${index}.unitPrice`}
-											render={({ field: f }) => (
-												<div className="relative">
-													<Input
-														inputMode="decimal"
-														aria-label={`Unit price, line ${index + 1}`}
-														onKeyDown={keyDown(index, "unitPrice")}
-														onFocus={(event) => event.currentTarget.select()}
-														{...cellProps(index, "unitPrice")}
-														{...f}
-														value={f.value ?? ""}
-														className="focus-visible:ring-primary/20 bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold"
-														onChange={(e) => {
-															// A French comma is the decimal mark ("450,50"), not dropped.
-															const val = normalizeDecimalInput(e.target.value);
-															const parts = val.split(".");
-															const sanitized =
-																parts[0] +
-																(parts.length > 1
-																	? "." + parts.slice(1).join("")
-																	: "");
-															f.onChange(sanitized);
-														}}
-													/>
-													<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">
-														MAD
-													</span>
-												</div>
-											)}
-										/>
-									)}
-									</TableCell>
-									<TableCell className="px-2 py-4 text-right align-top">
-										{waiting ? null : (
-										<span className="text-foreground font-mono text-sm font-black tabular-nums">
-											{(
-												(Number(linesWatcher[index]?.quantity) || 0) *
-												(Number(linesWatcher[index]?.unitPrice) || 0)
-											).toLocaleString()}
-											<span className="text-foreground ml-1 text-xs font-normal">
-												MAD
-											</span>
+										<span className="text-muted-foreground/60 text-[10px] font-bold">
+											%
 										</span>
-									)}
-									</TableCell>
-
-									<TableCell className="py-3 text-center align-top">
-										{waiting ? null : (
-										<Button
-											type="button"
-											size="icon"
-											aria-label={`Remove line ${index + 1}`}
-											className="text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90"
-											onClick={() => removeLine(index)}
-										>
-											<Trash size={15} variant="Bold" />
-										</Button>
-										)}
-									</TableCell>
-								</TableRow>
-								);
-							})}
-						</TableBody>
-					</Table>
-				</div>
-
-				<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
-					<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
-						<div className="flex w-full items-center justify-between gap-4">
-							<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
-								Subtotal
-							</span>
-							<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-								{subtotal.toLocaleString()}
-								<span className="text-muted-foreground ml-1 text-xs font-normal">
-									MAD
-								</span>
-							</span>
-						</div>
-						<div className="flex w-full items-center justify-between gap-4">
-							<div className="flex items-center gap-2.5">
-								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
-									Tax Rate
-								</span>
-								<div className="bg-card flex items-center rounded-xl border px-2 py-1">
-									<FormField
-										control={form.control}
-										name="taxRate"
-										render={({ field: f }) => (
-											<Input
-												inputMode="decimal"
-												{...f}
-												className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
-												
-												onChange={(e) => {
-													const val = normalizeDecimalInput(e.target.value);
-													const parts = val.split(".");
-													const sanitized =
-														parts[0] +
-														(parts.length > 1
-															? "." + parts.slice(1).join("")
-															: "");
-													f.onChange(sanitized);
-												}}
-											/>
-										)}
-									/>
-									<span className="text-muted-foreground/60 text-[10px] font-bold">
-										%
-									</span>
+									</div>
 								</div>
+								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+									{taxAmount.toLocaleString(undefined, {
+										minimumFractionDigits: 0,
+										maximumFractionDigits: 2,
+									})}
+									<span className="text-muted-foreground ml-1 text-xs font-normal">
+										MAD
+									</span>
+								</span>
 							</div>
-							<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-								{taxAmount.toLocaleString(undefined, {
-									minimumFractionDigits: 0,
-									maximumFractionDigits: 2,
-								})}
-								<span className="text-muted-foreground ml-1 text-xs font-normal">
-									MAD
+							<Separator className="w-full" />
+							<div className="flex w-full items-center justify-between gap-4">
+								<span className="text-primary text-[10px] font-black tracking-widest uppercase">
+									Total Amount
 								</span>
-							</span>
-						</div>
-						<Separator className="w-full" />
-						<div className="flex w-full items-center justify-between gap-4">
-							<span className="text-primary text-[10px] font-black tracking-widest uppercase">
-								Total Amount
-							</span>
-							<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
-								{totalAmount.toLocaleString()}
-								<span className="text-primary ml-1.5 text-sm font-semibold">
-									MAD
+								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
+									{totalAmount.toLocaleString()}
+									<span className="text-primary ml-1.5 text-sm font-semibold">
+										MAD
+									</span>
 								</span>
-							</span>
+							</div>
 						</div>
 					</div>
-				</div>
-			</form>
+				</form>
+			</DocumentSection>
 		</Form>
 	);
 }
-

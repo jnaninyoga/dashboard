@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useFlushDraft } from "@/components/b2b/documents/draft-save";
+import { useNotice } from "@/components/b2b/documents/notices";
 import { useConfirm } from "@/components/feedback/confirm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -30,7 +31,6 @@ import {
 	Send,
 	TickCircle,
 	Trash,
-	Warning2,
 } from "iconsax-reactjs";
 
 import { ArchiveDocumentDialog } from "./archive-dialog";
@@ -117,6 +117,24 @@ export function DocumentActionRibbon({
 	const partnerIceDigits = (doc.partner?.taxId ?? "").replace(/\D/g, "");
 	const partnerIceValid = partnerIceDigits.length > 0;
 	const blockSendForMissingIce = isInvoice && !partnerIceValid;
+	useNotice(
+		"missing-ice",
+		!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce
+			? {
+					tone: "warning",
+					message: `${doc.partner?.companyName ?? "This partner"} has no ICE yet: add it before marking this invoice as sent.`,
+					action: (
+						<Link
+							href={`/b2b/partners/${doc.partnerId}`}
+							className="text-primary inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold hover:underline"
+						>
+							Add it
+						</Link>
+					),
+				}
+			: null,
+		String(!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce),
+	);
 
 	const canRecordPayment = isPayableInvoice(doc);
 
@@ -198,20 +216,7 @@ export function DocumentActionRibbon({
 					</Badge>
 				) : null}
 
-				{!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce ? (
-					<Link
-						href={`/b2b/partners/${doc.partnerId}`}
-						className="text-warning hover:underline"
-					>
-						<Badge
-							variant="outline"
-							className="border-warning/30 bg-warning/10 text-warning gap-1.5 rounded-xl px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase"
-						>
-							<Warning2 size={12} variant="Bold" />
-							Partner ICE missing
-						</Badge>
-					</Link>
-				) : null}
+
 
 				{/* Draft -> Mark as sent (with the backorder check) */}
 				{!doc.archivedAt && doc.status === "draft" ? (

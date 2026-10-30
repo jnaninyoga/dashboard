@@ -41,9 +41,11 @@ export function MarkdownEditor({
 	onChange,
 	defaultValue,
 	placeholder,
+	readOnly,
 	...props
 }: MarkdownEditorProps) {
-	const [isEditing, setIsEditing] = React.useState(true);
+	// Read-only, it shows the notes as they print: no toolbar, no editing.
+	const [isEditing, setIsEditing] = React.useState(!readOnly);
 	const [content, setContent] = React.useState(
 		(value as string) || (defaultValue as string) || "",
 	);
@@ -118,9 +120,15 @@ export function MarkdownEditor({
 				</Label>
 			) : null}
 
-			<div className="bg-card/40 border-secondary-2/70 focus-within:border-secondary-2 focus-within:ring-secondary-2 flex flex-col overflow-hidden rounded-3xl border backdrop-blur-sm transition-all duration-300 focus-within:ring-2">
+			{/* Framed like a table: the same card, edge and blush header band. */}
+			<div className="bg-card focus-within:ring-secondary-2 flex flex-col overflow-hidden rounded-2xl border shadow-sm transition-shadow duration-300 focus-within:ring-2">
 				{/* Enhanced Toolbar */}
-				<div className="border-secondary/10 bg-secondary/60 flex items-center gap-1 border-b p-2 backdrop-blur-md">
+				<div
+					className={cn(
+						"border-secondary-2/40 bg-secondary/70 flex items-center gap-1 border-b p-2",
+						readOnly && "hidden",
+					)}
+				>
 					{/* Actions (Only disabled in preview mode visually, but buttons remain) */}
 					<div
 						className={cn(
@@ -162,6 +170,7 @@ export function MarkdownEditor({
 					<div className="bg-background/20 flex gap-0.5 rounded-xl p-0.5">
 						<button
 							type="button"
+							aria-pressed={isEditing}
 							onClick={() => setIsEditing(true)}
 							className={cn(
 								"flex h-8 items-center gap-2 rounded-lg px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
@@ -171,10 +180,12 @@ export function MarkdownEditor({
 							)}
 						>
 							<Edit2 size={14} variant={isEditing ? "Bold" : "Outline"} />
-							Write
+							{/* Icons alone on a phone, so the toolbar fits on one line. */}
+							<span className="max-sm:sr-only">Write</span>
 						</button>
 						<button
 							type="button"
+							aria-pressed={!isEditing}
 							onClick={() => setIsEditing(false)}
 							className={cn(
 								"flex h-8 items-center gap-2 rounded-lg px-3 text-[10px] font-bold uppercase tracking-wider transition-all",
@@ -184,12 +195,12 @@ export function MarkdownEditor({
 							)}
 						>
 							<Eye size={14} variant={!isEditing ? "Bold" : "Outline"} />
-							Preview
+							<span className="max-sm:sr-only">Preview</span>
 						</button>
 					</div>
 				</div>
 
-				<div className="relative min-h-[160px]">
+				<div className={cn("relative", !readOnly && "min-h-[160px]")}>
 					{isEditing ? (
 						<Textarea
 							{...props}
@@ -198,7 +209,7 @@ export function MarkdownEditor({
 							onChange={handleChange}
 							onKeyDown={handleKeyDown}
 							placeholder={placeholder}
-							className="text-foreground placeholder:text-muted-foreground/30 min-h-[160px] w-full resize-y border-none bg-transparent px-6 py-5 font-mono text-sm leading-relaxed transition-all focus-visible:ring-0 focus-visible:ring-offset-0"
+							className="text-foreground placeholder:text-muted-foreground/70 min-h-[160px] w-full resize-y border-none bg-transparent px-6 py-5 font-mono text-sm leading-relaxed transition-all focus-visible:ring-0 focus-visible:ring-offset-0"
 						/>
 					) : (
 						<div className="animate-in fade-in slide-in-from-bottom-1 p-8 duration-300">
@@ -363,6 +374,7 @@ function ToolbarButton({
 			className="text-secondary-foreground hover:bg-primary/10 hover:text-primary h-9 w-9 rounded-xl transition-all duration-200"
 			onClick={onClick}
 			title={label}
+			aria-label={label}
 		>
 			{icon}
 		</Button>
