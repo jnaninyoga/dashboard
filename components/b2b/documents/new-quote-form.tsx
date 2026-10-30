@@ -43,7 +43,7 @@ import {
 	type B2BPartner,
 	type B2BPricingTier,
 } from "@/lib/types/b2b";
-import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { formatAmount,normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import { createDocumentWithLinesSchema, withoutBlankLines } from "@/lib/validators/document";
 
@@ -366,7 +366,7 @@ export function NewQuoteForm({
 										</div>
 										<div className="flex flex-col">
 											<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-												Due Date
+												Valid until
 											</FormLabel>
 											<FormControl>
 												<Input
@@ -576,10 +576,8 @@ export function NewQuoteForm({
 										<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
 											{waiting ? null : (
 											<span className="text-foreground font-mono text-sm font-black tabular-nums">
-												{(
-													(Number(linesWatcher[index]?.quantity) || 0) *
-													(Number(linesWatcher[index]?.unitPrice) || 0)
-												).toLocaleString()}
+												{formatAmount((Number(linesWatcher[index]?.quantity) || 0) *
+													(Number(linesWatcher[index]?.unitPrice) || 0))}
 												<span className="text-muted-foreground ml-1 text-xs font-normal">
 													MAD
 												</span>
@@ -620,7 +618,7 @@ export function NewQuoteForm({
 									Subtotal
 								</span>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{subtotal.toLocaleString()}
+									{formatAmount(subtotal)}
 									<span className="text-muted-foreground ml-1 text-xs font-normal">
 										MAD
 									</span>
@@ -660,10 +658,7 @@ export function NewQuoteForm({
 									</div>
 								</div>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{taxAmount.toLocaleString(undefined, {
-										minimumFractionDigits: 0,
-										maximumFractionDigits: 2,
-									})}
+									{formatAmount(taxAmount)}
 									<span className="text-muted-foreground ml-1 text-xs font-normal">
 										MAD
 									</span>
@@ -675,7 +670,7 @@ export function NewQuoteForm({
 									Total Amount
 								</span>
 								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
-									{totalAmount.toLocaleString()}
+									{formatAmount(totalAmount)}
 									<span className="text-primary ml-1.5 text-sm font-semibold">
 										MAD
 									</span>
@@ -713,7 +708,7 @@ export function NewQuoteForm({
 				{/* Sticky footer */}
 				<div className="bg-card sticky bottom-[calc(var(--bottom-bar)+1rem)] z-10 flex items-center justify-between gap-3 rounded-2xl border p-4 shadow-md backdrop-blur-sm md:bottom-4">
 					<div className="text-muted-foreground hidden text-xs sm:block">
-						Issuing on {issueDate} · due {dueDate || "—"}
+						Dated {issueDate} · valid until {dueDate || "—"}
 					</div>
 					<div className="ml-auto flex items-center gap-3">
 						<Link href={`/b2b/partners/${partner.id}`}>

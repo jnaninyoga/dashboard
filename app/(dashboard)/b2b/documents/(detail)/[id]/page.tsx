@@ -9,6 +9,7 @@ import { DraftSaveProvider } from "@/components/b2b/documents/draft-save";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { DocumentNotices, NoticesProvider } from "@/components/b2b/documents/notices";
 import { phoneLine } from "@/components/b2b/documents/phone-line";
+import { QuoteInvoicing } from "@/components/b2b/documents/quote-invoicing";
 import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import {
@@ -21,10 +22,15 @@ import {
 } from "@/components/ui/table";
 import { getDocumentByIdAction } from "@/lib/actions/b2b/documents";
 import { getBusinessProfileAction } from "@/lib/actions/business-profile";
+import { documentName } from "@/lib/domain/billing/document-name";
+import { displayStatus } from "@/lib/domain/billing/payments";
+import { quoteBalance } from "@/lib/domain/billing/quote-billing";
 import {
 	type B2BDocumentLine,
 	type DocumentWithRelations,
 } from "@/lib/types/b2b";
+import { formatAmount } from "@/lib/utils/currency";
+import { studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
 import { format } from "date-fns";
@@ -112,10 +118,10 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 							{/* The number never breaks at its dashes; the status goes under it when there's no room. */}
 							<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
 								<h1 className="font-heading text-foreground text-2xl font-black tracking-tight whitespace-nowrap sm:text-3xl">
-									{document.documentNumber}
+									{documentName(document)}
 								</h1>
 								<DocumentStatusBadge
-									status={document.status}
+									status={displayStatus(document, studioDateString())}
 									className="rounded-lg"
 								/>
 							</div>
@@ -164,7 +170,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 								</div>
 								<div className="flex flex-col">
 									<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-										Due Date
+										{isQuote ? "Valid until" : "Due date"}
 									</span>
 									<span className="text-foreground text-sm font-bold">
 										{format(new Date(document.dueDate), "MMMM dd, yyyy")}
@@ -187,26 +193,17 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					{amountPaid > 0 && !isQuote ? (
 						<div className="flex flex-col">
 							<div className="text-primary/30 font-heading decoration-primary/20 text-2xl font-black tabular-nums line-through decoration-2">
-								{currentTotal.toLocaleString("en-US", {
-									minimumFractionDigits: 2,
-									maximumFractionDigits: 2,
-								})}
+								{formatAmount(currentTotal)}
 								<span className="ml-2 text-sm font-bold">MAD</span>
 							</div>
 							<div className="text-primary font-heading zen-teal-glow text-4xl font-black tabular-nums">
-								{(currentTotal - amountPaid).toLocaleString("en-US", {
-									minimumFractionDigits: 2,
-									maximumFractionDigits: 2,
-								})}
+								{formatAmount(currentTotal - amountPaid)}
 								<span className="ml-2 text-base font-bold opacity-60">MAD</span>
 							</div>
 						</div>
 					) : (
 						<div className="text-primary font-heading zen-teal-glow text-4xl font-black tabular-nums">
-							{currentTotal.toLocaleString("en-US", {
-								minimumFractionDigits: 2,
-								maximumFractionDigits: 2,
-							})}
+							{formatAmount(currentTotal)}
 							<span className="ml-2 text-base font-bold opacity-60">MAD</span>
 						</div>
 					)}
@@ -229,6 +226,14 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				previousInvoices={accountSummary?.allRelatedInvoices || []}
 			/>
 
+			{/* A quotation billed over time: what's invoiced, what's left. */}
+			{isQuote && document.children?.length ? (
+				<QuoteInvoicing
+					balance={quoteBalance(document.lines ?? [], document.children)}
+					invoices={document.children}
+				/>
+			) : null}
+
 			{/* Line Items Section */}
 			{document.status === "draft" ? (
 				<EditableDocumentLines
@@ -236,6 +241,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					initialLines={document.lines || []}
 					initialTaxRate={document.taxRate}
 					status={document.status}
+					taxLocked={document.type === "invoice" && !!document.parentDocumentId}
 				/>
 			) : (
 				<DocumentSection
@@ -275,13 +281,13 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 										{line.quantity}
 									</TableCell>
 									<TableCell className="max-sm:before:text-muted-foreground text-right font-mono text-sm leading-none tabular-nums max-sm:p-0 max-sm:before:mr-2 max-sm:before:content-['×']">
-										{parseFloat(line.unitPrice).toLocaleString()}
+										{formatAmount(parseFloat(line.unitPrice))}
 										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
 											MAD
 										</span>
 									</TableCell>
 									<TableCell className="pr-8 text-right font-mono text-sm font-black tabular-nums max-sm:ml-auto max-sm:p-0">
-										{parseFloat(line.totalPrice).toLocaleString()}
+										{formatAmount(parseFloat(line.totalPrice))}
 										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
 											MAD
 										</span>

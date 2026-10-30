@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { documentName } from "@/lib/domain/billing/document-name";
 import { B2BPayment, DocumentWithRelations } from "@/lib/types/b2b";
+import { formatAmount } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 
 import { format } from "date-fns";
@@ -29,7 +31,7 @@ export type ChainSummary = {
 };
 
 function formatMoney(value: number) {
-	return value.toLocaleString(undefined, { minimumFractionDigits: 2 });
+	return formatAmount(value);
 }
 
 export function computeChain(
@@ -117,7 +119,7 @@ export function ChainInvoiceCards({ rows }: { rows: ChainRow[] }) {
 											: "text-secondary-foreground group-hover:text-primary",
 									)}
 								>
-									{invoice.documentNumber}
+									{documentName(invoice)}
 								</span>
 								<span className="text-muted-foreground/70 text-[10px] font-medium tracking-wider uppercase">
 									{format(new Date(invoice.issueDate), "MMM dd, yyyy")}

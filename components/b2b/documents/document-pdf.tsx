@@ -634,7 +634,10 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 						<View style={S.headerRight}>
 							<Text style={S.docTitleVibes}>{title}</Text>
 							<View style={S.docNumPill}>
-								<Text style={S.docNumText}>N° {doc.documentNumber}</Text>
+								{/* An invoice is numbered when it's issued: a draft says so. */}
+								<Text style={S.docNumText}>
+									{doc.documentNumber ? `N° ${doc.documentNumber}` : "BROUILLON"}
+								</Text>
 							</View>
 							{doc.parent && doc.type === "invoice" ? (
 								<Text
@@ -645,7 +648,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 										letterSpacing: 0.4,
 									}}
 								>
-									Reliquat du devis N° {doc.parent.documentNumber}
+									Réf. devis N° {doc.parent.documentNumber}
 								</Text>
 							) : null}
 						</View>
@@ -681,7 +684,10 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 							</View>
 							{dueDate ? (
 								<View style={S.dateLine}>
-									<Text style={S.dateLabel}>ÉCHÉANCE :</Text>
+									<Text style={S.dateLabel}>
+										{/* A quotation's date is how long it holds, not a due date. */}
+										{isQuote ? "VALIDITÉ :" : "ÉCHÉANCE :"}
+									</Text>
 									<Text style={S.dateValue}>{dueDate}</Text>
 								</View>
 							) : null}

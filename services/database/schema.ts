@@ -75,6 +75,14 @@ export const b2bDocumentTypeEnum = pgEnum("b2b_document_type", [
 	"invoice",
 ]);
 
+// How a partner paid: hotels mostly by transfer or cheque.
+export const b2bPaymentMethodEnum = pgEnum("b2b_payment_method", [
+	"transfer",
+	"cheque",
+	"cash",
+	"card",
+]);
+
 export const clients = pgTable("clients", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	googleContactResourceName: text("google_contact_resource_name"),
@@ -308,7 +316,10 @@ export const b2bDocuments = pgTable(
 		contactId: uuid("contact_id").references(() => b2bContacts.id),
 		type: b2bDocumentTypeEnum("type").notNull(),
 		status: b2bDocumentStatusEnum("status").notNull().default("draft"),
-		documentNumber: text("document_number").notNull(),
+		// A quotation is numbered when it's created; an invoice only when it's
+		// issued, so invoice numbers run without gaps in the order they were
+		// issued (a deleted draft takes no number with it).
+		documentNumber: text("document_number"),
 		issueDate: date("issue_date").notNull(),
 		dueDate: date("due_date"),
 		subtotal: decimal("subtotal", { precision: 10, scale: 2 })
@@ -370,6 +381,9 @@ export const b2bDocumentLines = pgTable("b2b_document_lines", {
 		(): AnyPgColumn => b2bDocumentLines.id,
 		{ onDelete: "restrict" },
 	),
+	// Where the line sits on the document (lines saved together share one
+	// created_at, so that can't order them).
+	position: integer("position").notNull().default(0),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -385,6 +399,10 @@ export const b2bPayments = pgTable(
 			.notNull(),
 		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
 		paymentDate: timestamp("payment_date").defaultNow().notNull(),
+		// Empty on payments recorded before it was asked.
+		method: b2bPaymentMethodEnum("method"),
+		// The cheque or transfer number, to match the bank statement.
+		reference: text("reference"),
 		notes: text("notes"),
 		// Idempotency key. Client sends a UUID per dialog open; unique index prevents
 		// duplicate writes from double-submit. Nullable so backfilled rows are fine.

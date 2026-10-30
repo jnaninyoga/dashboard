@@ -22,6 +22,11 @@ const money = new Intl.NumberFormat("fr-FR", {
 	maximumFractionDigits: 2,
 });
 
+/** "1 234,50": an amount alone, for layouts that set "MAD" apart. */
+export function formatAmount(amount: number): string {
+	return money.format(amount);
+}
+
 /** "1 234,50 MAD": amounts shown the way she types them. */
 export function formatMoney(amount: number): string {
 	return `${money.format(amount)} MAD`;

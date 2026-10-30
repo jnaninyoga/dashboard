@@ -3,7 +3,9 @@
 import { AmountCell, DocumentCell, DocumentRowCard } from "@/components/b2b/documents/dashboard-table";
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
+import { displayStatus } from "@/lib/domain/billing/payments";
 import { type DocumentWithContact } from "@/lib/types";
+import { studioDateString } from "@/lib/utils/time";
 
 import { type ColumnDef } from "@tanstack/react-table";
 import { DocumentText } from "iconsax-reactjs";
@@ -42,7 +44,7 @@ const columns: ColumnDef<DocumentWithContact>[] = [
 		accessorKey: "status",
 		header: "Status",
 		meta: { className: "px-5" },
-		cell: ({ row }) => <DocumentStatusBadge status={row.original.status} />,
+		cell: ({ row }) => <DocumentStatusBadge status={displayStatus(row.original, studioDateString())} />,
 	},
 	{
 		id: "amount",

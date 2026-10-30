@@ -23,7 +23,7 @@ import {
 	type B2BDocumentStatus,
 	type B2BPricingTier,
 } from "@/lib/types/b2b";
-import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { formatAmount,normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import { documentLineSchema, withoutBlankLines } from "@/lib/validators";
 
@@ -49,6 +49,8 @@ interface EditableDocumentLinesProps {
 	initialLines: B2BDocumentLine[];
 	initialTaxRate: string;
 	status: B2BDocumentStatus;
+	/** An invoice from a quotation keeps the quotation's tax. */
+	taxLocked?: boolean;
 }
 
 export function EditableDocumentLines({
@@ -56,6 +58,7 @@ export function EditableDocumentLines({
 	initialLines,
 	initialTaxRate,
 	status,
+	taxLocked = false,
 }: EditableDocumentLinesProps) {
 	const [pricingTiers, setPricingTiers] = useState<B2BPricingTier[]>([]);
 	const isDraft = status === "draft";
@@ -162,7 +165,10 @@ export function EditableDocumentLines({
 			if (!res.success)
 				return {
 					ok: false,
-					message: (res.error ?? "couldn't reach the server").toLowerCase(),
+					// A refusal (no error code: "“Séance hôtel”: 5 left to
+					// invoice…") is hers to fix; a failure can be retried.
+					invalid: !!res.error && !res.ref,
+					message: (res.error ?? "Couldn't reach the server").replace(/\.$/, ""),
 				};
 			lastSaved.current = key;
 			return { ok: true };
@@ -343,10 +349,8 @@ export function EditableDocumentLines({
 											<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
 												{waiting ? null : (
 													<span className="text-foreground font-mono text-sm font-black tabular-nums">
-														{(
-															(Number(linesWatcher[index]?.quantity) || 0) *
-															(Number(linesWatcher[index]?.unitPrice) || 0)
-														).toLocaleString()}
+														{formatAmount((Number(linesWatcher[index]?.quantity) || 0) *
+															(Number(linesWatcher[index]?.unitPrice) || 0))}
 														<span className="text-foreground ml-1 text-xs font-normal">
 															MAD
 														</span>
@@ -381,7 +385,7 @@ export function EditableDocumentLines({
 									Subtotal
 								</span>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{subtotal.toLocaleString()}
+									{formatAmount(subtotal)}
 									<span className="text-muted-foreground ml-1 text-xs font-normal">
 										MAD
 									</span>
@@ -400,6 +404,9 @@ export function EditableDocumentLines({
 												<Input
 													inputMode="decimal"
 													{...f}
+													readOnly={taxLocked}
+													title={taxLocked ? "The quotation's tax" : undefined}
+													aria-label="Tax rate"
 													className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
 
 													onChange={(e) => {
@@ -421,10 +428,7 @@ export function EditableDocumentLines({
 									</div>
 								</div>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{taxAmount.toLocaleString(undefined, {
-										minimumFractionDigits: 0,
-										maximumFractionDigits: 2,
-									})}
+									{formatAmount(taxAmount)}
 									<span className="text-muted-foreground ml-1 text-xs font-normal">
 										MAD
 									</span>
@@ -436,7 +440,7 @@ export function EditableDocumentLines({
 									Total Amount
 								</span>
 								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
-									{totalAmount.toLocaleString()}
+									{formatAmount(totalAmount)}
 									<span className="text-primary ml-1.5 text-sm font-semibold">
 										MAD
 									</span>

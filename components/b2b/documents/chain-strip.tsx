@@ -10,6 +10,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "@/components/ui/sheet";
+import { formatAmount } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 
 import { ArrowRight, Link21 } from "iconsax-reactjs";
@@ -30,7 +31,7 @@ interface ChainStripProps {
 const DOT_LIMIT = 8;
 
 function formatMoney(value: number) {
-	return value.toLocaleString(undefined, { minimumFractionDigits: 2 });
+	return formatAmount(value);
 }
 
 export function ChainStrip({
@@ -74,7 +75,7 @@ export function ChainStrip({
 					</div>
 					<div className="flex min-w-0 flex-col items-start leading-tight">
 						<span className="text-foreground text-[10px] font-bold tracking-widest uppercase">
-							Backorder Chain
+							Invoices of this quotation
 						</span>
 						<span className="text-muted-foreground/80 truncate text-xs font-medium">
 							Invoice {currentIndex + 1} of {totalCount} &middot;{" "}
@@ -150,7 +151,7 @@ export function ChainStrip({
 								</div>
 								<div className="min-w-0">
 									<SheetTitle className="font-heading text-lg font-bold tracking-tight">
-										Backorder Chain
+										Invoices of this quotation
 									</SheetTitle>
 									<SheetDescription className="text-xs">
 										{partnerName ? `${partnerName} · ` : ""}

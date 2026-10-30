@@ -32,7 +32,8 @@ export function EditableNotes({
 				? { ok: true }
 				: {
 						ok: false,
-						message: (res.error ?? "couldn't reach the server").toLowerCase(),
+						invalid: !!res.error && !res.ref,
+						message: (res.error ?? "Couldn't reach the server").replace(/\.$/, ""),
 					};
 		},
 		{ id: "notes", label: "Notes" },

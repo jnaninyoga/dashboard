@@ -11,7 +11,9 @@ export const PAYABLE_INVOICE_STATUSES = [
 // Filter value for "every invoice that can still receive money", whatever
 // its exact status (an invoice confirmed directly stays "sent").
 export const OWED_FILTER = "owed";
-export type DocumentStatusFilter = B2BDocumentStatus | typeof OWED_FILTER | "all";
+// Filter value for owed invoices past their due date.
+export const OVERDUE_FILTER = "overdue";
+export type DocumentStatusFilter = B2BDocumentStatus | typeof OWED_FILTER | typeof OVERDUE_FILTER | "all";
 
 export function isPayableInvoice(doc: {
 	type: string;
@@ -120,4 +122,30 @@ export function documentAmounts(doc: {
 		paid: fromCents(paid),
 		due: isPayableInvoice(doc) ? fromCents(Math.max(0, total - paid)) : 0,
 	};
+}
+
+type StatusedDocument = {
+	type: string;
+	status: string;
+	archivedAt?: Date | string | null;
+	dueDate?: string | null;
+};
+
+/** An issued invoice past its due date (studio days, YYYY-MM-DD) that still owes money. */
+export function isOverdue(doc: StatusedDocument, today: string): boolean {
+	return isPayableInvoice(doc) && !!doc.dueDate && doc.dueDate < today;
+}
+
+/**
+ * The status to show: an issued invoice reads "Unpaid" however it was issued
+ * (older ones were left "sent"), and "Overdue" once its due date has passed;
+ * a sent quotation past its validity reads "Expired" (it can still be accepted).
+ */
+export function displayStatus(doc: StatusedDocument, today: string): string {
+	if (isOverdue(doc, today)) return "overdue";
+	if (doc.type === "quote" && doc.status === "sent" && !doc.archivedAt && !!doc.dueDate && doc.dueDate < today) {
+		return "expired";
+	}
+	if (doc.type === "invoice" && doc.status === "sent") return "unpaid";
+	return doc.status;
 }

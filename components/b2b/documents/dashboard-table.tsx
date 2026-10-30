@@ -4,10 +4,13 @@ import Link from "next/link";
 
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
+import { documentName } from "@/lib/domain/billing/document-name";
 import { documentAmounts } from "@/lib/domain/billing/payments";
+import { displayStatus } from "@/lib/domain/billing/payments";
 import { DocumentWithRelations } from "@/lib/types/b2b";
 import { formatMoney } from "@/lib/utils/currency";
 import { formatDay } from "@/lib/utils/time";
+import { studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
 import { ColumnDef } from "@tanstack/react-table";
@@ -20,10 +23,12 @@ type ListDocument = {
 	id: string;
 	type: string;
 	status: string;
-	documentNumber: string;
+	documentNumber: string | null;
 	issueDate: string;
+	dueDate?: string | null;
 	totalAmount: string;
 	parentDocumentId?: string | null;
+	parent?: { documentNumber: string | null } | null;
 	archivedAt?: Date | string | null;
 	payments?: { amount: string }[] | null;
 };
@@ -48,26 +53,26 @@ function DocumentIcon({ type, className }: { type: string; className?: string })
 
 /** The document: its number (what she scans for), then what it is and when. */
 export function DocumentCell({ doc }: { doc: ListDocument }) {
-	const backorder = doc.type === "invoice" && !!doc.parentDocumentId;
+	// An invoice says which quotation it bills.
+	const quote = doc.type === "invoice" && doc.parent?.documentNumber ? doc.parent.documentNumber : null;
 	return (
 		<div className="flex min-w-0 items-center gap-3">
 			<DocumentIcon type={doc.type} />
 			<div className="flex min-w-0 flex-col">
 				<Link
 					href={`/b2b/documents/${doc.id}`}
-					title={doc.documentNumber}
+					title={documentName(doc)}
 					className="text-foreground hover:text-primary focus-visible:ring-ring truncate rounded-sm font-semibold transition-colors outline-none focus-visible:ring-2"
 				>
-					{doc.documentNumber}
+					{documentName(doc)}
 				</Link>
 				<span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
 					<span className="truncate">
 						{doc.type === "invoice" ? "Invoice" : "Quotation"} · {issued(doc)}
 					</span>
-					{/* The part of a quote billed later, after a partial invoice. */}
-					{backorder ? (
+					{quote ? (
 						<span className="bg-secondary text-secondary-foreground shrink-0 rounded-full px-2 py-0.5 text-xs font-medium">
-							Backorder
+							{quote}
 						</span>
 					) : null}
 				</span>
@@ -99,7 +104,7 @@ export function DocumentRowCard({ doc, subtitle }: { doc: ListDocument; subtitle
 				<DocumentIcon type={doc.type} />
 				<div className="flex min-w-0 flex-1 flex-col">
 					<Link href={`/b2b/documents/${doc.id}`} className="text-foreground truncate font-semibold">
-						{doc.documentNumber}
+						{documentName(doc)}
 					</Link>
 					<span className="text-muted-foreground truncate text-sm">
 						{subtitle} · {issued(doc)}
@@ -107,7 +112,7 @@ export function DocumentRowCard({ doc, subtitle }: { doc: ListDocument; subtitle
 				</div>
 			</div>
 			<div className="border-border/60 flex items-end justify-between gap-3 border-t pt-3">
-				<DocumentStatusBadge status={doc.status} />
+				<DocumentStatusBadge status={displayStatus(doc, studioDateString())} />
 				<AmountCell doc={doc} />
 			</div>
 		</div>
@@ -150,7 +155,7 @@ const columns: ColumnDef<DocumentWithRelations>[] = [
 		accessorKey: "status",
 		header: "Status",
 		meta: { className: "px-5" },
-		cell: ({ row }) => <DocumentStatusBadge status={row.original.status} />,
+		cell: ({ row }) => <DocumentStatusBadge status={displayStatus(row.original, studioDateString())} />,
 	},
 	{
 		id: "amount",

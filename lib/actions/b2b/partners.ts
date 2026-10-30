@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
-import { type DocumentStatusFilter, OWED_FILTER, PAYABLE_INVOICE_STATUSES } from "@/lib/domain/billing/payments";
+import { type DocumentStatusFilter, OVERDUE_FILTER, OWED_FILTER, PAYABLE_INVOICE_STATUSES } from "@/lib/domain/billing/payments";
 import { logServerError } from "@/lib/errors/server";
 import { B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
+import { studioDateString } from "@/lib/utils/time";
 import { contactSchema, partnerSchema } from "@/lib/validators";
 import { db } from "@/services/database";
 import { b2bContacts, b2bDocuments, b2bPartners } from "@/services/database/schema";
@@ -13,7 +14,7 @@ import { syncPartnerContactToGoogle, updatePartnerContactInGoogle } from "@/serv
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, count, eq, exists, ilike, inArray, isNull, ne, or } from "drizzle-orm";
+import { and, count, eq, exists, ilike, inArray, isNull, lt, ne, or } from "drizzle-orm";
 
 export type ActionState = {
 	error?: string;
@@ -355,11 +356,12 @@ export async function getPartnersAction(filters?: {
 								.where(
 									and(
 										eq(b2bDocuments.partnerId, partners.id),
-										docStatus === OWED_FILTER
+										docStatus === OWED_FILTER || docStatus === OVERDUE_FILTER
 											? and(
 													eq(b2bDocuments.type, "invoice"),
 													inArray(b2bDocuments.status, [...PAYABLE_INVOICE_STATUSES]),
 													isNull(b2bDocuments.archivedAt),
+													docStatus === OVERDUE_FILTER ? lt(b2bDocuments.dueDate, studioDateString()) : undefined,
 												)
 											: eq(b2bDocuments.status, docStatus),
 									)
@@ -418,7 +420,23 @@ export async function deleteContactAction(id: string): Promise<ActionState> {
 			return { error: "Contact not found" };
 		}
 
-		await db.delete(b2bContacts).where(eq(b2bContacts.id, id));
+		// Issued documents keep who they were addressed to; drafts just lose
+		// the contact (they'll be addressed to the company).
+		const named = await db
+			.select({ id: b2bDocuments.id, status: b2bDocuments.status })
+			.from(b2bDocuments)
+			.where(eq(b2bDocuments.contactId, id));
+		const issued = named.filter((doc) => doc.status !== "draft").length;
+		if (issued) {
+			return {
+				error: `${contact.fullName} is on ${issued} issued ${issued === 1 ? "document" : "documents"}, so they stay on record. Edit their details instead.`,
+			};
+		}
+
+		await db.transaction(async (tx) => {
+			await tx.update(b2bDocuments).set({ contactId: null }).where(eq(b2bDocuments.contactId, id));
+			await tx.delete(b2bContacts).where(eq(b2bContacts.id, id));
+		});
 
 		revalidatePath(`/b2b/partners/${contact.partnerId}`);
 		return { success: true };

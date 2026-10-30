@@ -10,6 +10,14 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { B2BPayment } from "@/lib/types/b2b";
+import { formatAmount } from "@/lib/utils/currency";
+
+const METHOD_LABELS: Record<NonNullable<B2BPayment["method"]>, string> = {
+	transfer: "Transfer",
+	cheque: "Cheque",
+	cash: "Cash",
+	card: "Card",
+};
 
 import { format } from "date-fns";
 import { ArrowRight, MoneyTime, Receipt2, TickCircle } from "iconsax-reactjs";
@@ -20,7 +28,7 @@ interface PaymentHistorySummaryProps {
 }
 
 function formatMoney(value: number) {
-	return value.toLocaleString(undefined, { minimumFractionDigits: 2 });
+	return formatAmount(value);
 }
 
 export function PaymentHistorySummary({
@@ -144,6 +152,12 @@ export function PaymentHistorySummary({
 												</span>
 											</span>
 										</div>
+										{payment.method ? (
+											<p className="text-muted-foreground text-sm">
+												{METHOD_LABELS[payment.method]}
+												{payment.reference ? ` · ${payment.reference}` : null}
+											</p>
+										) : null}
 										{payment.notes ? (
 											<p className="text-muted-foreground border-primary/40 mt-1 border-t border-dashed pt-2 text-xs italic">
 												{payment.notes}

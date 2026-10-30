@@ -27,7 +27,7 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 	// Ensure partner name is safe for filename
 	const partnerName =
 		doc.partner?.companyName?.replace(/[^a-z0-9]/gi, "_") || "Partner";
-	const docName = `${prefix}_${partnerName}_${doc.documentNumber}.pdf`;
+	const docName = `${prefix}_${partnerName}_${doc.documentNumber ?? "draft"}.pdf`;
 
 	const handleDownload = async () => {
 		try {

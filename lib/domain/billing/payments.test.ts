@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
 	allocatePayment,
+	displayStatus,
 	documentAmounts,
+	isOverdue,
 	isPayableInvoice,
 	orderPaymentQueue,
 	outstandingOf,
@@ -122,5 +124,25 @@ describe("documentAmounts", () => {
 
 	it("adds in cents, so 0.10 + 0.20 leaves exactly 0.70 of 1.00", () => {
 		expect(documentAmounts(invoice("unpaid", "1.00", ["0.10", "0.20"])).due).toBe(0.7);
+	});
+});
+
+describe("overdue", () => {
+	const invoice = { type: "invoice", status: "unpaid", archivedAt: null, dueDate: "2026-10-15" };
+
+	it("is an owed invoice past its due date", () => {
+		expect(isOverdue(invoice, "2026-10-16")).toBe(true);
+		expect(isOverdue(invoice, "2026-10-15")).toBe(false);
+		expect(isOverdue({ ...invoice, status: "paid" }, "2026-11-01")).toBe(false);
+		expect(isOverdue({ ...invoice, archivedAt: "2026-10-20" }, "2026-11-01")).toBe(false);
+		expect(isOverdue({ ...invoice, type: "quote", status: "sent" }, "2026-11-01")).toBe(false);
+	});
+
+	it("shows an issued invoice as unpaid, then overdue", () => {
+		expect(displayStatus({ ...invoice, status: "sent" }, "2026-10-01")).toBe("unpaid");
+		expect(displayStatus({ ...invoice, status: "partially_paid" }, "2026-10-20")).toBe("overdue");
+		expect(displayStatus({ type: "quote", status: "sent", dueDate: "2026-10-25" }, "2026-10-20")).toBe("sent");
+		expect(displayStatus({ type: "quote", status: "sent", dueDate: "2026-10-01" }, "2026-10-20")).toBe("expired");
+		expect(displayStatus({ type: "quote", status: "accepted", dueDate: "2026-10-01" }, "2026-10-20")).toBe("accepted");
 	});
 });

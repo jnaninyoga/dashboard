@@ -11,31 +11,29 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	archiveDocumentAction,
-	confirmInvoiceWithBackorderAction,
-	convertQuoteToInvoiceAction,
 	deleteDocumentAction,
-	getDocumentByIdAction,
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
+import { documentName } from "@/lib/domain/billing/document-name";
 import { isPayableInvoice, orderPaymentQueue } from "@/lib/domain/billing/payments";
+import { quoteBalance } from "@/lib/domain/billing/quote-billing";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
-import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
+import { type B2BDocumentStatus } from "@/lib/types/b2b";
 
 import {
 	Archive,
-	ArrowRight,
-	Convert,
 	Link1,
 	MoneySend,
+	ReceiptAdd,
 	Send,
 	TickCircle,
 	Trash,
 } from "iconsax-reactjs";
 
 import { ArchiveDocumentDialog } from "./archive-dialog";
-import { BackorderDialog } from "./backorder-dialog";
 import { PDFDownloadBtn } from "./download-btn";
+import { InvoicePortionSheet } from "./invoice-portion-sheet";
 import {
 	type PaymentQueueEntry,
 	RecordPaymentDialog,
@@ -53,11 +51,16 @@ export function DocumentActionRibbon({
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
 	const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-	const [isBackorderOpen, setIsBackorderOpen] = useState(false);
+	const [isPortionOpen, setIsPortionOpen] = useState(false);
 	const [isFlushing, setIsFlushing] = useState(false);
 	const flushDraft = useFlushDraft();
 	const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
+	const DONE: Partial<Record<B2BDocumentStatus, string>> = {
+		sent: "Quotation marked as sent",
+		unpaid: "Invoice issued",
+		accepted: "Quotation accepted",
+	};
 	const handleStatusUpdate = (status: B2BDocumentStatus) => {
 		startTransition(async () => {
 			const res = await updateDocumentStatusAction(
@@ -66,7 +69,7 @@ export function DocumentActionRibbon({
 				doc.partnerId,
 			);
 			if (res.success) {
-				notify.success(`Document marked as ${status}`);
+				notify.success(DONE[status] ?? "Document updated");
 				router.refresh();
 			} else {
 				notifyActionError(res, "Failed to update document");
@@ -78,7 +81,7 @@ export function DocumentActionRibbon({
 
 	const handleDeleteDraft = async () => {
 		const ok = await confirm({
-			title: `Delete draft ${doc.documentNumber}?`,
+			title: `Delete ${doc.documentNumber ? `draft ${doc.documentNumber}` : "this draft invoice"}?`,
 			description: "This can't be undone.",
 			confirmLabel: "Delete draft",
 			destructive: true,
@@ -138,6 +141,15 @@ export function DocumentActionRibbon({
 
 	const canRecordPayment = isPayableInvoice(doc);
 
+	// What's billed of a quotation and what's left (its invoices, drafts
+	// included, archived ones left out).
+	const balance = quoteBalance(doc.lines ?? [], (doc.children ?? []) as DocumentWithRelations[]);
+	const canInvoice =
+		!doc.archivedAt &&
+		isQuote &&
+		(doc.status === "sent" || doc.status === "accepted") &&
+		balance.remaining > 0;
+
 	// Same scope and order as recordDocumentPaymentAction, so the dialog's
 	// preview is exactly what the server will do.
 	const paymentQueue: PaymentQueueEntry[] = orderPaymentQueue(
@@ -146,7 +158,7 @@ export function DocumentActionRibbon({
 			.filter(isPayableInvoice)
 			.map((inv) => ({
 				id: inv.id,
-				documentNumber: inv.documentNumber,
+				documentNumber: inv.documentNumber ?? "",
 				totalAmount: Number(inv.totalAmount),
 				amountPaid: (inv.payments || []).reduce(
 					(s, p) => s + Number(p.amount),
@@ -158,7 +170,9 @@ export function DocumentActionRibbon({
 	return (
 		<div className="animate-slide-up bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
 			{/* Linked Documents / Relations (Left Side) */}
-			{doc.parent || doc.children?.length ? (
+			{/* An invoice links to its quotation; a quotation's invoices are
+			    listed in its Invoicing section. */}
+			{doc.parent ? (
 				<div className="lg:border/50 flex flex-wrap items-center gap-4 lg:mr-2 lg:border-r lg:pr-5">
 					<div className="bg-primary/15 text-primary border-primary/20 zen-teal-glow flex size-9 shrink-0 items-center justify-center rounded-full border">
 						<Link1 size={18} variant="Bulk" />
@@ -174,28 +188,11 @@ export function DocumentActionRibbon({
 										variant="outline"
 										className="text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200"
 									>
-										{doc.parent.documentNumber}
+										{documentName(doc.parent)}
 									</Badge>
 								</Link>
 							</div>
 						) : null}
-						{doc.children?.length
-							? (doc.children as B2BDocument[]).map((child) => (
-									<div key={child.id} className="flex flex-col">
-										<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-											Generated Invoice
-										</span>
-										<Link href={`/b2b/documents/${child.id}`}>
-											<Badge
-												variant="outline"
-												className={`text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200 ${child.status === 'paid' ? 'bg-success/10' : ''}`}
-											>
-												{child.documentNumber}
-											</Badge>
-										</Link>
-									</div>
-								))
-							: null}
 					</div>
 				</div>
 			) : null}
@@ -226,63 +223,15 @@ export function DocumentActionRibbon({
 								// What she just typed (lines, notes) is saved first.
 								setIsFlushing(true);
 								const saved = await flushDraft();
-								// An invoice's backorder check needs its lines as now saved.
-								const current =
-									saved && isInvoice && doc.parentDocumentId
-										? ((await getDocumentByIdAction(doc.id)).document ?? doc)
-										: doc;
 								setIsFlushing(false);
 								if (!saved) {
 									notify.warning("Some changes aren't saved yet", "Fix what's marked on the page, then try again.");
 									return;
 								}
-								const hasBilledItems = current.lines?.some(l => l.sourceLineId && Number(l.quantity) > 0);
-								
-								// Smart Backorder Check:
-								// Does this invoice (plus previous ones) leave any unbilled quantity from the parent quote?
-								let hasUnbilledItems = false;
-								if (isInvoice && doc.parent?.lines) {
-									const parentLines = doc.parent.lines;
-									
-									// 1. Calculate how much has been billed so far across ALL invoices (previous + current)
-									// We group by sourceLineId
-									const billedTotals: Record<string, number> = {};
-									
-									// Add quantities from sibling invoices on the same quote.
-									// Skip the current doc — its lines are added below;
-									// double-counting them would hide remainders and bypass
-									// the backorder dialog.
-									previousInvoices
-										.filter((inv) => inv.id !== doc.id)
-										.forEach((inv) => {
-											inv.lines?.forEach((line) => {
-												if (line.sourceLineId) {
-													billedTotals[line.sourceLineId] =
-														(billedTotals[line.sourceLineId] || 0) +
-														Number(line.quantity);
-												}
-											});
-										});
-									
-									// Add quantities from the CURRENT draft invoice (as saved)
-									current.lines?.forEach(line => {
-										if (line.sourceLineId) {
-											billedTotals[line.sourceLineId] = (billedTotals[line.sourceLineId] || 0) + Number(line.quantity);
-										}
-									});
-									
-									// 2. Compare with the Quote's required quantities
-									hasUnbilledItems = parentLines.some(qLine => {
-										const totalBilled = billedTotals[qLine.id] || 0;
-										return totalBilled < Number(qLine.quantity);
-									});
-								}
-
-								if (isInvoice && doc.parentDocumentId && hasBilledItems && hasUnbilledItems) {
-									setIsBackorderOpen(true);
-								} else {
-									handleStatusUpdate("sent");
-								}
+								// An invoice is issued (numbered, dated today, owed); a
+								// quotation is sent. What's left of a quotation stays
+								// there to invoice later: no need to decide now.
+								handleStatusUpdate(isInvoice ? "unpaid" : "sent");
 							}}
 							disabled={isPending || isFlushing || blockSendForMissingIce}
 							title={
@@ -295,21 +244,6 @@ export function DocumentActionRibbon({
 							<Send size={18} variant="Bold" />
 							Mark as sent
 						</Button>
-						<BackorderDialog
-							open={isBackorderOpen}
-							onOpenChange={setIsBackorderOpen}
-							onConfirm={(createBackorder) => {
-								startTransition(async () => {
-									const res = await confirmInvoiceWithBackorderAction(doc.id, createBackorder);
-									if (res.success) {
-										notify.success(createBackorder ? "Invoice confirmed and backorder created" : "Invoice confirmed");
-										router.refresh();
-									} else {
-										notifyActionError(res, "Failed to confirm invoice");
-									}
-								});
-							}}
-						/>
 					</>
 				) : null}
 
@@ -325,27 +259,25 @@ export function DocumentActionRibbon({
 					</Button>
 				) : null}
 
-				{/* Quote Specific: Accepted -> Generate Invoice (Only if no invoices exist yet) */}
-				{!doc.archivedAt && isQuote && doc.status === "accepted" && (!doc.children || doc.children.length === 0) ? (
-					<Button
-						onClick={() => {
-							startTransition(async () => {
-								const res = await convertQuoteToInvoiceAction(doc.id);
-								if (res.success && res.id) {
-									notify.success("Draft invoice created");
-									router.push(`/b2b/documents/${res.id}`);
-								} else {
-									notifyActionError(res, "Failed to create draft invoice");
-								}
-							});
-						}}
-						disabled={isPending}
-						className="zen-glow-teal gap-2 rounded-xl font-bold shadow-md"
-					>
-						<Convert size={18} variant="Bold" />
-						Generate Invoice
-						<ArrowRight size={16} />
-					</Button>
+				{/* A sent or accepted quotation is invoiced in portions, for as long as something is left. */}
+				{canInvoice ? (
+					<>
+						<Button
+							onClick={() => setIsPortionOpen(true)}
+							disabled={isPending}
+							className="zen-glow-teal gap-2 rounded-xl font-bold shadow-md"
+						>
+							<ReceiptAdd size={18} variant="Bold" />
+							{balance.billed > 0 ? "Invoice next portion" : "Create invoice"}
+						</Button>
+						<InvoicePortionSheet
+							key={balance.remaining}
+							quote={doc}
+							balance={balance}
+							open={isPortionOpen}
+							onOpenChange={setIsPortionOpen}
+						/>
+					</>
 				) : null}
 
 				{/* Invoice Specific: any issued, not fully paid invoice -> Record Payment */}
@@ -394,7 +326,7 @@ export function DocumentActionRibbon({
 							Archive
 						</Button>
 						<ArchiveDocumentDialog
-							documentNumber={doc.documentNumber}
+							documentNumber={documentName(doc)}
 							open={isArchiveOpen}
 							onOpenChange={setIsArchiveOpen}
 							onConfirm={handleArchive}

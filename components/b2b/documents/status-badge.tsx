@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/ui";
 
-import { Clock, CloseCircle, Edit2, type Icon, MoneyTime, Send2, TickCircle, TickSquare } from "iconsax-reactjs";
+import { CalendarRemove, Clock, CloseCircle, Danger, Edit2, type Icon, MoneyTime, Send2, TickCircle, TickSquare } from "iconsax-reactjs";
 
 type Tone = "success" | "warning" | "info" | "primary" | "destructive" | "muted";
 
@@ -14,6 +14,10 @@ const STATUS: Record<string, { label: string; tone: Tone; icon: Icon }> = {
 	partially_paid: { label: "Partly paid", tone: "warning", icon: MoneyTime },
 	paid: { label: "Paid", tone: "success", icon: TickCircle },
 	cancelled: { label: "Cancelled", tone: "destructive", icon: CloseCircle },
+	// Not stored: an owed invoice past its due date (displayStatus).
+	overdue: { label: "Overdue", tone: "destructive", icon: Danger },
+	// Not stored: a sent quotation past its validity.
+	expired: { label: "Expired", tone: "muted", icon: CalendarRemove },
 };
 
 const TONES: Record<Tone, string> = {

@@ -6,24 +6,40 @@ import { requireUser } from "@/lib/auth/require-user";
 import {
 	allocatePayment,
 	type DocumentStatusFilter,
+	isPayableInvoice,
 	orderPaymentQueue,
 	outstandingOf,
+	OVERDUE_FILTER,
 	OWED_FILTER,
 	PAYABLE_INVOICE_STATUSES,
 } from "@/lib/domain/billing/payments";
+import {
+	beyondTheQuote,
+	type InvoiceLineInput,
+	portionByAmount,
+	portionByQuantities,
+	quoteBalance,
+} from "@/lib/domain/billing/quote-billing";
+import { mergeSameLines } from "@/lib/domain/billing/same-lines";
 import { logServerError } from "@/lib/errors/server";
 import { B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
 import { parseAmountInput } from "@/lib/utils/currency";
-import { createDocumentWithLinesSchema, DocumentLineFormValues } from "@/lib/validators";
+import { addDays, fromStudioTime, studioDateString } from "@/lib/utils/time";
+import {
+	createDocumentWithLinesSchema,
+	documentLinesSchema,
+	recordPaymentSchema,
+} from "@/lib/validators";
 import { db } from "@/services/database";
 import {
 	b2bDocumentLines,
 	b2bDocuments,
 	b2bDocumentSequences,
+	b2bPartners,
 	b2bPayments,
 } from "@/services/database/schema";
 
-import { and, asc, desc, eq, ilike, inArray, isNull, not, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, lt, not, or, sql } from "drizzle-orm";
 
 type DbTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -38,6 +54,11 @@ const isValidIce = (s: string | null | undefined): boolean => {
 	if (typeof s !== "string") return false;
 	return s.replace(/\D/g, "").length > 0;
 };
+
+// An invoice is due this many days after it's issued, unless its draft said otherwise.
+const DEFAULT_PAYMENT_DAYS = 15;
+
+const daysBetween = (from: string, to: string) => Math.round((Date.parse(to) - Date.parse(from)) / 86_400_000);
 
 type LineInput = { quantity: number | string; unitPrice: number | string };
 
@@ -58,17 +79,24 @@ function computeTotals(lines: LineInput[], taxRate: number | string) {
 	return { lines: linesPriced, subtotal, taxRate: tax, totalAmount };
 }
 
-// Allowed status transitions. Anything outside this map is rejected — once an
-// invoice is `sent`, payments drive it forward; corrections go through archive.
-const ALLOWED_STATUS_TRANSITIONS: Record<B2BDocumentStatus, B2BDocumentStatus[]> = {
-	draft: ["sent", "unpaid"],
-	sent: ["accepted", "partially_paid", "paid", "unpaid"],
-	unpaid: ["partially_paid", "paid", "cancelled"],
-	accepted: [],
-	partially_paid: ["paid"],
-	paid: [],
-	cancelled: [],
-};
+/** Rows for b2b_document_lines, in the order given, totals recomputed. */
+function lineRows(documentId: string, lines: (InvoiceLineInput & { sourceLineId?: string | null })[], taxRate: number | string) {
+	const computed = computeTotals(lines, taxRate);
+	return {
+		computed,
+		rows: lines.map((line, i) => ({
+			documentId,
+			sourceLineId: line.sourceLineId ?? null,
+			description: line.description.trim(),
+			quantity: computed.lines[i].quantity.toString(),
+			unitPrice: computed.lines[i].unitPrice.toFixed(2),
+			totalPrice: computed.lines[i].totalPrice.toFixed(2),
+			position: i,
+		})),
+	};
+}
+
+const linesInOrder = [asc(b2bDocumentLines.position), asc(b2bDocumentLines.createdAt)];
 
 export type ActionState = {
 	error?: string;
@@ -80,16 +108,17 @@ export type ActionState = {
 };
 
 /**
- * Reserve the next document number for (type, year) using b2b_document_sequences
- * with row-level locking (SELECT … FOR UPDATE) inside the caller's transaction.
- * Two concurrent invoice creations cannot collide.
+ * Reserve the next document number for (type, year of `date`) using
+ * b2b_document_sequences with row-level locking (SELECT … FOR UPDATE) inside
+ * the caller's transaction. Two concurrent numberings cannot collide.
  */
 async function reserveNextDocumentNumber(
 	tx: DbTx,
 	type: B2BDocumentType,
+	date: string,
 ): Promise<string> {
 	const prefix = type === "quote" ? "QUO" : "INV";
-	const year = new Date().getFullYear();
+	const year = Number(date.slice(0, 4));
 
 	// First-touch insert; ignored if the row already exists.
 	await tx
@@ -119,18 +148,17 @@ async function reserveNextDocumentNumber(
 }
 
 /**
- * Read-only preview of the next number for (type, year). Does NOT consume the
- * sequence — safe to call on every render of the create page so refreshes
- * don't leave gaps. The actual value is claimed inside createDocumentAction's
- * transaction via reserveNextDocumentNumber; if another insert lands in the
- * meantime the saved number may be one higher than the preview, which is fine.
+ * Read-only preview of the next number for (type, this year). Does NOT
+ * consume the sequence — safe to call on every render of the create page.
+ * If another document is numbered in the meantime, the saved number is one
+ * higher than the preview, which is fine.
  */
 export async function peekNextDocumentNumber(
 	type: B2BDocumentType,
 ): Promise<string> {
 	await requireUser();
 	const prefix = type === "quote" ? "QUO" : "INV";
-	const year = new Date().getFullYear();
+	const year = Number(studioDateString().slice(0, 4));
 
 	const row = await db.query.b2bDocumentSequences.findFirst({
 		where: and(
@@ -143,6 +171,11 @@ export async function peekNextDocumentNumber(
 	return `${prefix}-${year}-${next.toString().padStart(4, "0")}`;
 }
 
+/**
+ * A new draft. A quotation takes its number now; an invoice gets one only
+ * when it's issued. Whatever the form sends, a new document starts as a
+ * draft of its own (no status, no parent from the browser).
+ */
 export async function createDocumentAction(
 	_prevState: ActionState | null,
 	data: unknown
@@ -157,25 +190,29 @@ export async function createDocumentAction(
 		};
 	}
 
-	const { document, lines } = validated.data;
+	const { document } = validated.data;
+	const lines = mergeSameLines(validated.data.lines);
 
 	try {
 		let newId: string;
 		await db.transaction(async (tx) => {
-			// Reserve the official sequence number inside the same transaction so
-			// the row lock guarantees no two concurrent inserts can clash.
-			const documentNumber = await reserveNextDocumentNumber(tx, document.type);
+			const documentNumber =
+				document.type === "quote"
+					? await reserveNextDocumentNumber(tx, "quote", document.issueDate)
+					: null;
+			const { computed, rows } = lineRows("", lines, document.taxRate);
 
-			// Recompute totals server-side. Client-supplied subtotal / totalAmount
-			// are ignored to prevent tampering or drift on a posted document.
-			const computed = computeTotals(lines, document.taxRate);
-
-			// 1. Insert Document
 			const [newDoc] = await tx
 				.insert(b2bDocuments)
 				.values({
-					...document,
+					partnerId: document.partnerId,
+					contactId: document.contactId ?? null,
+					type: document.type,
+					status: "draft",
 					documentNumber,
+					issueDate: document.issueDate,
+					dueDate: document.dueDate || null,
+					notes: document.notes ?? null,
 					subtotal: computed.subtotal.toFixed(2),
 					taxRate: computed.taxRate.toFixed(2),
 					totalAmount: computed.totalAmount.toFixed(2),
@@ -183,17 +220,7 @@ export async function createDocumentAction(
 				.returning();
 
 			newId = newDoc.id;
-
-			// 2. Insert Lines (with recomputed totalPrice)
-			const linesToInsert = lines.map((line, i) => ({
-				...line,
-				documentId: newDoc.id,
-				quantity: computed.lines[i].quantity.toString(),
-				unitPrice: computed.lines[i].unitPrice.toFixed(2),
-				totalPrice: computed.lines[i].totalPrice.toFixed(2),
-			}));
-
-			await tx.insert(b2bDocumentLines).values(linesToInsert);
+			await tx.insert(b2bDocumentLines).values(rows.map((row) => ({ ...row, documentId: newDoc.id })));
 		});
 
 		revalidatePath(`/b2b/partners/${document.partnerId}`);
@@ -205,6 +232,70 @@ export async function createDocumentAction(
 	}
 }
 
+class RefusedError extends Error {}
+
+/**
+ * Issues a draft, all or nothing: the draft is locked (a double click can't
+ * issue it twice), must have lines and a total, and an invoice must have the
+ * partner's ICE and stay within what's left of its quotation. It's dated the
+ * day it's issued (the payment term it had is kept), and an invoice takes
+ * the next number then, so invoice numbers follow the order of issue.
+ */
+async function issueDraft(tx: DbTx, id: string) {
+	const [doc] = await tx.select().from(b2bDocuments).where(eq(b2bDocuments.id, id)).for("update");
+	if (!doc) throw new RefusedError("Document not found");
+	if (doc.archivedAt) throw new RefusedError("Archived documents cannot change status");
+	if (doc.status !== "draft") throw new RefusedError("This document is already issued.");
+
+	const lines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, id));
+	if (!lines.length) throw new RefusedError("Add at least one line before issuing it.");
+	if (!(Number(doc.totalAmount) > 0)) {
+		throw new RefusedError("It comes to 0 MAD: give its lines a price before issuing it.");
+	}
+
+	if (doc.type === "invoice") {
+		const partner = await tx.query.b2bPartners.findFirst({ where: eq(b2bPartners.id, doc.partnerId) });
+		if (!isValidIce(partner?.taxId)) {
+			throw new RefusedError("Add the partner's ICE (Tax ID) before issuing this invoice.");
+		}
+		if (doc.parentDocumentId) {
+			// The quotation is locked too, so two of its invoices can't be issued
+			// at once past what's left of it.
+			await tx.select({ id: b2bDocuments.id }).from(b2bDocuments).where(eq(b2bDocuments.id, doc.parentDocumentId)).for("update");
+			const quoteLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, doc.parentDocumentId));
+			const siblings = await tx.query.b2bDocuments.findMany({
+				where: and(eq(b2bDocuments.parentDocumentId, doc.parentDocumentId), eq(b2bDocuments.type, "invoice")),
+				with: { lines: true },
+			});
+			const problem = beyondTheQuote(quoteBalance(quoteLines, siblings, id), lines);
+			if (problem) throw new RefusedError(problem);
+		}
+	}
+
+	const today = studioDateString();
+	const term = doc.dueDate
+		? Math.max(0, daysBetween(doc.issueDate, doc.dueDate))
+		: doc.type === "invoice"
+			? DEFAULT_PAYMENT_DAYS
+			: null;
+	await tx
+		.update(b2bDocuments)
+		.set({
+			status: doc.type === "invoice" ? "unpaid" : "sent",
+			documentNumber: doc.documentNumber ?? (await reserveNextDocumentNumber(tx, doc.type, today)),
+			issueDate: today,
+			dueDate: term === null ? null : addDays(today, term),
+			updatedAt: new Date(),
+		})
+		.where(eq(b2bDocuments.id, id));
+	return doc;
+}
+
+/**
+ * The status changes she makes by hand: issuing a draft ("Mark as sent")
+ * and accepting a sent quotation. Payments move invoices on from there;
+ * archiving retires a document.
+ */
 export async function updateDocumentStatusAction(
 	id: string,
 	status: B2BDocumentStatus,
@@ -214,38 +305,29 @@ export async function updateDocumentStatusAction(
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
-			with: { partner: true },
 		});
 		if (!doc) return { error: "Document not found" };
 		if (doc.archivedAt) return { error: "Archived documents cannot change status" };
 
-		const allowed = ALLOWED_STATUS_TRANSITIONS[doc.status] ?? [];
-		if (!allowed.includes(status)) {
-			return {
-				error: `Cannot transition ${doc.status} → ${status}. Allowed: ${allowed.join(", ") || "(terminal)"}`,
-			};
+		if (doc.status === "draft" && (status === "sent" || status === "unpaid")) {
+			await db.transaction((tx) => issueDraft(tx, id));
+		} else if (doc.type === "quote" && doc.status === "sent" && status === "accepted") {
+			await db
+				.update(b2bDocuments)
+				.set({ status, updatedAt: new Date() })
+				.where(and(eq(b2bDocuments.id, id), eq(b2bDocuments.status, "sent")));
+		} else {
+			return { error: `A ${doc.status} ${doc.type} can't become ${status}.` };
 		}
 
-		// Issuing an invoice requires a valid partner ICE (15 digits) — without
-		// it the partner cannot reclaim VAT and the invoice fails Morocco audit.
-		if ((status === "sent" || status === "unpaid") && doc.type === "invoice" && !isValidIce(doc.partner?.taxId)) {
-			return {
-				error:
-					"Add the partner's ICE (Tax ID) before issuing this invoice.",
-			};
-		}
-
-		await db
-			.update(b2bDocuments)
-			.set({ status, updatedAt: new Date() })
-			.where(eq(b2bDocuments.id, id));
-
-		if (partnerId) revalidatePath(`/b2b/partners/${partnerId}`);
+		if (partnerId ?? doc.partnerId) revalidatePath(`/b2b/partners/${partnerId ?? doc.partnerId}`);
 		revalidatePath("/b2b/documents");
 		revalidatePath(`/b2b/documents/${id}`);
+		if (doc.parentDocumentId) revalidatePath(`/b2b/documents/${doc.parentDocumentId}`);
 
 		return { success: true };
 	} catch (error) {
+		if (error instanceof RefusedError) return { error: error.message };
 		return { error: "Failed to update status", ref: logServerError("Error updating document status", error) };
 	}
 }
@@ -253,6 +335,7 @@ export async function updateDocumentStatusAction(
 /**
  * Archive an issued document (soft-hide). The row, its number, and its history
  * are preserved — required for an audit-grade trail. Drafts use deleteDocumentAction.
+ * An archived invoice gives back what it had billed of its quotation.
  */
 export async function archiveDocumentAction(
 	id: string,
@@ -282,6 +365,7 @@ export async function archiveDocumentAction(
 		if (partnerId) revalidatePath(`/b2b/partners/${partnerId}`);
 		revalidatePath("/b2b/documents");
 		revalidatePath(`/b2b/documents/${id}`);
+		if (doc.parentDocumentId) revalidatePath(`/b2b/documents/${doc.parentDocumentId}`);
 
 		return { success: true };
 	} catch (error) {
@@ -297,9 +381,22 @@ export async function unarchiveDocumentAction(
 	try {
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
+			with: { lines: true },
 		});
 		if (!doc) return { error: "Document not found" };
 		if (!doc.archivedAt) return { error: "Document is not archived" };
+
+		// Restoring an invoice takes its share of the quotation back: only if
+		// it's still there to take.
+		if (doc.type === "invoice" && doc.parentDocumentId) {
+			const quoteLines = await db.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, doc.parentDocumentId));
+			const siblings = await db.query.b2bDocuments.findMany({
+				where: and(eq(b2bDocuments.parentDocumentId, doc.parentDocumentId), eq(b2bDocuments.type, "invoice")),
+				with: { lines: true },
+			});
+			const problem = beyondTheQuote(quoteBalance(quoteLines, siblings, doc.id), doc.lines);
+			if (problem) return { error: `Can't restore it: ${problem}` };
+		}
 
 		await db
 			.update(b2bDocuments)
@@ -335,11 +432,19 @@ export async function getDocumentsAction(filters?: {
 					conditions.push(isNull(docs.archivedAt));
 				}
 
+				// A number, words from the notes, or the partner's name.
 				if (query) {
 					conditions.push(
 						or(
 							ilike(docs.documentNumber, `%${query}%`),
-							ilike(docs.notes ?? "", `%${query}%`),
+							ilike(docs.notes, `%${query}%`),
+							inArray(
+								docs.partnerId,
+								db
+									.select({ id: b2bPartners.id })
+									.from(b2bPartners)
+									.where(ilike(b2bPartners.companyName, `%${query}%`)),
+							),
 						),
 					);
 				}
@@ -348,11 +453,12 @@ export async function getDocumentsAction(filters?: {
 					conditions.push(eq(docs.type, type));
 				}
 
-				if (status === OWED_FILTER) {
+				if (status === OWED_FILTER || status === OVERDUE_FILTER) {
 					conditions.push(
 						eq(docs.type, "invoice"),
 						inArray(docs.status, [...PAYABLE_INVOICE_STATUSES]),
 					);
+					if (status === OVERDUE_FILTER) conditions.push(lt(docs.dueDate, studioDateString()));
 				} else if (status && status !== "all") {
 					conditions.push(eq(docs.status, status));
 				}
@@ -396,15 +502,17 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 					},
 				},
 				contact: true,
-				lines: {
-					orderBy: [desc(b2bDocumentLines.createdAt)],
-				},
+				lines: { orderBy: linesInOrder },
 				parent: {
 					with: {
-						lines: true,
+						lines: { orderBy: linesInOrder },
 					},
 				},
-				children: true,
+				// A quotation's invoices, with their lines: what's billed and what's left.
+				children: {
+					with: { lines: true, payments: true },
+					orderBy: [asc(b2bDocuments.createdAt)],
+				},
 				payments: {
 					orderBy: [desc(b2bPayments.paymentDate)],
 				},
@@ -444,13 +552,12 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 				document,
 				accountSummary: {
 					previousInvoices: statementInvoices,
-					// Sibling invoices for the action ribbon's backorder check.
-					// Excludes the current document — its lines are read directly
-					// from `doc.lines` so including it here would double-count.
+					// Sibling invoices (the current one left out: its lines are
+					// read from `doc.lines`).
 					allRelatedInvoices: previousInvoices.filter(
 						(inv) => inv.id !== document.id,
 					),
-					// Full backorder chain (incl. current) for the AccountStatement view.
+					// Full chain (incl. current) for the AccountStatement view.
 					chainInvoices: previousInvoices,
 				},
 			};
@@ -469,55 +576,59 @@ export async function getDocumentByIdAction(id: string): Promise<{ document?: Do
 	}
 }
 
-export async function convertQuoteToInvoiceAction(quoteId: string): Promise<ActionState> {
+/** What part of a quotation an invoice bills. */
+export type InvoicePortion =
+	| { kind: "remaining" }
+	| { kind: "quantities"; quantities: Record<string, string> }
+	| { kind: "amount"; amount: string };
+
+/**
+ * A draft invoice for a portion of a sent or accepted quotation: everything
+ * left, chosen quantities of its lines, or an amount (before tax) spread
+ * over what's left. Never more than what's left (drafts already made count),
+ * at the quotation's prices and tax. Invoicing a sent quotation accepts it.
+ */
+export async function createInvoiceFromQuoteAction(
+	quoteId: string,
+	portion: InvoicePortion = { kind: "remaining" },
+): Promise<ActionState> {
 	await requireUser();
 	try {
-		const quote = (await db.query.b2bDocuments.findFirst({
-			where: eq(b2bDocuments.id, quoteId),
-			with: {
-				lines: true,
-				children: {
-					with: {
-						lines: true,
-					},
-				},
-			},
-		})) as DocumentWithRelations | null;
-
-		if (!quote || quote.type !== "quote") {
-			return { error: "Original quote not found" };
-		}
-
-		// 1. Calculate remaining quantities for each line
-		const initialLines = (quote.lines || []).map((line) => {
-			const alreadyInvoiced = (quote.children || []).reduce((acc: number, child: DocumentWithRelations) => {
-				const matchingLine = child.lines?.find((l) => l.sourceLineId === line.id);
-				return acc + (Number(matchingLine?.quantity) || 0);
-			}, 0);
-
-			const remaining = Math.max(0, Number(line.quantity) - alreadyInvoiced);
-
-			return {
-				sourceLineId: line.id,
-				description: line.description,
-				unitPrice: line.unitPrice,
-				quantity: remaining,
-			};
-		}).filter(l => l.quantity > 0);
-
-		if (initialLines.length === 0) {
-			return { error: "Quote is already fully invoiced" };
-		}
-
-		// Tax inherited from parent quote per the solo-operator rule.
-		const computed = computeTotals(initialLines, quote.taxRate);
-
-		let newId: string;
-
+		let newId = "";
+		let partnerId = "";
 		await db.transaction(async (tx) => {
-			const nextNumber = await reserveNextDocumentNumber(tx, "invoice");
+			// One invoice at a time per quotation: what's left can't be taken twice.
+			const [quote] = await tx.select().from(b2bDocuments).where(eq(b2bDocuments.id, quoteId)).for("update");
+			if (!quote || quote.type !== "quote") throw new RefusedError("Quotation not found");
+			if (quote.archivedAt) throw new RefusedError("This quotation is archived.");
+			if (quote.status !== "sent" && quote.status !== "accepted") {
+				throw new RefusedError("Mark the quotation as sent before invoicing it.");
+			}
+			partnerId = quote.partnerId;
 
-			// 1. Create Draft Invoice
+			const quoteLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, quoteId)).orderBy(...linesInOrder);
+			const invoices = await tx.query.b2bDocuments.findMany({
+				where: and(eq(b2bDocuments.parentDocumentId, quoteId), eq(b2bDocuments.type, "invoice")),
+				with: { lines: true },
+			});
+			const balance = quoteBalance(quoteLines, invoices);
+			if (balance.remaining <= 0) throw new RefusedError("This quotation is already fully invoiced.");
+
+			const lines =
+				portion.kind === "quantities"
+					? portionByQuantities(balance, portion.quantities)
+					: portion.kind === "amount"
+						? portionByAmount(balance, parseAmountInput(portion.amount))
+						: portionByQuantities(
+								balance,
+								Object.fromEntries(balance.lines.map((line) => [line.lineId, line.remaining])),
+							);
+			if (!lines.length) throw new RefusedError("Choose what to invoice: a quantity or an amount.");
+			const problem = beyondTheQuote(balance, lines);
+			if (problem) throw new RefusedError(problem);
+
+			const today = studioDateString();
+			const { computed, rows } = lineRows("", lines, quote.taxRate);
 			const [invoice] = await tx
 				.insert(b2bDocuments)
 				.values({
@@ -525,106 +636,22 @@ export async function convertQuoteToInvoiceAction(quoteId: string): Promise<Acti
 					contactId: quote.contactId,
 					type: "invoice",
 					status: "draft",
-					documentNumber: nextNumber,
-					issueDate: new Date().toISOString().split("T")[0],
-					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+					// Numbered when it's issued.
+					documentNumber: null,
+					issueDate: today,
+					dueDate: addDays(today, DEFAULT_PAYMENT_DAYS),
 					subtotal: computed.subtotal.toFixed(2),
 					taxRate: computed.taxRate.toFixed(2),
 					totalAmount: computed.totalAmount.toFixed(2),
-					notes: `Invoice for work completed from ${quote.documentNumber}`,
+					// Her terms and bank details carry over from the quotation.
+					notes: quote.notes,
 					parentDocumentId: quoteId,
 				})
 				.returning();
-
 			newId = invoice.id;
+			await tx.insert(b2bDocumentLines).values(rows.map((row) => ({ ...row, documentId: invoice.id })));
 
-			// 2. Insert Lines
-			const linesToInsert = initialLines.map((line, i) => ({
-				documentId: invoice.id,
-				sourceLineId: line.sourceLineId,
-				description: line.description,
-				quantity: computed.lines[i].quantity.toString(),
-				unitPrice: computed.lines[i].unitPrice.toFixed(2),
-				totalPrice: computed.lines[i].totalPrice.toFixed(2),
-			}));
-
-			await tx.insert(b2bDocumentLines).values(linesToInsert);
-			
-			// 3. Ensure Quote is marked as accepted
-			if (quote.status !== "accepted") {
-				await tx.update(b2bDocuments)
-					.set({ status: "accepted", updatedAt: new Date() })
-					.where(eq(b2bDocuments.id, quoteId));
-			}
-		});
-
-		revalidatePath(`/b2b/partners/${quote.partnerId}`);
-		revalidatePath("/b2b/documents");
-		// @ts-expect-error - newId is assigned in transaction
-		return { success: true, id: newId };
-	} catch (error) {
-		return { error: "Failed to create draft invoice", ref: logServerError("Error converting quote to invoice", error) };
-	}
-}
-
-export async function createPartialInvoiceAction(
-	quoteId: string,
-	data: {
-		lines: { sourceLineId?: string; description: string; quantity: string; unitPrice: string; totalPrice: string }[];
-		taxRate: string;
-		notes?: string;
-	}
-): Promise<ActionState> {
-	await requireUser();
-	try {
-		const quote = await db.query.b2bDocuments.findFirst({
-			where: eq(b2bDocuments.id, quoteId),
-		});
-
-		if (!quote || quote.type !== "quote") {
-			return { error: "Source quotation not found" };
-		}
-
-		// Inherit tax rate from the parent quote — solo-operator simplicity rule.
-		// The user sets tax once on the quote; everything downstream follows it.
-		const computed = computeTotals(data.lines, quote.taxRate);
-
-		let newId: string;
-
-		await db.transaction(async (tx) => {
-			const nextNumber = await reserveNextDocumentNumber(tx, "invoice");
-			const [invoice] = await tx
-				.insert(b2bDocuments)
-				.values({
-					partnerId: quote.partnerId,
-					contactId: quote.contactId,
-					type: "invoice",
-					status: "unpaid",
-					documentNumber: nextNumber,
-					issueDate: new Date().toISOString().split("T")[0],
-					dueDate: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-					subtotal: computed.subtotal.toFixed(2),
-					taxRate: computed.taxRate.toFixed(2),
-					totalAmount: computed.totalAmount.toFixed(2),
-					notes: data.notes || `Partial invoice from ${quote.documentNumber}`,
-					parentDocumentId: quoteId,
-				})
-				.returning();
-
-			newId = invoice.id;
-
-			const linesToInsert = data.lines.map((line, i) => ({
-				documentId: invoice.id,
-				description: line.description,
-				quantity: computed.lines[i].quantity.toString(),
-				unitPrice: computed.lines[i].unitPrice.toFixed(2),
-				totalPrice: computed.lines[i].totalPrice.toFixed(2),
-				sourceLineId: line.sourceLineId,
-			}));
-
-			await tx.insert(b2bDocumentLines).values(linesToInsert);
-
-			if (quote.status !== "accepted") {
+			if (quote.status === "sent") {
 				await tx
 					.update(b2bDocuments)
 					.set({ status: "accepted", updatedAt: new Date() })
@@ -632,29 +659,45 @@ export async function createPartialInvoiceAction(
 			}
 		});
 
+		revalidatePath(`/b2b/partners/${partnerId}`);
 		revalidatePath("/b2b/documents");
-		revalidatePath(`/b2b/partners/${quote.partnerId}`);
 		revalidatePath(`/b2b/documents/${quoteId}`);
-		// @ts-expect-error - newId is assigned in transaction
 		return { success: true, id: newId };
 	} catch (error) {
-		return { error: "Failed to create partial invoice", ref: logServerError("Error creating partial invoice", error) };
+		if (error instanceof RefusedError) return { error: error.message };
+		return { error: "Failed to create the invoice", ref: logServerError("Error invoicing a quotation", error) };
 	}
 }
 
+/**
+ * Money received from a partner, on the day it arrived, with how it was
+ * paid. The invoice she's looking at is paid first; any excess goes to the
+ * other open invoices of the same quotation, oldest first. Never more than
+ * they owe.
+ */
 export async function recordDocumentPaymentAction(
 	id: string,
-	amountPaid: string,
+	payment: unknown,
 	partnerId?: string,
 	requestId?: string,
 ): Promise<ActionState> {
 	await requireUser();
 	try {
+		const parsed = recordPaymentSchema.safeParse(payment);
+		if (!parsed.success) {
+			return { error: parsed.error.issues[0]?.message ?? "Check the payment", issues: parsed.error.flatten().fieldErrors };
+		}
+		const { amountPaid, paymentDate, method, reference } = parsed.data;
+		if (paymentDate > studioDateString()) {
+			return { error: "The payment date can't be in the future." };
+		}
+
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
 		});
 
 		if (!doc) return { error: "Document not found" };
+		if (!isPayableInvoice(doc)) return { error: "Only an issued, unpaid invoice can receive a payment." };
 
 		const amount = round2(parseAmountInput(amountPaid));
 		if (!Number.isFinite(amount) || amount <= 0) {
@@ -704,7 +747,7 @@ export async function recordDocumentPaymentAction(
 				doc.id,
 				openInvoices.map((inv) => ({
 					id: inv.id,
-					documentNumber: inv.documentNumber,
+					documentNumber: inv.documentNumber ?? "",
 					totalAmount: Number(inv.totalAmount),
 					amountPaid: (inv.payments || []).reduce(
 						(s, p) => s + Number(p.amount),
@@ -739,7 +782,10 @@ export async function recordDocumentPaymentAction(
 				await tx.insert(b2bPayments).values({
 					documentId: allocation.id,
 					amount: allocation.applied.toFixed(2),
-					paymentDate: new Date(),
+					// Midday at the studio, so the day reads the same everywhere.
+					paymentDate: fromStudioTime(paymentDate, "12:00"),
+					method,
+					reference: reference || null,
 					notes: `Payment recorded via ${doc.documentNumber}`,
 					requestId: isFirstRow ? requestId ?? null : null,
 				});
@@ -794,6 +840,7 @@ export async function deleteDocumentAction(id: string, partnerId?: string): Prom
 		await db.delete(b2bDocuments).where(eq(b2bDocuments.id, id));
 		if (partnerId) revalidatePath(`/b2b/partners/${partnerId}`);
 		revalidatePath("/b2b/documents");
+		if (doc.parentDocumentId) revalidatePath(`/b2b/documents/${doc.parentDocumentId}`);
 		return { success: true };
 	} catch (error) {
 		return { error: "Failed to delete document", ref: logServerError("Error deleting document", error) };
@@ -824,107 +871,50 @@ export async function updateDocumentNotesAction(id: string, notes: string): Prom
 }
 
 /**
- * Confirms a draft invoice and optionally creates a backorder for remaining quantities
+ * A draft's lines, as she leaves them: checked here too (the page checks
+ * first), each item once, in her order. An invoice from a quotation keeps
+ * the quotation's tax and stays within what's left of it.
  */
-export async function confirmInvoiceWithBackorderAction(
-	invoiceId: string,
-	createBackorder: boolean
-): Promise<ActionState> {
-	await requireUser();
-	try {
-		const invoice = (await db.query.b2bDocuments.findFirst({
-			where: eq(b2bDocuments.id, invoiceId),
-			with: {
-				parent: true,
-				partner: true,
-			},
-		})) as DocumentWithRelations | null;
-
-		if (!invoice || invoice.type !== "invoice") {
-			return { error: "Invoice not found" };
-		}
-		if (invoice.archivedAt) {
-			return { error: "Archived documents cannot change status" };
-		}
-		if (invoice.status !== "draft") {
-			return { error: "Only drafts can be confirmed" };
-		}
-		if (!isValidIce(invoice.partner?.taxId)) {
-			return {
-				error:
-					"Add the partner's ICE (Tax ID) before issuing this invoice.",
-			};
-		}
-
-		// 1. Mark current invoice as unpaid and clean up zero-quantity lines
-		await db.transaction(async (tx) => {
-			await tx.update(b2bDocuments)
-				.set({ status: "unpaid", updatedAt: new Date() })
-				.where(eq(b2bDocuments.id, invoiceId));
-
-			// Remove any lines that have 0 quantity (they don't belong on a professional invoice)
-			await tx.delete(b2bDocumentLines)
-				.where(and(
-					eq(b2bDocumentLines.documentId, invoiceId),
-					eq(b2bDocumentLines.quantity, "0")
-				));
-		});
-
-		// 2. If backorder requested and parent quote exists, create next draft
-		if (createBackorder && invoice.parentDocumentId) {
-			const res = await convertQuoteToInvoiceAction(invoice.parentDocumentId);
-			if (res.error) {
-				// If error is just "Quote is already fully invoiced", we ignore it
-				if (res.error !== "Quote is already fully invoiced") {
-					return res;
-				}
-			}
-		}
-
-		revalidatePath(`/b2b/documents/${invoiceId}`);
-		revalidatePath("/b2b/documents");
-		
-		return { success: true };
-	} catch (error) {
-		return { error: "Failed to confirm invoice", ref: logServerError("Error confirming invoice", error) };
-	}
-}
-
 export async function updateDocumentLinesAction(
 	id: string,
-	data: { lines: DocumentLineFormValues[]; taxRate: string }
+	data: unknown,
 ): Promise<ActionState> {
 	await requireUser();
 	try {
+		const parsed = documentLinesSchema.safeParse(data);
+		if (!parsed.success) {
+			return { error: parsed.error.issues[0]?.message ?? "Check the lines" };
+		}
+
 		const doc = await db.query.b2bDocuments.findFirst({
 			where: eq(b2bDocuments.id, id),
+			with: { parent: true },
 		});
 
 		if (!doc) return { error: "Document not found" };
 		if (doc.archivedAt) return { error: "Archived documents cannot be edited" };
 		if (doc.status !== "draft") return { error: "Only draft documents can be edited" };
 
-		const computed = computeTotals(data.lines, data.taxRate);
+		const lines = mergeSameLines(parsed.data.lines);
+		const taxRate = doc.type === "invoice" && doc.parent ? doc.parent.taxRate : parsed.data.taxRate;
 
 		await db.transaction(async (tx) => {
-			// 1. Delete old lines
-			await tx.delete(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, id));
-
-			// 2. Insert new lines (server-recomputed totals)
-			const linesToInsert = data.lines.map((line, i) => ({
-				documentId: id,
-				sourceLineId: line.sourceLineId,
-				description: line.description,
-				quantity: computed.lines[i].quantity.toString(),
-				unitPrice: computed.lines[i].unitPrice.toFixed(2),
-				totalPrice: computed.lines[i].totalPrice.toFixed(2),
-			}));
-
-			if (linesToInsert.length > 0) {
-				await tx.insert(b2bDocumentLines).values(linesToInsert);
+			if (doc.type === "invoice" && doc.parentDocumentId) {
+				const quoteLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, doc.parentDocumentId));
+				const siblings = await tx.query.b2bDocuments.findMany({
+					where: and(eq(b2bDocuments.parentDocumentId, doc.parentDocumentId), eq(b2bDocuments.type, "invoice")),
+					with: { lines: true },
+				});
+				const problem = beyondTheQuote(quoteBalance(quoteLines, siblings, id), lines);
+				if (problem) throw new RefusedError(problem);
 			}
 
-			// 3. Update document totals
+			const { computed, rows } = lineRows(id, lines, taxRate);
+			await tx.delete(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, id));
+			if (rows.length > 0) {
+				await tx.insert(b2bDocumentLines).values(rows);
+			}
+
 			await tx
 				.update(b2bDocuments)
 				.set({
@@ -937,8 +927,10 @@ export async function updateDocumentLinesAction(
 		});
 
 		revalidatePath(`/b2b/documents/${id}`);
+		if (doc.parentDocumentId) revalidatePath(`/b2b/documents/${doc.parentDocumentId}`);
 		return { success: true };
 	} catch (error) {
+		if (error instanceof RefusedError) return { error: error.message };
 		return { error: "Failed to update lines", ref: logServerError("Error updating document lines", error) };
 	}
 }

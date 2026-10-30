@@ -76,6 +76,9 @@ export function PartnerFilters() {
 							Any status
 						</SelectItem>
 						<SelectItem value="owed">Owed (any unpaid invoice)</SelectItem>
+						<SelectItem value="overdue">
+							<DocumentStatusBadge status="overdue" />
+						</SelectItem>
 						<SelectItem value="draft">
 							<DocumentStatusBadge status="draft" />
 						</SelectItem>

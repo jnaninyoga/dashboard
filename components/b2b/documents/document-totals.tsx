@@ -1,5 +1,7 @@
 import { Separator } from "@/components/ui/separator";
+import { documentName } from "@/lib/domain/billing/document-name";
 import { DocumentWithRelations } from "@/lib/types/b2b";
+import { formatAmount } from "@/lib/utils/currency";
 
 import { TickCircle } from "iconsax-reactjs";
 
@@ -35,7 +37,7 @@ export function DocumentTotals({
 							Subtotal
 						</span>
 						<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-							{parseFloat(document.subtotal).toLocaleString()}
+							{formatAmount(parseFloat(document.subtotal))}
 							<span className="text-muted-foreground/70 ml-1 text-xs font-normal">
 								MAD
 							</span>
@@ -46,13 +48,8 @@ export function DocumentTotals({
 							Tax ({parseFloat(document.taxRate)}%)
 						</span>
 						<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-							{(
-								parseFloat(document.subtotal) *
-								(parseFloat(document.taxRate) / 100)
-							).toLocaleString(undefined, {
-								minimumFractionDigits: 0,
-								maximumFractionDigits: 2,
-							})}
+							{formatAmount(parseFloat(document.subtotal) *
+								(parseFloat(document.taxRate) / 100))}
 							<span className="text-muted-foreground/70 ml-1 text-xs font-normal">
 								MAD
 							</span>
@@ -69,9 +66,7 @@ export function DocumentTotals({
 						<span
 							className={`font-heading ${showAmountDue ? "text-foreground" : "text-primary"} text-3xl font-bold tracking-tight tabular-nums`}
 						>
-							{currentTotal.toLocaleString(undefined, {
-								minimumFractionDigits: 2,
-							})}
+							{formatAmount(currentTotal)}
 							<span className="ml-1.5 text-sm font-semibold opacity-60">
 								MAD
 							</span>
@@ -81,7 +76,7 @@ export function DocumentTotals({
 					{document.payments && document.payments.length > 0 ? (
 						<PaymentHistorySummary
 							payments={document.payments}
-							documentNumber={document.documentNumber}
+							documentNumber={documentName(document)}
 						/>
 					) : null}
 
@@ -93,9 +88,7 @@ export function DocumentTotals({
 									Amount Due
 								</span>
 								<span className="font-heading text-primary text-3xl font-bold tracking-tight tabular-nums">
-									{amountDue.toLocaleString(undefined, {
-										minimumFractionDigits: 2,
-									})}
+									{formatAmount(amountDue)}
 									<span className="ml-1.5 text-sm font-semibold opacity-60">
 										MAD
 									</span>

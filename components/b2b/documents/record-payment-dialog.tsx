@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { recordDocumentPaymentAction } from "@/lib/actions/b2b/documents";
+import { documentName } from "@/lib/domain/billing/document-name";
 import {
 	allocatePayment,
 	outstandingOf,
@@ -31,7 +32,10 @@ import {
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type DocumentWithRelations } from "@/lib/types/b2b";
 import { parseAmountInput } from "@/lib/utils/currency";
+import { studioDateString } from "@/lib/utils/time";
 import {
+	PAYMENT_METHODS,
+	type PaymentMethod,
 	type RecordPaymentFormValues,
 	recordPaymentSchema,
 } from "@/lib/validators/document";
@@ -40,6 +44,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { MoneySend, TickCircle, Wallet3 } from "iconsax-reactjs";
 
 export type PaymentQueueEntry = PaymentTarget;
+
+const METHOD_LABELS: Record<PaymentMethod, string> = {
+	transfer: "Transfer",
+	cheque: "Cheque",
+	cash: "Cash",
+	card: "Card",
+};
+
+// What to write down so the payment can be found on the bank statement.
+const REFERENCE_LABELS: Record<PaymentMethod, string> = {
+	transfer: "Transfer reference",
+	cheque: "Cheque number",
+	cash: "Receipt number",
+	card: "Card receipt number",
+};
 
 const formatMAD = (n: number) =>
 	n.toLocaleString("fr-FR", {
@@ -83,7 +102,12 @@ export function RecordPaymentDialog({
 
 	const form = useForm<RecordPaymentFormValues>({
 		resolver: zodResolver(recordPaymentSchema),
-		defaultValues: { amountPaid: thisInvoiceDue.toFixed(2) },
+		defaultValues: {
+			amountPaid: thisInvoiceDue.toFixed(2),
+			paymentDate: studioDateString(),
+			method: "transfer",
+			reference: "",
+		},
 	});
 
 	// Each open is a fresh payment: new idempotency key (the server dedupes
@@ -94,11 +118,18 @@ export function RecordPaymentDialog({
 		if (!open) return;
 		requestIdRef.current = newRequestId();
 		setIsSubmitting(false);
-		form.reset({ amountPaid: thisInvoiceDue.toFixed(2) });
+		// Hotels pay by transfer most of the time.
+		form.reset({
+			amountPaid: thisInvoiceDue.toFixed(2),
+			paymentDate: studioDateString(),
+			method: "transfer",
+			reference: "",
+		});
 	}, [open, thisInvoiceDue, form]);
 
 	// eslint-disable-next-line react-hooks/incompatible-library
 	const watchedAmount = form.watch("amountPaid");
+	const watchedMethod = form.watch("method");
 	const parsedAmount = parseAmountInput(watchedAmount);
 	const paidAmount = Number.isFinite(parsedAmount) ? parsedAmount : 0;
 
@@ -118,7 +149,7 @@ export function RecordPaymentDialog({
 		startTransition(async () => {
 			const res = await recordDocumentPaymentAction(
 				doc.id,
-				values.amountPaid,
+				values,
 				doc.partnerId,
 				requestIdRef.current ?? undefined,
 			);
@@ -157,8 +188,8 @@ export function RecordPaymentDialog({
 							</DialogTitle>
 							<DialogDescription>
 								{isMultiInvoice
-									? `Pays ${doc.documentNumber} first, then the other open invoices from this quote`
-									: `Payment for ${doc.documentNumber}`}
+									? `Pays ${documentName(doc)} first, then the other open invoices from this quote`
+									: `Payment for ${documentName(doc)}`}
 							</DialogDescription>
 						</div>
 					</div>
@@ -188,6 +219,67 @@ export function RecordPaymentDialog({
 												</div>
 											</div>
 										</FormControl>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
+							<div className="grid gap-4 sm:grid-cols-2">
+								<FormField
+									control={form.control}
+									name="paymentDate"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-sm font-semibold">Received on</FormLabel>
+											<FormControl>
+												<Input {...field} type="date" max={studioDateString()} className="h-11 rounded-xl" />
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="reference"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-sm font-semibold">
+												{REFERENCE_LABELS[watchedMethod ?? "transfer"]}{" "}
+												<span className="text-muted-foreground font-normal">(optional)</span>
+											</FormLabel>
+											<FormControl>
+												<Input {...field} value={field.value ?? ""} autoComplete="off" className="h-11 rounded-xl" />
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<FormField
+								control={form.control}
+								name="method"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel className="text-sm font-semibold">Paid by</FormLabel>
+										<div role="radiogroup" aria-label="Paid by" className="bg-secondary/40 grid grid-cols-4 gap-1 rounded-2xl p-1">
+											{PAYMENT_METHODS.map((method) => (
+												<label
+													key={method}
+													className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+												>
+													<input
+														type="radio"
+														name={field.name}
+														value={method}
+														checked={field.value === method}
+														onChange={() => field.onChange(method)}
+														className="sr-only"
+													/>
+													{METHOD_LABELS[method]}
+												</label>
+											))}
+										</div>
 										<FormMessage />
 									</FormItem>
 								)}
