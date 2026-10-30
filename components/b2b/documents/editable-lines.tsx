@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils/ui";
 import { documentLineSchema, withoutBlankLines } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Add, Trash } from "iconsax-reactjs";
+import { Trash } from "iconsax-reactjs";
 import { z } from "zod";
 
 import { DescriptionAutocomplete } from "./description-autocomplete";
@@ -96,7 +96,7 @@ export function EditableDocumentLines({
 	const taxAmount = subtotal * (parseFloat(taxRateWatcher) / 100 || 0);
 	const totalAmount = subtotal + taxAmount;
 
-	const { isWaiting, removeLine, keyDown, focusWaiting } = useFluidLines({
+	const { isWaiting, removeLine, keyDown } = useFluidLines({
 		count: fields.length,
 		lines: linesWatcher,
 		append,
@@ -172,22 +172,8 @@ export function EditableDocumentLines({
 			<DocumentSection
 				id="line-items"
 				title="Line items"
-				aside={
-					<>
-						<SaveStatus state={state} retry={retry} />
-						<Button
-							type="button"
-							size="sm"
-							variant="outline"
-							className="h-8 gap-1.5 rounded-xl text-xs font-bold"
-							// An empty line is always waiting at the end: go to it.
-							onClick={focusWaiting}
-						>
-							<Add size={16} variant="Bold" />
-							Add item
-						</Button>
-					</>
-				}
+				// No "Add" button: an empty line always waits at the end of the table.
+				aside={<SaveStatus state={state} retry={retry} />}
 			>
 				<form
 					onSubmit={(event) => event.preventDefault()}

@@ -81,7 +81,7 @@ export function useFluidLines({
 		}
 	};
 
-	/** Puts the cursor in the waiting line ("Add item"). */
+	/** Puts the cursor in the waiting line (a notice's "Add a line"). */
 	const focusWaiting = () => focusCell(count - 1, "description");
 
 	return { isWaiting, removeLine, keyDown, focusWaiting };

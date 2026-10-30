@@ -48,7 +48,6 @@ import { createDocumentWithLinesSchema, withoutBlankLines } from "@/lib/validato
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-	Add,
 	ArrowLeft,
 	Buildings,
 	Calendar,
@@ -432,21 +431,8 @@ export function NewQuoteForm({
 				<DocumentSection
 					id="line-items"
 					title="Line items"
+					// No "Add" button: an empty line always waits at the end of the table.
 					className="animate-slide-up delay-100"
-					aside={
-						<Button
-							type="button"
-							size="sm"
-							variant="outline"
-							className="h-8 gap-1.5 rounded-xl text-xs font-bold"
-							// An empty line is always waiting at the end: go to it.
-							onClick={focusWaiting}
-							disabled={isPending}
-						>
-							<Add size={16} variant="Bold" />
-							Add item
-						</Button>
-					}
 				>
 					<div>
 					<div className="overflow-x-auto">
@@ -479,13 +465,8 @@ export function NewQuoteForm({
 																onChange={f.onChange}
 																disabled={isPending}
 																pricingTiers={pricingTiers}
-																placeholder={
-																	waiting
-																		? fields.length === 1
-																			? "Write the first line, or pick one of your prices…"
-																			: "Add a line…"
-																		: "Description…"
-																}
+																// Her prices open by themselves on an empty line: no need to say so.
+																placeholder={waiting ? "Add a line…" : "Description…"}
 																inputProps={{
 																	"aria-label": waiting ? "Add a line" : `Description, line ${index + 1}`,
 																	onKeyDown: keyDown(index, "description"),
