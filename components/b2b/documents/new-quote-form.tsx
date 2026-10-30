@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table";
 import { createDocumentAction } from "@/lib/actions/b2b/documents";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { mergeSameLines } from "@/lib/domain/billing/same-lines";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import {
 	type B2BContact,
@@ -145,9 +146,12 @@ export function NewQuoteForm({
 	}, [state, router]);
 
 	const linesWatcher = useWatch({ control: form.control, name: "lines" });
-	const { isWaiting, removeLine, keyDown, focusWaiting } = useFluidLines({
+	const { isWaiting, removeLine, keyDown, focusWaiting, mergeLine, leaveLine, grownId, announcement } = useFluidLines({
 		count: fields.length,
 		lines: linesWatcher,
+		ids: fields.map((field) => field.id),
+		getLines: () => form.getValues("lines"),
+		setQuantity: (index, quantity) => form.setValue(`lines.${index}.quantity`, quantity),
 		append,
 		remove,
 	});
@@ -174,10 +178,11 @@ export function NewQuoteForm({
 	});
 	const dueDate = useWatch({ control: form.control, name: "document.dueDate" });
 
-	// The waiting line (and any she emptied) isn't a line: drop it, then check.
+	// The waiting line (and any she emptied) isn't a line: drop it, put a
+	// repeated item on one line, then check.
 	const submit = (event: React.FormEvent) => {
 		event.preventDefault();
-		form.setValue("lines", withoutBlankLines(form.getValues("lines")));
+		form.setValue("lines", mergeSameLines(withoutBlankLines(form.getValues("lines"))));
 		// What's missing shows in the notices at the top (and on the line).
 		void form.handleSubmit(onSubmit)();
 	};
@@ -435,6 +440,9 @@ export function NewQuoteForm({
 					className="animate-slide-up delay-100"
 				>
 					<div>
+					<p aria-live="polite" className="sr-only">
+						{announcement}
+					</p>
 					<div className="overflow-x-auto">
 						<Table className={phoneLine.table}>
 							<TableHeader className={phoneLine.head}>
@@ -452,7 +460,15 @@ export function NewQuoteForm({
 								{fields.map((field, index) => {
 									const waiting = isWaiting(index);
 									return (
-									<TableRow key={field.id} className={cn("hover:bg-primary/5 border-none", phoneLine.row)}>
+									<TableRow
+										key={field.id}
+										onBlur={leaveLine(index)}
+										className={cn(
+											"hover:bg-primary/5 border-none transition-colors duration-500",
+											grownId === field.id && "bg-primary/10 hover:bg-primary/10",
+											phoneLine.row,
+										)}
+									>
 										<TableCell className={cn("px-4 py-3 align-top", phoneLine.description)}>
 											<FormField
 												control={form.control}
@@ -474,15 +490,14 @@ export function NewQuoteForm({
 																}}
 																inputClassName={cn(phoneLine.input, waiting && "border-dashed")}
 																onSelectTier={(tier) => {
-																	form.setValue(
-																		`lines.${index}.description`,
-																		tier.name,
-																	);
-																	form.setValue(
-																		`lines.${index}.unitPrice`,
-																		tier.price.toString(),
-																	);
-																	setTimeout(() => focusCell(index, "quantity"));
+																	const picked = { description: tier.name, unitPrice: tier.price.toString() };
+																	// Already on the quotation: that line's quantity grows.
+																	const into = mergeLine(index, picked);
+																	if (into < 0) {
+																		form.setValue(`lines.${index}.description`, picked.description);
+																		form.setValue(`lines.${index}.unitPrice`, picked.unitPrice);
+																	}
+																	setTimeout(() => focusCell(into < 0 ? index : into, "quantity"));
 																}}
 															/>
 														</FormControl>

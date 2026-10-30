@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { updateDocumentLinesAction } from "@/lib/actions/b2b/documents";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { mergeSameLines } from "@/lib/domain/billing/same-lines";
 import {
 	type B2BDocumentLine,
 	type B2BDocumentStatus,
@@ -96,21 +97,29 @@ export function EditableDocumentLines({
 	const taxAmount = subtotal * (parseFloat(taxRateWatcher) / 100 || 0);
 	const totalAmount = subtotal + taxAmount;
 
-	const { isWaiting, removeLine, keyDown } = useFluidLines({
+	const { isWaiting, removeLine, keyDown, mergeLine, leaveLine, grownId, announcement } = useFluidLines({
 		count: fields.length,
 		lines: linesWatcher,
+		ids: fields.map((field) => field.id),
+		getLines: () => form.getValues("lines"),
+		setQuantity: (index, quantity) =>
+			form.setValue(`lines.${index}.quantity`, quantity, { shouldDirty: true }),
 		append,
 		remove,
 	});
 
-	// What the server has, so the empty line appearing (or a change undone)
-	// doesn't send the same lines again.
-	const payloadOf = (values: LinesFormValues) => ({
-		lines: withoutBlankLines(values.lines).map((l) => ({
+	const withTotals = (lines: LinesFormValues["lines"]) =>
+		lines.map((l) => ({
 			...l,
 			sourceLineId: l.sourceLineId,
 			totalPrice: (Number(l.quantity) * Number(l.unitPrice)).toString(),
-		})),
+		}));
+	// What the server gets: each item once, even while the cursor is still in
+	// a repeat (the table merges it when she leaves the line). Compared with
+	// what was last saved, so the empty line appearing (or a change undone)
+	// doesn't send the same lines again.
+	const payloadOf = (values: LinesFormValues) => ({
+		lines: withTotals(mergeSameLines(withoutBlankLines(values.lines))),
 		taxRate: values.taxRate,
 	});
 	const lastSaved = useRef(JSON.stringify(payloadOf(form.getValues())));
@@ -122,7 +131,11 @@ export function EditableDocumentLines({
 			const payload = payloadOf(values);
 			if (!payload.lines.length)
 				return { ok: false, invalid: true, message: "add at least one line" };
-			const check = linesFormSchema.safeParse(payload);
+			// Checked as she sees them (before merging), so "line 3" is her line 3.
+			const check = linesFormSchema.safeParse({
+				lines: withTotals(withoutBlankLines(values.lines)),
+				taxRate: values.taxRate,
+			});
 			if (!check.success) {
 				const issue = check.error.issues[0];
 				const kept = values.lines
@@ -179,6 +192,9 @@ export function EditableDocumentLines({
 					onSubmit={(event) => event.preventDefault()}
 					className="space-y-6"
 				>
+					<p aria-live="polite" className="sr-only">
+						{announcement}
+					</p>
 					<div className="overflow-x-auto">
 						<Table className={phoneLine.table}>
 							<TableHeader className={phoneLine.head}>
@@ -202,7 +218,12 @@ export function EditableDocumentLines({
 									return (
 										<TableRow
 											key={field.id}
-											className={cn("hover:bg-primary/5 border-none transition-colors", phoneLine.row)}
+											onBlur={leaveLine(index)}
+											className={cn(
+												"hover:bg-primary/5 border-none transition-colors duration-500",
+												grownId === field.id && "bg-primary/10 hover:bg-primary/10",
+												phoneLine.row,
+											)}
 										>
 											<TableCell className={cn("px-4 py-3 align-top", phoneLine.description)}>
 												<FormField
@@ -226,19 +247,17 @@ export function EditableDocumentLines({
 																	}}
 																	inputClassName={cn(phoneLine.input, waiting && "border-dashed")}
 																	onSelectTier={(tier) => {
-																		form.setValue(
-																			`lines.${index}.description`,
-																			tier.name,
-																			{ shouldDirty: true },
-																		);
-																		form.setValue(
-																			`lines.${index}.unitPrice`,
-																			tier.price.toString(),
-																			{ shouldDirty: true },
-																		);
-																		setTimeout(() =>
-																			focusCell(index, "quantity"),
-																		);
+																		const picked = {
+																			description: tier.name,
+																			unitPrice: tier.price.toString(),
+																		};
+																		// Already on the quotation: that line's quantity grows.
+																		const into = mergeLine(index, picked);
+																		if (into < 0) {
+																			form.setValue(`lines.${index}.description`, picked.description, { shouldDirty: true });
+																			form.setValue(`lines.${index}.unitPrice`, picked.unitPrice, { shouldDirty: true });
+																		}
+																		setTimeout(() => focusCell(into < 0 ? index : into, "quantity"));
 																	}}
 																	pricingTiers={pricingTiers}
 																/>

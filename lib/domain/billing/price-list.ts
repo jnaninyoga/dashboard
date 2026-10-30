@@ -1,7 +1,8 @@
 // Her price list as suggestions while she writes a line: what matches the
 // words typed so far (accents and capitals don't matter), each price once.
 
-const fold = (text: string) =>
+/** A name as it's compared: accents, capitals and outer spaces don't count. */
+export const fold = (text: string) =>
 	text
 		.normalize("NFD")
 		.replace(/\p{Diacritic}/gu, "")
