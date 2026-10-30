@@ -12,6 +12,7 @@ import { InvoicePayments } from "@/components/b2b/documents/invoice-payments";
 import { DocumentNotices, NoticesProvider } from "@/components/b2b/documents/notices";
 import { phoneLine } from "@/components/b2b/documents/phone-line";
 import { QuoteInvoicing } from "@/components/b2b/documents/quote-invoicing";
+import { RecordPaymentButton } from "@/components/b2b/documents/record-payment-button";
 import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import {
@@ -266,8 +267,8 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					</Table>
 
 					<div className="flex w-full justify-end">
-						<div className="w-full lg:max-w-md">
-							<DocumentTotals document={document} isQuote={isQuote} />
+						<div className="w-full sm:max-w-xs">
+							<DocumentTotals document={document} />
 						</div>
 					</div>
 					</div>
@@ -275,7 +276,18 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			)}
 
 			{/* An issued invoice's payments, from issue to settled. */}
-			{!isQuote && document.status !== "draft" ? <InvoicePayments invoice={document} /> : null}
+			{!isQuote && document.status !== "draft" ? (
+				<InvoicePayments
+					invoice={document}
+					action={
+						<RecordPaymentButton
+							doc={document}
+							siblings={accountSummary?.allRelatedInvoices ?? []}
+							className="h-9 px-3 text-sm"
+						/>
+					}
+				/>
+			) : null}
 
 			{/* Notes Section */}
 			<EditableNotes

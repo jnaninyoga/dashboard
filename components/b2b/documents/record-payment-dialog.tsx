@@ -180,7 +180,7 @@ export function RecordPaymentDialog({
 						</div>
 						<div>
 							<DialogTitle className="text-xl font-bold tracking-tight">
-								Record Payment
+								Record payment
 							</DialogTitle>
 							<DialogDescription>
 								{isMultiInvoice

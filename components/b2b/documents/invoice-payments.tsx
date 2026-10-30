@@ -69,7 +69,14 @@ function describe(entry: LedgerEntry) {
  * payment with what it left, then paid in full, or what's still owed (red
  * once overdue).
  */
-export function InvoicePayments({ invoice }: { invoice: LedgerInvoice }) {
+export function InvoicePayments({
+	invoice,
+	action,
+}: {
+	invoice: LedgerInvoice;
+	/** Offered where the story ends while money is owed ("Record payment"). */
+	action?: React.ReactNode;
+}) {
 	const entries = paymentLedger(invoice, studioDateString());
 	const { total, paid } = documentAmounts(invoice);
 
@@ -104,7 +111,14 @@ export function InvoicePayments({ invoice }: { invoice: LedgerInvoice }) {
 								<p className="truncate font-semibold">{title}</p>
 								<p className="text-muted-foreground text-sm">{detail}</p>
 							</div>
-							{amount ? <span className={cn("font-medium tabular-nums", amountTone)}>{amount}</span> : <span />}
+							{amount ? (
+								<span className={cn("font-medium tabular-nums", amountTone)}>{amount}</span>
+							) : entry.kind === "open" && action ? (
+								// Under the words on a phone, beside them from sm up.
+								<div className="max-sm:col-span-2 max-sm:col-start-2 max-sm:mt-2">{action}</div>
+							) : (
+								<span />
+							)}
 						</li>
 					);
 				})}

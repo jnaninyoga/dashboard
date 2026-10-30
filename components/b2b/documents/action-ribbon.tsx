@@ -15,7 +15,6 @@ import {
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
 import { documentName } from "@/lib/domain/billing/document-name";
-import { isPayableInvoice, orderPaymentQueue } from "@/lib/domain/billing/payments";
 import { quoteBalance } from "@/lib/domain/billing/quote-billing";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
@@ -23,7 +22,6 @@ import { type B2BDocumentStatus } from "@/lib/types/b2b";
 
 import {
 	Archive,
-	MoneySend,
 	ReceiptAdd,
 	Send,
 	TickCircle,
@@ -33,10 +31,7 @@ import {
 import { ArchiveDocumentDialog } from "./archive-dialog";
 import { PDFDownloadBtn } from "./download-btn";
 import { InvoicePortionSheet } from "./invoice-portion-sheet";
-import {
-	type PaymentQueueEntry,
-	RecordPaymentDialog,
-} from "./record-payment-dialog";
+import { RecordPaymentButton } from "./record-payment-button";
 
 export function DocumentActionRibbon({ 
 	doc, 
@@ -49,7 +44,6 @@ export function DocumentActionRibbon({
 }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
-	const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 	const [isPortionOpen, setIsPortionOpen] = useState(false);
 	const [isFlushing, setIsFlushing] = useState(false);
 	const flushDraft = useFlushDraft();
@@ -138,7 +132,6 @@ export function DocumentActionRibbon({
 		String(!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce),
 	);
 
-	const canRecordPayment = isPayableInvoice(doc);
 
 	// What's billed of a quotation and what's left (its invoices, drafts
 	// included, archived ones left out).
@@ -149,22 +142,6 @@ export function DocumentActionRibbon({
 		(doc.status === "sent" || doc.status === "accepted") &&
 		balance.remaining > 0;
 
-	// Same scope and order as recordDocumentPaymentAction, so the dialog's
-	// preview is exactly what the server will do.
-	const paymentQueue: PaymentQueueEntry[] = orderPaymentQueue(
-		doc.id,
-		[doc, ...previousInvoices.filter((inv) => inv.id !== doc.id)]
-			.filter(isPayableInvoice)
-			.map((inv) => ({
-				id: inv.id,
-				documentNumber: inv.documentNumber ?? "",
-				totalAmount: Number(inv.totalAmount),
-				amountPaid: (inv.payments || []).reduce(
-					(s, p) => s + Number(p.amount),
-					0,
-				),
-			})),
-	);
 
 	return (
 		// The document's actions, as a row of buttons on the right (its
@@ -183,9 +160,7 @@ export function DocumentActionRibbon({
 					</Badge>
 				) : null}
 
-
-
-				{/* Draft -> Mark as sent (with the backorder check) */}
+				{/* Draft -> Mark as sent */}
 				{!doc.archivedAt && doc.status === "draft" ? (
 					<>
 						<Button
@@ -250,25 +225,8 @@ export function DocumentActionRibbon({
 					</>
 				) : null}
 
-				{/* Invoice Specific: any issued, not fully paid invoice -> Record Payment */}
-				{canRecordPayment ? (
-					<>
-                        <Button
-                            onClick={() => setIsPaymentOpen(true)}
-                            disabled={isPending}
-                            className="bg-success text-success-foreground hover:bg-success/90 gap-2 rounded-xl font-bold shadow-sm"
-                        >
-                            <MoneySend size={18} variant="Bold" />
-                            Record Payment
-                        </Button>
-                        <RecordPaymentDialog
-                            doc={doc}
-                            queue={paymentQueue}
-                            open={isPaymentOpen}
-                            onOpenChange={setIsPaymentOpen}
-                        />
-                    </>
-				) : null}
+				{/* An issued invoice that still owes: record what came in. */}
+				<RecordPaymentButton doc={doc} siblings={previousInvoices} />
 
 				{/* Retire action: drafts are deleted (irreversible);
 				    issued documents are archived (preserves audit trail). */}

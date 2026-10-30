@@ -381,9 +381,7 @@ export function EditableDocumentLines({
 					<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
 						<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
 							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
-									Subtotal
-								</span>
+								<span className="text-muted-foreground text-sm">Subtotal</span>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
 									{formatAmount(subtotal)}
 									<span className="text-muted-foreground ml-1 text-xs font-normal">
@@ -393,9 +391,7 @@ export function EditableDocumentLines({
 							</div>
 							<div className="flex w-full items-center justify-between gap-4">
 								<div className="flex items-center gap-2.5">
-									<span className="text-muted-foreground/70 text-[10px] font-bold tracking-widest uppercase">
-										Tax Rate
-									</span>
+									<span className="text-muted-foreground text-sm">Tax</span>
 									<div className="bg-card flex items-center rounded-xl border px-2 py-1">
 										<FormField
 											control={form.control}
@@ -436,9 +432,7 @@ export function EditableDocumentLines({
 							</div>
 							<Separator className="w-full" />
 							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-primary text-[10px] font-black tracking-widest uppercase">
-									Total Amount
-								</span>
+								<span className="text-foreground font-semibold">Total</span>
 								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
 									{formatAmount(totalAmount)}
 									<span className="text-primary ml-1.5 text-sm font-semibold">
