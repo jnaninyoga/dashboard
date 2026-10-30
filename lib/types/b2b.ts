@@ -22,7 +22,7 @@ export type B2BDocumentStatus =
 	| "partially_paid"
 	| "paid"
 	| "cancelled";
-export type B2BDocumentType = "quote" | "invoice";
+export type B2BDocumentType = "quote" | "invoice" | "credit_note";
 
 export type Partner = B2BPartner;
 export type Contact = B2BContact;

@@ -73,6 +73,18 @@ export const b2bDocumentStatusEnum = pgEnum("b2b_document_status", [
 export const b2bDocumentTypeEnum = pgEnum("b2b_document_type", [
 	"quote",
 	"invoice",
+	// An avoir: it takes back part or all of an issued invoice.
+	"credit_note",
+]);
+
+// What a money row is: a payment received, a payment undone (the cheque
+// bounced, or it was recorded by mistake), a credit note set against an
+// invoice, or money given back to the partner. Nothing is ever deleted.
+export const b2bPaymentKindEnum = pgEnum("b2b_payment_kind", [
+	"payment",
+	"reversal",
+	"credit",
+	"refund",
 ]);
 
 // How a partner paid: hotels mostly by transfer or cheque.
@@ -403,6 +415,19 @@ export const b2bPayments = pgTable(
 		method: b2bPaymentMethodEnum("method"),
 		// The cheque or transfer number, to match the bank statement.
 		reference: text("reference"),
+		kind: b2bPaymentKindEnum("kind").notNull().default("payment"),
+		// One receipt (a cheque) can pay several invoices of a quotation:
+		// its rows share this id, so undoing it undoes all of them.
+		receiptId: uuid("receipt_id"),
+		// A reversal names the payment it undoes; a payment is undone once.
+		reversesPaymentId: uuid("reverses_payment_id")
+			.references((): AnyPgColumn => b2bPayments.id)
+			.unique(),
+		// A credit's other document: the credit note on the invoice's row,
+		// the invoice on the credit note's.
+		counterpartId: uuid("counterpart_id").references((): AnyPgColumn => b2bDocuments.id),
+		// Why a payment was undone, or what a credit or refund was for.
+		reason: text("reason"),
 		notes: text("notes"),
 		// Idempotency key. Client sends a UUID per dialog open; unique index prevents
 		// duplicate writes from double-submit. Nullable so backfilled rows are fine.

@@ -87,40 +87,66 @@ export function allocatePayment<T extends PaymentTarget>(
 	});
 }
 
+/** A money row on a document: a payment, a payment undone, a credit note set against it, a refund. */
+export type MoneyRow = { amount: string | number; kind?: string | null };
+
+const sumOf = (rows: MoneyRow[] | null | undefined, kinds: string[]) =>
+	(rows ?? []).filter((row) => kinds.includes(row.kind ?? "payment")).reduce((sum, row) => sum + toCents(Number(row.amount)), 0);
+
+/** Money received on an invoice, less payments undone. */
+export function paidOf(rows: MoneyRow[] | null | undefined): number {
+	return fromCents(sumOf(rows, ["payment"]) - sumOf(rows, ["reversal"]));
+}
+
+/**
+ * What a document has settled: on an invoice, money received and credit
+ * notes set against it, less payments undone; on a credit note, what was
+ * set against its invoice and what was given back.
+ */
+export function settledOf(rows: MoneyRow[] | null | undefined): number {
+	return fromCents(sumOf(rows, ["payment", "credit", "refund"]) - sumOf(rows, ["reversal"]));
+}
+
+/** The status an issued invoice (or credit note) has once `settled` of its `total` is settled. */
+export function statusAfter(total: string | number, settled: number): "paid" | "partially_paid" | "unpaid" {
+	const left = toCents(Number(total)) - toCents(settled);
+	return left <= 0 ? "paid" : toCents(settled) > 0 ? "partially_paid" : "unpaid";
+}
+
 type InvoiceWithPayments = {
 	totalAmount: string | number;
-	payments?: { amount: string | number }[] | null;
+	payments?: MoneyRow[] | null;
 };
 
 /** What a set of invoices still owes in total, and how many still owe anything. */
 export function owedSummary(invoices: InvoiceWithPayments[]): { amount: number; count: number } {
 	const owing = invoices
-		.map((invoice) => {
-			const paid = (invoice.payments ?? []).reduce((sum, p) => sum + toCents(Number(p.amount)), 0);
-			return Math.max(0, toCents(Number(invoice.totalAmount)) - paid);
-		})
+		.map((invoice) => Math.max(0, toCents(Number(invoice.totalAmount)) - toCents(settledOf(invoice.payments))))
 		.filter((cents) => cents > 0);
 	return { amount: fromCents(owing.reduce((a, b) => a + b, 0)), count: owing.length };
 }
 
 /**
- * A document's money at a glance: its total, what's been paid, and what it
- * still owes. Only an issued invoice that can still receive money owes
- * anything (the same rule as the payment dialog and the "owed" filter).
+ * A document's money at a glance: its total, what's been paid (less payments
+ * undone), what credit notes took off, and what it still owes. Only an
+ * issued invoice that can still receive money owes anything (the same rule
+ * as the payment dialog and the "owed" filter).
  */
 export function documentAmounts(doc: {
 	type: string;
 	status: string;
 	archivedAt?: Date | string | null;
 	totalAmount: string | number;
-	payments?: { amount: string | number }[] | null;
-}): { total: number; paid: number; due: number } {
+	payments?: MoneyRow[] | null;
+}): { total: number; paid: number; credited: number; settled: number; due: number } {
 	const total = toCents(Number(doc.totalAmount));
-	const paid = (doc.payments ?? []).reduce((sum, p) => sum + toCents(Number(p.amount)), 0);
+	const settled = toCents(settledOf(doc.payments));
 	return {
 		total: fromCents(total),
-		paid: fromCents(paid),
-		due: isPayableInvoice(doc) ? fromCents(Math.max(0, total - paid)) : 0,
+		paid: paidOf(doc.payments),
+		credited: fromCents(sumOf(doc.payments, ["credit"])),
+		settled: fromCents(settled),
+		due: isPayableInvoice(doc) ? fromCents(Math.max(0, total - settled)) : 0,
 	};
 }
 

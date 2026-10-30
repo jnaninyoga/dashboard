@@ -5,10 +5,11 @@ import { formatDay, studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 import { type PaymentMethod } from "@/lib/validators/document";
 
-import { Clock, Danger, MoneyRecive, ReceiptText, TickCircle } from "iconsax-reactjs";
+import { ArrowRotateLeft, Clock, Danger, MoneyRecive, ReceiptMinus, ReceiptText, TickCircle } from "iconsax-reactjs";
 
 import { DocumentSection } from "./document-section";
 import { PAYMENT_METHOD } from "./payment-methods";
+import { ReversePaymentButton } from "./reverse-payment-button";
 
 const day = (date: string | Date) =>
 	formatDay(typeof date === "string" ? date : studioDateString(date), { day: "numeric", month: "short", year: "numeric" });
@@ -34,15 +35,36 @@ function describe(entry: LedgerEntry) {
 			};
 		case "payment": {
 			const method = entry.method ? PAYMENT_METHOD[entry.method as PaymentMethod] : null;
+			// An undone payment stays in the story, crossed out.
 			return {
 				icon: method?.icon ?? MoneyRecive,
-				tone: TONE.success,
+				tone: entry.reversedOn ? "bg-muted text-muted-foreground" : TONE.success,
 				title: [method?.label ?? "Payment", entry.reference].filter(Boolean).join(" · "),
-				detail: `${day(entry.date)} · ${entry.left > 0 ? `${formatMoney(entry.left)} left` : "nothing left"}`,
+				detail: entry.reversedOn
+					? `${day(entry.date)} · undone ${day(entry.reversedOn)}`
+					: `${day(entry.date)} · ${entry.left > 0 ? `${formatMoney(entry.left)} left` : "nothing left"}`,
 				amount: `− ${formatMoney(entry.amount)}`,
-				amountTone: "text-success",
+				amountTone: entry.reversedOn ? "text-muted-foreground line-through" : "text-success",
 			};
 		}
+		case "reversal":
+			return {
+				icon: ArrowRotateLeft,
+				tone: TONE.destructive,
+				title: entry.reason ?? "Payment undone",
+				detail: `${day(entry.date)} · ${formatMoney(entry.left)} owed again`,
+				amount: `+ ${formatMoney(entry.amount)}`,
+				amountTone: "text-destructive",
+			};
+		case "credit":
+			return {
+				icon: ReceiptMinus,
+				tone: TONE.primary,
+				title: entry.reason ?? "Credit note",
+				detail: `${day(entry.date)} · ${entry.left > 0 ? `${formatMoney(entry.left)} left` : "nothing left"}`,
+				amount: `− ${formatMoney(entry.amount)}`,
+				amountTone: "text-primary",
+			};
 		case "settled":
 			return {
 				icon: TickCircle,
@@ -66,8 +88,9 @@ function describe(entry: LedgerEntry) {
 
 /**
  * An issued invoice's payments as its story, oldest first: issued, each
- * payment with what it left, then paid in full, or what's still owed (red
- * once overdue).
+ * payment with what it left (one that didn't go through can be undone: it
+ * stays, crossed out, and is owed again), credit notes set against it, then
+ * paid in full, or what's still owed (red once overdue).
  */
 export function InvoicePayments({
 	invoice,
@@ -97,7 +120,7 @@ export function InvoicePayments({
 					const last = index === entries.length - 1;
 					return (
 						<li
-							key={entry.kind === "payment" ? entry.id : entry.kind}
+							key={"id" in entry ? entry.id : entry.kind}
 							className="relative grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 rounded-xl px-2 py-2.5 sm:px-3"
 						>
 							{/* The thread from one step to the next. */}
@@ -112,7 +135,16 @@ export function InvoicePayments({
 								<p className="text-muted-foreground text-sm">{detail}</p>
 							</div>
 							{amount ? (
-								<span className={cn("font-medium tabular-nums", amountTone)}>{amount}</span>
+								<span className="flex items-center gap-1">
+									<span className={cn("font-medium tabular-nums", amountTone)}>{amount}</span>
+									{entry.kind === "payment" && !entry.reversedOn && !invoice.archivedAt ? (
+										<ReversePaymentButton
+											paymentId={entry.id}
+											isCheque={entry.method === "cheque"}
+											summary={`${entry.method ? PAYMENT_METHOD[entry.method as PaymentMethod].label : "Payment"} of ${formatMoney(entry.amount)} on ${day(entry.date)}`}
+										/>
+									) : null}
+								</span>
 							) : entry.kind === "open" && action ? (
 								// Under the words on a phone, beside them from sm up.
 								<div className="max-sm:col-span-2 max-sm:col-start-2 max-sm:mt-2">{action}</div>

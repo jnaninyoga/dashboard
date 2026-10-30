@@ -12,6 +12,8 @@ import {
 	OVERDUE_FILTER,
 	OWED_FILTER,
 	PAYABLE_INVOICE_STATUSES,
+	settledOf,
+	statusAfter,
 } from "@/lib/domain/billing/payments";
 import {
 	beyondTheQuote,
@@ -29,6 +31,7 @@ import {
 	createDocumentWithLinesSchema,
 	documentLinesSchema,
 	recordPaymentSchema,
+	reversePaymentSchema,
 } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
@@ -117,7 +120,8 @@ async function reserveNextDocumentNumber(
 	type: B2BDocumentType,
 	date: string,
 ): Promise<string> {
-	const prefix = type === "quote" ? "QUO" : "INV";
+	// AV: an avoir (credit note), the French name it carries on paper.
+	const prefix = type === "quote" ? "QUO" : type === "credit_note" ? "AV" : "INV";
 	const year = Number(date.slice(0, 4));
 
 	// First-touch insert; ignored if the row already exists.
@@ -157,7 +161,8 @@ export async function peekNextDocumentNumber(
 	type: B2BDocumentType,
 ): Promise<string> {
 	await requireUser();
-	const prefix = type === "quote" ? "QUO" : "INV";
+	// AV: an avoir (credit note), the French name it carries on paper.
+	const prefix = type === "quote" ? "QUO" : type === "credit_note" ? "AV" : "INV";
 	const year = Number(studioDateString().slice(0, 4));
 
 	const row = await db.query.b2bDocumentSequences.findFirst({
@@ -749,10 +754,7 @@ export async function recordDocumentPaymentAction(
 					id: inv.id,
 					documentNumber: inv.documentNumber ?? "",
 					totalAmount: Number(inv.totalAmount),
-					amountPaid: (inv.payments || []).reduce(
-						(s, p) => s + Number(p.amount),
-						0,
-					),
+					amountPaid: settledOf(inv.payments),
 				})),
 			);
 
@@ -764,6 +766,8 @@ export async function recordDocumentPaymentAction(
 				throw new OverpaymentError(totalOutstanding);
 			}
 
+			// One receipt, however many invoices it pays: undone together.
+			const receiptId = crypto.randomUUID();
 			let isFirstRow = true;
 			for (const allocation of allocatePayment(queue, amount)) {
 				if (allocation.applied <= 0) continue;
@@ -786,6 +790,8 @@ export async function recordDocumentPaymentAction(
 					paymentDate: fromStudioTime(paymentDate, "12:00"),
 					method,
 					reference: reference || null,
+					kind: "payment",
+					receiptId,
 					notes: `Payment recorded via ${doc.documentNumber}`,
 					requestId: isFirstRow ? requestId ?? null : null,
 				});
@@ -815,6 +821,88 @@ export async function recordDocumentPaymentAction(
 			return { success: true };
 		}
 		return { error: "Failed to record payment", ref: logServerError("Error recording payment", error) };
+	}
+}
+
+const REVERSAL_LABEL = {
+	failed: { cheque: "Cheque bounced", other: "Payment didn't go through" },
+	mistake: { cheque: "Recorded by mistake", other: "Recorded by mistake" },
+} as const;
+
+/**
+ * Undoes a payment that didn't really happen: the cheque bounced, the
+ * transfer came back, or it was recorded by mistake. Nothing is erased: a
+ * reversal row, dated the day it happened, says why, and the invoice owes
+ * it again. A receipt that paid several invoices of a quotation is undone
+ * on all of them. (Giving money back is a credit note, then a refund.)
+ */
+export async function reversePaymentAction(paymentId: string, input: unknown): Promise<ActionState> {
+	await requireUser();
+	try {
+		const parsed = reversePaymentSchema.safeParse(input);
+		if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form" };
+		const { reversedOn, reason, note } = parsed.data;
+		if (reversedOn > studioDateString()) return { error: "That day hasn't come yet." };
+
+		const touched = new Set<string>();
+		await db.transaction(async (tx) => {
+			const [payment] = await tx.select().from(b2bPayments).where(eq(b2bPayments.id, paymentId)).for("update");
+			if (!payment || payment.kind !== "payment") throw new RefusedError("Only a payment can be undone.");
+
+			// The whole receipt: every invoice this money was spread over.
+			const rows = payment.receiptId
+				? await tx
+						.select()
+						.from(b2bPayments)
+						.where(and(eq(b2bPayments.receiptId, payment.receiptId), eq(b2bPayments.kind, "payment")))
+						.for("update")
+				: [payment];
+			const already = await tx
+				.select({ id: b2bPayments.id })
+				.from(b2bPayments)
+				.where(inArray(b2bPayments.reversesPaymentId, rows.map((row) => row.id)));
+			if (already.length) throw new RefusedError("This payment was already undone.");
+
+			const documentIds = [...new Set(rows.map((row) => row.documentId))];
+			const docs = await tx.select().from(b2bDocuments).where(inArray(b2bDocuments.id, documentIds)).for("update");
+			if (docs.some((doc) => doc.archivedAt)) throw new RefusedError("It paid an archived invoice: restore it first.");
+
+			const label = REVERSAL_LABEL[reason][payment.method === "cheque" ? "cheque" : "other"];
+			for (const row of rows) {
+				await tx.insert(b2bPayments).values({
+					documentId: row.documentId,
+					amount: row.amount,
+					kind: "reversal",
+					reversesPaymentId: row.id,
+					receiptId: payment.receiptId,
+					paymentDate: fromStudioTime(reversedOn, "12:00"),
+					method: row.method,
+					reference: row.reference,
+					reason: note ? `${label}: ${note}` : label,
+				});
+			}
+
+			// Each invoice owes again what came off it.
+			for (const doc of docs) {
+				const money = await tx.select().from(b2bPayments).where(eq(b2bPayments.documentId, doc.id));
+				await tx
+					.update(b2bDocuments)
+					.set({ status: statusAfter(doc.totalAmount, settledOf(money)), updatedAt: new Date() })
+					.where(eq(b2bDocuments.id, doc.id));
+				touched.add(doc.id);
+				touched.add(`partner:${doc.partnerId}`);
+				if (doc.parentDocumentId) touched.add(doc.parentDocumentId);
+			}
+		});
+
+		for (const key of touched) {
+			revalidatePath(key.startsWith("partner:") ? `/b2b/partners/${key.slice(8)}` : `/b2b/documents/${key}`);
+		}
+		revalidatePath("/b2b/documents");
+		return { success: true };
+	} catch (error) {
+		if (error instanceof RefusedError) return { error: error.message };
+		return { error: "Failed to undo the payment", ref: logServerError("Error reversing a payment", error) };
 	}
 }
 

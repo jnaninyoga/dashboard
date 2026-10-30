@@ -84,3 +84,18 @@ export const recordPaymentSchema = z.object({
 });
 
 export type RecordPaymentFormValues = z.infer<typeof recordPaymentSchema>;
+
+// --- UNDO A PAYMENT ---
+// The payment stays on record; a reversal, dated the day it bounced (or the
+// mistake was found), says why. Giving money back to a partner is not this:
+// it's a credit note, then a refund.
+export const REVERSAL_REASONS = ["failed", "mistake"] as const;
+export type ReversalReason = (typeof REVERSAL_REASONS)[number];
+
+export const reversePaymentSchema = z.object({
+	reversedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the day"),
+	reason: z.enum(REVERSAL_REASONS, { error: "Say why" }),
+	note: z.string().trim().max(200, "Keep it under 200 characters").optional(),
+});
+
+export type ReversePaymentValues = z.infer<typeof reversePaymentSchema>;

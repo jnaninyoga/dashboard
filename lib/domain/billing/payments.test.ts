@@ -109,7 +109,7 @@ describe("documentAmounts", () => {
 	});
 
 	it("shows what an issued invoice still owes", () => {
-		expect(documentAmounts(invoice("partially_paid", "1000.00", ["400.00"]))).toEqual({ total: 1000, paid: 400, due: 600 });
+		expect(documentAmounts(invoice("partially_paid", "1000.00", ["400.00"]))).toMatchObject({ total: 1000, paid: 400, due: 600 });
 	});
 
 	it("owes nothing once paid, cancelled, or still a draft", () => {
@@ -119,7 +119,7 @@ describe("documentAmounts", () => {
 	});
 
 	it("never owes on a quotation (its invoices do)", () => {
-		expect(documentAmounts({ type: "quote", status: "accepted", totalAmount: "900.00" })).toEqual({ total: 900, paid: 0, due: 0 });
+		expect(documentAmounts({ type: "quote", status: "accepted", totalAmount: "900.00" })).toMatchObject({ total: 900, paid: 0, due: 0 });
 	});
 
 	it("adds in cents, so 0.10 + 0.20 leaves exactly 0.70 of 1.00", () => {
