@@ -11,5 +11,5 @@ export default function CheckInLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	return <main className="flex flex-1 flex-col gap-6">{children}</main>;
+	return <div className="flex flex-1 flex-col gap-6">{children}</div>;
 }

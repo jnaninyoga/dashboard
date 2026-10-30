@@ -89,14 +89,14 @@ export default async function CheckInPage({ params }: PageProps) {
             </header>
 
             {/* Main Content Area */}
-            <main className="relative z-20 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
+            <div className="relative z-20 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
                 <CheckInManager
                     eventId={eventId}
                     eventType={type}
                     initialAttendance={attendanceRecords}
                     isPast={isPast}
                 />
-            </main>
+            </div>
         </div>
     );
 }

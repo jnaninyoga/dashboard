@@ -21,7 +21,7 @@ export default function Loading() {
 			</header>
 
 			{/* Main Content Area Skeleton */}
-			<main className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
+			<div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
                 {/* Search Bar Skeleton */}
                 <div className="flex flex-col gap-2">
                     <Skeleton className="bg-muted-foreground/10 h-12 w-full rounded-2xl" />
@@ -49,7 +49,7 @@ export default function Loading() {
 						</div>
 					))}
 				</div>
-			</main>
+			</div>
 		</div>
 	);
 }
