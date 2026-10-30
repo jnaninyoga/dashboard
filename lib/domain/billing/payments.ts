@@ -138,7 +138,7 @@ export function documentAmounts(doc: {
 	archivedAt?: Date | string | null;
 	totalAmount: string | number;
 	payments?: MoneyRow[] | null;
-}): { total: number; paid: number; credited: number; settled: number; due: number } {
+}): { total: number; paid: number; credited: number; settled: number; due: number; toRefund: number } {
 	const total = toCents(Number(doc.totalAmount));
 	const settled = toCents(settledOf(doc.payments));
 	return {
@@ -147,7 +147,14 @@ export function documentAmounts(doc: {
 		credited: fromCents(sumOf(doc.payments, ["credit"])),
 		settled: fromCents(settled),
 		due: isPayableInvoice(doc) ? fromCents(Math.max(0, total - settled)) : 0,
+		// An issued credit note owes the partner what its invoice couldn't absorb.
+		toRefund: isRefundable(doc) ? fromCents(Math.max(0, total - settled)) : 0,
 	};
+}
+
+/** An issued credit note that may still have money to give back. */
+export function isRefundable(doc: { type: string; status: string; archivedAt?: Date | string | null }): boolean {
+	return doc.type === "credit_note" && !doc.archivedAt && doc.status !== "draft" && doc.status !== "cancelled";
 }
 
 type StatusedDocument = {
@@ -168,6 +175,8 @@ export function isOverdue(doc: StatusedDocument, today: string): boolean {
  * a sent quotation past its validity reads "Expired" (it can still be accepted).
  */
 export function displayStatus(doc: StatusedDocument, today: string): string {
+	// A credit note: still money to give back, or settled.
+	if (doc.type === "credit_note" && doc.status !== "draft") return doc.status === "paid" ? "settled" : "to_refund";
 	if (isOverdue(doc, today)) return "overdue";
 	if (doc.type === "quote" && doc.status === "sent" && !doc.archivedAt && !!doc.dueDate && doc.dueDate < today) {
 		return "expired";

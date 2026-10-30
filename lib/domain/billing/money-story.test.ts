@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { paymentLedger } from "./payment-ledger";
-import { documentAmounts, paidOf, settledOf, statusAfter } from "./payments";
+import { displayStatus, documentAmounts, paidOf, settledOf, statusAfter } from "./payments";
+import { beyondTheQuote, CREDITING, quoteBalance } from "./quote-billing";
 import { quoteTape } from "./quote-tape";
 
 const invoice = (
@@ -104,5 +105,38 @@ describe("undone payments", () => {
 		];
 		expect(settledOf(rows)).toBe(8000);
 		expect(paidOf(rows)).toBe(6000);
+	});
+});
+
+describe("credit notes", () => {
+	const note = (status: string, rows: { amount: number; kind: string }[]) => ({
+		type: "credit_note",
+		status,
+		archivedAt: null,
+		totalAmount: 3000,
+		payments: rows,
+	});
+
+	it("owes the partner what its invoice couldn't absorb, until refunded", () => {
+		// The invoice still owed 1 000: that came off; 2 000 had been paid, to give back.
+		const issued = note("partially_paid", [{ amount: 1000, kind: "credit" }]);
+		expect(documentAmounts(issued)).toMatchObject({ total: 3000, toRefund: 2000, due: 0 });
+		expect(displayStatus(issued, "2026-10-30")).toBe("to_refund");
+		const refunded = note("paid", [
+			{ amount: 1000, kind: "credit" },
+			{ amount: 2000, kind: "refund" },
+		]);
+		expect(documentAmounts(refunded).toRefund).toBe(0);
+		expect(displayStatus(refunded, "2026-10-30")).toBe("settled");
+		expect(displayStatus(note("draft", []), "2026-10-30")).toBe("draft");
+	});
+
+	it("never takes back more than is left of its invoice, and says so in its own words", () => {
+		const invoiceLines = [{ id: "s", description: "Séance hôtel", quantity: "10", unitPrice: "800" }];
+		const earlier = [{ id: "c1", status: "paid", lines: [{ sourceLineId: "s", quantity: 8, unitPrice: 800 }] }];
+		const balance = quoteBalance(invoiceLines, earlier);
+		expect(beyondTheQuote(balance, [{ sourceLineId: "s", description: "Séance hôtel", quantity: 3, unitPrice: 800 }], CREDITING)).toBe(
+			"“Séance hôtel”: 2 left to credit, this credit note has 3.",
+		);
 	});
 });

@@ -25,10 +25,12 @@ export function PageTitle({ className }: { className?: string }) {
 		// Pages stream in (a skeleton first), so follow the heading as it arrives.
 		const track = () => {
 			const next = content.querySelector("h1");
+			// The same heading can change its words ("Draft invoice" once
+			// issued becomes "INV-2026-0003"): always read them again.
+			setTitle(next?.textContent?.trim() || null);
 			if (next === heading) return;
 			heading = next;
 			visibility?.disconnect();
-			setTitle(next?.textContent?.trim() || null);
 			setShown(false);
 			if (!next) return;
 			// The sticky header (56px) covers the top of the page.
@@ -39,7 +41,7 @@ export function PageTitle({ className }: { className?: string }) {
 		};
 		track();
 		const changes = new MutationObserver(track);
-		changes.observe(content, { childList: true, subtree: true });
+		changes.observe(content, { childList: true, subtree: true, characterData: true });
 		return () => {
 			changes.disconnect();
 			visibility?.disconnect();

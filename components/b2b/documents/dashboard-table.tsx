@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
-import { documentName } from "@/lib/domain/billing/document-name";
+import { documentKind, documentName } from "@/lib/domain/billing/document-name";
 import { documentAmounts } from "@/lib/domain/billing/payments";
 import { displayStatus } from "@/lib/domain/billing/payments";
 import { DocumentWithRelations } from "@/lib/types/b2b";
@@ -68,7 +68,7 @@ export function DocumentCell({ doc }: { doc: ListDocument }) {
 				</Link>
 				<span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
 					<span className="truncate">
-						{doc.type === "invoice" ? "Invoice" : "Quotation"} · {issued(doc)}
+						{documentKind(doc.type)} · {issued(doc)}
 					</span>
 					{quote ? (
 						<span className="bg-secondary text-secondary-foreground shrink-0 rounded-full px-2 py-0.5 text-xs font-medium">
@@ -83,12 +83,14 @@ export function DocumentCell({ doc }: { doc: ListDocument }) {
 
 /** The total, and underneath what an invoice still owes (amber) or that it's settled. */
 export function AmountCell({ doc, align = "right" }: { doc: ListDocument; align?: "left" | "right" }) {
-	const { total, due } = documentAmounts(doc);
+	const { total, due, toRefund } = documentAmounts(doc);
 	return (
 		<div className={cn("flex flex-col", align === "right" ? "items-end text-right" : "items-start")}>
 			<span className="text-foreground font-semibold tabular-nums">{formatMoney(total)}</span>
 			{due > 0 ? (
 				<span className="text-warning text-sm font-medium tabular-nums">Due {formatMoney(due)}</span>
+			) : toRefund > 0 ? (
+				<span className="text-warning text-sm font-medium tabular-nums">To refund {formatMoney(toRefund)}</span>
 			) : doc.type === "invoice" && doc.status === "paid" ? (
 				<span className="text-success text-sm">Paid in full</span>
 			) : null}

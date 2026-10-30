@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createInvoiceFromQuoteAction, type InvoicePortion } from "@/lib/actions/b2b/documents";
+import { createCreditNoteAction, createInvoiceFromQuoteAction, type InvoicePortion } from "@/lib/actions/b2b/documents";
 import { documentName } from "@/lib/domain/billing/document-name";
 import {
 	linesSubtotal,
@@ -22,10 +22,37 @@ import { ReceiptAdd, Refresh } from "iconsax-reactjs";
 
 type Mode = InvoicePortion["kind"];
 
-const MODES: { value: Mode; label: string; hint: string }[] = [
-	{ value: "remaining", label: "Everything left", hint: "What's left of every line." },
-	{ value: "quantities", label: "Some of it", hint: "This month's sessions, say." },
-	{ value: "amount", label: "An amount", hint: "A share of what's left." },
+// The same sheet makes an invoice from a quotation, or a credit note (an
+// avoir) from an invoice: only the words and the action change.
+const WORDS = {
+	invoice: {
+		title: "New invoice",
+		verb: "invoice",
+		create: "Create draft invoice",
+		created: ["Draft invoice created", "Check it, then mark it as sent."],
+		failed: "Couldn't create the invoice",
+		hints: { remaining: "What's left of every line.", quantities: "This month's sessions, say.", amount: "A share of what's left." },
+		action: createInvoiceFromQuoteAction,
+	},
+	credit: {
+		title: "New credit note",
+		verb: "credit",
+		create: "Create draft credit note",
+		created: ["Draft credit note created", "Check it, then issue it."],
+		failed: "Couldn't create the credit note",
+		hints: {
+			remaining: "Takes back the whole invoice.",
+			quantities: "The sessions that didn't happen, say.",
+			amount: "A share of the invoice, spread over its lines.",
+		},
+		action: createCreditNoteAction,
+	},
+} as const;
+
+const MODES: { value: Mode; label: string }[] = [
+	{ value: "remaining", label: "Everything left" },
+	{ value: "quantities", label: "Some of it" },
+	{ value: "amount", label: "An amount" },
 ];
 
 const quantity = (n: number) => n.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
@@ -41,8 +68,12 @@ export function InvoicePortionSheet({
 	balance,
 	open,
 	onOpenChange,
+	mode: sheetMode = "invoice",
 }: {
+	/** What it's cut from: a quotation (for an invoice) or an invoice (for a credit note). */
 	quote: { id: string; type: string; documentNumber: string | null; taxRate: string };
+	/** An invoice from a quotation, or a credit note from an invoice. */
+	mode?: keyof typeof WORDS;
 	balance: QuoteBalance;
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
@@ -57,6 +88,7 @@ export function InvoicePortionSheet({
 	);
 	const [amount, setAmount] = useState("");
 	const taxRate = Number(quote.taxRate) || 0;
+	const words = WORDS[sheetMode];
 
 	const tooMany = openLines.filter((line) => Number(quantities[line.lineId] || 0) > line.remaining);
 	const lines = useMemo(() => {
@@ -75,13 +107,13 @@ export function InvoicePortionSheet({
 		const portion: InvoicePortion =
 			mode === "quantities" ? { kind: "quantities", quantities } : mode === "amount" ? { kind: "amount", amount } : { kind: "remaining" };
 		startTransition(async () => {
-			const res = await createInvoiceFromQuoteAction(quote.id, portion);
+			const res = await words.action(quote.id, portion);
 			if (res.success && res.id) {
-				notify.success("Draft invoice created", "Check it, then mark it as sent.");
+				notify.success(words.created[0], words.created[1]);
 				onOpenChange(false);
 				router.push(`/b2b/documents/${res.id}`);
 			} else {
-				notifyActionError(res, "Couldn't create the invoice");
+				notifyActionError(res, words.failed);
 			}
 		});
 	};
@@ -93,8 +125,8 @@ export function InvoicePortionSheet({
 			busy={isPending}
 			dirty={false}
 			icon={<ReceiptAdd size={28} variant="Bulk" />}
-			title="New invoice"
-			description={`${documentName(quote)}: ${formatMoney(balance.remaining)} left to invoice${taxRate ? " before tax" : ""}, of ${formatMoney(balance.quoted)}.`}
+			title={words.title}
+			description={`${documentName(quote)}: ${formatMoney(balance.remaining)} left to ${words.verb}${taxRate ? " before tax" : ""}, of ${formatMoney(balance.quoted)}.`}
 			footer={
 				<Button
 					type="submit"
@@ -103,7 +135,7 @@ export function InvoicePortionSheet({
 					className="h-11 rounded-xl font-bold shadow-sm transition-all active:scale-95"
 				>
 					{isPending ? <Refresh size={16} className="mr-2 animate-spin" /> : null}
-					{ready ? `Create draft invoice · ${formatMoney(total)}` : "Create draft invoice"}
+					{ready ? `${words.create} · ${formatMoney(total)}` : words.create}
 				</Button>
 			}
 		>
@@ -128,7 +160,7 @@ export function InvoicePortionSheet({
 							</label>
 						))}
 					</div>
-					<p className="text-muted-foreground text-sm">{MODES.find((option) => option.value === mode)?.hint}</p>
+					<p className="text-muted-foreground text-sm">{words.hints[mode]}</p>
 				</fieldset>
 
 				{mode === "quantities" ? (
@@ -146,7 +178,7 @@ export function InvoicePortionSheet({
 									</div>
 									<Input
 										inputMode="decimal"
-										aria-label={`Quantity of ${line.description} to invoice`}
+										aria-label={`Quantity of ${line.description} to ${words.verb}`}
 										aria-invalid={over}
 										value={quantities[line.lineId] ?? ""}
 										onFocus={(event) => event.currentTarget.select()}
@@ -181,7 +213,7 @@ export function InvoicePortionSheet({
 						</div>
 						{amountTooHigh ? (
 							<p role="alert" className="text-destructive text-sm">
-								Only {formatMoney(balance.remaining)} is left to invoice.
+								Only {formatMoney(balance.remaining)} is left to {words.verb}.
 							</p>
 						) : null}
 						<div className="flex flex-wrap gap-2">
@@ -206,7 +238,7 @@ export function InvoicePortionSheet({
 				) : null}
 
 				{/* What the draft will hold. */}
-				<section aria-label="This invoice" className="bg-secondary/30 grid gap-2 rounded-2xl p-4">
+				<section aria-label={sheetMode === "credit" ? "This credit note" : "This invoice"} className="bg-secondary/30 grid gap-2 rounded-2xl p-4">
 					{lines.length ? (
 						<ul className="grid gap-1.5 text-sm">
 							{lines.map((line) => (

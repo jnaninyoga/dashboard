@@ -22,7 +22,7 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 	const flushDraft = useFlushDraft();
 
 	const isQuote = doc.type === "quote";
-	const prefix = isQuote ? "Quote" : "Invoice";
+	const prefix = isQuote ? "Quote" : doc.type === "credit_note" ? "CreditNote" : "Invoice";
 
 	// Ensure partner name is safe for filename
 	const partnerName =

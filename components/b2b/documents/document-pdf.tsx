@@ -571,7 +571,8 @@ interface B2BDocumentPDFProps {
 
 export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 	const isQuote = doc.type === "quote";
-	const title = isQuote ? "Devis" : "Facture";
+	// An avoir takes back part of an invoice (a credit note).
+	const title = isQuote ? "Devis" : doc.type === "credit_note" ? "Avoir" : "Facture";
 	const issueDate = format(new Date(doc.issueDate), "dd/MM/yyyy");
 	const dueDate = doc.dueDate
 		? format(new Date(doc.dueDate), "dd/MM/yyyy")
@@ -639,7 +640,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 									{doc.documentNumber ? `N° ${doc.documentNumber}` : "BROUILLON"}
 								</Text>
 							</View>
-							{doc.parent && doc.type === "invoice" ? (
+							{doc.parent && doc.type !== "quote" ? (
 								<Text
 									style={{
 										fontSize: 8,
@@ -648,7 +649,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 										letterSpacing: 0.4,
 									}}
 								>
-									Réf. devis N° {doc.parent.documentNumber}
+									{doc.type === "credit_note" ? "Réf. facture" : "Réf. devis"} N° {doc.parent.documentNumber}
 								</Text>
 							) : null}
 						</View>

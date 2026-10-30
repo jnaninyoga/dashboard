@@ -89,13 +89,18 @@ export function quoteBalance(quoteLines: QuoteLine[], invoices: BillingInvoice[]
 
 const formatQuantity = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 
+/** How a check speaks: of an invoice against its quotation, or of a credit note against its invoice. */
+export type BillingWords = { verb: string; document: string; source: string };
+const INVOICING: BillingWords = { verb: "invoice", document: "invoice", source: "quotation" };
+export const CREDITING: BillingWords = { verb: "credit", document: "credit note", source: "invoice" };
+
 /**
  * Why these lines can't be invoiced against the quotation (`balance` leaves
  * this invoice out), or null when they can: no line beyond what's left of
  * it, and no more money than the quotation, whatever the prices were
- * changed to.
+ * changed to. The same check holds a credit note to its invoice (`words`).
  */
-export function beyondTheQuote(balance: QuoteBalance, invoiceLines: InvoiceLineInput[]): string | null {
+export function beyondTheQuote(balance: QuoteBalance, invoiceLines: InvoiceLineInput[], words: BillingWords = INVOICING): string | null {
 	const asked = new Map<string, number>();
 	for (const line of invoiceLines) {
 		if (!line.sourceLineId) continue;
@@ -103,17 +108,17 @@ export function beyondTheQuote(balance: QuoteBalance, invoiceLines: InvoiceLineI
 	}
 	for (const [lineId, quantity] of asked) {
 		const quoted = balance.lines.find((line) => line.lineId === lineId);
-		if (!quoted) return "A line of this invoice isn't on its quotation any more.";
+		if (!quoted) return `A line of this ${words.document} isn't on its ${words.source} any more.`;
 		if (quantity > cents(quoted.remaining)) {
 			return quoted.remaining > 0
-				? `“${quoted.description}”: ${formatQuantity(quoted.remaining)} left to invoice, this invoice has ${formatQuantity(fromCents(quantity))}.`
-				: `“${quoted.description}” is already fully invoiced.`;
+				? `“${quoted.description}”: ${formatQuantity(quoted.remaining)} left to ${words.verb}, this ${words.document} has ${formatQuantity(fromCents(quantity))}.`
+				: `“${quoted.description}” is already fully ${words.verb === "credit" ? "credited" : "invoiced"}.`;
 		}
 	}
 	const total = invoiceLines.reduce((sum, line) => sum + lineCents(line.quantity, line.unitPrice), 0);
 	if (total > cents(balance.remaining)) {
 		const over = fromCents(total - cents(balance.remaining));
-		return `This invoice goes ${over.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD beyond what's left of the quotation.`;
+		return `This ${words.document} goes ${over.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD beyond what's left of the ${words.source}.`;
 	}
 	return null;
 }

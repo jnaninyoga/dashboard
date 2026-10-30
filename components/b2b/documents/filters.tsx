@@ -108,6 +108,7 @@ export function DocumentFilters() {
 						<SelectItem value="all">All types</SelectItem>
 						<SelectItem value="quote">Quotations</SelectItem>
 						<SelectItem value="invoice">Invoices</SelectItem>
+						<SelectItem value="credit_note">Credit notes</SelectItem>
 					</SelectContent>
 				</Select>
 

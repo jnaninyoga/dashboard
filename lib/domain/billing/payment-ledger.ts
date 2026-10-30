@@ -2,6 +2,7 @@
 // payment came in (what was left after it), a payment was undone (the
 // cheque bounced: owed again), a credit note took part of it back, then it
 // was settled, or it still waits (overdue once its due date has passed).
+// A credit note tells the same way: set against its invoice, refunded.
 // Nothing is ever erased: an undone payment stays, marked as undone.
 
 import { isOverdue } from "./payments";
@@ -17,6 +18,7 @@ export type LedgerRow = {
 	method?: string | null;
 	reference?: string | null;
 	reversesPaymentId?: string | null;
+	counterpartId?: string | null;
 	reason?: string | null;
 };
 
@@ -44,7 +46,10 @@ export type LedgerEntry =
 			reversedOn: Date | null;
 	  }
 	| { kind: "reversal"; id: string; date: Date; amount: number; method: string | null; reason: string | null; left: number }
-	| { kind: "credit"; id: string; date: Date; amount: number; reason: string | null; left: number }
+	/** A credit note set against an invoice (or, on a credit note, its invoice). */
+	| { kind: "credit"; id: string; date: Date; amount: number; reason: string | null; counterpartId: string | null; left: number }
+	/** Money given back to the partner, on a credit note. */
+	| { kind: "refund"; id: string; date: Date; amount: number; method: string | null; reference: string | null; left: number }
 	| { kind: "settled"; date: Date | null }
 	| { kind: "open"; left: number; dueDate: string | null; overdue: boolean };
 
@@ -76,7 +81,17 @@ export function paymentLedger(invoice: LedgerInvoice, today: string): LedgerEntr
 		left -= amount;
 		lastSettling = date;
 		if (row.kind === "credit") {
-			entries.push({ kind: "credit", id: row.id, date, amount: amount / 100, reason: row.reason ?? null, left: Math.max(0, left) / 100 });
+			entries.push({
+				kind: "credit",
+				id: row.id,
+				date,
+				amount: amount / 100,
+				reason: row.reason ?? null,
+				counterpartId: row.counterpartId ?? null,
+				left: Math.max(0, left) / 100,
+			});
+		} else if (row.kind === "refund") {
+			entries.push({ kind: "refund", id: row.id, date, amount: amount / 100, method: row.method ?? null, reference: row.reference ?? null, left: Math.max(0, left) / 100 });
 		} else {
 			entries.push({
 				kind: "payment",

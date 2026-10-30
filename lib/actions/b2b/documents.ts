@@ -7,6 +7,7 @@ import {
 	allocatePayment,
 	type DocumentStatusFilter,
 	isPayableInvoice,
+	isRefundable,
 	orderPaymentQueue,
 	outstandingOf,
 	OVERDUE_FILTER,
@@ -17,6 +18,7 @@ import {
 } from "@/lib/domain/billing/payments";
 import {
 	beyondTheQuote,
+	CREDITING,
 	type InvoiceLineInput,
 	portionByAmount,
 	portionByQuantities,
@@ -277,7 +279,26 @@ async function issueDraft(tx: DbTx, id: string) {
 		}
 	}
 
+	// A credit note takes back part of an issued invoice, never more than
+	// is left of it to credit (its other credit notes count).
+	let invoice: typeof b2bDocuments.$inferSelect | undefined;
+	if (doc.type === "credit_note") {
+		if (!doc.parentDocumentId) throw new RefusedError("A credit note needs its invoice.");
+		[invoice] = await tx.select().from(b2bDocuments).where(eq(b2bDocuments.id, doc.parentDocumentId)).for("update");
+		if (!invoice || invoice.archivedAt || invoice.status === "draft" || invoice.status === "cancelled") {
+			throw new RefusedError("Its invoice isn't issued any more.");
+		}
+		const invoiceLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, invoice.id));
+		const credits = await tx.query.b2bDocuments.findMany({
+			where: and(eq(b2bDocuments.parentDocumentId, invoice.id), eq(b2bDocuments.type, "credit_note")),
+			with: { lines: true },
+		});
+		const problem = beyondTheQuote(quoteBalance(invoiceLines, credits, id), lines, CREDITING);
+		if (problem) throw new RefusedError(problem);
+	}
+
 	const today = studioDateString();
+	const number = doc.documentNumber ?? (await reserveNextDocumentNumber(tx, doc.type, today));
 	const term = doc.dueDate
 		? Math.max(0, daysBetween(doc.issueDate, doc.dueDate))
 		: doc.type === "invoice"
@@ -286,14 +307,63 @@ async function issueDraft(tx: DbTx, id: string) {
 	await tx
 		.update(b2bDocuments)
 		.set({
-			status: doc.type === "invoice" ? "unpaid" : "sent",
-			documentNumber: doc.documentNumber ?? (await reserveNextDocumentNumber(tx, doc.type, today)),
+			status: doc.type === "quote" ? "sent" : "unpaid",
+			documentNumber: number,
 			issueDate: today,
 			dueDate: term === null ? null : addDays(today, term),
 			updatedAt: new Date(),
 		})
 		.where(eq(b2bDocuments.id, id));
+
+	if (invoice) await applyCreditNote(tx, { ...doc, documentNumber: number }, invoice, today);
 	return doc;
+}
+
+/**
+ * Sets an issued credit note against its invoice, the double-entry way: a
+ * "credit" row on each (the invoice owes that much less; the credit note
+ * has given that much). It takes off what the invoice still owes; what was
+ * already paid beyond its new amount is left on the credit note, to refund.
+ */
+async function applyCreditNote(
+	tx: DbTx,
+	note: typeof b2bDocuments.$inferSelect,
+	invoice: typeof b2bDocuments.$inferSelect,
+	today: string,
+) {
+	const invoiceMoney = await tx.select().from(b2bPayments).where(eq(b2bPayments.documentId, invoice.id));
+	const settled = settledOf(invoiceMoney);
+	const owed = Math.max(0, round2(Number(invoice.totalAmount) - settled));
+	const applied = round2(Math.min(Number(note.totalAmount), owed));
+	const on = fromStudioTime(today, "12:00");
+	if (applied > 0) {
+		await tx.insert(b2bPayments).values([
+			{
+				documentId: invoice.id,
+				kind: "credit" as const,
+				amount: applied.toFixed(2),
+				counterpartId: note.id,
+				paymentDate: on,
+				reason: `Credit note ${note.documentNumber}`,
+			},
+			{
+				documentId: note.id,
+				kind: "credit" as const,
+				amount: applied.toFixed(2),
+				counterpartId: invoice.id,
+				paymentDate: on,
+				reason: `Set against ${invoice.documentNumber}`,
+			},
+		]);
+		await tx
+			.update(b2bDocuments)
+			.set({ status: statusAfter(invoice.totalAmount, round2(settled + applied)), updatedAt: new Date() })
+			.where(eq(b2bDocuments.id, invoice.id));
+	}
+	await tx
+		.update(b2bDocuments)
+		.set({ status: statusAfter(note.totalAmount, applied), updatedAt: new Date() })
+		.where(eq(b2bDocuments.id, note.id));
 }
 
 /**
@@ -357,6 +427,9 @@ export async function archiveDocumentAction(
 			return { error: "Drafts should be deleted, not archived" };
 		}
 		if (doc.archivedAt) return { error: "Document is already archived" };
+		if (doc.type === "credit_note") {
+			return { error: "An issued credit note is part of the books: it stays." };
+		}
 
 		await db
 			.update(b2bDocuments)
@@ -675,6 +748,142 @@ export async function createInvoiceFromQuoteAction(
 }
 
 /**
+ * A draft credit note (avoir) taking back part of an issued invoice: all of
+ * what's left to credit, chosen quantities of its lines, or an amount
+ * spread over them. Never more than the invoice (its other credit notes
+ * count), at its prices and tax. Issuing it sets it against the invoice;
+ * what was already paid beyond the new amount is then to refund.
+ */
+export async function createCreditNoteAction(
+	invoiceId: string,
+	portion: InvoicePortion = { kind: "remaining" },
+): Promise<ActionState> {
+	await requireUser();
+	try {
+		let newId = "";
+		let partnerId = "";
+		await db.transaction(async (tx) => {
+			const [invoice] = await tx.select().from(b2bDocuments).where(eq(b2bDocuments.id, invoiceId)).for("update");
+			if (!invoice || invoice.type !== "invoice") throw new RefusedError("Invoice not found");
+			if (invoice.archivedAt) throw new RefusedError("This invoice is archived.");
+			if (invoice.status === "draft" || invoice.status === "cancelled") {
+				throw new RefusedError("Only an issued invoice takes a credit note (a draft can simply be changed).");
+			}
+			partnerId = invoice.partnerId;
+
+			const invoiceLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, invoiceId)).orderBy(...linesInOrder);
+			const credits = await tx.query.b2bDocuments.findMany({
+				where: and(eq(b2bDocuments.parentDocumentId, invoiceId), eq(b2bDocuments.type, "credit_note")),
+				with: { lines: true },
+			});
+			const balance = quoteBalance(invoiceLines, credits);
+			if (balance.remaining <= 0) throw new RefusedError("This invoice is already fully credited.");
+
+			const lines =
+				portion.kind === "quantities"
+					? portionByQuantities(balance, portion.quantities)
+					: portion.kind === "amount"
+						? portionByAmount(balance, parseAmountInput(portion.amount))
+						: portionByQuantities(balance, Object.fromEntries(balance.lines.map((line) => [line.lineId, line.remaining])));
+			if (!lines.length) throw new RefusedError("Choose what to credit: a quantity or an amount.");
+			const problem = beyondTheQuote(balance, lines, CREDITING);
+			if (problem) throw new RefusedError(problem);
+
+			const { computed, rows } = lineRows("", lines, invoice.taxRate);
+			const [note] = await tx
+				.insert(b2bDocuments)
+				.values({
+					partnerId: invoice.partnerId,
+					contactId: invoice.contactId,
+					type: "credit_note",
+					status: "draft",
+					// Numbered (AV-…) when it's issued.
+					documentNumber: null,
+					issueDate: studioDateString(),
+					dueDate: null,
+					subtotal: computed.subtotal.toFixed(2),
+					taxRate: computed.taxRate.toFixed(2),
+					totalAmount: computed.totalAmount.toFixed(2),
+					parentDocumentId: invoiceId,
+				})
+				.returning();
+			newId = note.id;
+			await tx.insert(b2bDocumentLines).values(rows.map((row) => ({ ...row, documentId: note.id })));
+		});
+
+		revalidatePath(`/b2b/partners/${partnerId}`);
+		revalidatePath("/b2b/documents");
+		revalidatePath(`/b2b/documents/${invoiceId}`);
+		return { success: true, id: newId };
+	} catch (error) {
+		if (error instanceof RefusedError) return { error: error.message };
+		return { error: "Failed to create the credit note", ref: logServerError("Error creating a credit note", error) };
+	}
+}
+
+/**
+ * Money given back to the partner on an issued credit note (what its
+ * invoice couldn't absorb because it was already paid), on the day it left,
+ * with how. Never more than is left to refund.
+ */
+export async function recordRefundAction(creditNoteId: string, refund: unknown, requestId?: string): Promise<ActionState> {
+	await requireUser();
+	try {
+		const parsed = recordPaymentSchema.safeParse(refund);
+		if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the refund" };
+		const { amountPaid, paymentDate, method, reference } = parsed.data;
+		if (paymentDate > studioDateString()) return { error: "The refund date can't be in the future." };
+		const amount = round2(parseAmountInput(amountPaid));
+		if (!(amount > 0)) return { error: "Enter a positive amount" };
+		if (requestId) {
+			const existing = await db.query.b2bPayments.findFirst({ where: eq(b2bPayments.requestId, requestId) });
+			if (existing) return { success: true };
+		}
+
+		let partnerId = "";
+		await db.transaction(async (tx) => {
+			const [note] = await tx.select().from(b2bDocuments).where(eq(b2bDocuments.id, creditNoteId)).for("update");
+			if (!note || !isRefundable(note)) throw new RefusedError("Only an issued credit note can be refunded.");
+			partnerId = note.partnerId;
+			const money = await tx.select().from(b2bPayments).where(eq(b2bPayments.documentId, note.id));
+			const settled = settledOf(money);
+			const left = round2(Number(note.totalAmount) - settled);
+			if (amount > left) {
+				throw new RefusedError(
+					`Only ${left.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD is left to refund.`,
+				);
+			}
+			await tx.insert(b2bPayments).values({
+				documentId: note.id,
+				kind: "refund",
+				amount: amount.toFixed(2),
+				paymentDate: fromStudioTime(paymentDate, "12:00"),
+				method,
+				reference: reference || null,
+				receiptId: crypto.randomUUID(),
+				requestId: requestId ?? null,
+				notes: `Refund on ${note.documentNumber}`,
+			});
+			await tx
+				.update(b2bDocuments)
+				.set({ status: statusAfter(note.totalAmount, round2(settled + amount)), updatedAt: new Date() })
+				.where(eq(b2bDocuments.id, note.id));
+		});
+
+		revalidatePath(`/b2b/documents/${creditNoteId}`);
+		revalidatePath(`/b2b/partners/${partnerId}`);
+		revalidatePath("/b2b/documents");
+		return { success: true };
+	} catch (error) {
+		if (error instanceof RefusedError) return { error: error.message };
+		if (error instanceof Error && "code" in error && (error as { code?: string }).code === "23505" && error.message.includes("request_id")) {
+			return { success: true };
+		}
+		return { error: "Failed to record the refund", ref: logServerError("Error recording a refund", error) };
+	}
+}
+
+/**
  * Money received from a partner, on the day it arrived, with how it was
  * paid. The invoice she's looking at is paid first; any excess goes to the
  * other open invoices of the same quotation, oldest first. Never more than
@@ -984,16 +1193,23 @@ export async function updateDocumentLinesAction(
 		if (doc.status !== "draft") return { error: "Only draft documents can be edited" };
 
 		const lines = mergeSameLines(parsed.data.lines);
-		const taxRate = doc.type === "invoice" && doc.parent ? doc.parent.taxRate : parsed.data.taxRate;
+		// An invoice keeps its quotation's tax; a credit note, its invoice's.
+		const taxRate = doc.type !== "quote" && doc.parent ? doc.parent.taxRate : parsed.data.taxRate;
 
 		await db.transaction(async (tx) => {
-			if (doc.type === "invoice" && doc.parentDocumentId) {
-				const quoteLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, doc.parentDocumentId));
+			// Within what's left of its source: a quotation for an invoice, an
+			// invoice for a credit note.
+			if (doc.type !== "quote" && doc.parentDocumentId) {
+				const sourceLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, doc.parentDocumentId));
 				const siblings = await tx.query.b2bDocuments.findMany({
-					where: and(eq(b2bDocuments.parentDocumentId, doc.parentDocumentId), eq(b2bDocuments.type, "invoice")),
+					where: and(eq(b2bDocuments.parentDocumentId, doc.parentDocumentId), eq(b2bDocuments.type, doc.type)),
 					with: { lines: true },
 				});
-				const problem = beyondTheQuote(quoteBalance(quoteLines, siblings, id), lines);
+				const problem = beyondTheQuote(
+					quoteBalance(sourceLines, siblings, id),
+					lines,
+					doc.type === "credit_note" ? CREDITING : undefined,
+				);
 				if (problem) throw new RefusedError(problem);
 			}
 

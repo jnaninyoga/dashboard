@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
+import { CreditOrigin } from "@/components/b2b/documents/credit-origin";
 import { DocumentSection } from "@/components/b2b/documents/document-section";
 import { DocumentTotals } from "@/components/b2b/documents/document-totals";
 import { DraftSaveProvider } from "@/components/b2b/documents/draft-save";
@@ -13,6 +14,7 @@ import { DocumentNotices, NoticesProvider } from "@/components/b2b/documents/not
 import { phoneLine } from "@/components/b2b/documents/phone-line";
 import { QuoteInvoicing } from "@/components/b2b/documents/quote-invoicing";
 import { RecordPaymentButton } from "@/components/b2b/documents/record-payment-button";
+import { RecordRefundButton } from "@/components/b2b/documents/record-refund-button";
 import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { EditableNotes } from "@/components/b2b/editable-notes";
 import {
@@ -25,14 +27,14 @@ import {
 } from "@/components/ui/table";
 import { getDocumentByIdAction } from "@/lib/actions/b2b/documents";
 import { getBusinessProfileAction } from "@/lib/actions/business-profile";
-import { documentName } from "@/lib/domain/billing/document-name";
-import { displayStatus } from "@/lib/domain/billing/payments";
+import { documentKind, documentName } from "@/lib/domain/billing/document-name";
+import { displayStatus, documentAmounts } from "@/lib/domain/billing/payments";
 import { quoteTape } from "@/lib/domain/billing/quote-tape";
 import {
 	type B2BDocumentLine,
 	type DocumentWithRelations,
 } from "@/lib/types/b2b";
-import { formatAmount } from "@/lib/utils/currency";
+import { formatAmount, formatMoney } from "@/lib/utils/currency";
 import { studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
@@ -43,6 +45,7 @@ import {
 	Calendar,
 	DocumentText,
 	MoneyTime,
+	ReceiptMinus,
 	ReceiptText,
 } from "iconsax-reactjs";
 
@@ -73,6 +76,20 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 	// Financial Calculations
 	const isQuote = document.type === "quote";
 	const today = studioDateString();
+	const KindIcon = document.type === "credit_note" ? ReceiptMinus : document.type === "invoice" ? ReceiptText : DocumentText;
+	// A draft credit note waiting on this invoice: said once, at the top.
+	const draftCredits = (document.type === "invoice" ? (document.children ?? []) : [])
+		.filter((child) => child.type === "credit_note" && child.status === "draft")
+		.map((child) => ({
+			id: `draft-credit-${child.id}`,
+			tone: "info" as const,
+			message: `A draft credit note of ${formatMoney(Number(child.totalAmount))} is waiting for this invoice.`,
+			action: (
+				<Link href={`/b2b/documents/${child.id}`} className="text-primary inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold hover:underline">
+					Open it
+				</Link>
+			),
+		}));
 
 	return (
 		// A draft's lines and notes save themselves; its actions wait for them.
@@ -91,26 +108,18 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			</Link>
 
 			{/* Errors, warnings and notes about this document, in one place */}
-			<DocumentNotices />
+			<DocumentNotices notices={draftCredits} />
 
 			{/* Header Zen Card */}
 			<div className="animate-slide-up border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-6 shadow-sm sm:p-8 md:flex-row">
 				<div className="text-primary absolute -top-10 right-0 p-8 opacity-5">
-					{document.type === "invoice" ? (
-						<ReceiptText size={240} variant="Bulk" />
-					) : (
-						<DocumentText size={240} variant="Bulk" />
-					)}
+					<KindIcon size={240} variant="Bulk" />
 				</div>
 
 				<div className="relative z-10 flex flex-col gap-6">
 					<div className="flex items-center gap-4">
 						<div className="border-primary/20 bg-primary/10 text-primary flex size-14 items-center justify-center rounded-2xl border shadow-inner">
-							{document.type === "invoice" ? (
-								<ReceiptText size={28} variant="Bulk" />
-							) : (
-								<DocumentText size={28} variant="Bulk" />
-							)}
+							<KindIcon size={28} variant="Bulk" />
 						</div>
 						<div className="min-w-0 space-y-1">
 							{/* The number never breaks at its dashes; the status goes under it when there's no room. */}
@@ -124,7 +133,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 								/>
 							</div>
 							<p className="text-muted-foreground/60 text-xs font-bold tracking-wider uppercase">
-								B2B {document.type}
+								{documentKind(document.type)}
 							</p>
 						</div>
 					</div>
@@ -183,12 +192,17 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			</div>
 
 			{/* An invoice's quotation: its tape, this invoice standing out. */}
-			{!isQuote && document.parent ? (
+			{document.type === "invoice" && document.parent ? (
 				<InvoiceOrigin
 					invoiceId={document.id}
 					quote={document.parent}
 					tape={quoteTape(document.parent.totalAmount, chainInvoices, today)}
 				/>
+			) : null}
+
+			{/* A credit note's invoice: what it takes back, and where that went. */}
+			{document.type === "credit_note" && document.parent ? (
+				<CreditOrigin note={document} invoice={document.parent} />
 			) : null}
 
 			{/* Actions Ribbon */}
@@ -275,16 +289,25 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 				</DocumentSection>
 			)}
 
-			{/* An issued invoice's payments, from issue to settled. */}
+			{/* An issued invoice's payments (or a credit note's settlement), from issue to settled. */}
 			{!isQuote && document.status !== "draft" ? (
 				<InvoicePayments
 					invoice={document}
 					action={
-						<RecordPaymentButton
-							doc={document}
-							siblings={accountSummary?.allRelatedInvoices ?? []}
-							className="h-9 px-3 text-sm"
-						/>
+						document.type === "credit_note" ? (
+							<RecordRefundButton
+								creditNoteId={document.id}
+								creditNoteName={documentName(document)}
+								toRefund={documentAmounts(document).toRefund}
+								className="h-9 gap-2 rounded-xl px-3 text-sm font-bold"
+							/>
+						) : (
+							<RecordPaymentButton
+								doc={document}
+								siblings={accountSummary?.allRelatedInvoices ?? []}
+								className="h-9 px-3 text-sm"
+							/>
+						)
 					}
 				/>
 			) : null}

@@ -15,6 +15,7 @@ import {
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
 import { documentName } from "@/lib/domain/billing/document-name";
+import { documentAmounts } from "@/lib/domain/billing/payments";
 import { quoteBalance } from "@/lib/domain/billing/quote-billing";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
@@ -23,6 +24,7 @@ import { type B2BDocumentStatus } from "@/lib/types/b2b";
 import {
 	Archive,
 	ReceiptAdd,
+	ReceiptMinus,
 	Send,
 	TickCircle,
 	Trash,
@@ -32,6 +34,7 @@ import { ArchiveDocumentDialog } from "./archive-dialog";
 import { PDFDownloadBtn } from "./download-btn";
 import { InvoicePortionSheet } from "./invoice-portion-sheet";
 import { RecordPaymentButton } from "./record-payment-button";
+import { RecordRefundButton } from "./record-refund-button";
 
 export function DocumentActionRibbon({ 
 	doc, 
@@ -62,7 +65,7 @@ export function DocumentActionRibbon({
 				doc.partnerId,
 			);
 			if (res.success) {
-				notify.success(DONE[status] ?? "Document updated");
+				notify.success(doc.type === "credit_note" ? "Credit note issued" : (DONE[status] ?? "Document updated"));
 				router.refresh();
 			} else {
 				notifyActionError(res, "Failed to update document");
@@ -142,6 +145,17 @@ export function DocumentActionRibbon({
 		(doc.status === "sent" || doc.status === "accepted") &&
 		balance.remaining > 0;
 
+	// An issued invoice can be credited (an avoir) for as long as something
+	// of it is left to credit: its children are its credit notes.
+	const isCreditNote = doc.type === "credit_note";
+	const canCredit =
+		!doc.archivedAt &&
+		isInvoice &&
+		doc.status !== "draft" &&
+		doc.status !== "cancelled" &&
+		balance.remaining > 0;
+	const toRefund = documentAmounts(doc).toRefund;
+
 
 	return (
 		// The document's actions, as a row of buttons on the right (its
@@ -187,7 +201,7 @@ export function DocumentActionRibbon({
 							className="zen-glow-teal gap-2 rounded-xl font-bold"
 						>
 							<Send size={18} variant="Bold" />
-							Mark as sent
+							{isCreditNote ? "Issue credit note" : "Mark as sent"}
 						</Button>
 					</>
 				) : null}
@@ -228,6 +242,34 @@ export function DocumentActionRibbon({
 				{/* An issued invoice that still owes: record what came in. */}
 				<RecordPaymentButton doc={doc} siblings={previousInvoices} />
 
+				{/* An issued credit note with money owed back: record it given back. */}
+				{isCreditNote && !doc.archivedAt && toRefund > 0 ? (
+					<RecordRefundButton creditNoteId={doc.id} creditNoteName={documentName(doc)} toRefund={toRefund} />
+				) : null}
+
+				{/* Take back part of an issued invoice: sessions that didn't happen, a discount. */}
+				{canCredit ? (
+					<>
+						<Button
+							onClick={() => setIsPortionOpen(true)}
+							disabled={isPending}
+							variant="outline"
+							className="gap-2 rounded-xl font-semibold"
+						>
+							<ReceiptMinus size={18} variant="Bulk" />
+							Credit note
+						</Button>
+						<InvoicePortionSheet
+							key={balance.remaining}
+							mode="credit"
+							quote={doc}
+							balance={balance}
+							open={isPortionOpen}
+							onOpenChange={setIsPortionOpen}
+						/>
+					</>
+				) : null}
+
 				{/* Retire action: drafts are deleted (irreversible);
 				    issued documents are archived (preserves audit trail). */}
 				{!doc.archivedAt && doc.status === "draft" ? (
@@ -242,7 +284,8 @@ export function DocumentActionRibbon({
 					</Button>
 				) : null}
 
-				{!doc.archivedAt && doc.status !== "draft" ? (
+				{/* An issued credit note is part of the books: it stays. */}
+				{!doc.archivedAt && doc.status !== "draft" && !isCreditNote ? (
 					<>
 						<Button
 							onClick={() => setIsArchiveOpen(true)}

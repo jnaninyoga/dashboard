@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { type LedgerEntry, type LedgerInvoice, paymentLedger } from "@/lib/domain/billing/payment-ledger";
 import { documentAmounts } from "@/lib/domain/billing/payments";
 import { formatMoney } from "@/lib/utils/currency";
@@ -5,7 +7,16 @@ import { formatDay, studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 import { type PaymentMethod } from "@/lib/validators/document";
 
-import { ArrowRotateLeft, Clock, Danger, MoneyRecive, ReceiptMinus, ReceiptText, TickCircle } from "iconsax-reactjs";
+import {
+	ArrowRotateLeft,
+	Clock,
+	Danger,
+	MoneyRecive,
+	MoneySend,
+	ReceiptMinus,
+	ReceiptText,
+	TickCircle,
+} from "iconsax-reactjs";
 
 import { DocumentSection } from "./document-section";
 import { PAYMENT_METHOD } from "./payment-methods";
@@ -20,13 +31,26 @@ const TONE = {
 	settled: "bg-success text-success-foreground",
 	warning: "bg-warning/12 text-warning",
 	destructive: "bg-destructive/10 text-destructive",
+	muted: "bg-muted text-muted-foreground",
 };
 
-function describe(entry: LedgerEntry) {
+const methodOf = (method: string | null) => (method ? PAYMENT_METHOD[method as PaymentMethod] : null);
+
+type Step = {
+	icon: React.ComponentType<{ size?: number; variant?: "Bold" | "Bulk" }>;
+	tone: string;
+	title: React.ReactNode;
+	detail: string;
+	amount: string | null;
+	amountTone: string;
+};
+
+function describe(entry: LedgerEntry, creditNote: boolean, credited: boolean): Step {
+	const left = (amount: number) => (amount > 0 ? `${formatMoney(amount)} left` : "nothing left");
 	switch (entry.kind) {
 		case "issued":
 			return {
-				icon: ReceiptText,
+				icon: creditNote ? ReceiptMinus : ReceiptText,
 				tone: TONE.primary,
 				title: "Issued",
 				detail: `${day(entry.date)}${entry.dueDate ? ` · due ${day(entry.dueDate)}` : ""}`,
@@ -34,15 +58,13 @@ function describe(entry: LedgerEntry) {
 				amountTone: "text-foreground",
 			};
 		case "payment": {
-			const method = entry.method ? PAYMENT_METHOD[entry.method as PaymentMethod] : null;
+			const method = methodOf(entry.method);
 			// An undone payment stays in the story, crossed out.
 			return {
 				icon: method?.icon ?? MoneyRecive,
-				tone: entry.reversedOn ? "bg-muted text-muted-foreground" : TONE.success,
+				tone: entry.reversedOn ? TONE.muted : TONE.success,
 				title: [method?.label ?? "Payment", entry.reference].filter(Boolean).join(" · "),
-				detail: entry.reversedOn
-					? `${day(entry.date)} · undone ${day(entry.reversedOn)}`
-					: `${day(entry.date)} · ${entry.left > 0 ? `${formatMoney(entry.left)} left` : "nothing left"}`,
+				detail: entry.reversedOn ? `${day(entry.date)} · undone ${day(entry.reversedOn)}` : `${day(entry.date)} · ${left(entry.left)}`,
 				amount: `− ${formatMoney(entry.amount)}`,
 				amountTone: entry.reversedOn ? "text-muted-foreground line-through" : "text-success",
 			};
@@ -56,25 +78,56 @@ function describe(entry: LedgerEntry) {
 				amount: `+ ${formatMoney(entry.amount)}`,
 				amountTone: "text-destructive",
 			};
-		case "credit":
+		case "credit": {
+			const label = entry.reason ?? (creditNote ? "Set against its invoice" : "Credit note");
 			return {
 				icon: ReceiptMinus,
 				tone: TONE.primary,
-				title: entry.reason ?? "Credit note",
-				detail: `${day(entry.date)} · ${entry.left > 0 ? `${formatMoney(entry.left)} left` : "nothing left"}`,
+				// The other document is a tap away: the credit note, or its invoice.
+				title: entry.counterpartId ? (
+					<Link href={`/b2b/documents/${entry.counterpartId}`} className="hover:text-primary hover:underline">
+						{label}
+					</Link>
+				) : (
+					label
+				),
+				detail: `${day(entry.date)} · ${creditNote ? (entry.left > 0 ? `${formatMoney(entry.left)} to refund` : "nothing to refund") : left(entry.left)}`,
 				amount: `− ${formatMoney(entry.amount)}`,
 				amountTone: "text-primary",
 			};
+		}
+		case "refund": {
+			const method = methodOf(entry.method);
+			return {
+				icon: method?.icon ?? MoneySend,
+				tone: TONE.success,
+				title: [method ? `Refund by ${method.label.toLowerCase()}` : "Refund", entry.reference].filter(Boolean).join(" · "),
+				detail: `${day(entry.date)} · ${entry.left > 0 ? `${formatMoney(entry.left)} still to refund` : "nothing left to refund"}`,
+				amount: `− ${formatMoney(entry.amount)}`,
+				amountTone: "text-success",
+			};
+		}
 		case "settled":
 			return {
 				icon: TickCircle,
 				tone: TONE.settled,
-				title: "Paid in full",
+				// Part of it cancelled by a credit note: settled, not all paid.
+				title: creditNote || credited ? "Settled" : "Paid in full",
 				detail: entry.date ? day(entry.date) : "",
 				amount: null,
 				amountTone: "",
 			};
 		case "open":
+			if (creditNote) {
+				return {
+					icon: MoneySend,
+					tone: TONE.warning,
+					title: `${formatMoney(entry.left)} to refund`,
+					detail: "Already paid on its invoice: give it back to the partner",
+					amount: null,
+					amountTone: "",
+				};
+			}
 			return {
 				icon: entry.overdue ? Danger : Clock,
 				tone: entry.overdue ? TONE.destructive : TONE.warning,
@@ -87,36 +140,41 @@ function describe(entry: LedgerEntry) {
 }
 
 /**
- * An issued invoice's payments as its story, oldest first: issued, each
+ * An issued invoice's money as its story, oldest first: issued, each
  * payment with what it left (one that didn't go through can be undone: it
  * stays, crossed out, and is owed again), credit notes set against it, then
- * paid in full, or what's still owed (red once overdue).
+ * paid in full, or what's still owed (red once overdue). A credit note
+ * tells its own: set against its invoice, refunds, settled or to refund.
  */
 export function InvoicePayments({
 	invoice,
 	action,
 }: {
 	invoice: LedgerInvoice;
-	/** Offered where the story ends while money is owed ("Record payment"). */
+	/** Offered where the story ends while money is owed ("Record payment", "Record refund"). */
 	action?: React.ReactNode;
 }) {
+	const creditNote = invoice.type === "credit_note";
 	const entries = paymentLedger(invoice, studioDateString());
-	const { total, paid } = documentAmounts(invoice);
+	const { total, paid, credited, toRefund } = documentAmounts(invoice);
+	const summary = creditNote
+		? toRefund > 0
+			? `${formatMoney(toRefund)} to refund`
+			: "Settled"
+		: paid > 0 || credited > 0
+			? `${formatMoney(paid)} of ${formatMoney(total)} paid${credited > 0 ? `, ${formatMoney(credited)} credited` : ""}`
+			: "No payment yet";
 
 	return (
 		<DocumentSection
 			id="payments"
-			title="Payments"
-			aside={
-				<p className="text-muted-foreground text-sm tabular-nums">
-					{paid > 0 ? `${formatMoney(paid)} of ${formatMoney(total)} paid` : "No payment yet"}
-				</p>
-			}
+			title={creditNote ? "Settlement" : "Payments"}
+			aside={<p className="text-muted-foreground text-sm tabular-nums">{summary}</p>}
 			className="animate-slide-up delay-150"
 		>
 			<ol className="bg-card rounded-2xl border p-2 shadow-sm sm:p-3">
 				{entries.map((entry, index) => {
-					const { icon: EntryIcon, tone, title, detail, amount, amountTone } = describe(entry);
+					const { icon: EntryIcon, tone, title, detail, amount, amountTone } = describe(entry, creditNote, credited > 0);
 					const last = index === entries.length - 1;
 					return (
 						<li
@@ -141,7 +199,7 @@ export function InvoicePayments({
 										<ReversePaymentButton
 											paymentId={entry.id}
 											isCheque={entry.method === "cheque"}
-											summary={`${entry.method ? PAYMENT_METHOD[entry.method as PaymentMethod].label : "Payment"} of ${formatMoney(entry.amount)} on ${day(entry.date)}`}
+											summary={`${methodOf(entry.method)?.label ?? "Payment"} of ${formatMoney(entry.amount)} on ${day(entry.date)}`}
 										/>
 									) : null}
 								</span>
