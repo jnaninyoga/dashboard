@@ -64,11 +64,11 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
   - Files: `lib/actions/schedule/events.ts`, `lib/actions/schedule/attendance.ts`, `lib/domain/schedule/cancel.ts` (new) and its test.
 
 ### Checkpoint C
-- [ ] Tests pass; the migration and the schema-drift check are clean. Push; the migration is listed as an owner step in the PR.
+- [x] Tests pass; the migration and the schema-drift check are clean. Push; the migration is listed as an owner step in the PR.
 
 ## Phase 4: feed, Schedule, week
 
-- [ ] **Task 8: Session feed for a range of studio days** (M)
+- [x] **Task 8: Session feed for a range of studio days** (M)
   - Acceptance:
     - Week helpers (Monday of a date, the seven days, the range as instants) are tested across the Ramadan changes and a year boundary.
     - `getEventsBetween` makes one Google request. The feed merges Google events, our cancelled sessions and check-in counts (cancelled check-ins excluded).

@@ -1,4 +1,5 @@
 import { CalendarEvent } from "@/lib/types";
+import { addDays, studioDateString, studioDaysRange } from "@/lib/utils/time";
 
 import { calendar_v3 } from "googleapis";
 
@@ -125,46 +126,12 @@ export async function createStudioEvent(
 }
 
 /**
- * Fetches today's events from the primary calendar to display on the dashboard.
+ * Every event between two instants, in one request: what the Schedule, the
+ * week strip and today's agenda read. Recurring events come as their
+ * single occurrences, in time order.
  */
-export async function getTodayEvents(accessToken: string): Promise<CalendarEvent[]> {
+export async function getEventsBetween(accessToken: string, start: Date, end: Date): Promise<CalendarEvent[]> {
 	const google = getGoogleClient(accessToken);
-
-	// Get start and end of "today" in local time
-	const todayStart = new Date();
-	todayStart.setHours(0, 0, 0, 0);
-
-	const todayEnd = new Date();
-	todayEnd.setHours(23, 59, 59, 999);
-
-	try {
-		const response = await google.calendar.events.list({
-			calendarId: "primary",
-			timeMin: todayStart.toISOString(),
-			timeMax: todayEnd.toISOString(),
-			singleEvents: true,
-			orderBy: "startTime",
-		});
-
-		return response.data.items || [];
-	} catch (error) {
-		console.error("Error fetching today's events:", error);
-		throw new Error("Failed to fetch events from Google Calendar.");
-	}
-}
-
-/**
- * Fetches upcoming events from the primary calendar.
- */
-export async function getUpcomingEvents(accessToken: string, daysForward = 7): Promise<CalendarEvent[]> {
-	const google = getGoogleClient(accessToken);
-
-	const start = new Date();
-	start.setHours(0, 0, 0, 0);
-
-	const end = new Date();
-	end.setDate(end.getDate() + daysForward);
-	end.setHours(23, 59, 59, 999);
 
 	try {
 		const response = await google.calendar.events.list({
@@ -173,13 +140,29 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7): P
 			timeMax: end.toISOString(),
 			singleEvents: true,
 			orderBy: "startTime",
+			// A week is far below this; one page means one request.
+			maxResults: 250,
 		});
 
 		return response.data.items || [];
 	} catch (error) {
-		console.error("Error fetching upcoming events:", error);
+		console.error("Error fetching events:", error);
 		throw new Error("Failed to fetch events from Google Calendar.");
 	}
+}
+
+/** Today's events, today being the studio's day in Marrakech (not the server's). */
+export async function getTodayEvents(accessToken: string): Promise<CalendarEvent[]> {
+	const today = studioDateString();
+	const { start, end } = studioDaysRange(today, today);
+	return getEventsBetween(accessToken, start, end);
+}
+
+/** Events from the start of the studio's today through `daysForward` more days. */
+export async function getUpcomingEvents(accessToken: string, daysForward = 7): Promise<CalendarEvent[]> {
+	const today = studioDateString();
+	const { start, end } = studioDaysRange(today, addDays(today, daysForward));
+	return getEventsBetween(accessToken, start, end);
 }
 
 /**

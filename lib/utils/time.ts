@@ -90,6 +90,39 @@ export function weekdayOf(date: string): number {
 	return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 }
 
+/** A "YYYY-MM-DD" date plus `days` (calendar arithmetic: no clock, no zone). */
+export function addDays(date: string, days: number): string {
+	const [year, month, day] = date.split("-").map(Number);
+	const t = new Date(Date.UTC(year, month - 1, day + days));
+	return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
+}
+
+/** The Monday of the week holding `date`: the studio's weeks run Monday to Sunday. */
+export function weekStart(date: string): string {
+	return addDays(date, -((weekdayOf(date) + 6) % 7));
+}
+
+/** The seven days of the week that starts on `monday`. */
+export function weekDays(monday: string): string[] {
+	return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
+}
+
+/**
+ * The instants a run of studio days covers: from the first day's midnight to
+ * the midnight after the last, in Marrakech (a week with a clock change is
+ * an hour longer or shorter).
+ */
+export function studioDaysRange(first: string, last: string): { start: Date; end: Date } {
+	return { start: fromStudioTime(first, "00:00"), end: fromStudioTime(addDays(last, 1), "00:00") };
+}
+
+/** A `?week=` value as the Monday of the week it names; anything else means this week. */
+export function weekOf(value: string | null | undefined, now: Date = new Date()): string {
+	// A real day only: "2026-02-30" would roll over into March.
+	if (value && /^\d{4}-\d{2}-\d{2}$/.test(value) && addDays(value, 0) === value) return weekStart(value);
+	return weekStart(studioDateString(now));
+}
+
 export type DayPeriod = "morning" | "afternoon" | "evening" | "night";
 
 export function getDayPeriod(studioTime: Date): DayPeriod {
