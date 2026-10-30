@@ -23,7 +23,6 @@ import { type B2BDocumentStatus } from "@/lib/types/b2b";
 
 import {
 	Archive,
-	Link1,
 	MoneySend,
 	ReceiptAdd,
 	Send,
@@ -168,39 +167,10 @@ export function DocumentActionRibbon({
 	);
 
 	return (
-		<div className="animate-slide-up bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
-			{/* Linked Documents / Relations (Left Side) */}
-			{/* An invoice links to its quotation; a quotation's invoices are
-			    listed in its Invoicing section. */}
-			{doc.parent ? (
-				<div className="lg:border/50 flex flex-wrap items-center gap-4 lg:mr-2 lg:border-r lg:pr-5">
-					<div className="bg-primary/15 text-primary border-primary/20 zen-teal-glow flex size-9 shrink-0 items-center justify-center rounded-full border">
-						<Link1 size={18} variant="Bulk" />
-					</div>
-					<div className="flex flex-wrap gap-x-5 gap-y-2">
-						{doc.parent ? (
-							<div className="flex flex-col">
-								<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-									Source Quote
-								</span>
-								<Link href={`/b2b/documents/${doc.parent.id}`}>
-									<Badge
-										variant="outline"
-										className="text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200"
-									>
-										{documentName(doc.parent)}
-									</Badge>
-								</Link>
-							</div>
-						) : null}
-					</div>
-				</div>
-			) : null}
-
-			<div className="flex-1" />
-
-			{/* Actions (Right Side - Stable CTA) */}
-			<div className="flex flex-wrap items-center gap-3">
+		// The document's actions, as a row of buttons on the right (its
+		// quotation and payments have their own places on the page).
+		<div className="animate-slide-up flex flex-wrap items-center justify-end gap-3 delay-100">
+			<div className="flex flex-wrap items-center justify-end gap-3">
 				<PDFDownloadBtn doc={doc} profile={profile} />
 
 				{doc.archivedAt ? (

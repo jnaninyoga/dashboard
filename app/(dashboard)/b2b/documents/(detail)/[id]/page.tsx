@@ -2,11 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
-import { ChainStrip } from "@/components/b2b/documents/chain-strip";
 import { DocumentSection } from "@/components/b2b/documents/document-section";
 import { DocumentTotals } from "@/components/b2b/documents/document-totals";
 import { DraftSaveProvider } from "@/components/b2b/documents/draft-save";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
+import { HeroAmount } from "@/components/b2b/documents/hero-amount";
+import { InvoiceOrigin } from "@/components/b2b/documents/invoice-origin";
+import { InvoicePayments } from "@/components/b2b/documents/invoice-payments";
 import { DocumentNotices, NoticesProvider } from "@/components/b2b/documents/notices";
 import { phoneLine } from "@/components/b2b/documents/phone-line";
 import { QuoteInvoicing } from "@/components/b2b/documents/quote-invoicing";
@@ -24,7 +26,7 @@ import { getDocumentByIdAction } from "@/lib/actions/b2b/documents";
 import { getBusinessProfileAction } from "@/lib/actions/business-profile";
 import { documentName } from "@/lib/domain/billing/document-name";
 import { displayStatus } from "@/lib/domain/billing/payments";
-import { quoteBalance } from "@/lib/domain/billing/quote-billing";
+import { quoteTape } from "@/lib/domain/billing/quote-tape";
 import {
 	type B2BDocumentLine,
 	type DocumentWithRelations,
@@ -69,12 +71,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 	// Financial Calculations
 	const isQuote = document.type === "quote";
-	const currentTotal = parseFloat(document.totalAmount);
-	const amountPaid = (document.payments || []).reduce(
-		(sum, p) => sum + parseFloat(p.amount),
-		0,
-	);
-	const amountDue = currentTotal - amountPaid;
+	const today = studioDateString();
 
 	return (
 		// A draft's lines and notes save themselves; its actions wait for them.
@@ -121,7 +118,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 									{documentName(document)}
 								</h1>
 								<DocumentStatusBadge
-									status={displayStatus(document, studioDateString())}
+									status={displayStatus(document, today)}
 									className="rounded-lg"
 								/>
 							</div>
@@ -181,41 +178,15 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 					</div>
 				</div>
 
-				<div className="relative z-10 flex flex-col justify-end text-right">
-					<span className="text-primary text-[10px] font-black tracking-widest uppercase opacity-40">
-						{isQuote
-							? "Quoted Amount"
-							: amountPaid > 0
-								? "Balance Due"
-								: "Invoice Total"}
-					</span>
-
-					{amountPaid > 0 && !isQuote ? (
-						<div className="flex flex-col">
-							<div className="text-primary/30 font-heading decoration-primary/20 text-2xl font-black tabular-nums line-through decoration-2">
-								{formatAmount(currentTotal)}
-								<span className="ml-2 text-sm font-bold">MAD</span>
-							</div>
-							<div className="text-primary font-heading zen-teal-glow text-4xl font-black tabular-nums">
-								{formatAmount(currentTotal - amountPaid)}
-								<span className="ml-2 text-base font-bold opacity-60">MAD</span>
-							</div>
-						</div>
-					) : (
-						<div className="text-primary font-heading zen-teal-glow text-4xl font-black tabular-nums">
-							{formatAmount(currentTotal)}
-							<span className="ml-2 text-base font-bold opacity-60">MAD</span>
-						</div>
-					)}
-				</div>
+				<HeroAmount doc={document} />
 			</div>
 
-			{/* Backorder chain strip (only when this invoice is part of a multi-invoice chain) */}
-			{chainInvoices.length > 1 ? (
-				<ChainStrip
-					invoices={chainInvoices}
-					currentDocumentId={document.id}
-					partnerName={document.partner?.companyName ?? null}
+			{/* An invoice's quotation: its tape, this invoice standing out. */}
+			{!isQuote && document.parent ? (
+				<InvoiceOrigin
+					invoiceId={document.id}
+					quote={document.parent}
+					tape={quoteTape(document.parent.totalAmount, chainInvoices, today)}
 				/>
 			) : null}
 
@@ -228,10 +199,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 			{/* A quotation billed over time: what's invoiced, what's left. */}
 			{isQuote && document.children?.length ? (
-				<QuoteInvoicing
-					balance={quoteBalance(document.lines ?? [], document.children)}
-					invoices={document.children}
-				/>
+				<QuoteInvoicing tape={quoteTape(document.totalAmount, document.children, today)} />
 			) : null}
 
 			{/* Line Items Section */}
@@ -299,18 +267,15 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 
 					<div className="flex w-full justify-end">
 						<div className="w-full lg:max-w-md">
-							<DocumentTotals
-								document={document}
-								currentTotal={currentTotal}
-								amountPaid={amountPaid}
-								amountDue={amountDue}
-								isQuote={isQuote}
-							/>
+							<DocumentTotals document={document} isQuote={isQuote} />
 						</div>
 					</div>
 					</div>
 				</DocumentSection>
 			)}
+
+			{/* An issued invoice's payments, from issue to settled. */}
+			{!isQuote && document.status !== "draft" ? <InvoicePayments invoice={document} /> : null}
 
 			{/* Notes Section */}
 			<EditableNotes

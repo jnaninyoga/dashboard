@@ -43,14 +43,10 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MoneySend, TickCircle, Wallet3 } from "iconsax-reactjs";
 
+import { PAYMENT_METHOD } from "./payment-methods";
+
 export type PaymentQueueEntry = PaymentTarget;
 
-const METHOD_LABELS: Record<PaymentMethod, string> = {
-	transfer: "Transfer",
-	cheque: "Cheque",
-	cash: "Cash",
-	card: "Card",
-};
 
 // What to write down so the payment can be found on the bank statement.
 const REFERENCE_LABELS: Record<PaymentMethod, string> = {
@@ -276,7 +272,7 @@ export function RecordPaymentDialog({
 														onChange={() => field.onChange(method)}
 														className="sr-only"
 													/>
-													{METHOD_LABELS[method]}
+													{PAYMENT_METHOD[method].label}
 												</label>
 											))}
 										</div>
