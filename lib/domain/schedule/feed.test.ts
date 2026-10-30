@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { mergeFeed } from "./feed";
+import { dayCountLabel, type FeedSession, mergeFeed, summarize } from "./feed";
 
 const week = ["2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-20", "2026-06-21"];
 
@@ -21,18 +21,25 @@ describe("mergeFeed", () => {
 			checkIns: new Map([["a", { live: 3, cancelled: 0 }]]),
 		});
 		expect(feed).toHaveLength(1);
-		expect(feed[0]).toMatchObject({ id: "a", day: "2026-06-16", type: "private", status: "scheduled", checkIns: 3 });
+		expect(feed[0]).toMatchObject({
+			id: "a",
+			day: "2026-06-16",
+			type: "private",
+			status: "scheduled",
+			external: false,
+			checkIns: 3,
+		});
 		expect(feed[0].event?.id).toBe("a");
 	});
 
-	it("shows events made outside the dashboard, as group classes", () => {
+	it("shows events made outside the dashboard, marked as such", () => {
 		const [only] = mergeFeed({
 			days: week,
 			events: [event("ext", "2026-06-17T18:00:00+01:00", "2026-06-17T19:00:00+01:00")],
 			cancelled: [],
 			checkIns: new Map(),
 		});
-		expect(only).toMatchObject({ type: "group", checkIns: 0 });
+		expect(only).toMatchObject({ external: true, checkIns: 0 });
 	});
 
 	it("places a session on the studio's day, not UTC's", () => {
@@ -102,5 +109,32 @@ describe("mergeFeed", () => {
 		});
 		expect(feed).toHaveLength(1);
 		expect(feed[0].status).toBe("cancelled");
+	});
+});
+
+describe("summarize", () => {
+	const session = (status: "scheduled" | "cancelled", checkIns: number) =>
+		({ status, checkIns }) as Pick<FeedSession, "status" | "checkIns"> as FeedSession;
+
+	it("counts the sessions that happen and the clients who came, cancelled ones apart", () => {
+		expect(summarize([session("scheduled", 3), session("scheduled", 0), session("cancelled", 0)])).toEqual({
+			sessions: 2,
+			cancelled: 1,
+			checkIns: 3,
+		});
+	});
+
+	it("is all zeros for an empty day", () => {
+		expect(summarize([])).toEqual({ sessions: 0, cancelled: 0, checkIns: 0 });
+	});
+});
+
+describe("dayCountLabel", () => {
+	it("names a day's sessions the same way on Home and in the Schedule", () => {
+		expect(dayCountLabel({ sessions: 1, cancelled: 0 })).toBe("1 session");
+		expect(dayCountLabel({ sessions: 3, cancelled: 0 })).toBe("3 sessions");
+		expect(dayCountLabel({ sessions: 2, cancelled: 1 })).toBe("2 sessions, 1 cancelled");
+		expect(dayCountLabel({ sessions: 0, cancelled: 2 })).toBe("2 cancelled");
+		expect(dayCountLabel({ sessions: 0, cancelled: 0 })).toBe("No sessions");
 	});
 });

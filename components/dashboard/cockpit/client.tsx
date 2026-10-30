@@ -1,50 +1,37 @@
-"use client";
-
-import { useState } from "react";
-
 import { EventCard } from "@/components/schedule/events/card";
-import { NewSessionDialog } from "@/components/schedule/sessions/new-dialog";
-import { Button } from "@/components/ui/button";
-import { type CalendarEvent } from "@/lib/types/calendar";
+import { NewSessionButton } from "@/components/schedule/new-session-button";
+import { type FeedSession } from "@/lib/domain/schedule/feed";
 
-import { Add } from "iconsax-reactjs";
+/** Today's sessions, first on Home: the full cards, to check in or cancel. */
+export function CockpitClient({ sessions, error }: { sessions: FeedSession[]; error: string | null }) {
+	// Cancelled sessions live in the week below; Today is what still happens.
+	const today = sessions.filter((session) => session.status === "scheduled" && session.event);
 
-export function CockpitClient({ initialEvents, initialError }: { initialEvents: CalendarEvent[], initialError: string | null }) {
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+	return (
+		<div className="flex flex-col gap-5">
+			<div className="bg-card zen-shadow flex items-center justify-between gap-4 rounded-3xl p-5">
+				<div className="flex flex-col gap-0.5">
+					<h2 className="font-heading text-foreground text-lg font-semibold tracking-tight">Today&apos;s agenda</h2>
+					<span className="text-muted-foreground text-sm">
+						{today.length
+							? `${today.length} ${today.length === 1 ? "session" : "sessions"}`
+							: "No sessions today. Enjoy the downtime."}
+					</span>
+				</div>
+				<NewSessionButton />
+			</div>
 
-    return (
-        <div className="flex flex-col gap-5">
-            <div className="bg-card zen-shadow flex items-center justify-between rounded-3xl p-5">
-                <div className="flex flex-col gap-0.5">
-                    <h2 className="font-heading text-foreground text-lg font-semibold tracking-tight">Today&apos;s Agenda</h2>
-                    <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">{initialEvents.length} {initialEvents.length === 1 ? "session" : "sessions"}</span>
-                </div>
-                <Button onClick={() => setIsDialogOpen(true)} className="zen-glow-teal min-h-[48px] rounded-full px-6 font-semibold" variant="default">
-                    <Add className="h-5 w-5 text-white" variant="Outline" />
-                    New session
-                </Button>
-            </div>
-
-            {initialError ? (
-                <div className="zen-shadow bg-destructive/10 text-destructive rounded-2xl p-5 font-medium">
-                    {initialError}
-                </div>
-            ) : null}
-
-            <div className="flex flex-col gap-3">
-                {initialEvents.length === 0 && !initialError ? (
-                    <div className="bg-card zen-shadow rounded-3xl p-12 text-center">
-                        <p className="text-muted-foreground text-base font-medium">The studio is quiet today.</p>
-                        <p className="text-muted-foreground mt-2 text-xs">Enjoy the peaceful downtime, or add a private session.</p>
-                    </div>
-                ) : (
-                    initialEvents.map((event) => (
-                        <EventCard key={event.id} event={event} />
-                    ))
-                )}
-            </div>
-
-            <NewSessionDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-        </div>
-    );
+			{error ? (
+				<p role="alert" className="bg-card zen-shadow rounded-2xl border p-5 text-sm leading-relaxed">
+					{error}
+				</p>
+			) : today.length === 0 ? null : (
+				<div className="flex flex-col gap-3">
+					{today.map((session) => (
+						<EventCard key={session.id} event={session.event!} checkIns={session.checkIns} />
+					))}
+				</div>
+			)}
+		</div>
+	);
 }

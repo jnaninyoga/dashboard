@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
 import { EventCard, TYPE_META } from "@/components/schedule/events/card";
-import { type FeedSession } from "@/lib/domain/schedule/feed";
+import { dayCountLabel, type FeedSession, summarize } from "@/lib/domain/schedule/feed";
 import { formatDay, toStudioTime } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
@@ -21,7 +21,7 @@ const row =
 	"group focus-visible:ring-ring flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 transition-colors outline-none focus-visible:ring-2";
 
 /** A session that has ended (or an all-day event): when, what, who came; opens its history. */
-function SessionRow({ session, ended }: { session: FeedSession; ended: boolean }) {
+export function SessionRow({ session, ended }: { session: FeedSession; ended: boolean }) {
 	return (
 		<Link href={`/check-in/${session.id}`} className={cn(row, "bg-card/70 border-border/60 hover:bg-card")}>
 			<span className="text-muted-foreground w-[5.75rem] shrink-0 self-start pt-0.5 text-sm tabular-nums">
@@ -30,7 +30,7 @@ function SessionRow({ session, ended }: { session: FeedSession; ended: boolean }
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="text-foreground truncate font-medium">{session.title}</span>
 				<span className="text-muted-foreground text-sm">
-					{TYPE_META[session.type].label}
+					{session.external ? "Calendar event" : TYPE_META[session.type].label}
 					{session.checkIns ? (
 						<>
 							{" · "}
@@ -47,7 +47,7 @@ function SessionRow({ session, ended }: { session: FeedSession; ended: boolean }
 }
 
 /** A cancelled session stays in her history, with what it gave back. */
-function CancelledSessionRow({ session }: { session: FeedSession }) {
+export function CancelledSessionRow({ session }: { session: FeedSession }) {
 	return (
 		<Link
 			href={`/check-in/${session.id}`}
@@ -144,7 +144,7 @@ export function WeekList({
 								<span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-semibold">Today</span>
 							) : null}
 							<span className="text-muted-foreground ml-auto text-sm tabular-nums">
-								{list.length ? `${list.length} ${list.length === 1 ? "session" : "sessions"}` : "No sessions"}
+								{dayCountLabel(summarize(list))}
 							</span>
 						</h2>
 						{list.length === 0 ? null : (

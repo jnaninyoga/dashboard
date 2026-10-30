@@ -1,31 +1,33 @@
 import { CockpitClient } from "@/components/dashboard/cockpit/client";
 import { Greeting } from "@/components/dashboard/greeting";
-import { CalendarEvent } from "@/lib/types";
+import { WeekStrip } from "@/components/dashboard/week-strip";
+import { getSessionFeed } from "@/lib/actions/schedule/feed";
+import { requireUser } from "@/lib/auth/require-user";
+import { studioDateString, weekDays, weekStart } from "@/lib/utils/time";
 import { getUserProfile } from "@/lib/utils/user";
-import { getTodayEvents, withGoogle } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
 
 export default async function Home() {
-	const supabase = await createClient();
-	const { data: { user } } = await supabase.auth.getUser();
-	const firstName = user ? getUserProfile(user).firstName : "";
+	const user = await requireUser();
+	const firstName = getUserProfile(user).firstName;
 
-	let events: CalendarEvent[] = [];
-	let errorMsg: string | null = null;
-
-	if (user) {
-		const today = await withGoogle(user.id, "Google Calendar", getTodayEvents);
-		events = today.data ?? [];
-		errorMsg = today.error ?? null;
-	}
+	// One Google Calendar request feeds both today's agenda and the week.
+	const now = new Date();
+	const today = studioDateString(now);
+	const days = weekDays(weekStart(today));
+	const week = await getSessionFeed(days[0], days[6]);
+	const sessions = week.data ?? [];
 
 	return (
 		<div className="flex flex-1 flex-col gap-6">
 			<header className="flex flex-col items-start justify-between space-y-2 sm:flex-row sm:items-center sm:space-y-0">
-				<Greeting firstName={firstName} now={new Date().toISOString()} />
+				<Greeting firstName={firstName} now={now.toISOString()} />
 			</header>
 
-			<CockpitClient initialEvents={events} initialError={errorMsg} />
+			<CockpitClient sessions={sessions.filter((session) => session.day === today)} error={week.error ?? null} />
+
+			{week.error === undefined ? (
+				<WeekStrip days={days} sessions={sessions} today={today} now={now.toISOString()} />
+			) : null}
 		</div>
 	);
 }

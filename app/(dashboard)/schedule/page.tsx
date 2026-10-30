@@ -19,7 +19,8 @@ export default async function SchedulePage({
 	const type = SESSION_TYPES.some((t) => t.value === params.type) ? (params.type as SessionType) : undefined;
 
 	const feed = await getSessionFeed(days[0], days[6]);
-	const sessions = (feed.data ?? []).filter((session) => !type || session.type === type);
+	// A type narrows to the studio's own sessions of that kind.
+	const sessions = (feed.data ?? []).filter((session) => !type || (session.type === type && !session.external));
 
 	return (
 		<>

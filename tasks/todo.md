@@ -80,10 +80,10 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
   - Verify: browser at 390 and 1366, the back button, a past week with check-ins, Google unavailable.
   - Files: `app/(dashboard)/schedule/page.tsx`, `components/schedule/client.tsx`, `components/schedule/week-nav.tsx` (new).
 
-- [ ] **Task 10: This week on the dashboard** (M)
+- [x] **Task 10: This week on the dashboard** (M)
   - Acceptance: spec criterion 5. Today's agenda uses the studio day. The seven-day strip shows sessions and check-ins per day and matches Schedule for the same week. Tapping a day lists its sessions; there is a summary line and a link to Schedule.
   - Verify: browser on a week with sessions; counts compared with Schedule.
   - Files: `app/(dashboard)/page.tsx`, `components/dashboard/week-strip.tsx` (new), `components/dashboard/cockpit/client.tsx`.
 
 ### Checkpoint D
-- [ ] Every success criterion in the spec is met; tests, build and audit pass. Owner review, push.
+- [x] Every success criterion in the spec is met; tests, build and audit pass. Push. Owner review pending.

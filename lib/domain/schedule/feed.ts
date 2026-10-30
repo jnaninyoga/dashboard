@@ -20,6 +20,8 @@ export type FeedSession = {
 	/** The studio's calendar day ("YYYY-MM-DD") the session starts on. */
 	day: string;
 	status: "scheduled" | "cancelled";
+	/** Made outside the dashboard (no studio type): shown, but not a class to check into. */
+	external: boolean;
 	/** Clients who came (check-ins of a cancelled session don't count). */
 	checkIns: number;
 	/** Credits given back when the session was cancelled. */
@@ -59,14 +61,16 @@ export function mergeFeed({
 		const end = instantOf(event.end) ?? start;
 		if (!event.id || !start || !end) continue;
 		const type = event.extendedProperties?.private?.jnaninEventType;
+		const studioType = type && TYPES.includes(type) ? (type as SessionType) : null;
 		sessions.set(event.id, {
 			id: event.id,
 			title: event.summary || "Session",
-			type: type && TYPES.includes(type) ? (type as SessionType) : "group",
+			type: studioType ?? "group",
 			start: start.toISOString(),
 			end: end.toISOString(),
 			day: event.start?.date ?? studioDateString(start),
 			status: "scheduled",
+			external: !studioType,
 			checkIns: checkIns.get(event.id)?.live ?? 0,
 			refunded: 0,
 			cancelReason: null,
@@ -84,6 +88,7 @@ export function mergeFeed({
 			end: session.endsAt.toISOString(),
 			day: studioDateString(session.startsAt),
 			status: "cancelled",
+			external: false,
 			checkIns: 0,
 			refunded: checkIns.get(session.googleEventId)?.cancelled ?? 0,
 			cancelReason: session.cancelReason,
@@ -94,4 +99,28 @@ export function mergeFeed({
 	return [...sessions.values()]
 		.filter((session) => wanted.has(session.day))
 		.sort((a, b) => a.start.localeCompare(b.start));
+}
+
+/** What a day or a week holds: the sessions that happen, the cancelled ones, the clients who came. */
+export function summarize(sessions: Pick<FeedSession, "status" | "checkIns">[]) {
+	let live = 0;
+	let cancelled = 0;
+	let checkIns = 0;
+	for (const session of sessions) {
+		if (session.status === "cancelled") cancelled++;
+		else {
+			live++;
+			checkIns += session.checkIns;
+		}
+	}
+	return { sessions: live, cancelled, checkIns };
+}
+
+/** A day's sessions in words, the same on Home and in the Schedule. */
+export function dayCountLabel({ sessions, cancelled }: { sessions: number; cancelled: number }) {
+	const parts = [
+		sessions ? `${sessions} ${sessions === 1 ? "session" : "sessions"}` : null,
+		cancelled ? `${cancelled} cancelled` : null,
+	].filter(Boolean);
+	return parts.length ? parts.join(", ") : "No sessions";
 }

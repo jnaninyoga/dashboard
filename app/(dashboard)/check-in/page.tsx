@@ -1,27 +1,15 @@
-import { redirect } from "next/navigation";
-
 import { CockpitClient } from "@/components/dashboard/cockpit/client";
-import { CalendarEvent } from "@/lib/types";
-import { getTodayEvents, withGoogle } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
+import { getSessionFeed } from "@/lib/actions/schedule/feed";
+import { studioDateString } from "@/lib/utils/time";
 
 export default async function CheckInIndexPage() {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        redirect("/login");
-    }
-
-    const today = await withGoogle(user.id, "Google Calendar", getTodayEvents);
+    const today = studioDateString();
+    const feed = await getSessionFeed(today, today);
     // Check-in only applies to in-studio sessions (group, private). Off-site
     // b2b/outdoor events are managed in Google Calendar and have no check-in
     // workflow, so we filter them out of the portal to avoid confusion.
-    const events: CalendarEvent[] = (today.data ?? []).filter((e) => {
-        const type = e.extendedProperties?.private?.jnaninEventType;
-        return type === "group" || type === "private";
-    });
-    const errorMsg = today.error ?? null;
+    // Events made outside the dashboard aren't classes to check into either.
+    const sessions = (feed.data ?? []).filter((s) => !s.external && (s.type === "group" || s.type === "private"));
 
     return (
         <>
@@ -30,7 +18,7 @@ export default async function CheckInIndexPage() {
                 <p className="text-md text-muted-foreground">Select a group or private studio session from today to manage client attendance.</p>
             </header>
 
-            <CockpitClient initialEvents={events} initialError={errorMsg} />
+            <CockpitClient sessions={sessions} error={feed.error ?? null} />
         </>
     );
 }
