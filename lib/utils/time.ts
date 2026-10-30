@@ -90,6 +90,17 @@ export function weekdayOf(date: string): number {
 	return new Date(Date.UTC(year, month - 1, day)).getUTCDay();
 }
 
+/**
+ * The wall-clock date and time written in an RFC 3339 string, as Google
+ * Calendar returns them when asked for the studio's zone. Google's zone
+ * rules are always current; a server's can lag (an old Node still puts
+ * Morocco on UTC+1), so a Google time is read as written, never converted.
+ */
+export function wallClockOf(dateTime: string | null | undefined): { date: string; time: string } | null {
+	const match = dateTime?.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+	return match ? { date: match[1], time: match[2] } : null;
+}
+
 /** A "YYYY-MM-DD" date plus `days` (calendar arithmetic: no clock, no zone). */
 export function addDays(date: string, days: number): string {
 	const [year, month, day] = date.split("-").map(Number);

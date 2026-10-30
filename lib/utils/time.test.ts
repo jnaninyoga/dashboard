@@ -12,6 +12,7 @@ import {
 	studioIsoString,
 	studioMonthStart,
 	toStudioTime,
+	wallClockOf,
 	weekdayOf,
 	weekDays,
 	weekOf,
@@ -151,5 +152,18 @@ describe("formatDay", () => {
 	it("names a calendar day the same in every zone", () => {
 		expect(formatDay("2026-10-29", { weekday: "long", day: "numeric", month: "long" })).toBe("Thursday 29 October");
 		expect(formatDay("2027-01-01", { day: "numeric", month: "short", year: "numeric" })).toBe("1 Jan 2027");
+	});
+});
+
+describe("wallClockOf", () => {
+	it("reads the date and time Google wrote, with no zone data of our own", () => {
+		// Google answers in the zone we ask for (Africa/Casablanca), with current rules.
+		expect(wallClockOf("2026-10-31T10:00:00+00:00")).toEqual({ date: "2026-10-31", time: "10:00" });
+		expect(wallClockOf("2026-06-16T00:30:00+01:00")).toEqual({ date: "2026-06-16", time: "00:30" });
+	});
+
+	it("gives nothing for an all-day date or a malformed string", () => {
+		expect(wallClockOf("2026-10-31")).toBeNull();
+		expect(wallClockOf(undefined)).toBeNull();
 	});
 });

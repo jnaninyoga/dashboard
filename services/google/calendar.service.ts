@@ -1,5 +1,5 @@
 import { CalendarEvent } from "@/lib/types";
-import { addDays, studioDateString, studioDaysRange } from "@/lib/utils/time";
+import { addDays, STUDIO_TIME_ZONE, studioDateString, studioDaysRange } from "@/lib/utils/time";
 
 import { calendar_v3 } from "googleapis";
 
@@ -142,6 +142,9 @@ export async function getEventsBetween(accessToken: string, start: Date, end: Da
 			orderBy: "startTime",
 			// A week is far below this; one page means one request.
 			maxResults: 250,
+			// Times come back as the studio's wall clock, placed by Google's
+			// always-current zone rules (see wallClockOf).
+			timeZone: STUDIO_TIME_ZONE,
 		});
 
 		return response.data.items || [];
@@ -200,6 +203,7 @@ export async function getEventById(accessToken: string, eventId: string): Promis
 		const response = await google.calendar.events.get({
 			calendarId: "primary",
 			eventId: eventId,
+			timeZone: STUDIO_TIME_ZONE,
 		});
 
 		return response.data;

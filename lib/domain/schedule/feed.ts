@@ -4,7 +4,7 @@
 // and Google calls so the rules are tested on their own.
 
 import { type CalendarEvent } from "@/lib/types";
-import { fromStudioTime, studioDateString } from "@/lib/utils/time";
+import { fromStudioTime, studioDateString, toStudioTime, wallClockOf } from "@/lib/utils/time";
 import { type StudioSession } from "@/services/database/schema";
 
 export type SessionType = StudioSession["type"];
@@ -19,6 +19,9 @@ export type FeedSession = {
 	end: string;
 	/** The studio's calendar day ("YYYY-MM-DD") the session starts on. */
 	day: string;
+	/** Start and end on the studio's clock ("HH:mm"); null for an all-day event. */
+	startTime: string | null;
+	endTime: string | null;
 	status: "scheduled" | "cancelled";
 	/** Made outside the dashboard (no studio type): shown, but not a class to check into. */
 	external: boolean;
@@ -32,6 +35,13 @@ export type FeedSession = {
 };
 
 const TYPES: readonly string[] = ["group", "private", "outdoor", "b2b"];
+
+const pad = (n: number) => String(n).padStart(2, "0");
+/** "HH:mm" of an instant on the studio's clock, from our own zone data (our records only). */
+const clockOf = (instant: Date) => {
+	const t = toStudioTime(instant);
+	return `${pad(t.getHours())}:${pad(t.getMinutes())}`;
+};
 
 /** An event's start or end as an instant; an all-day event starts at the studio's midnight. */
 function instantOf(time: CalendarEvent["start"]): Date | null {
@@ -62,13 +72,18 @@ export function mergeFeed({
 		if (!event.id || !start || !end) continue;
 		const type = event.extendedProperties?.private?.jnaninEventType;
 		const studioType = type && TYPES.includes(type) ? (type as SessionType) : null;
+		// Google's own wall clock (we ask for the studio's zone): always current.
+		const startWall = wallClockOf(event.start?.dateTime);
+		const endWall = wallClockOf(event.end?.dateTime);
 		sessions.set(event.id, {
 			id: event.id,
 			title: event.summary || "Session",
 			type: studioType ?? "group",
 			start: start.toISOString(),
 			end: end.toISOString(),
-			day: event.start?.date ?? studioDateString(start),
+			day: startWall?.date ?? event.start?.date ?? studioDateString(start),
+			startTime: startWall?.time ?? null,
+			endTime: endWall?.time ?? null,
 			status: "scheduled",
 			external: !studioType,
 			checkIns: checkIns.get(event.id)?.live ?? 0,
@@ -87,6 +102,8 @@ export function mergeFeed({
 			start: session.startsAt.toISOString(),
 			end: session.endsAt.toISOString(),
 			day: studioDateString(session.startsAt),
+			startTime: clockOf(session.startsAt),
+			endTime: clockOf(session.endsAt),
 			status: "cancelled",
 			external: false,
 			checkIns: 0,

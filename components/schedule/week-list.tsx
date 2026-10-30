@@ -3,19 +3,16 @@ import Link from "next/link";
 import { EmptyState } from "@/components/empty-state";
 import { EventCard, TYPE_META } from "@/components/schedule/events/card";
 import { dayCountLabel, type FeedSession, summarize } from "@/lib/domain/schedule/feed";
-import { formatDay, toStudioTime } from "@/lib/utils/time";
+import { formatDay } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
-import { format } from "date-fns";
 import { ArrowRight2, Calendar } from "iconsax-reactjs";
 
 import { NewSessionButton } from "./new-session-button";
 
-/** "09:00–10:00" on the studio's clock, or "All day" for a Google all-day event. */
+/** "09:00–10:00" on the studio's clock (as Google placed it), or "All day". */
 const timeRange = (session: FeedSession) =>
-	session.event && !session.event.start?.dateTime
-		? "All day"
-		: `${format(toStudioTime(new Date(session.start)), "HH:mm")}–${format(toStudioTime(new Date(session.end)), "HH:mm")}`;
+	session.startTime && session.endTime ? `${session.startTime}–${session.endTime}` : "All day";
 
 const row =
 	"group focus-visible:ring-ring flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 transition-colors outline-none focus-visible:ring-2";

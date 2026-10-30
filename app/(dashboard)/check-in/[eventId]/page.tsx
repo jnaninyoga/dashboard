@@ -4,12 +4,21 @@ import { notFound, redirect } from "next/navigation";
 import { CheckInManager } from "@/components/schedule/check-in";
 import { getEventAttendanceAction } from "@/lib/actions/schedule/attendance";
 import { getStudioSession } from "@/lib/actions/schedule/feed";
-import { studioDateString, toStudioTime, weekStart } from "@/lib/utils/time";
+import { formatDay, studioDateString, toStudioTime, wallClockOf, weekStart } from "@/lib/utils/time";
 import { getEventById, type JnaninEventType, withGoogle } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 import { format } from "date-fns";
 import { ArrowLeft2,Calendar as CalendarIcon } from "iconsax-reactjs";
+
+/** "Wednesday 28 October 2026 at 18:00", from Google's wall clock when there is one. */
+function sessionWhen(googleDateTime: string | undefined, instant: Date) {
+    const wall = wallClockOf(googleDateTime);
+    if (wall) {
+        return `${formatDay(wall.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} at ${wall.time}`;
+    }
+    return format(toStudioTime(instant), "EEEE d MMMM yyyy 'at' HH:mm");
+}
 
 interface PageProps {
     params: Promise<{ eventId: string }>;
@@ -63,7 +72,8 @@ export default async function CheckInPage({ params }: PageProps) {
     // Past and cancelled sessions are read-only attendance history, so no one
     // backfills attendees after the fact.
     const isPast = cancelled || (endTime ? new Date(endTime) < new Date() : false);
-    const scheduleWeek = startTime ? `/schedule?week=${weekStart(studioDateString(new Date(startTime)))}` : "/schedule";
+    const sessionDay = wallClockOf(details?.start?.dateTime)?.date ?? (startTime ? studioDateString(new Date(startTime)) : null);
+    const scheduleWeek = sessionDay ? `/schedule?week=${weekStart(sessionDay)}` : "/schedule";
 
     // Fetch currently checked-in clients
     const attendanceRecords = await getEventAttendanceAction(eventId);
@@ -89,8 +99,8 @@ export default async function CheckInPage({ params }: PageProps) {
                     
                     <div className="text-primary-foreground mt-1 flex items-center gap-2 text-base font-medium">
                         <CalendarIcon className="h-5 w-5 shrink-0" variant="Outline" />
-                        {/* The studio's clock, whatever zone the server is in. */}
-                        {startTime ? format(toStudioTime(new Date(startTime)), "EEEE, MMMM d, yyyy 'at' HH:mm") : "Time TBA"}
+                        {/* The studio's clock: as Google wrote it, or from our record. */}
+                        {startTime ? sessionWhen(details?.start?.dateTime, new Date(startTime)) : "Time TBA"}
                     </div>
                 </div>
             </header>

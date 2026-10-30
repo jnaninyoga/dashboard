@@ -42,15 +42,26 @@ describe("mergeFeed", () => {
 		expect(only).toMatchObject({ external: true, checkIns: 0 });
 	});
 
-	it("places a session on the studio's day, not UTC's", () => {
+	it("takes the studio's day and time as Google wrote them (asked in Marrakech time)", () => {
 		// 23:30 UTC on the 15th is 00:30 on the 16th in Marrakech (UTC+1).
 		const [late] = mergeFeed({
 			days: week,
-			events: [event("n", "2026-06-15T23:30:00Z", "2026-06-16T00:30:00Z")],
+			events: [event("n", "2026-06-16T00:30:00+01:00", "2026-06-16T01:30:00+01:00")],
 			cancelled: [],
 			checkIns: new Map(),
 		});
-		expect(late.day).toBe("2026-06-16");
+		expect(late).toMatchObject({ day: "2026-06-16", startTime: "00:30", endTime: "01:30" });
+		expect(late.start).toBe("2026-06-15T23:30:00.000Z");
+	});
+
+	it("has no clock time for an all-day event", () => {
+		const [allDay] = mergeFeed({
+			days: week,
+			events: [{ id: "h", summary: "Holiday", start: { date: "2026-06-18" }, end: { date: "2026-06-19" } }],
+			cancelled: [],
+			checkIns: new Map(),
+		});
+		expect(allDay).toMatchObject({ day: "2026-06-18", startTime: null, endTime: null });
 	});
 
 	it("adds the cancelled sessions from our records, in time order, with the credits given back", () => {

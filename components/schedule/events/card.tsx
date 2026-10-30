@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { CalendarEvent } from "@/lib/types";
-import { toStudioTime } from "@/lib/utils/time";
+import { toStudioTime, wallClockOf } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
 import { format, isWithinInterval, parseISO, subMinutes } from "date-fns";
@@ -222,8 +222,9 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 				<div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm font-medium">
 					<span className="flex items-center">
 						<Clock className="mr-2 h-4 w-4" />
-						{/* The studio's clock, whatever zone renders this. */}
-						{format(toStudioTime(startTime), "HH:mm")} – {format(toStudioTime(endTime), "HH:mm")}
+						{/* The studio's clock as Google placed it; our zone data only as a fallback. */}
+						{wallClockOf(startIso)?.time ?? format(toStudioTime(startTime), "HH:mm")} –{" "}
+						{wallClockOf(endIso)?.time ?? format(toStudioTime(endTime), "HH:mm")}
 					</span>
 					{checkIns ? (
 						<span className="text-foreground flex items-center">
