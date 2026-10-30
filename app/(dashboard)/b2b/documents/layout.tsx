@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "B2B Documents — JnaninYoga",
+	title: "Documents — JnaninYoga",
 	description: "Manage your B2B documents, invoices, and quotes.",
 };
 

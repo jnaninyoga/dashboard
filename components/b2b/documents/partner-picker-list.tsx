@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { type B2BPartner } from "@/lib/types/b2b";
 
-import { Buildings, SearchNormal } from "iconsax-reactjs";
+import { ArrowRight2, Buildings, SearchNormal, Warning2 } from "iconsax-reactjs";
 
 export function PartnerPickerList({ partners }: { partners: B2BPartner[] }) {
 	const [query, setQuery] = useState("");
@@ -37,47 +37,43 @@ export function PartnerPickerList({ partners }: { partners: B2BPartner[] }) {
 					onChange={(e) => setQuery(e.target.value)}
 					autoFocus
 					placeholder="Search by company, ICE, or address…"
-					className="bg-secondary/5 focus-visible:ring-primary/20 h-11 rounded-xl border pl-10"
+					className="h-11 rounded-xl pl-10"
 				/>
 			</div>
 
 			{filtered.length === 0 ? (
-				<div className="border-secondary/10 bg-secondary/5 rounded-2xl border-2 border-dashed p-10 text-center">
+				<div className="border-border rounded-2xl border-2 border-dashed p-10 text-center">
 					<p className="text-muted-foreground text-sm">
-						No partners match{" "}
-						<span className="font-mono font-bold">&quot;{query}&quot;</span>.
+						No partner matches <span className="text-foreground font-medium">&ldquo;{query}&rdquo;</span>.
 					</p>
 				</div>
 			) : (
-				<ul className="divide-secondary/15 max-h-[60vh] divide-y overflow-y-auto">
+				<ul className="flex max-h-[60vh] flex-col gap-1 overflow-y-auto">
 					{filtered.map((p) => (
 						<li key={p.id}>
 							<Link
 								href={`/b2b/documents/new?partner=${p.id}`}
-								className="hover:bg-primary/5 group flex items-center justify-between rounded-xl px-3 py-3 transition-colors"
+								className="group hover:bg-muted/60 focus-visible:ring-ring flex min-h-16 items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors outline-none focus-visible:ring-2"
 							>
-								<div className="flex items-center gap-3">
-									<div className="bg-secondary/40 text-secondary-3 group-hover:bg-primary/10 group-hover:text-primary flex size-10 items-center justify-center rounded-xl transition-colors">
-										<Buildings size={18} variant="Bulk" />
-									</div>
-									<div className="flex flex-col">
-										<span className="text-foreground text-sm font-bold">
-											{p.companyName}
-										</span>
-										{p.taxId ? (
-											<span className="text-muted-foreground/60 font-mono text-[10px]">
-												ICE {p.taxId}
-											</span>
-										) : (
-											<span className="text-warning/70 font-mono text-[10px]">
-												ICE missing
-											</span>
-										)}
-									</div>
-								</div>
-								<span className="text-muted-foreground/40 group-hover:text-primary text-xs font-bold tracking-widest uppercase transition-colors">
-									Continue →
+								<span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+									<Buildings size={20} variant="Bulk" />
 								</span>
+								<span className="flex min-w-0 flex-1 flex-col">
+									<span className="text-foreground truncate font-semibold">{p.companyName}</span>
+									{p.taxId ? (
+										<span className="text-muted-foreground truncate text-sm tabular-nums">ICE {p.taxId}</span>
+									) : (
+										// Flagged: the partner's ICE (tax id) is printed on their documents.
+										<span className="text-warning flex items-center gap-1 text-sm">
+											<Warning2 size={14} variant="Bold" aria-hidden />
+											No ICE yet
+										</span>
+									)}
+								</span>
+								<ArrowRight2
+									size={18}
+									className="text-muted-foreground group-hover:text-primary shrink-0 transition-[color,translate] group-hover:translate-x-0.5"
+								/>
 							</Link>
 						</li>
 					))}

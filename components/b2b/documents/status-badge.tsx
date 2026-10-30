@@ -1,94 +1,42 @@
-import { ReactNode } from "react";
-
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/ui";
 
-import {
-	Clock,
-	CloseCircle,
-	Edit2,
-	MoneyTime,
-	ReceiptText,
-	TickCircle,
-} from "iconsax-reactjs";
+import { Clock, CloseCircle, Edit2, type Icon, MoneyTime, Send2, TickCircle, TickSquare } from "iconsax-reactjs";
 
-interface DocumentStatusBadgeProps {
-	status: string;
-	className?: string;
-}
+type Tone = "success" | "warning" | "info" | "primary" | "destructive" | "muted";
 
-type BadgeVariant =
-	| "default"
-	| "secondary"
-	| "destructive"
-	| "outline"
-	| "success"
-	| "info"
-	| "warning"
-	| "muted";
+// A document's status in the dashboard's chip language (like "Here today"):
+// a soft tint, sentence case, a small icon. Owing is amber, settled is green.
+const STATUS: Record<string, { label: string; tone: Tone; icon: Icon }> = {
+	draft: { label: "Draft", tone: "muted", icon: Edit2 },
+	sent: { label: "Sent", tone: "info", icon: Send2 },
+	accepted: { label: "Accepted", tone: "primary", icon: TickSquare },
+	unpaid: { label: "Unpaid", tone: "warning", icon: Clock },
+	partially_paid: { label: "Partly paid", tone: "warning", icon: MoneyTime },
+	paid: { label: "Paid", tone: "success", icon: TickCircle },
+	cancelled: { label: "Cancelled", tone: "destructive", icon: CloseCircle },
+};
 
-interface StatusProps {
-	variant: BadgeVariant;
-	icon: ReactNode;
-	label: string;
-}
+const TONES: Record<Tone, string> = {
+	success: "bg-success/10 text-success",
+	warning: "bg-warning/10 text-warning",
+	info: "bg-info/10 text-info",
+	primary: "bg-primary/10 text-primary",
+	destructive: "bg-destructive/10 text-destructive",
+	muted: "bg-muted text-muted-foreground",
+};
 
-export function DocumentStatusBadge({ status, className }: DocumentStatusBadgeProps) {
-	const getStatusProps = (s: string): StatusProps => {
-		switch (s.toLowerCase()) {
-			case "paid":
-				return {
-					variant: "success",
-					icon: <TickCircle size={14} variant="Bold" />,
-					label: "Paid",
-				};
-			case "unpaid":
-				return {
-					variant: "warning",
-					icon: <Clock size={14} variant="Bold" />,
-					label: "Unpaid",
-				};
-			case "partially_paid":
-			case "sent":
-				return {
-					variant: "info",
-					icon: s.toLowerCase() === "sent" ? <Clock size={14} variant="Bold" /> : <MoneyTime size={14} variant="Bold" />,
-					label: s.toLowerCase() === "sent" ? "Sent" : "Partially Paid",
-				};
-			case "accepted":
-				return {
-					variant: "default", // Primary color to distinguish from "Paid" green
-					icon: <ReceiptText size={14} variant="Bold" />,
-					label: "Accepted",
-				};
-			case "cancelled":
-				return {
-					variant: "destructive",
-					icon: <CloseCircle size={14} variant="Bold" />,
-					label: "Cancelled",
-				};
-			case "draft":
-			default:
-				return {
-					variant: "muted",
-					icon: <Edit2 size={14} variant="Bold" />,
-					label: "Draft",
-				};
-		}
-	};
-
-	const statusProps = getStatusProps(status);
-
+export function DocumentStatusBadge({ status, className }: { status: string; className?: string }) {
+	const { label, tone, icon: StatusIcon } = STATUS[status.toLowerCase()] ?? STATUS.draft;
 	return (
-		<Badge
-			variant={statusProps.variant}
+		<span
 			className={cn(
-				"flex w-fit items-center gap-1.5 px-2.5 py-1 text-[10px] font-bold tracking-widest uppercase transition-all",
-				className
+				"inline-flex h-7 w-fit shrink-0 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium whitespace-nowrap",
+				TONES[tone],
+				className,
 			)}
 		>
-			{statusProps.icon}
-			{statusProps.label}
-		</Badge>
+			<StatusIcon size={14} variant="Bold" aria-hidden />
+			{label}
+		</span>
 	);
 }

@@ -41,18 +41,18 @@ export default async function DocumentsPage(props: {
 			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
 				<header className="space-y-1">
 					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
-						B2B Documents
+						Documents
 					</h1>
 					<p className="text-md text-muted-foreground">
-						Unified management of all Quotations and Invoices.
+						Quotations and invoices for the hotels and companies you teach for.
 					</p>
 				</header>
-				<Link href="/b2b/documents/new">
-					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
-						<DocumentText className="mr-2 size-4" variant="Bold" />
-						New Quotation
-					</Button>
-				</Link>
+				<Button asChild className="zen-glow-teal min-h-11 gap-2 rounded-full px-5 font-semibold">
+					<Link href="/b2b/documents/new">
+						<DocumentText size={20} className="size-5" variant="Bold" />
+						New quotation
+					</Link>
+				</Button>
 			</div>
 
 			{due.amount > 0 && status !== OWED_FILTER ? (

@@ -3,7 +3,6 @@
 import { useCallback, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -90,7 +89,7 @@ export function DocumentFilters() {
 			</div>
 			{/* Three equal, shrinkable columns on phones (the row of fixed-width
 			    selects used to push the page sideways); a row from sm up. */}
-			<div className="grid grid-cols-3 gap-2 xl:flex xl:items-center">
+			<div className="grid grid-cols-[1fr_1fr_auto] gap-2 xl:flex xl:items-center">
 				<Select
 					defaultValue={searchParams.get("type") || "all"}
 					onValueChange={handleTypeChange}
@@ -100,15 +99,9 @@ export function DocumentFilters() {
 						<SelectValue placeholder="Type" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
-						<SelectItem value="all">
-							All Types
-						</SelectItem>
-						<SelectItem value="quote">
-							Quotes
-						</SelectItem>
-						<SelectItem value="invoice">
-							Invoices
-						</SelectItem>
+						<SelectItem value="all">All types</SelectItem>
+						<SelectItem value="quote">Quotations</SelectItem>
+						<SelectItem value="invoice">Invoices</SelectItem>
 					</SelectContent>
 				</Select>
 
@@ -121,9 +114,7 @@ export function DocumentFilters() {
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
-						<SelectItem value="all">
-							All Status
-						</SelectItem>
+						<SelectItem value="all">Any status</SelectItem>
 						<SelectItem value="owed">Owed (any unpaid invoice)</SelectItem>
 						<SelectItem value="draft">
 							<DocumentStatusBadge status="draft" />
@@ -158,17 +149,8 @@ export function DocumentFilters() {
 						<SelectValue placeholder="Backorder" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
-						<SelectItem value="all">
-							All Documents
-						</SelectItem>
-						<SelectItem value="true">
-							<Badge
-								variant="outline"
-								className="border-purple-500 px-2 py-0.5 text-[10px] font-bold tracking-widest text-purple-600 uppercase"
-							>
-								Backorders Only
-							</Badge>
-						</SelectItem>
+						<SelectItem value="all">All</SelectItem>
+						<SelectItem value="true">Backorders</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>

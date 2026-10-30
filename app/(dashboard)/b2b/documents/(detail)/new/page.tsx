@@ -55,7 +55,7 @@ async function PartnerPicker({ missing = false }: { missing?: boolean }) {
 					</div>
 					<div>
 						<h1 className="font-heading text-foreground text-2xl font-black tracking-tight">
-							New Quotation
+							New quotation
 						</h1>
 						<p className="text-muted-foreground text-sm">
 							{missing

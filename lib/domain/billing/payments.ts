@@ -100,3 +100,24 @@ export function owedSummary(invoices: InvoiceWithPayments[]): { amount: number; 
 		.filter((cents) => cents > 0);
 	return { amount: fromCents(owing.reduce((a, b) => a + b, 0)), count: owing.length };
 }
+
+/**
+ * A document's money at a glance: its total, what's been paid, and what it
+ * still owes. Only an issued invoice that can still receive money owes
+ * anything (the same rule as the payment dialog and the "owed" filter).
+ */
+export function documentAmounts(doc: {
+	type: string;
+	status: string;
+	archivedAt?: Date | string | null;
+	totalAmount: string | number;
+	payments?: { amount: string | number }[] | null;
+}): { total: number; paid: number; due: number } {
+	const total = toCents(Number(doc.totalAmount));
+	const paid = (doc.payments ?? []).reduce((sum, p) => sum + toCents(Number(p.amount)), 0);
+	return {
+		total: fromCents(total),
+		paid: fromCents(paid),
+		due: isPayableInvoice(doc) ? fromCents(Math.max(0, total - paid)) : 0,
+	};
+}

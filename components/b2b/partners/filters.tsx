@@ -73,7 +73,7 @@ export function PartnerFilters() {
 					</SelectTrigger>
 					<SelectContent className="border-secondary/20 rounded-xl shadow-xl">
 						<SelectItem value="all" className="font-bold">
-							All Statuses
+							Any status
 						</SelectItem>
 						<SelectItem value="owed">Owed (any unpaid invoice)</SelectItem>
 						<SelectItem value="draft">

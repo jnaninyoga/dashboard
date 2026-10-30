@@ -30,7 +30,7 @@ export function DocumentsTab({ partner }: DocumentsTabProps) {
 						className="zen-glow-teal h-9 gap-2 rounded-xl text-xs font-bold"
 					>
 						<Document size={16} className="mr-1" variant="Outline" />
-						New Quotation
+						New quotation
 					</Button>
 				</Link>
 			</div>

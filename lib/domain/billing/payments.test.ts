@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	allocatePayment,
+	documentAmounts,
 	isPayableInvoice,
 	orderPaymentQueue,
 	outstandingOf,
@@ -94,5 +95,32 @@ describe("owedSummary", () => {
 
 	it("never counts an overpaid invoice as negative", () => {
 		expect(owedSummary([{ totalAmount: 100, payments: [{ amount: 150 }] }]).amount).toBe(0);
+	});
+});
+
+describe("documentAmounts", () => {
+	const invoice = (status: string, total: string, paid: string[] = []) => ({
+		type: "invoice",
+		status,
+		totalAmount: total,
+		payments: paid.map((amount) => ({ amount })),
+	});
+
+	it("shows what an issued invoice still owes", () => {
+		expect(documentAmounts(invoice("partially_paid", "1000.00", ["400.00"]))).toEqual({ total: 1000, paid: 400, due: 600 });
+	});
+
+	it("owes nothing once paid, cancelled, or still a draft", () => {
+		expect(documentAmounts(invoice("paid", "500.00", ["500.00"])).due).toBe(0);
+		expect(documentAmounts(invoice("cancelled", "500.00")).due).toBe(0);
+		expect(documentAmounts(invoice("draft", "500.00")).due).toBe(0);
+	});
+
+	it("never owes on a quotation (its invoices do)", () => {
+		expect(documentAmounts({ type: "quote", status: "accepted", totalAmount: "900.00" })).toEqual({ total: 900, paid: 0, due: 0 });
+	});
+
+	it("adds in cents, so 0.10 + 0.20 leaves exactly 0.70 of 1.00", () => {
+		expect(documentAmounts(invoice("unpaid", "1.00", ["0.10", "0.20"])).due).toBe(0.7);
 	});
 });

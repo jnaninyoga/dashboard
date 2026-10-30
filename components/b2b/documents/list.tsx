@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
-
-import { DocumentRowCard } from "@/components/b2b/documents/dashboard-table";
+import { AmountCell, DocumentCell, DocumentRowCard } from "@/components/b2b/documents/dashboard-table";
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { type DocumentWithContact } from "@/lib/types";
 
 import { type ColumnDef } from "@tanstack/react-table";
-import { format } from "date-fns";
-import { DocumentText, ReceiptText } from "iconsax-reactjs";
+import { DocumentText } from "iconsax-reactjs";
 
 import { DocumentStatusBadge } from "./status-badge";
 
@@ -18,62 +15,40 @@ interface DocumentListProps {
 	partnerId: string;
 }
 
+// A partner's documents: the dashboard's document columns, with the contact
+// each one was addressed to in place of the partner.
 const columns: ColumnDef<DocumentWithContact>[] = [
 	{
-		accessorKey: "type",
-		header: "Type",
-		cell: ({ row }) => (
-			<span className="text-[10px] font-bold tracking-wider uppercase opacity-40">{row.original.type}</span>
-		),
+		id: "document",
+		header: "Document",
+		accessorFn: (doc) => doc.issueDate,
+		sortDescFirst: true,
+		meta: { className: "w-full max-w-0" },
+		cell: ({ row }) => <DocumentCell doc={row.original} />,
 	},
 	{
-		id: "document",
-		accessorKey: "documentNumber",
-		header: "Document",
-		cell: ({ row }) => {
-			const doc = row.original;
-			return (
-				<Link href={`/b2b/documents/${doc.id}`} className="flex items-center gap-3">
-					<div className="bg-secondary/40 text-secondary-3 group-hover:bg-primary/10 group-hover:text-primary flex h-10 w-10 items-center justify-center rounded-xl transition-all">
-						{doc.type === "invoice" ? <ReceiptText size={20} variant="Bulk" /> : <DocumentText size={20} variant="Bulk" />}
-					</div>
-					<div className="flex flex-col">
-						<span className="text-foreground text-sm font-bold tracking-tight">{doc.documentNumber}</span>
-						<span className="text-muted-foreground/60 text-[10px] leading-none font-medium">
-							{doc.contact?.fullName || "No contact linked"}
-						</span>
-					</div>
-				</Link>
-			);
-		},
+		id: "contact",
+		header: "Contact",
+		accessorFn: (doc) => doc.contact?.fullName ?? "",
+		meta: { className: "px-5" },
+		cell: ({ row }) =>
+			row.original.contact?.fullName ? (
+				<span className="text-foreground block max-w-48 truncate">{row.original.contact.fullName}</span>
+			) : (
+				<span className="text-muted-foreground">No contact</span>
+			),
 	},
 	{
 		accessorKey: "status",
 		header: "Status",
+		meta: { className: "px-5" },
 		cell: ({ row }) => <DocumentStatusBadge status={row.original.status} />,
 	},
 	{
-		accessorKey: "issueDate",
-		header: "Issued",
-		cell: ({ row }) => (
-			<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-70">
-				{format(new Date(row.original.issueDate), "MMM dd, yyyy")}
-			</span>
-		),
-	},
-	{
 		id: "amount",
-		accessorFn: (doc) => Number(doc.totalAmount),
 		header: () => <div className="text-right">Amount</div>,
-		cell: ({ row }) => (
-			<div className="text-primary text-right text-sm font-black tabular-nums">
-				{Number(row.original.totalAmount).toLocaleString("en-US", {
-					minimumFractionDigits: 2,
-					maximumFractionDigits: 2,
-				})}{" "}
-				MAD
-			</div>
-		),
+		accessorFn: (doc) => Number(doc.totalAmount),
+		cell: ({ row }) => <AmountCell doc={row.original} />,
 	},
 ];
 
@@ -93,9 +68,7 @@ export function DocumentList({ documents }: DocumentListProps) {
 					description="Quotes and invoices for this partner will appear here once created."
 				/>
 			}
-			renderCard={(doc) => (
-				<DocumentRowCard doc={doc} subtitle={doc.contact?.fullName || "No contact linked"} />
-			)}
+			renderCard={(doc) => <DocumentRowCard doc={doc} subtitle={doc.contact?.fullName || "No contact"} />}
 		/>
 	);
 }
