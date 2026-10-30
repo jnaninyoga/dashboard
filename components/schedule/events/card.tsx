@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { CalendarEvent } from "@/lib/types";
+import { toStudioTime } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
 import { format, isWithinInterval, parseISO, subMinutes } from "date-fns";
@@ -31,7 +32,7 @@ import {
 	SunPattern,
 } from "./patterns";
 
-type EventTypeKey = "group" | "private" | "b2b" | "outdoor";
+export type EventTypeKey = "group" | "private" | "b2b" | "outdoor";
 
 type TypeMeta = {
 	label: string;
@@ -54,7 +55,7 @@ const CTA_VIOLET =
 const CTA_AMBER =
 	"hover:shadow-[0_6px_24px_rgba(245,158,11,0.45)] hover:-translate-y-0.5";
 
-const TYPE_META: Record<EventTypeKey, TypeMeta> = {
+export const TYPE_META: Record<EventTypeKey, TypeMeta> = {
 	group: {
 		label: "Group Class",
 		Icon: Profile2User,
@@ -97,7 +98,7 @@ const TYPE_META: Record<EventTypeKey, TypeMeta> = {
 	},
 };
 
-export function EventCard({ event }: { event: CalendarEvent }) {
+export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?: number }) {
 	const calendarLink = event.htmlLink as string | undefined;
 	const startIso = event.start?.dateTime;
 	const endIso = event.end?.dateTime;
@@ -221,8 +222,15 @@ export function EventCard({ event }: { event: CalendarEvent }) {
 				<div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm font-medium">
 					<span className="flex items-center">
 						<Clock className="mr-2 h-4 w-4" />
-						{format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
+						{/* The studio's clock, whatever zone renders this. */}
+						{format(toStudioTime(startTime), "HH:mm")} – {format(toStudioTime(endTime), "HH:mm")}
 					</span>
+					{checkIns ? (
+						<span className="text-foreground flex items-center">
+							<ClipboardTick className="text-primary mr-2 h-4 w-4" variant="Bulk" />
+							{checkIns} checked in
+						</span>
+					) : null}
 					{eventType === "outdoor" && outdoorPrice ? (
 						<span className="flex items-center">
 							<Tag className="mr-2 h-4 w-4" variant="Bulk" />

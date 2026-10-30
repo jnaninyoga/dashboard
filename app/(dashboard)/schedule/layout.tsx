@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Weekly Schedule — JnaninYoga",
-	description:
-		"View all upcoming yoga sessions and classes for the week ahead.",
+	title: "Schedule — JnaninYoga",
+	description: "Every session, week by week: what's coming and who came.",
 };
 
 export default function ScheduleLayout({

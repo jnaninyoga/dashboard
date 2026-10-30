@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
 	addDays,
 	currentHourStart,
+	formatDay,
 	fromStudioTime,
 	getDayPeriod,
 	studioDateString,
@@ -143,5 +144,12 @@ describe("weeks", () => {
 		expect(weekOf(undefined, now)).toBe("2026-06-15");
 		expect(weekOf("not-a-date", now)).toBe("2026-06-15");
 		expect(weekOf("2026-02-30", now)).toBe("2026-06-15"); // no such day
+	});
+});
+
+describe("formatDay", () => {
+	it("names a calendar day the same in every zone", () => {
+		expect(formatDay("2026-10-29", { weekday: "long", day: "numeric", month: "long" })).toBe("Thursday 29 October");
+		expect(formatDay("2027-01-01", { day: "numeric", month: "short", year: "numeric" })).toBe("1 Jan 2027");
 	});
 });

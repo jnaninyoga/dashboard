@@ -75,7 +75,7 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
   - Verify: unit tests; a harness run with real check-ins.
   - Files: `lib/utils/time.ts` and its test, `services/google/calendar.service.ts`, `lib/actions/schedule/feed.ts` (new).
 
-- [ ] **Task 9: Schedule page with any week** (M)
+- [x] **Task 9: Schedule page with any week** (M)
   - Acceptance: spec criteria 1 to 4 (title, week navigation in the URL, past sessions with counts opening their history, cancelled sessions marked, type filter, empty state).
   - Verify: browser at 390 and 1366, the back button, a past week with check-ins, Google unavailable.
   - Files: `app/(dashboard)/schedule/page.tsx`, `components/schedule/client.tsx`, `components/schedule/week-nav.tsx` (new).

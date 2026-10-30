@@ -3,6 +3,8 @@ import { notFound, redirect } from "next/navigation";
 
 import { CheckInManager } from "@/components/schedule/check-in";
 import { getEventAttendanceAction } from "@/lib/actions/schedule/attendance";
+import { getStudioSession } from "@/lib/actions/schedule/feed";
+import { studioDateString, toStudioTime, weekStart } from "@/lib/utils/time";
 import { getEventById, type JnaninEventType, withGoogle } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
@@ -40,7 +42,9 @@ export default async function CheckInPage({ params }: PageProps) {
         );
     }
 
-    if (!event.data) {
+    // Our record: the only trace of a session cancelled here (Google deleted it).
+    const record = await getStudioSession(eventId);
+    if (!event.data && !record) {
         notFound();
     }
 
@@ -49,15 +53,17 @@ export default async function CheckInPage({ params }: PageProps) {
         start?: { dateTime?: string; date?: string };
         end?: { dateTime?: string; date?: string };
         extendedProperties?: { private?: { jnaninEventType?: string } };
-    };
+    } | null;
 
-    const title = details.summary || "Unnamed Event";
-    const startTime = details.start?.dateTime || details.start?.date;
-    const endTime = details.end?.dateTime || details.end?.date;
-    const type = (details.extendedProperties?.private?.jnaninEventType as JnaninEventType) || "group";
-    // Past events go into read-only attendance-history mode so operators can't
-    // accidentally backfill attendees after the session has ended.
-    const isPast = endTime ? new Date(endTime) < new Date() : false;
+    const cancelled = record?.status === "cancelled";
+    const title = details?.summary || record?.title || "Unnamed Event";
+    const startTime = details?.start?.dateTime || details?.start?.date || record?.startsAt.toISOString();
+    const endTime = details?.end?.dateTime || details?.end?.date || record?.endsAt.toISOString();
+    const type = (details?.extendedProperties?.private?.jnaninEventType as JnaninEventType) || record?.type || "group";
+    // Past and cancelled sessions are read-only attendance history, so no one
+    // backfills attendees after the fact.
+    const isPast = cancelled || (endTime ? new Date(endTime) < new Date() : false);
+    const scheduleWeek = startTime ? `/schedule?week=${weekStart(studioDateString(new Date(startTime)))}` : "/schedule";
 
     // Fetch currently checked-in clients
     const attendanceRecords = await getEventAttendanceAction(eventId);
@@ -68,12 +74,12 @@ export default async function CheckInPage({ params }: PageProps) {
             <header className="bg-primary/70 zen-shadow relative z-10 rounded-b-3xl px-6 py-8 md:py-10">
                 <div className="mx-auto flex max-w-4xl flex-col gap-4">
                     <div className="mb-1 flex items-center justify-between text-sm md:text-base">
-                        <Link href="/check-in" className="group text-primary-foreground flex min-h-[48px] items-center font-semibold transition-colors hover:text-white">
+                        <Link href={scheduleWeek} className="group text-primary-foreground flex min-h-[48px] items-center font-semibold transition-colors hover:text-white">
                             <ArrowLeft2 className="mr-2 h-5 w-5 transition-transform group-hover:-translate-x-1" />
                             <span>Back to Schedule</span>
                         </Link>
                         <span className="bg-secondary text-secondary-foreground rounded-full px-4 py-1.5 text-xs font-bold tracking-widest uppercase">
-                            {isPast ? `${type} · History` : `${type} Session`}
+                            {cancelled ? `${type} · Cancelled` : isPast ? `${type} · History` : `${type} Session`}
                         </span>
                     </div>
                     
@@ -83,7 +89,8 @@ export default async function CheckInPage({ params }: PageProps) {
                     
                     <div className="text-primary-foreground mt-1 flex items-center gap-2 text-base font-medium">
                         <CalendarIcon className="h-5 w-5 shrink-0" variant="Outline" />
-                        {startTime ? format(new Date(startTime), "EEEE, MMMM d, yyyy 'at' h:mm a") : "Time TBA"}
+                        {/* The studio's clock, whatever zone the server is in. */}
+                        {startTime ? format(toStudioTime(new Date(startTime)), "EEEE, MMMM d, yyyy 'at' HH:mm") : "Time TBA"}
                     </div>
                 </div>
             </header>
@@ -95,6 +102,7 @@ export default async function CheckInPage({ params }: PageProps) {
                     eventType={type}
                     initialAttendance={attendanceRecords}
                     isPast={isPast}
+                    cancelled={cancelled}
                 />
             </div>
         </div>

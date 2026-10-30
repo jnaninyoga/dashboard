@@ -123,6 +123,15 @@ export function weekOf(value: string | null | undefined, now: Date = new Date())
 	return weekStart(studioDateString(now));
 }
 
+/**
+ * A "YYYY-MM-DD" calendar day in words, e.g. formatDay(d, { weekday: "long",
+ * day: "numeric", month: "long" }) → "Thursday 29 October". A calendar day,
+ * not an instant: no zone can move it to the day before.
+ */
+export function formatDay(date: string, options: Intl.DateTimeFormatOptions): string {
+	return new Intl.DateTimeFormat("en-GB", { ...options, timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`));
+}
+
 export type DayPeriod = "morning" | "afternoon" | "evening" | "night";
 
 export function getDayPeriod(studioTime: Date): DayPeriod {

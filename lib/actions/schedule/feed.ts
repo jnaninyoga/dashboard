@@ -62,3 +62,10 @@ export async function getSessionFeed(first: string, last: string): Promise<Googl
 		}),
 	};
 }
+
+/** Our record of a session (the history of one Google Calendar no longer has). */
+export async function getStudioSession(googleEventId: string) {
+	await requireUser();
+	const [session] = await db.select().from(studioSessions).where(eq(studioSessions.googleEventId, googleEventId));
+	return session ?? null;
+}

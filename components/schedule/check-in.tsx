@@ -6,10 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { checkInClientAction } from "@/lib/actions/schedule/attendance";
 import { type AttendanceRecord } from "@/lib/actions/schedule/attendance";
 import { notify } from "@/lib/feedback/notify";
+import { toStudioTime } from "@/lib/utils/time";
 import { type Client, type HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
-import { Location, People, SecurityUser, TickCircle,User } from "iconsax-reactjs";
+import { format } from "date-fns";
+import { ArrowRotateLeft, Location, People, SecurityUser, TickCircle, User } from "iconsax-reactjs";
 
 import { ClientSearch } from "../clients/search";
 
@@ -22,9 +24,11 @@ interface CheckInManagerProps {
     eventType: JnaninEventType | string;
     initialAttendance: AttendanceRecord[];
     isPast?: boolean;
+    /** The session was cancelled: history only, and the credits went back. */
+    cancelled?: boolean;
 }
 
-export function CheckInManager({ eventId, eventType, initialAttendance, isPast = false }: CheckInManagerProps) {
+export function CheckInManager({ eventId, eventType, initialAttendance, isPast = false, cancelled = false }: CheckInManagerProps) {
     const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance);
     const [selectedClient, setSelectedClient] = useState<ClientWithLogs | null>(null);
     const [showGuardrail, setShowGuardrail] = useState(false);
@@ -200,7 +204,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                         ) : (
                             <div className="bg-primary/10 rounded-2xl p-2"><People className="text-primary h-5 w-5" variant="Outline" /></div>
                         )}
-                        {isPast ? "Attendance Record" : "Active Manifest"}
+                        {cancelled ? "Cancelled session" : isPast ? "Attendance Record" : "Active Manifest"}
                     </h2>
                     <div className="flex items-center gap-2">
                         <span className="text-muted-foreground hidden text-sm font-medium sm:block">
@@ -216,10 +220,12 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                     <div className="text-muted-foreground flex flex-col items-center justify-center py-20">
                         <People className="mb-6 h-20 w-20 opacity-15" variant="Outline" />
                         <h3 className="font-heading text-foreground/60 text-xl font-semibold">
-                            {isPast ? "No one was checked in" : "The studio is empty"}
+                            {cancelled ? "No one had checked in" : isPast ? "No one was checked in" : "The studio is empty"}
                         </h3>
                         <p className="text-muted-foreground mt-2 max-w-sm text-center">
-                            {isPast
+                            {cancelled
+                                ? "The session was cancelled before anyone checked in."
+                                : isPast
                                 ? "This session ended with no attendance recorded."
                                 : "Use the search bar above to begin checking clients into the session."}
                         </p>
@@ -238,13 +244,18 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                                         <AvatarFallback className="bg-muted text-muted-foreground text-lg font-bold">{record.client.fullName[0]}</AvatarFallback>
                                     </Avatar>
                                     <div className="bg-card absolute -right-1 -bottom-1 rounded-full p-0.5 shadow-sm">
-                                        <TickCircle className="text-success h-5 w-5" variant="Bulk" />
+                                        {record.cancelledAt ? (
+                                            <ArrowRotateLeft className="text-muted-foreground h-5 w-5" variant="Bulk" />
+                                        ) : (
+                                            <TickCircle className="text-success h-5 w-5" variant="Bulk" />
+                                        )}
                                     </div>
                                 </div>
                                 <div className="flex min-w-0 flex-1 flex-col">
                                     <span className="text-foreground group-hover:text-primary truncate pr-2 text-lg font-bold transition-colors">{record.client.fullName}</span>
                                     <span className="text-muted-foreground mt-0.5 text-sm font-medium">
-                                        Checked in at {new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        Checked in at {format(toStudioTime(new Date(record.checkInTime)), "HH:mm")}
+                                        {record.cancelledAt ? " · credit given back" : null}
                                     </span>
                                 </div>
                                 <div className="bg-muted ml-2 hidden items-center rounded-full px-3 py-2 sm:flex">
