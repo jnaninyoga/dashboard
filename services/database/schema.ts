@@ -108,7 +108,8 @@ export const clients = pgTable("clients", {
 	consultationReason: text("consultation_reason"),
 	referralSource: referralSourceEnum("referral_source"),
 	// category: categoryEnum("category").notNull().default("adult"), // Deprecated
-	categoryId: uuid("category_id").references(() => clientCategories.id), // New FK
+	// The discount she gives this client on memberships (Senior −12.5%…).
+	discountId: uuid("discount_id").references(() => discounts.id),
 	// Structured dossier for the detailed questionnaire
 	intakeData: jsonb("intake_data"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -133,7 +134,9 @@ export const healthLogs = pgTable("health_logs", {
 export type HealthLog = typeof healthLogs.$inferSelect;
 export type NewHealthLog = typeof healthLogs.$inferInsert;
 
-export const membershipProducts = pgTable("membership_products", {
+// What she sells to clients: a card of credits (10 sessions) that lasts a
+// number of months, at her price.
+export const memberships = pgTable("memberships", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	name: text("name").notNull(),
 	defaultCredits: integer("default_credits").notNull(),
@@ -141,12 +144,13 @@ export const membershipProducts = pgTable("membership_products", {
 	basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
 	isArchived: boolean("is_archived").default(false).notNull(),
 });
-export type MembershipProduct = typeof membershipProducts.$inferSelect;
-export type NewMembershipProduct = typeof membershipProducts.$inferInsert;
+export type Membership = typeof memberships.$inferSelect;
+export type NewMembership = typeof memberships.$inferInsert;
 
-export const clientCategories = pgTable("client_categories", {
+// Her discounts, given to a client and applied when they buy a membership.
+export const discounts = pgTable("discounts", {
 	id: uuid("id").defaultRandom().primaryKey(),
-	name: text("name").notNull(), // e.g., "Student", "Adult"
+	name: text("name").notNull(), // e.g., "Senior", "Student"
 	discountType: discountTypeEnum("discount_type")
 		.notNull()
 		.default("percentage"),
@@ -155,8 +159,8 @@ export const clientCategories = pgTable("client_categories", {
 		.default("0"),
 	isArchived: boolean("is_archived").default(false).notNull(),
 });
-export type ClientCategory = typeof clientCategories.$inferSelect;
-export type NewClientCategory = typeof clientCategories.$inferInsert;
+export type Discount = typeof discounts.$inferSelect;
+export type NewDiscount = typeof discounts.$inferInsert;
 
 export const appSettings = pgTable("app_settings", {
 	key: text("key").primaryKey(), // e.g., 'discount_student'
@@ -168,7 +172,7 @@ export const clientWallets = pgTable("client_wallets", {
 	clientId: uuid("client_id")
 		.references(() => clients.id, { onDelete: "cascade" })
 		.notNull(),
-	productId: uuid("product_id").references(() => membershipProducts.id),
+	membershipId: uuid("membership_id").references(() => memberships.id),
 	physicalCardRef: text("physical_card_ref"),
 	remainingCredits: integer("remaining_credits").notNull(),
 	status: walletStatusEnum("status").notNull().default("active"),
@@ -226,9 +230,9 @@ export type NewAttendanceLedger = typeof attendanceLedger.$inferInsert;
 export const clientsRelations = relations(clients, ({ many, one }) => ({
 	healthLogs: many(healthLogs),
 	wallets: many(clientWallets),
-	category: one(clientCategories, {
-		fields: [clients.categoryId],
-		references: [clientCategories.id],
+	discount: one(discounts, {
+		fields: [clients.discountId],
+		references: [discounts.id],
 	}),
 }));
 
@@ -246,9 +250,9 @@ export const clientWalletsRelations = relations(
 			fields: [clientWallets.clientId],
 			references: [clients.id],
 		}),
-		product: one(membershipProducts, {
-			fields: [clientWallets.productId],
-			references: [membershipProducts.id],
+		membership: one(memberships, {
+			fields: [clientWallets.membershipId],
+			references: [memberships.id],
 		}),
 		ledgerEntries: many(attendanceLedger),
 	}),
@@ -264,8 +268,12 @@ export const attendanceLedgerRelations = relations(
 	}),
 );
 
-export const clientCategoriesRelations = relations(clientCategories, ({ many }) => ({
+export const discountsRelations = relations(discounts, ({ many }) => ({
 	clients: many(clients),
+}));
+
+export const membershipsRelations = relations(memberships, ({ many }) => ({
+	wallets: many(clientWallets),
 }));
 
 
@@ -279,15 +287,17 @@ export const userTokens = pgTable("user_tokens", {
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const b2bPricingTiers = pgTable("b2b_pricing_tiers", {
+// Her prices for hotels and partners ("Famille (3–5 pax)" 450 MAD), offered
+// while writing a quotation.
+export const partnerRates = pgTable("partner_rates", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	name: text("name").notNull(), // e.g., "Famille (3-5 pax)"
 	price: integer("price").notNull(), // Price in MAD
 	isArchived: boolean("is_archived").default(false).notNull(),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-export type B2BPricingTier = typeof b2bPricingTiers.$inferSelect;
-export type NewB2BPricingTier = typeof b2bPricingTiers.$inferInsert;
+export type PartnerRate = typeof partnerRates.$inferSelect;
+export type NewPartnerRate = typeof partnerRates.$inferInsert;
 
 export const b2bPartners = pgTable("b2b_partners", {
 	id: uuid("id").defaultRandom().primaryKey(),

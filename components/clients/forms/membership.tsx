@@ -12,25 +12,25 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
-import { type Category } from "@/lib/types";
+import { type Discount } from "@/lib/types";
 import { ClientFormValues } from "@/lib/validators";
-import { type MembershipProduct } from "@/services/database/schema";
+import { type Membership } from "@/services/database/schema";
 
 import { Refresh } from "iconsax-reactjs";
 
 interface StepMembershipProps {
 	form: UseFormReturn<ClientFormValues>;
-	categories: Category[];
+	discounts: Discount[];
 	mode?: "create" | "edit";
 }
 
-export function StepMembership({ form, categories, mode }: StepMembershipProps) {
-	const [products, setProducts] = useState<MembershipProduct[]>([]);
+export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
+	const [products, setProducts] = useState<Membership[]>([]);
 	const [isLoading, setIsLoading] = useState(mode !== "edit");
 
-	const categoryId = useWatch({
+	const discountId = useWatch({
 		control: form.control,
-		name: "categoryId",
+		name: "discountId",
 	});
 
 	useEffect(() => {
@@ -56,16 +56,16 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 		);
 	}
 
-	const selectedCategory = categories.find((c) => c.id === categoryId);
+	const selectedDiscount = discounts.find((c) => c.id === discountId);
 
 	const calculatePrice = (basePrice: string) => {
 		const price = parseFloat(basePrice);
-		if (!selectedCategory || isNaN(price)) return { price, isDiscounted: false };
+		if (!selectedDiscount || isNaN(price)) return { price, isDiscounted: false };
 
 		let finalPrice = price;
-		const discountValue = parseFloat(selectedCategory.discountValue);
+		const discountValue = parseFloat(selectedDiscount.discountValue);
 
-		if (selectedCategory.discountType === "percentage") {
+		if (selectedDiscount.discountType === "percentage") {
 			finalPrice = price * (1 - discountValue / 100);
 		} else {
 			finalPrice = Math.max(0, price - discountValue);
@@ -85,11 +85,11 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 				<p className="text-muted-foreground text-sm">
 					Optional: Choose a product to assign immediately upon registration.
 				</p>
-				{selectedCategory ? (
+				{selectedDiscount ? (
 					<Badge variant="outline" className="text-primary mt-2">
-						Applied Category: {selectedCategory.name}
-						{parseFloat(selectedCategory.discountValue) > 0 ? (
-							` (${selectedCategory.discountType === "percentage" ? `-${selectedCategory.discountValue}%` : `-${selectedCategory.discountValue} MAD`})`
+						Discount: {selectedDiscount.name}
+						{parseFloat(selectedDiscount.discountValue) > 0 ? (
+							` (${selectedDiscount.discountType === "percentage" ? `-${selectedDiscount.discountValue}%` : `-${selectedDiscount.discountValue} MAD`})`
 						) : null}
 					</Badge>
 				) : null}

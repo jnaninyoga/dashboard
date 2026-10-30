@@ -35,13 +35,13 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { createDocumentAction } from "@/lib/actions/b2b/documents";
-import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { getPartnerRates } from "@/lib/actions/settings";
 import { mergeSameLines } from "@/lib/domain/billing/same-lines";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import {
 	type B2BContact,
 	type B2BPartner,
-	type B2BPricingTier,
+	type PartnerRate,
 } from "@/lib/types/b2b";
 import { formatAmount,normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
@@ -84,7 +84,7 @@ export function NewQuoteForm({
 	previewNumber: string;
 }) {
 	const router = useRouter();
-	const [pricingTiers, setPricingTiers] = useState<B2BPricingTier[]>([]);
+	const [pricingTiers, setPricingTiers] = useState<PartnerRate[]>([]);
 	const [state, formAction, isPending] = useActionState(
 		createDocumentAction,
 		null,
@@ -121,8 +121,8 @@ export function NewQuoteForm({
 	});
 
 	useEffect(() => {
-		getB2BPricingTiers().then((tiers) =>
-			setPricingTiers(tiers as B2BPricingTier[]),
+		getPartnerRates().then((tiers) =>
+			setPricingTiers(tiers as PartnerRate[]),
 		);
 	}, []);
 

@@ -16,12 +16,12 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { updateDocumentLinesAction } from "@/lib/actions/b2b/documents";
-import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { getPartnerRates } from "@/lib/actions/settings";
 import { mergeSameLines } from "@/lib/domain/billing/same-lines";
 import {
 	type B2BDocumentLine,
 	type B2BDocumentStatus,
-	type B2BPricingTier,
+	type PartnerRate,
 } from "@/lib/types/b2b";
 import { formatAmount,normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
@@ -60,7 +60,7 @@ export function EditableDocumentLines({
 	status,
 	taxLocked = false,
 }: EditableDocumentLinesProps) {
-	const [pricingTiers, setPricingTiers] = useState<B2BPricingTier[]>([]);
+	const [pricingTiers, setPricingTiers] = useState<PartnerRate[]>([]);
 	const isDraft = status === "draft";
 
 	const form = useForm<LinesFormValues>({
@@ -84,8 +84,8 @@ export function EditableDocumentLines({
 
 	useEffect(() => {
 		if (isDraft) {
-			getB2BPricingTiers().then((tiers) =>
-				setPricingTiers(tiers as B2BPricingTier[]),
+			getPartnerRates().then((tiers) =>
+				setPricingTiers(tiers as PartnerRate[]),
 			);
 		}
 	}, [isDraft]);

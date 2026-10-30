@@ -16,17 +16,17 @@ import {
 import { assignProductToClient } from "@/lib/actions/clients/wallets";
 import { notify } from "@/lib/feedback/notify";
 import { cn } from "@/lib/utils/ui";
-import { type ClientWallet, type MembershipProduct } from "@/services/database/schema";
+import { type ClientWallet, type Membership } from "@/services/database/schema";
 
 import { format } from "date-fns";
 import { Bag2 as ShoppingCart, Card as CreditCard, CardAdd, Tag } from "iconsax-reactjs";
 
-type WalletWithProduct = ClientWallet & { product?: MembershipProduct | null };
+type WalletWithProduct = ClientWallet & { membership?: Membership | null };
 
 interface WalletTabProps {
 	clientId: string;
 	wallets: WalletWithProduct[];
-	products: MembershipProduct[];
+	products: Membership[];
 }
 
 export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
@@ -184,7 +184,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 									<div className="flex flex-col gap-2">
 										<div className="flex items-center gap-2">
 											<span className="text-secondary-foreground text-lg leading-none font-bold">
-												{wallet.product?.name || "Member Pack"}
+												{wallet.membership?.name || "Member Pack"}
 											</span>
 											{wallet.status === "active" ? (
 												<div className="bg-success h-2 w-2 animate-pulse rounded-full" />

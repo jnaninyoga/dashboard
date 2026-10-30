@@ -22,7 +22,13 @@ describe("isCurrent", () => {
 
 describe("navigation", () => {
 	it("is grouped in her words, with no admin group names", () => {
-		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing"]);
+		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing", "Price list"]);
+	});
+
+	it("keeps what she sells in her price list, and only the studio in Settings", () => {
+		const priceList = dashboardConfig.sections.find((s) => s.label === "Price list")!;
+		expect(priceList.items.map((item) => item.title)).toEqual(["Memberships", "Partner rates", "Discounts"]);
+		expect(dashboardConfig.settings.map((item) => item.title)).toEqual(["Studio profile", "Studio hours"]);
 	});
 });
 

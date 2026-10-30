@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { createClientCategory, updateClientCategory } from "@/lib/actions/settings";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { type Category } from "@/lib/types";
+import { type Discount } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
 import {
     type CategoryFormInput,
@@ -31,7 +31,7 @@ import { Category2, Edit2, Refresh as Loader2 } from "iconsax-reactjs";
 interface CategoryDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    category?: Category | null;
+    category?: Discount | null;
 }
 
 export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogProps) {

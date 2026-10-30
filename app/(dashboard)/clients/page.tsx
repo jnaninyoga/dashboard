@@ -6,7 +6,7 @@ import { ClientsTable } from "@/components/clients/table";
 import { ClientViewToggle } from "@/components/clients/view-toggle";
 import { Button } from "@/components/ui/button";
 import { getClientsAction } from "@/lib/actions/clients/queries";
-import { getClientCategories } from "@/lib/actions/settings";
+import { getDiscounts } from "@/lib/actions/settings";
 import { Gender, View } from "@/lib/types";
 
 import { Add } from "iconsax-reactjs";
@@ -14,7 +14,7 @@ import { Add } from "iconsax-reactjs";
 type SearchParams = Promise<{
 	view: View;
 	query: string;
-	categoryId: string;
+	discountId: string;
 	gender: Gender;
 	page: number;
 }>;
@@ -25,15 +25,15 @@ export default async function ClientsPage(props: {
 	const searchParams = await props.searchParams;
 	const view = searchParams.view || View.GRID;
 	const query = searchParams.query || "";
-	const categoryId = searchParams.categoryId || "all";
+	const discountId = searchParams.discountId || "all";
 	const gender = searchParams.gender || Gender.ALL;
 	const page = searchParams.page || 1;
 
-	// Fetch categories for filter
-	const categories = await getClientCategories();
+	// Fetch discounts for filter
+	const discounts = await getDiscounts();
 
 	const { data: clients, error } = await getClientsAction(page, 50, query, {
-		categoryId,
+		discountId,
 		gender,
 	});
 
@@ -57,7 +57,7 @@ export default async function ClientsPage(props: {
 			</div>
 
 			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-start md:justify-between">
-				<ClientFilters categories={categories || []} />
+				<ClientFilters discounts={discounts || []} />
 				<ClientViewToggle />
 			</div>
 

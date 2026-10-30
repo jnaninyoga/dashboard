@@ -14,7 +14,7 @@ const clients = [
 	{
 		id: "c-1", fullName: "Salma Bennani", phone: "+212600000001", email: null, address: null,
 		birthDate: "1990-04-02", gender: "female", profession: null, consultationReason: null,
-		referralSource: null, categoryId: null, intakeData: {}, createdAt: now, photoUrl: null,
+		referralSource: null, discountId: null, intakeData: {}, createdAt: now, photoUrl: null,
 		googleContactResourceName: null, wallets: [], healthLogs: [], category: null,
 	},
 ] as unknown as React.ComponentProps<typeof ClientsTable>["clients"];

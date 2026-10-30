@@ -53,7 +53,7 @@ export function FormsDemo() {
 			</div>
 			{clientFormShown ? (
 				<div data-testid="client-form">
-					<ClientForm mode="create" categories={[]} />
+					<ClientForm mode="create" discounts={[]} />
 				</div>
 			) : null}
 			<B2BTierDialog open={tierOpen} onOpenChange={setTierOpen} />

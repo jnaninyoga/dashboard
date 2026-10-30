@@ -35,7 +35,7 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: Clie
 		async function fetchClients() {
 			if (!debouncedQuery.trim() && !isFocused) return;
 			setIsLoading(true);
-			const res = await getClientsAction(1, 10, debouncedQuery, { categoryId: "all" });
+			const res = await getClientsAction(1, 10, debouncedQuery, { discountId: "all" });
 			if (isMounted && res.success && res.data) {
 				setClients(res.data);
 			}

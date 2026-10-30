@@ -10,11 +10,11 @@ const LOW_CREDITS = 2;
 
 /** Credits left on the client's active membership card, out of the card's total. */
 export function creditsSummary(
-	wallet: { remainingCredits: number; product?: { defaultCredits: number } | null } | null | undefined,
+	wallet: { remainingCredits: number; membership?: { defaultCredits: number } | null } | null | undefined,
 ): { count: number | null; total: number | null; tone: CreditsTone } {
 	if (!wallet) return { count: null, total: null, tone: "none" };
 	const count = Math.max(0, wallet.remainingCredits);
-	return { count, total: wallet.product?.defaultCredits ?? null, tone: count <= LOW_CREDITS ? "low" : "ok" };
+	return { count, total: wallet.membership?.defaultCredits ?? null, tone: count <= LOW_CREDITS ? "low" : "ok" };
 }
 
 // Dates are read in the studio's calendar, assembled from parts so the text

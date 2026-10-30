@@ -1,21 +1,21 @@
 import { 
     type Client as ClientSchema, 
-    type clientCategories,
     type ClientWallet,
+    type Discount,
     type HealthLog,
-    type MembershipProduct,
+    type Membership,
     type NewClient, 
-    type NewClientCategory as NewCategory 
+    type NewDiscount,
 } from "@/services/database/schema";
 
-export type Category = typeof clientCategories.$inferSelect;
 export type Client = ClientSchema;
-export type { NewCategory, NewClient };
+export type { Discount, NewClient, NewDiscount };
 
 export type ClientWithRelations = Client & {
-    category?: Category | null;
+    /** The discount she gives this client on memberships. */
+    discount?: Discount | null;
     wallets?: (ClientWallet & {
-        product: MembershipProduct | null;
+        membership: Membership | null;
     })[];
     healthLogs?: HealthLog[];
     /** Check-ins since the start of the studio's month, and the latest one. */

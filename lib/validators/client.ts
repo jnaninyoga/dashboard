@@ -30,7 +30,7 @@ export const clientSchema = createInsertSchema(clients, {
 		.refine((val) => val.replace(/\D/g, "").length >= 10, {
 			message: "Phone number must contain at least 10 digits",
 		}),
-	categoryId: z
+	discountId: z
 		.string()
 		.uuid({
 			message: "Please select a valid category",

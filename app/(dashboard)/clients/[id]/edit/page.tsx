@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ClientForm } from "@/components/clients/form";
 import { getClientByIdAction } from "@/lib/actions/clients/queries";
-import { getClientCategories } from "@/lib/actions/settings";
+import { getDiscounts } from "@/lib/actions/settings";
 import { Gender, HealthCategory, HealthSeverity, ReferralSource } from "@/lib/types";
 
 // Next.js 15+ params are promises
@@ -12,9 +12,9 @@ export default async function EditClientPage(props: { params: Params }) {
 	const params = await props.params;
 	const { id } = params;
 
-    const [clientResult, categories] = await Promise.all([
+    const [clientResult, discounts] = await Promise.all([
         getClientByIdAction(id),
-        getClientCategories()
+        getDiscounts()
     ]);
     
     const { client, error } = clientResult;
@@ -34,7 +34,7 @@ export default async function EditClientPage(props: { params: Params }) {
 		birthDate: formattedDate,
 		profession: client.profession || undefined,
 		consultationReason: client.consultationReason || "",
-		categoryId: client.categoryId || undefined,
+		discountId: client.discountId || undefined,
 		gender: (client.gender as Exclude<Gender, Gender.ALL>) || Gender.MALE,
 		referralSource: (client.referralSource as ReferralSource) || undefined,
 		intakeData: (client.intakeData as Record<string, string>) || {},
@@ -64,5 +64,5 @@ export default async function EditClientPage(props: { params: Params }) {
 		activeProductId: client.activeProductId || undefined,
 	};
 
-	return <ClientForm mode="edit" initialData={initialData} categories={categories} />;
+	return <ClientForm mode="edit" initialData={initialData} discounts={discounts} />;
 }

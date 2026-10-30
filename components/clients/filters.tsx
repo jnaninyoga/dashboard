@@ -11,13 +11,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { type Category, Gender } from "@/lib/types";
+import { type Discount, Gender } from "@/lib/types";
 
 interface ClientFiltersProps {
-    categories: Category[];
+    discounts: Discount[];
 }
 
-export function ClientFilters({ categories }: ClientFiltersProps) {
+export function ClientFilters({ discounts }: ClientFiltersProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [_isPending, startTransition] = useTransition();
@@ -58,15 +58,15 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 			/>
 			<div className="flex w-full gap-3 sm:w-auto">
 				<Select
-					onValueChange={(v) => handleFilterChange("categoryId", v)}
-					defaultValue={searchParams.get("categoryId") || "all"}
+					onValueChange={(v) => handleFilterChange("discountId", v)}
+					defaultValue={searchParams.get("discountId") || "all"}
 				>
 					<SelectTrigger className="bg-card w-full sm:w-40 xl:w-[180px]">
-						<SelectValue placeholder="Category" />
+						<SelectValue placeholder="Discount" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="all">All Categories</SelectItem>
-                        {categories.map((cat) => (
+						<SelectItem value="all">Any discount</SelectItem>
+                        {discounts.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>
                                 {cat.name}
                             </SelectItem>

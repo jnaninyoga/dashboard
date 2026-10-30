@@ -9,7 +9,8 @@ interface ContactData {
 	address?: string | null;
 	profession?: string | null;
 	birthDate: string;
-	category: string;
+	/** The discount she gives this client ("No discount" when none). */
+	discount: string;
 	gender?: "male" | "female";
 	referralSource?: string | null;
 	consultationReason?: string | null;
@@ -65,7 +66,7 @@ export async function syncClientToGoogleContacts(
 	let bioNote = "🧘 JnaninYoga Client Profile\n===========================\n";
 
 	// Core Info Summary
-	bioNote += `Category: ${data.category.charAt(0).toUpperCase() + data.category.slice(1)}\n`;
+	bioNote += `Discount: ${data.discount}\n`;
 	if (data.gender)
 		bioNote += `Gender: ${data.gender.charAt(0).toUpperCase() + data.gender.slice(1)}\n`;
 	if (data.referralSource)
@@ -117,7 +118,7 @@ export async function syncClientToGoogleContacts(
 			biographies: [{ value: bioNote.trim(), contentType: "TEXT_PLAIN" }],
 			// Add custom fields or userDefined fields if needed in future
 			userDefined: [
-				{ key: "Client Category", value: data.category },
+				{ key: "Discount", value: data.discount },
 				{ key: "Gender", value: data.gender || "Not specified" },
 			],
 		},
@@ -160,7 +161,7 @@ export async function updateClientInGoogleContacts(
 
 	// 3. Construct Biography Note
 	let bioNote = "🧘 JnaninYoga Client Profile\n===========================\n";
-	bioNote += `Category: ${data.category.charAt(0).toUpperCase() + data.category.slice(1)}\n`;
+	bioNote += `Discount: ${data.discount}\n`;
 	if (data.gender)
 		bioNote += `Gender: ${data.gender.charAt(0).toUpperCase() + data.gender.slice(1)}\n`;
 	if (data.referralSource)
@@ -203,7 +204,7 @@ export async function updateClientInGoogleContacts(
 			birthdays: [birthdayValue],
 			biographies: [{ value: bioNote.trim(), contentType: "TEXT_PLAIN" }],
 			userDefined: [
-				{ key: "Client Category", value: data.category },
+				{ key: "Discount", value: data.discount },
 				{ key: "Gender", value: data.gender || "Not specified" },
 			],
 		},

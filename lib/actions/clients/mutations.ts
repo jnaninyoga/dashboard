@@ -10,11 +10,11 @@ import { studioDateString } from "@/lib/utils/time";
 import { clientSchema } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
-	clientCategories,
 	clients,
 	clientWallets,
+	discounts,
 	healthLogs,
-	membershipProducts,
+	memberships,
 } from "@/services/database/schema";
 import {
 	syncClientToGoogleContacts,
@@ -75,7 +75,7 @@ export async function createClientAction(
 		address: getString(formData, "address"),
 		profession: getString(formData, "profession"),
 		birthDate: getString(formData, "birthDate"),
-		categoryId: getString(formData, "categoryId"),
+		discountId: getString(formData, "discountId"),
 		gender: getString(formData, "gender"),
 		referralSource: getString(formData, "referralSource"),
 		consultationReason: getString(formData, "consultationReason"),
@@ -98,7 +98,7 @@ export async function createClientAction(
 		address,
 		profession,
 		birthDate,
-		categoryId,
+		discountId,
 		gender,
 		referralSource,
 		consultationReason,
@@ -111,15 +111,15 @@ export async function createClientAction(
 		let clientWithId: { id: string }[] = [];
 
 		await db.transaction(async (tx) => {
-			let categoryName = "Uncategorized";
+			let discountName = "No discount";
 
-			if (categoryId) {
-				const categoryObj = await tx.query.clientCategories.findFirst({
-					where: eq(clientCategories.id, categoryId as string),
+			if (discountId) {
+				const discountRow = await tx.query.discounts.findFirst({
+					where: eq(discounts.id, discountId as string),
 					columns: { name: true },
 				});
-				if (categoryObj) {
-					categoryName = categoryObj.name;
+				if (discountRow) {
+					discountName = discountRow.name;
 				}
 			}
 
@@ -132,7 +132,7 @@ export async function createClientAction(
 					address: address || null,
 					profession: profession || null,
 					birthDate,
-					category: categoryName,
+					discount: discountName,
 					gender: gender,
 					referralSource: referralSource || null,
 					consultationReason: consultationReason || null,
@@ -149,7 +149,7 @@ export async function createClientAction(
 					address: address || null,
 					profession: profession || null,
 					birthDate,
-					categoryId: categoryId,
+					discountId: discountId,
 					gender: gender || Gender.MALE,
 					referralSource: referralSource ?? null,
 					consultationReason: consultationReason || null,
@@ -183,14 +183,14 @@ export async function createClientAction(
 			}
 
 			if (initialProductId) {
-				const product = await tx.query.membershipProducts.findFirst({
-					where: eq(membershipProducts.id, initialProductId),
+				const product = await tx.query.memberships.findFirst({
+					where: eq(memberships.id, initialProductId),
 				});
 
 				if (product) {
 					await tx.insert(clientWallets).values({
 						clientId: newClientId,
-						productId: initialProductId,
+						membershipId: initialProductId,
 						remainingCredits: product.defaultCredits,
 						status: "active",
 						amountPaid: product.basePrice,
@@ -241,7 +241,7 @@ export async function updateClientAction(
 		address: getString(formData, "address"),
 		profession: getString(formData, "profession"),
 		birthDate: getString(formData, "birthDate"),
-		categoryId: getString(formData, "categoryId"),
+		discountId: getString(formData, "discountId"),
 		gender: getString(formData, "gender"),
 		referralSource: getString(formData, "referralSource"),
 		consultationReason: getString(formData, "consultationReason"),
@@ -270,7 +270,7 @@ export async function updateClientAction(
 				.update(clients)
 				.set({
 					...clientUpdateData,
-					categoryId: parsed.data.categoryId,
+					discountId: parsed.data.discountId,
 					gender: parsed.data.gender,
 					intakeData: parsed.data.intakeData || {},
 				})
@@ -354,14 +354,14 @@ export async function updateClientAction(
 			try {
 				accessToken = await getValidAccessToken(user.id);
 
-				let categoryName = "Uncategorized";
-				if (parsed.data.categoryId) {
-					const categoryObj = await db.query.clientCategories.findFirst({
-						where: eq(clientCategories.id, parsed.data.categoryId as string),
+				let discountName = "No discount";
+				if (parsed.data.discountId) {
+					const discountRow = await db.query.discounts.findFirst({
+						where: eq(discounts.id, parsed.data.discountId as string),
 						columns: { name: true },
 					});
-					if (categoryObj) {
-						categoryName = categoryObj.name;
+					if (discountRow) {
+						discountName = discountRow.name;
 					}
 				}
 
@@ -375,7 +375,7 @@ export async function updateClientAction(
 						address: parsed.data.address || null,
 						profession: parsed.data.profession || null,
 						birthDate: parsed.data.birthDate,
-						category: categoryName,
+						discount: discountName,
 						gender: parsed.data.gender,
 						referralSource: parsed.data.referralSource || null,
 						consultationReason: parsed.data.consultationReason || null,

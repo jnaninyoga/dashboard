@@ -16,7 +16,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
-import { getB2BPricingTiers } from "@/lib/actions/settings";
+import { getPartnerRates } from "@/lib/actions/settings";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
@@ -70,7 +70,7 @@ export function NewSessionDialog({
 	useEffect(() => {
 		if (!open) return;
 		reset(freshSession());
-		getB2BPricingTiers()
+		getPartnerRates()
 			.then(setTiers)
 			.catch((error) => notify.error("Couldn't load the B2B tiers", { error }));
 	}, [open, reset]);

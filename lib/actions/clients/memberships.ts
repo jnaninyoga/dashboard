@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
-import { clientWallets,membershipProducts } from "@/services/database/schema";
+import { clientWallets,memberships } from "@/services/database/schema";
 
 import {desc, eq } from "drizzle-orm";
 
@@ -13,9 +13,9 @@ export async function getMembershipProducts() {
 	await requireUser();
 	return await db
 		.select()
-		.from(membershipProducts)
-		.where(eq(membershipProducts.isArchived, false))
-		.orderBy(desc(membershipProducts.name));
+		.from(memberships)
+		.where(eq(memberships.isArchived, false))
+		.orderBy(desc(memberships.name));
 }
 
 
@@ -30,14 +30,14 @@ export async function createMembershipProduct(
 ) {
 	await requireUser();
     try {
-        await db.insert(membershipProducts).values({
+        await db.insert(memberships).values({
             name: data.name,
             basePrice: data.basePrice.toString(),
             defaultCredits: data.defaultCredits,
             durationMonths: data.durationMonths,
         });
 
-        revalidatePath("/settings/memberships");
+        revalidatePath("/price-list/memberships");
         return { success: true };
     } catch (error) {
         return { error: "Failed to create membership product", ref: logServerError("Failed to create membership product", error) };
@@ -57,16 +57,16 @@ export async function updateMembershipProduct(
 	await requireUser();
     try {
         await db
-            .update(membershipProducts)
+            .update(memberships)
             .set({
                 name: data.name,
                 basePrice: data.basePrice.toString(),
                 defaultCredits: data.defaultCredits,
                 durationMonths: data.durationMonths,
             })
-            .where(eq(membershipProducts.id, id));
+            .where(eq(memberships.id, id));
 
-        revalidatePath("/settings/memberships");
+        revalidatePath("/price-list/memberships");
         return { success: true };
     } catch (error) {
         return { error: "Failed to update membership product", ref: logServerError("Failed to update membership product", error) };
@@ -76,11 +76,11 @@ export async function updateMembershipProduct(
 export async function archiveMembershipProduct(id: string) {
 	await requireUser();
 	await db
-		.update(membershipProducts)
+		.update(memberships)
 		.set({ isArchived: true })
-		.where(eq(membershipProducts.id, id));
+		.where(eq(memberships.id, id));
 
-	revalidatePath("/settings/memberships");
+	revalidatePath("/price-list/memberships");
 }
 
 export async function deleteMembershipProduct(id: string) {
@@ -89,7 +89,7 @@ export async function deleteMembershipProduct(id: string) {
 	const wallets = await db
 		.select()
 		.from(clientWallets)
-		.where(eq(clientWallets.productId, id))
+		.where(eq(clientWallets.membershipId, id))
 		.limit(1);
 
 	if (wallets.length > 0) {
@@ -98,7 +98,7 @@ export async function deleteMembershipProduct(id: string) {
 		);
 	}
 
-	await db.delete(membershipProducts).where(eq(membershipProducts.id, id));
+	await db.delete(memberships).where(eq(memberships.id, id));
 
-	revalidatePath("/settings/memberships");
+	revalidatePath("/price-list/memberships");
 }

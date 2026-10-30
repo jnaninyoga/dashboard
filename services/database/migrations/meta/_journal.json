@@ -78,6 +78,13 @@
       "when": 1793370295409,
       "tag": "0010_refunds_the_right_way",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793372671645,
+      "tag": "0011_price_list_names",
+      "breakpoints": true
     }
   ]
 }

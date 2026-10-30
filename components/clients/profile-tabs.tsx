@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
 	type Client,
 	type ClientWallet,
-	type MembershipProduct,
+	type Membership,
 } from "@/services/database/schema";
 
 import { HealthTab } from "./tabs/health";
@@ -13,7 +13,7 @@ import { WalletTab } from "./tabs/wallet";
 
 interface ClientProfileTabsProps {
 	client: Client & { wallets?: ClientWallet[] };
-	products: MembershipProduct[];
+	products: Membership[];
 }
 
 export function ClientProfileTabs({

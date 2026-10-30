@@ -5,7 +5,7 @@ import { useId, useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { suggestPrices } from "@/lib/domain/billing/price-list";
-import { type B2BPricingTier } from "@/lib/types/b2b";
+import { type PartnerRate } from "@/lib/types/b2b";
 import { formatMoney } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 
@@ -14,8 +14,8 @@ import { HamburgerMenu } from "iconsax-reactjs";
 interface DescriptionAutocompleteProps {
 	value: string;
 	onChange: (val: string) => void;
-	onSelectTier: (tier: B2BPricingTier) => void;
-	pricingTiers: B2BPricingTier[];
+	onSelectTier: (tier: PartnerRate) => void;
+	pricingTiers: PartnerRate[];
 	disabled?: boolean;
 	placeholder?: string;
 	/** Extra attributes for the input (an aria-label, data-* to focus it, key handling). */
@@ -55,7 +55,7 @@ export function DescriptionAutocomplete({
 		setOpen(false);
 		setActive(-1);
 	};
-	const pick = (tier: B2BPricingTier) => {
+	const pick = (tier: PartnerRate) => {
 		close();
 		onSelectTier(tier);
 	};

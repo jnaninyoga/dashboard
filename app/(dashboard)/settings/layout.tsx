@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Settings — JnaninYoga",
-	description: "Manage studio settings, categories, memberships, and schedule.",
+	description: "The studio itself: its profile and its hours.",
 };
 
 export default function SettingsLayout({

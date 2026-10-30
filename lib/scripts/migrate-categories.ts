@@ -1,6 +1,6 @@
 
 import { db } from "@/services/database";
-import { appSettings, clientCategories, clients } from "@/services/database/schema";
+import { appSettings, discounts, clients } from "@/services/database/schema";
 
 import { eq } from "drizzle-orm";
 
@@ -30,8 +30,8 @@ async function main() {
 
     for (const cat of categories) {
         // Check if exists (idempotency)
-        const existing = await db.query.clientCategories.findFirst({
-            where: eq(clientCategories.name, cat.name)
+        const existing = await db.query.discounts.findFirst({
+            where: eq(discounts.name, cat.name)
         });
 
         let catId;
@@ -40,7 +40,7 @@ async function main() {
             catId = existing.id;
         } else {
             console.log(`Creating category: ${cat.name}`);
-            const inserted = await db.insert(clientCategories).values({
+            const inserted = await db.insert(discounts).values({
                 name: cat.name,
                 discountType: "percentage",
                 discountValue: cat.value,
@@ -64,13 +64,13 @@ async function main() {
 
         if (newId) {
              await db.update(clients)
-                .set({ categoryId: newId })
+                .set({ discountId: newId })
                 .where(eq(clients.id, client.id));
         } else {
             console.warn(`Warning: Client ${client.id} has unknown category '${oldCat}'. defaulting to Adult.`);
              if (categoryMap['adult']) {
                 await db.update(clients)
-                    .set({ categoryId: categoryMap['adult'] })
+                    .set({ discountId: categoryMap['adult'] })
                     .where(eq(clients.id, client.id));
              }
         }

@@ -16,7 +16,7 @@ import { createClientAction, updateClientAction } from "@/lib/actions/clients/mu
 import { HEALTH_TEMPLATE, type HealthSection } from "@/lib/config/health";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { 
-    type Category, 
+    type Discount, 
     type HealthLog 
 } from "@/lib/types";
 import { type ClientFormValues, clientSchema } from "@/lib/validators";
@@ -50,7 +50,7 @@ interface ClientFormProps {
 		healthLogs?: HealthLog[];
 	};
 	mode: "create" | "edit";
-    categories: Category[];
+    discounts: Discount[];
 }
 
 type Draft = { values: Partial<ClientFormValues>; step: number };
@@ -95,7 +95,7 @@ export function ClientForm(props: ClientFormProps) {
 function ClientFormBody({
 	initialData,
 	mode,
-	categories,
+	discounts,
 	draft,
 	draftReady,
 }: ClientFormProps & { draft: Draft | null; draftReady: boolean }) {
@@ -127,7 +127,7 @@ function ClientFormBody({
 			address: "",
 			profession: "",
 			birthDate: "",
-			categoryId: "",
+			discountId: "",
 			consultationReason: "",
 			intakeData: {},
 			...initialData,
@@ -207,7 +207,7 @@ function ClientFormBody({
 	const getStepFields = (step: number): (keyof ClientFormValues)[] => {
 		switch (step) {
 			case 0:
-				return ["fullName", "phone", "birthDate", "categoryId", "gender"];
+				return ["fullName", "phone", "birthDate", "discountId", "gender"];
 			case 1:
 				return []; // flexible intake data
 			case 2:
@@ -262,8 +262,8 @@ function ClientFormBody({
 			if (values.profession) formData.append("profession", values.profession);
 			formData.append("birthDate", values.birthDate || "");
 			formData.append(
-				"categoryId",
-				values.categoryId || "",
+				"discountId",
+				values.discountId || "",
 			);
 			if (values.gender) formData.append("gender", values.gender);
 			if (values.referralSource)
@@ -316,15 +316,15 @@ function ClientFormBody({
 						submitLabel={mode === "create" ? "Add client" : "Save changes"}
 						mode={mode}
 					>
-						{currentStep === 0 ? <StepPersonalDetails form={form} categories={categories} /> : null}
+						{currentStep === 0 ? <StepPersonalDetails form={form} discounts={discounts} /> : null}
 						{currentStep === 1 ? (
 							<StepHealthWellness
 								form={form}
 								sections={getHealthSectionsByStep(1)}
 							/>
 						) : null}
-						{currentStep === 2 ? <StepMembership form={form} categories={categories} mode={mode} /> : null}
-						{currentStep === 3 ? <StepConsultation form={form} categories={categories} /> : null}
+						{currentStep === 2 ? <StepMembership form={form} discounts={discounts} mode={mode} /> : null}
+						{currentStep === 3 ? <StepConsultation form={form} discounts={discounts} /> : null}
 					</FormWizard>
 				</form>
 			</Form>

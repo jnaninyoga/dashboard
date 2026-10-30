@@ -79,7 +79,7 @@ async function ProfileContent({ id }: { id: string }) {
         .reduce((sum, w) => sum + w.remainingCredits, 0);
     
     const activeWallet = wallets.find(w => w.status === 'active'); // Just take first active for now
-    const activeProductName = activeWallet?.product?.name;
+    const activeProductName = activeWallet?.membership?.name;
 
 	return (
 		<>
@@ -98,7 +98,7 @@ async function ProfileContent({ id }: { id: string }) {
 						</h1>
 						<div className="mt-1 flex flex-wrap items-center gap-2">
 							<Badge variant="outline" className="capitalize">
-								{client.category?.name || "Uncategorized"}
+								{client.discount?.name || "No discount"}
 							</Badge>
 							{client.gender ? (
 								<Badge variant="secondary" className="capitalize">

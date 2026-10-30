@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { createMembershipProduct, updateMembershipProduct } from "@/lib/actions/clients/memberships";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { type MembershipProduct } from "@/lib/types";
+import { type Membership } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
 import {
 	type MembershipProductFormInput,
@@ -31,11 +31,11 @@ type MembershipSheetProps = {
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	/** Edit mode: the membership to change. */
-	initialData?: MembershipProduct;
+	initialData?: Membership;
 	trigger?: React.ReactNode;
 };
 
-const defaultsFor = (product?: MembershipProduct): MembershipProductFormValues => ({
+const defaultsFor = (product?: Membership): MembershipProductFormValues => ({
 	name: product?.name ?? "",
 	basePrice: product?.basePrice ? parseFloat(product.basePrice) : 0,
 	durationMonths: product?.durationMonths ?? 1,

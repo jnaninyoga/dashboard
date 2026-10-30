@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
-import {clients, clientWallets, membershipProducts } from "@/services/database/schema";
+import {clients, clientWallets, memberships } from "@/services/database/schema";
 import { createClient } from "@/services/supabase/server";
 
 import {eq } from "drizzle-orm";
@@ -24,7 +24,7 @@ export async function assignProductToClient(clientId: string, productId: string)
 		const clientData = await db.query.clients.findFirst({
 			where: eq(clients.id, clientId),
 			with: {
-				category: true,
+				discount: true,
 			},
 		});
 
@@ -33,11 +33,11 @@ export async function assignProductToClient(clientId: string, productId: string)
 		}
         
         // Use the category relation (if exists) for discounts
-        const clientCategory = clientData.category;
+        const clientCategory = clientData.discount;
 
 		// 2. Fetch product details
-		const product = await db.query.membershipProducts.findFirst({
-			where: eq(membershipProducts.id, productId),
+		const product = await db.query.memberships.findFirst({
+			where: eq(memberships.id, productId),
 		});
 
 		if (!product) {
@@ -65,7 +65,7 @@ export async function assignProductToClient(clientId: string, productId: string)
 		// 4. Insert into client_wallets
 		await db.insert(clientWallets).values({
 			clientId,
-			productId,
+			membershipId: productId,
 			remainingCredits: product.defaultCredits,
 			status: "active",
             amountPaid: finalPrice.toFixed(2),
@@ -93,8 +93,8 @@ export async function getMembershipProductsAction() {
 
 	try {
         // Fetch all active products
-		const products = await db.query.membershipProducts.findMany({
-            where: eq(membershipProducts.isArchived, false),
+		const products = await db.query.memberships.findMany({
+            where: eq(memberships.isArchived, false),
             orderBy: (products, { asc }) => [asc(products.basePrice)]
         });
 		return { success: true, products };

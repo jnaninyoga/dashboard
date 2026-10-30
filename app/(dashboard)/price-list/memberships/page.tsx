@@ -20,10 +20,10 @@ export default async function MembershipSettingsPage() {
 			<div className="flex items-center justify-between">
 				<div>
 					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
-						Membership Products
+						Memberships
 					</h1>
 					<p className="text-md text-muted-foreground">
-						Manage your class passes and membership types.
+						The cards you sell to clients: credits for their visits, for a number of months.
 					</p>
 				</div>
 				<CreateMembershipDialog />

@@ -21,7 +21,7 @@ export async function getClientsAction(
 	page = 1,
 	pageSize = 10,
 	query = "",
-	filters: { categoryId?: string; gender?: Gender } = {},
+	filters: { discountId?: string; gender?: Gender } = {},
 ) {
 	const supabase = await createClient();
 	const {
@@ -53,8 +53,8 @@ export async function getClientsAction(
 		);
 	}
 
-	if (filters.categoryId && filters.categoryId !== "all") {
-		whereConditions.push(eq(clients.categoryId, filters.categoryId));
+	if (filters.discountId && filters.discountId !== "all") {
+		whereConditions.push(eq(clients.discountId, filters.discountId));
 	}
 
 	if (filters.gender && filters.gender !== Gender.ALL) {
@@ -71,11 +71,11 @@ export async function getClientsAction(
 			offset: offset,
 			orderBy: [desc(clients.createdAt)],
 			with: {
-				category: true,
+				discount: true,
 				wallets: {
 					where: eq(clientWallets.status, "active"),
 					with: {
-						product: true,
+						membership: true,
 						// Fetch recent ledger entries to check for "Online" status
 						ledgerEntries: {
 							// A cancelled session's check-in is history, not a visit.
@@ -185,14 +185,14 @@ export async function getClientByIdAction(id: string) {
 		const client = (await db.query.clients.findFirst({
 			where: eq(clients.id, id),
 			with: {
-				category: true,
+				discount: true,
 				healthLogs: {
 					orderBy: desc(healthLogs.startDate),
 					where: isNull(healthLogs.endDate), // active only
 				},
 				wallets: {
 					with: {
-						product: true,
+						membership: true,
 					},
 					orderBy: desc(clientWallets.activatedAt),
 				},
@@ -210,7 +210,7 @@ export async function getClientByIdAction(id: string) {
 			success: true,
 			client: {
 				...client,
-				activeProductId: activeWallet?.productId,
+				activeProductId: activeWallet?.membershipId,
 			},
 		};
 	} catch (error) {

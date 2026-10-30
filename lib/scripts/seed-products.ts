@@ -2,7 +2,7 @@
 import "dotenv/config";
 
 import { db } from "@/services/database";
-import { membershipProducts } from "@/services/database/schema";
+import { memberships } from "@/services/database/schema";
 
 async function main() {
 	console.log("Seeding membership products...");
@@ -31,7 +31,7 @@ async function main() {
 	];
 
 	for (const product of products) {
-		await db.insert(membershipProducts).values(product);
+		await db.insert(memberships).values(product);
 		console.log(`Inserted: ${product.name}`);
 	}
 

@@ -2,10 +2,11 @@ import {
 	Buildings,
 	Calendar,
 	Card,
-	Category2,
+	DiscountShape,
 	DocumentText,
 	Home2,
 	type Icon,
+	MenuBoard,
 	People,
 	ReceiptText,
 	Shop,
@@ -23,8 +24,9 @@ export type NavItem = {
 
 /**
  * The navigation, in the words of her day: what's happening today, the studio
- * itself, and the billing of the hotels and companies she teaches for.
- * Settings are set up once and visited rarely, so they fold away.
+ * itself, the billing of the hotels and companies she teaches for, and her
+ * price list (what she sells, at what price). Settings are set up once and
+ * visited rarely, so they fold away.
  */
 export const dashboardConfig = {
 	sections: [
@@ -49,12 +51,17 @@ export const dashboardConfig = {
 				{ title: "Documents", url: "/b2b/documents", icon: DocumentText },
 			],
 		},
+		{
+			label: "Price list",
+			items: [
+				{ title: "Memberships", url: "/price-list/memberships", icon: Card },
+				{ title: "Partner rates", url: "/price-list/partner-rates", icon: MenuBoard },
+				{ title: "Discounts", url: "/price-list/discounts", icon: DiscountShape },
+			],
+		},
 	] satisfies { label: string; items: NavItem[] }[],
 	settings: [
 		{ title: "Studio profile", url: "/settings/company", icon: Shop },
-		{ title: "Memberships", url: "/settings/memberships", icon: Card },
-		{ title: "Categories", url: "/settings/categories", icon: Category2 },
-		{ title: "B2B pricing", url: "/settings/b2b", icon: Buildings },
 		{ title: "Studio hours", url: "/settings/schedule", icon: Timer1 },
 	] satisfies NavItem[],
 };

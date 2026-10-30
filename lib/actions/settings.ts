@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
-import { appSettings, b2bPricingTiers, clientCategories, clients } from "@/services/database/schema";
+import { appSettings, clients,discounts, partnerRates } from "@/services/database/schema";
 
 import { asc, eq } from "drizzle-orm";
 
@@ -53,9 +53,9 @@ export async function setWorkingHours(config: WorkingHoursConfig) {
 
 // --- Dynamic Categories ---
 
-export async function getClientCategories() {
+export async function getDiscounts() {
 	await requireUser();
-    return await db.query.clientCategories.findMany({
+    return await db.query.discounts.findMany({
         orderBy: (categories, { asc }) => [asc(categories.name)],
     });
 }
@@ -70,12 +70,12 @@ export async function createClientCategory(
 ) {
 	await requireUser();
     try {
-        await db.insert(clientCategories).values({
+        await db.insert(discounts).values({
             name: data.name,
             discountType: data.discountType,
             discountValue: data.discountValue.toString(),
         });
-        revalidatePath("/settings/categories");
+        revalidatePath("/price-list/discounts");
         return { success: true };
     } catch (error) {
         return { error: "Failed to create category", ref: logServerError("Failed to create category", error) };
@@ -93,14 +93,14 @@ export async function updateClientCategory(
 ) {
 	await requireUser();
     try {
-        await db.update(clientCategories)
+        await db.update(discounts)
             .set({
                 name: data.name,
                 discountType: data.discountType,
                 discountValue: data.discountValue.toString(),
             })
-            .where(eq(clientCategories.id, id));
-        revalidatePath("/settings/categories");
+            .where(eq(discounts.id, id));
+        revalidatePath("/price-list/discounts");
         return { success: true };
     } catch (error) {
         return { error: "Failed to update category", ref: logServerError("Failed to update category", error) };
@@ -109,41 +109,41 @@ export async function updateClientCategory(
 
 export async function archiveClientCategory(id: string) {
 	await requireUser();
-    await db.update(clientCategories)
+    await db.update(discounts)
         .set({ isArchived: true })
-        .where(eq(clientCategories.id, id));
-    revalidatePath("/settings/categories");
+        .where(eq(discounts.id, id));
+    revalidatePath("/price-list/discounts");
 }
 
 export async function restoreClientCategory(id: string) {
 	await requireUser();
-    await db.update(clientCategories)
+    await db.update(discounts)
         .set({ isArchived: false })
-        .where(eq(clientCategories.id, id));
-    revalidatePath("/settings/categories");
+        .where(eq(discounts.id, id));
+    revalidatePath("/price-list/discounts");
 }
 
 export async function deleteClientCategory(id: string) {
 	await requireUser();
     // Check if in use
     const used = await db.query.clients.findFirst({
-        where: eq(clients.categoryId, id)
+        where: eq(clients.discountId, id)
     });
 
     if (used) {
         throw new Error("Cannot delete category: It is assigned to one or more clients. Archive it instead.");
     }
 
-    await db.delete(clientCategories).where(eq(clientCategories.id, id));
-    revalidatePath("/settings/categories");
+    await db.delete(discounts).where(eq(discounts.id, id));
+    revalidatePath("/price-list/discounts");
 }
 
 // --- B2B Pricing Tiers ---
 
-export async function getB2BPricingTiers() {
+export async function getPartnerRates() {
 	await requireUser();
-    return await db.query.b2bPricingTiers.findMany({
-        orderBy: [asc(b2bPricingTiers.name)],
+    return await db.query.partnerRates.findMany({
+        orderBy: [asc(partnerRates.name)],
     });
 }
 
@@ -163,11 +163,11 @@ export async function createB2BTierAction(_prevState: unknown, formData: FormDat
     }
 
     try {
-        await db.insert(b2bPricingTiers).values({
+        await db.insert(partnerRates).values({
             name: parsed.data.name,
             price: Number(parsed.data.price),
         });
-        revalidatePath("/settings/b2b");
+        revalidatePath("/price-list/partner-rates");
         return { success: true };
     } catch (error) {
         return { error: "Failed to create B2B tier", ref: logServerError("Failed to create B2B tier", error) };
@@ -188,13 +188,13 @@ export async function updateB2BTierAction(id: string, _prevState: unknown, formD
     }
 
     try {
-        await db.update(b2bPricingTiers)
+        await db.update(partnerRates)
             .set({
                 name: parsed.data.name,
                 price: Number(parsed.data.price),
             })
-            .where(eq(b2bPricingTiers.id, id));
-        revalidatePath("/settings/b2b");
+            .where(eq(partnerRates.id, id));
+        revalidatePath("/price-list/partner-rates");
         return { success: true };
     } catch (error) {
         return { error: "Failed to update B2B tier", ref: logServerError("Failed to update B2B tier", error) };
@@ -204,8 +204,8 @@ export async function updateB2BTierAction(id: string, _prevState: unknown, formD
 export async function deleteB2BTierAction(id: string) {
 	await requireUser();
     try {
-        await db.delete(b2bPricingTiers).where(eq(b2bPricingTiers.id, id));
-        revalidatePath("/settings/b2b");
+        await db.delete(partnerRates).where(eq(partnerRates.id, id));
+        revalidatePath("/price-list/partner-rates");
         return { success: true };
     } catch (error) {
         return { error: "Failed to delete B2B tier", ref: logServerError("Failed to delete B2B tier", error) };
@@ -215,10 +215,10 @@ export async function deleteB2BTierAction(id: string) {
 export async function toggleArchiveB2BTierAction(id: string, isArchived: boolean) {
 	await requireUser();
     try {
-        await db.update(b2bPricingTiers)
+        await db.update(partnerRates)
             .set({ isArchived: !isArchived })
-            .where(eq(b2bPricingTiers.id, id));
-        revalidatePath("/settings/b2b");
+            .where(eq(partnerRates.id, id));
+        revalidatePath("/price-list/partner-rates");
         return { success: true };
     } catch (error) {
         return { error: "Failed to update archive status", ref: logServerError("Failed to update archive status", error) };

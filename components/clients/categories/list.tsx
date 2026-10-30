@@ -26,7 +26,7 @@ import {
 	restoreClientCategory,
 } from "@/lib/actions/settings";
 import { notify } from "@/lib/feedback/notify";
-import { type Category } from "@/lib/types";
+import { type Discount } from "@/lib/types";
 
 import {
 	ArchiveBook as Archive,
@@ -40,10 +40,10 @@ import { CategoryDialog } from "./dialog";
 export function CategoryList({
 	initialCategories,
 }: {
-	initialCategories: Category[];
+	initialCategories: Discount[];
 }) {
 	const [isCreateOpen, setIsCreateOpen] = useState(false);
-	const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+	const [editingCategory, setEditingCategory] = useState<Discount | null>(null);
 
 	const activeCategories = initialCategories.filter((c) => !c.isArchived);
 	const archivedCategories = initialCategories.filter((c) => c.isArchived);
@@ -105,7 +105,7 @@ export function CategoryList({
 					{activeCategories.length === 0 ? (
 						<TableRow>
 							<TableCell colSpan={4} className="h-24 text-center">
-								No active categories.
+								No active discounts.
 							</TableCell>
 						</TableRow>
 					) : (

@@ -9,10 +9,10 @@ import { formatPhone, whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
 import {
 	type Client,
-	type ClientCategory,
 	type ClientWallet,
+	type Discount,
 	type HealthLog,
-	type MembershipProduct,
+	type Membership,
 } from "@/services/database/schema";
 
 import { type ColumnDef } from "@tanstack/react-table";
@@ -23,8 +23,8 @@ import { ClientAvatar, ClientCard } from "./client-card";
 import { HealthAlertButton } from "./health-alert-button";
 
 export type ClientWithRelations = Client & {
-	category?: ClientCategory | null;
-	wallets?: (ClientWallet & { product?: MembershipProduct | null })[];
+	discount?: Discount | null;
+	wallets?: (ClientWallet & { membership?: Membership | null })[];
 	healthLogs?: HealthLog[];
 	/** Check-ins since the start of the studio's month, and the latest one. */
 	visitsThisMonth?: number;
