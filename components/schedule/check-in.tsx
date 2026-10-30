@@ -59,6 +59,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                 const newRecord: AttendanceRecord = {
                     id: Math.random().toString(), 
                     checkInTime: new Date().toISOString(),
+                    cancelledAt: null,
                     slotType: eventType as JnaninEventType,
                     client: {
                         id: clientId,

@@ -34,8 +34,13 @@ export function CancelEventButton({
     const handleConfirm = () => {
         startTransition(async () => {
             const result = await cancelEventAction(eventId);
-            if (result.success) {
-                notify.success("Session cancelled.");
+            if ("success" in result) {
+                notify.success(
+                    "Session cancelled.",
+                    result.refunded
+                        ? `${result.refunded} ${result.refunded === 1 ? "credit" : "credits"} given back to the clients who checked in.`
+                        : undefined,
+                );
                 setOpen(false);
                 router.refresh();
             } else {
@@ -79,8 +84,9 @@ export function CancelEventButton({
                                 <br />
                             </>
                         ) : null}
-                        This will delete the event from Google Calendar. Any attendance
-                        records already taken will be preserved. This cannot be undone.
+                        It leaves Google Calendar, so the time frees up and guests are told.
+                        It stays in your history as cancelled, and everyone who checked in
+                        gets their credit back. You can&apos;t undo this.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

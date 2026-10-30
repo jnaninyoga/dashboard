@@ -2,12 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
+import { refundsFor, walletAfterRefund } from "@/lib/domain/schedule/cancel";
 import { logServerError } from "@/lib/errors/server";
-import { type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
+import { type CalendarEvent, type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
 import { currentHourStart, fromStudioTime, STUDIO_TIME_ZONE, studioIsoString, weekdayOf } from "@/lib/utils/time";
-import { cancelStudioEvent, checkAvailability, createStudioEvent, googleErrorMessage } from "@/services/google";
-import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
+import { db } from "@/services/database";
+import { attendanceLedger, clientWallets, slotTypeEnum, studioSessions } from "@/services/database/schema";
+import {
+	cancelStudioEvent,
+	checkAvailability,
+	createStudioEvent,
+	getEventById,
+	getValidAccessToken,
+	googleErrorMessage,
+} from "@/services/google";
+
+import { and, eq, inArray, isNull } from "drizzle-orm";
 
 import { getWorkingHours } from "../settings";
 
@@ -30,15 +41,7 @@ if (process.versions.tz && process.versions.tz < "2026e") {
 }
 
 export async function scheduleNewEventAction(data: ScheduleEventInput) {
-	// Authentication
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return { error: "Not authenticated" };
-	}
+	const user = await requireUser();
 
 	if (
 		!/^\d{4}-\d{2}-\d{2}$/.test(data.dateStr) ||
@@ -108,45 +111,142 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 			b2bPaxLabel: data.b2bPaxLabel,
 		});
 
+		// Her record of the session, kept even after it's cancelled. Without it
+		// the session would have no history, so a failed write takes the event
+		// back out of Google Calendar and the session isn't created at all.
+		try {
+			await db.insert(studioSessions).values({
+				googleEventId: newEvent.id!,
+				title: data.title,
+				type: data.type,
+				// Google's times, placed with its always-current zone data (a stale
+				// Node can still think Morocco is on UTC+1); ours only as a fallback.
+				startsAt: newEvent.start?.dateTime
+					? new Date(newEvent.start.dateTime)
+					: fromStudioTime(data.dateStr, data.startTimeStr),
+				endsAt: newEvent.end?.dateTime ? new Date(newEvent.end.dateTime) : fromStudioTime(data.dateStr, data.endTimeStr),
+			});
+		} catch (error) {
+			const ref = logServerError("Failed to record the new session", error);
+			await cancelStudioEvent(accessToken, newEvent.id!).catch((undo) =>
+				logServerError("Couldn't remove the unrecorded session from Google Calendar", undo),
+			);
+			return { error: "The session couldn't be saved. Nothing was added; try again.", ref };
+		}
+
 		return { success: true, event: newEvent };
 	} catch (error) {
 		return { error: "Failed to create the event in Google Calendar.", ref: logServerError("Failed to schedule event", error) };
 	}
 }
 
+// Expected refusals, shown to her as they are.
+class CancelRefused extends Error {}
+
+const SLOT_TYPES: readonly string[] = slotTypeEnum.enumValues;
+
+/** A Google event's start or end as an instant (all-day events start at midnight UTC). */
+const instantOf = (time: CalendarEvent["start"]) => new Date(time?.dateTime ?? time?.date ?? Date.now());
+
 /**
- * Cancels an event by deleting it from Google Calendar. Local attendance
- * records (if any) remain intact so past check-ins stay queryable.
+ * Cancels a session. It stays in her history, marked cancelled; its
+ * check-ins are marked cancelled and each gives its credit back to the card
+ * it came from; then the event leaves Google Calendar, freeing the slot (and
+ * telling guests). All of it happens or none of it: if Google refuses, the
+ * records are rolled back. Cancelling twice changes nothing more.
  */
-export async function cancelEventAction(eventId: string) {
+export async function cancelEventAction(eventId: string, reason?: string) {
 	if (!eventId) {
 		return { error: "Missing event id." };
 	}
-
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return { error: "Not authenticated" };
-	}
+	const user = await requireUser();
 
 	let accessToken: string;
+	let event: CalendarEvent | null;
 	try {
 		accessToken = await getValidAccessToken(user.id);
+		// For sessions with no record yet (made before records existed, or in
+		// Google Calendar itself), the cancelled record is built from it.
+		event = await getEventById(accessToken, eventId);
 	} catch (error) {
 		return { error: googleErrorMessage(error, "Google Calendar") };
 	}
 
 	try {
-		await cancelStudioEvent(accessToken, eventId);
+		const result = await db.transaction(async (tx) => {
+			const [session] = await tx
+				.select()
+				.from(studioSessions)
+				.where(eq(studioSessions.googleEventId, eventId))
+				.for("update");
+			if (session?.status === "cancelled") return { refunded: 0, alreadyCancelled: true };
+			if (!session && !event) throw new CancelRefused("This session no longer exists in Google Calendar.");
+
+			const now = new Date();
+			const cancellation = { status: "cancelled" as const, cancelledAt: now, cancelReason: reason?.trim() || null };
+			if (session) {
+				await tx.update(studioSessions).set(cancellation).where(eq(studioSessions.id, session.id));
+			} else {
+				const type = event!.extendedProperties?.private?.jnaninEventType;
+				await tx.insert(studioSessions).values({
+					googleEventId: eventId,
+					title: event!.summary || "Session",
+					type: type && SLOT_TYPES.includes(type) ? (type as (typeof slotTypeEnum.enumValues)[number]) : "group",
+					startsAt: instantOf(event!.start),
+					endsAt: instantOf(event!.end),
+					...cancellation,
+				});
+			}
+
+			// Its check-ins stay in history, marked cancelled, and give their credit back.
+			const checkIns = await tx
+				.select({
+					id: attendanceLedger.id,
+					walletId: attendanceLedger.walletId,
+					slotType: attendanceLedger.slotType,
+					cancelledAt: attendanceLedger.cancelledAt,
+				})
+				.from(attendanceLedger)
+				.where(and(eq(attendanceLedger.googleEventId, eventId), isNull(attendanceLedger.cancelledAt)))
+				.for("update");
+			if (checkIns.length) {
+				await tx
+					.update(attendanceLedger)
+					.set({ cancelledAt: now })
+					.where(inArray(attendanceLedger.id, checkIns.map((c) => c.id)));
+			}
+			const refunds = refundsFor(checkIns);
+			if (refunds.size) {
+				const wallets = await tx
+					.select()
+					.from(clientWallets)
+					.where(inArray(clientWallets.id, [...refunds.keys()]))
+					.for("update");
+				for (const wallet of wallets) {
+					await tx
+						.update(clientWallets)
+						.set(walletAfterRefund(wallet, refunds.get(wallet.id)!))
+						.where(eq(clientWallets.id, wallet.id));
+				}
+			}
+
+			// Last, free the slot in Google Calendar. If Google refuses, the throw
+			// rolls back everything above: the session is still on.
+			if (event) await cancelStudioEvent(accessToken, eventId);
+
+			return { refunded: [...refunds.values()].reduce((sum, n) => sum + n, 0), alreadyCancelled: false };
+		});
+
+		revalidatePath("/schedule");
+		revalidatePath("/");
+		revalidatePath("/clients");
+		revalidatePath(`/check-in/${eventId}`);
+		return { success: true as const, ...result };
 	} catch (error) {
-		return { error: "Failed to cancel the event in Google Calendar.", ref: logServerError("Failed to cancel event", error) };
+		if (error instanceof CancelRefused) return { error: error.message };
+		return {
+			error: "The session couldn't be cancelled. Nothing changed; try again.",
+			ref: logServerError("Failed to cancel event", error),
+		};
 	}
-
-	revalidatePath("/schedule");
-	revalidatePath("/");
-
-	return { success: true };
 }

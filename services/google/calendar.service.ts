@@ -183,8 +183,9 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7): P
 }
 
 /**
- * Cancels (deletes) an event on the primary calendar. The event is removed
- * from Google Calendar; attendance records stored locally are preserved.
+ * Deletes an event from the primary calendar, freeing the slot (Google tells
+ * invited guests). An event that is already gone counts as deleted, so a
+ * cancellation that stopped halfway can simply be tried again.
  */
 export async function cancelStudioEvent(
 	accessToken: string,
@@ -198,6 +199,8 @@ export async function cancelStudioEvent(
 			eventId,
 		});
 	} catch (error) {
+		const status = (error as { response?: { status?: number } }).response?.status;
+		if (status === 404 || status === 410) return;
 		console.error("Error cancelling Studio Event:", error);
 		throw new Error("Failed to cancel event in Google Calendar.");
 	}

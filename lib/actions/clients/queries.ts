@@ -78,6 +78,8 @@ export async function getClientsAction(
 						product: true,
 						// Fetch recent ledger entries to check for "Online" status
 						ledgerEntries: {
+							// A cancelled session's check-in is history, not a visit.
+							where: isNull(attendanceLedger.cancelledAt),
 							orderBy: desc(attendanceLedger.checkInTime),
 							limit: 1,
 						},
@@ -114,7 +116,8 @@ export async function getClientsAction(
                 })
                 .from(attendanceLedger)
                 .innerJoin(clientWallets, eq(attendanceLedger.walletId, clientWallets.id))
-                .where(inArray(clientWallets.clientId, clientIds))
+                // Check-ins of cancelled sessions aren't visits.
+                .where(and(inArray(clientWallets.clientId, clientIds), isNull(attendanceLedger.cancelledAt)))
                 .groupBy(clientWallets.clientId);
             const visitsByClient = new Map(visits.map((v) => [v.clientId, v]));
             for (const client of data as (Client & { visitsThisMonth?: number; lastVisitAt?: Date })[]) {
@@ -134,7 +137,8 @@ export async function getClientsAction(
                 .where(
                     and(
                         inArray(clientWallets.clientId, clientIds),
-                        gte(attendanceLedger.checkInTime, startOfToday)
+                        gte(attendanceLedger.checkInTime, startOfToday),
+                        isNull(attendanceLedger.cancelledAt)
                     )
                 )
                 .orderBy(desc(attendanceLedger.checkInTime));

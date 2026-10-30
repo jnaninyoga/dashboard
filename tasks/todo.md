@@ -49,14 +49,14 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
 
 ## Phase 3: session record
 
-- [ ] **Task 6: Record every session the dashboard creates** (M)
+- [x] **Task 6: Record every session the dashboard creates** (M)
   - Acceptance:
     - The migration adds `studio_sessions` (Google event id, title, type, start, end, status, cancelled at, cancel reason) and `attendance_ledger.cancelled_at`.
     - Creating a session writes its record. `pnpm db:check` passes.
   - Verify: migration applied to the local database; the action harness creates a session record.
   - Files: `services/database/schema.ts`, `services/database/migrations/0008_*.sql`, `lib/actions/schedule/events.ts`.
 
-- [ ] **Task 7: Cancelling keeps the session and gives credits back** (M)
+- [x] **Task 7: Cancelling keeps the session and gives credits back** (M)
   - Acceptance:
     - Cancel marks the session cancelled, marks its check-ins cancelled and returns one credit per check-in, in one transaction. Then it deletes the Google event; if that fails, everything is rolled back.
     - Cancelling twice changes nothing more. A cancelled session can't take new check-ins.

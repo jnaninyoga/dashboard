@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
-import { attendanceLedger, clients, clientWallets, healthLogs } from "@/services/database/schema";
+import { attendanceLedger, clients, clientWallets, healthLogs, studioSessions } from "@/services/database/schema";
 import { HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
@@ -14,6 +14,8 @@ import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 export interface AttendanceRecord {
 	id: string;
 	checkInTime: string;
+	/** When the session was cancelled (the credit went back), or null. */
+	cancelledAt: string | null;
 	slotType: JnaninEventType;
 	client: {
 		id: string;
@@ -35,6 +37,14 @@ export async function checkInClientAction(
 	await requireUser();
 	try {
 		const message = await db.transaction(async (tx) => {
+			const [session] = await tx
+				.select({ status: studioSessions.status })
+				.from(studioSessions)
+				.where(eq(studioSessions.googleEventId, eventId));
+			if (session?.status === "cancelled") {
+				throw new CheckInRefused("This session was cancelled.");
+			}
+
 			// Lock the client's wallets first: a double tap (or a second device)
 			// waits here, then sees the first check-in below and is refused.
 			const allWallets = await tx
@@ -121,7 +131,8 @@ export async function getEventAttendanceAction(eventId: string): Promise<Attenda
 	const records = await db
 		.select({
 			id: attendanceLedger.id,
-			checkInTime: attendanceLedger.checkInTime, // This is Date in DB, we need to convert to string for the interface if required, or keep as Date.
+			checkInTime: attendanceLedger.checkInTime,
+			cancelledAt: attendanceLedger.cancelledAt,
 			slotType: attendanceLedger.slotType,
 			client: {
 				id: clients.id,
@@ -154,6 +165,7 @@ export async function getEventAttendanceAction(eventId: string): Promise<Attenda
 	return records.map((r) => ({
 		...r,
 		checkInTime: r.checkInTime.toISOString(),
+		cancelledAt: r.cancelledAt?.toISOString() ?? null,
 		slotType: r.slotType as JnaninEventType,
 		client: { ...r.client, healthLogs: alerts.filter((log) => log.clientId === r.client.id) },
 	}));
