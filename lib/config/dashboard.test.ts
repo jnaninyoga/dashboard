@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { dashboardConfig, isCurrent } from "./dashboard";
+import { bottomBar, dashboardConfig, isCurrent } from "./dashboard";
 
 describe("isCurrent", () => {
 	it("marks the dashboard only on the home page", () => {
@@ -23,5 +23,23 @@ describe("isCurrent", () => {
 describe("navigation", () => {
 	it("is grouped in her words, with no admin group names", () => {
 		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing"]);
+	});
+});
+
+describe("bottom bar", () => {
+	it("carries her daily work around the + in the middle", () => {
+		expect([...bottomBar.start, ...bottomBar.end].map((item) => item.title)).toEqual([
+			"Today",
+			"Check-in",
+			"Clients",
+			"Billing",
+		]);
+	});
+
+	it("keeps Billing current across quotes, invoices and partners", () => {
+		const billing = bottomBar.end.find((item) => item.title === "Billing")!;
+		expect(isCurrent("/b2b/partners/7", billing.match ?? billing.url)).toBe(true);
+		expect(isCurrent("/b2b/documents/new", billing.match ?? billing.url)).toBe(true);
+		expect(isCurrent("/clients", billing.match ?? billing.url)).toBe(false);
 	});
 });

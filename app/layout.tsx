@@ -33,6 +33,9 @@ export const viewport: Viewport = {
 	themeColor: "#54A5B3",
 	width: "device-width",
 	initialScale: 1,
+	// Lets the page know the phone's home-indicator area (safe-area insets),
+	// which the bottom bar keeps clear of.
+	viewportFit: "cover",
 };
 
 export const metadata: Metadata = {

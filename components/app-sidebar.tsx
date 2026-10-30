@@ -5,9 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { NavUser } from "@/components/nav-user";
-import { QuickActionItems } from "@/components/quick-actions";
+import { QuickActionsMenu } from "@/components/quick-actions";
 import { SidebarScene } from "@/components/sidebar-scene";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
 	Sidebar,
 	SidebarContent,
@@ -75,13 +74,6 @@ export function AppSidebar({
 	const closeOnMobile = () => {
 		if (isMobile) setOpenMobile(false);
 	};
-	// Once an action is chosen, the menu must not hand focus back to "New":
-	// the session sheet it opens needs it (Escape, screen readers).
-	const actionChosen = React.useRef(false);
-	const chooseAction = () => {
-		actionChosen.current = true;
-		closeOnMobile();
-	};
 	const toggleSettings = (open: boolean) => {
 		setSettingsOpen(open);
 		document.cookie = `${SETTINGS_COOKIE}=${open ? "open" : "closed"}; path=/; max-age=31536000; samesite=lax`;
@@ -117,30 +109,15 @@ export function AppSidebar({
 
 				<SidebarMenu>
 					<SidebarMenuItem>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<SidebarMenuButton
-									tooltip="New"
-									className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-[state=open]:bg-primary/90 data-[state=open]:text-primary-foreground zen-glow-teal h-11 justify-center gap-2 rounded-full font-semibold group-data-[collapsible=icon]:rounded-full [&>svg]:size-5"
-								>
-									<Add className="motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover/menu-item:rotate-90" />
-									<span>New</span>
-								</SidebarMenuButton>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent
-								side={isMobile ? "bottom" : "right"}
-								align="start"
-								sideOffset={8}
-								className="w-72 rounded-2xl p-1.5"
-								onCloseAutoFocus={(event) => {
-									if (!actionChosen.current) return;
-									actionChosen.current = false;
-									event.preventDefault();
-								}}
+						<QuickActionsMenu side={isMobile ? "bottom" : "right"} onChoose={closeOnMobile}>
+							<SidebarMenuButton
+								tooltip="New"
+								className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-[state=open]:bg-primary/90 data-[state=open]:text-primary-foreground zen-glow-teal h-11 justify-center gap-2 rounded-full font-semibold group-data-[collapsible=icon]:rounded-full [&>svg]:size-5"
 							>
-								<QuickActionItems onChoose={chooseAction} />
-							</DropdownMenuContent>
-						</DropdownMenu>
+								<Add className="motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover/menu-item:rotate-90" />
+								<span>New</span>
+							</SidebarMenuButton>
+						</QuickActionsMenu>
 					</SidebarMenuItem>
 				</SidebarMenu>
 			</SidebarHeader>

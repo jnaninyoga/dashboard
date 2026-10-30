@@ -37,7 +37,7 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
   - Verify: browser light and dark, reduced motion (0 animations in the sidebar), the phone menu screenshot.
   - Files: `components/sidebar-scene.tsx` (new), `components/app-sidebar.tsx`, `app/globals.css`.
 
-- [ ] **Task 5: Phone bottom bar and page titles** (M)
+- [x] **Task 5: Phone bottom bar and page titles** (M)
   - Acceptance:
     - Below 768px: a bottom bar with Today, Check-in, +, Clients and Billing, with controls at least 48px, clear of the home indicator. "+" opens the quick actions.
     - Content isn't hidden behind the bar. The header shows the current page's title.
@@ -45,7 +45,7 @@ Plan: [plan.md](plan.md). Every task also clears the project's Definition of Don
   - Files: `components/bottom-bar.tsx` (new), `app/(dashboard)/layout.tsx`, `components/page-title.tsx` (new), `lib/config/dashboard.ts`.
 
 ### Checkpoint B
-- [ ] Tests, type-check and lint pass; production build passes. The owner looks at the new navigation. Push.
+- [x] Tests, type-check and lint pass; production build passes (no console errors in production). Push. The owner looks at the new navigation.
 
 ## Phase 3: session record
 

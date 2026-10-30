@@ -593,7 +593,7 @@ export function NewQuoteForm({
 				</div>
 
 				{/* Sticky footer */}
-				<div className="bg-card sticky bottom-4 z-10 flex items-center justify-between gap-3 rounded-2xl border p-4 shadow-md backdrop-blur-sm">
+				<div className="bg-card sticky bottom-[calc(var(--bottom-bar)+1rem)] z-10 flex items-center justify-between gap-3 rounded-2xl border p-4 shadow-md backdrop-blur-sm md:bottom-4">
 					<div className="text-muted-foreground hidden text-xs sm:block">
 						Issuing on {issueDate} · due {dueDate || "—"}
 					</div>

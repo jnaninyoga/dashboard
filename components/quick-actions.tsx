@@ -1,10 +1,15 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 import Link from "next/link";
 
 import { NewSessionDialog } from "@/components/schedule/sessions/new-dialog";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { CalendarAdd, CardAdd, DocumentText1, type Icon, UserAdd } from "iconsax-reactjs";
 
@@ -92,5 +97,48 @@ export function QuickActionItems({ onChoose }: { onChoose?: () => void }) {
 				onSelect={onChoose}
 			/>
 		</>
+	);
+}
+
+/**
+ * The "New" menu around any trigger (the sidebar's button, the phone bar's
+ * +). Once an action is chosen the menu doesn't hand focus back to its
+ * trigger: the session sheet it opens needs it (Escape, screen readers).
+ */
+export function QuickActionsMenu({
+	children,
+	side,
+	align = "start",
+	onChoose,
+}: {
+	children: React.ReactElement;
+	side: "top" | "right" | "bottom";
+	align?: "start" | "center" | "end";
+	onChoose?: () => void;
+}) {
+	const chosen = useRef(false);
+	return (
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
+			<DropdownMenuContent
+				side={side}
+				align={align}
+				sideOffset={side === "top" ? 14 : 8}
+				collisionPadding={16}
+				className="w-72 rounded-2xl p-1.5"
+				onCloseAutoFocus={(event) => {
+					if (!chosen.current) return;
+					chosen.current = false;
+					event.preventDefault();
+				}}
+			>
+				<QuickActionItems
+					onChoose={() => {
+						chosen.current = true;
+						onChoose?.();
+					}}
+				/>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }

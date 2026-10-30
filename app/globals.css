@@ -63,6 +63,10 @@
 
 	/* Shadows are warm ink on light surfaces, plain black on dark ones. */
 	--shadow-ink: oklch(0.216 0.006 56);
+
+	/* The phone's bottom bar (components/bottom-bar.tsx), home indicator
+	   included: pages and sticky footers keep this much room below. */
+	--bottom-bar: calc(4rem + env(safe-area-inset-bottom));
 }
 
 .dark {
