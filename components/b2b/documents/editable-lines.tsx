@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,6 @@ import {
 } from "@/components/ui/table";
 import { updateDocumentLinesAction } from "@/lib/actions/b2b/documents";
 import { getB2BPricingTiers } from "@/lib/actions/settings";
-import { notify, notifyActionError } from "@/lib/feedback/notify";
 import {
 	type B2BDocumentLine,
 	type B2BDocumentStatus,
@@ -26,13 +25,16 @@ import {
 import { normalizeDecimalInput } from "@/lib/utils/currency";
 import {
 	documentLineSchema,
+	withoutBlankLines,
 } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Add, Refresh, Save2, Trash } from "iconsax-reactjs";
+import { Add, Trash } from "iconsax-reactjs";
 import { z } from "zod";
 
 import { DescriptionAutocomplete } from "./description-autocomplete";
+import { cellProps, useFluidLines } from "./fluid-lines";
+import { SaveStatus, useAutosave } from "./use-autosave";
 
 const linesFormSchema = z.object({
 	lines: z.array(documentLineSchema).min(1),
@@ -55,7 +57,6 @@ export function EditableDocumentLines({
 	initialTaxRate,
 	status,
 }: EditableDocumentLinesProps) {
-	const [isPending, startTransition] = useTransition();
 	const [pricingTiers, setPricingTiers] = useState<B2BPricingTier[]>([]);
 	const isDraft = status === "draft";
 
@@ -98,26 +99,58 @@ export function EditableDocumentLines({
 	const totalAmount = subtotal + taxAmount;
 
 
-	const handleSave = (values: LinesFormValues) => {
-		startTransition(async () => {
-			// Totals are recomputed server-side from (quantity, unitPrice, taxRate);
-			// the client-displayed totals above are preview-only.
-			const res = await updateDocumentLinesAction(documentId, {
-				lines: values.lines.map((l) => ({
-					...l,
-					sourceLineId: l.sourceLineId,
-					totalPrice: (Number(l.quantity) * Number(l.unitPrice)).toString(),
-				})),
-				taxRate: values.taxRate,
-			});
+	const { isWaiting, removeLine, keyDown, focusWaiting } = useFluidLines({
+		count: fields.length,
+		lines: linesWatcher,
+		append,
+		remove,
+	});
 
-			if (res.success) {
-				notify.success("Line items updated");
-			} else {
-				notifyActionError(res, "Failed to update lines");
-			}
-		});
-	};
+	// What the server has, so the empty line appearing (or a change undone)
+	// doesn't send the same lines again.
+	const payloadOf = (values: LinesFormValues) => ({
+		lines: withoutBlankLines(values.lines).map((l) => ({
+			...l,
+			sourceLineId: l.sourceLineId,
+			totalPrice: (Number(l.quantity) * Number(l.unitPrice)).toString(),
+		})),
+		taxRate: values.taxRate,
+	});
+	const lastSaved = useRef(JSON.stringify(payloadOf(form.getValues())));
+
+	// The lines save themselves as she types: no "Save" to remember.
+	const { state, changed, retry } = useAutosave(async () => {
+		const values = form.getValues();
+		const payload = payloadOf(values);
+		if (!payload.lines.length) return { ok: false, invalid: true, message: "add at least one line" };
+		const check = linesFormSchema.safeParse(payload);
+		if (!check.success) {
+			const issue = check.error.issues[0];
+			const kept = values.lines.map((line, i) => ({ line, i })).filter(({ line }) => withoutBlankLines([line]).length);
+			const row = typeof issue.path[1] === "number" ? (kept[issue.path[1]]?.i ?? 0) + 1 : null;
+			const field = issue.path[2];
+			const message =
+				field === "description"
+					? `line ${row} needs a description`
+					: field === "quantity"
+						? `line ${row} needs a quantity of at least 0.01`
+						: field === "unitPrice"
+							? `line ${row} needs a price`
+							: issue.message.toLowerCase();
+			return { ok: false, invalid: true, message };
+		}
+		const key = JSON.stringify(payload);
+		if (key === lastSaved.current) return { ok: true };
+		const res = await updateDocumentLinesAction(documentId, payload);
+		if (!res.success) return { ok: false, message: (res.error ?? "couldn't reach the server").toLowerCase() };
+		lastSaved.current = key;
+		return { ok: true };
+	});
+
+	useEffect(() => {
+		const subscription = form.watch(() => changed());
+		return () => subscription.unsubscribe();
+	}, [form, changed]);
 
 	if (!isDraft) {
 		// Read-only view for non-draft documents (redundant but safe)
@@ -126,42 +159,23 @@ export function EditableDocumentLines({
 
 	return (
 		<Form {...form}>
-			<form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
+			<form onSubmit={(event) => event.preventDefault()} className="space-y-6">
 				<div className="flex items-center justify-between">
 					<h3 className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
 						Line Items
 					</h3>
 					<div className="flex items-center gap-3">
+						<SaveStatus state={state} retry={retry} />
 						<Button
 							type="button"
 							size="sm"
 							variant="outline"
 							className="h-8 gap-1.5 rounded-xl text-xs font-bold"
-							onClick={() =>
-								append({
-									description: "",
-									quantity: "1",
-									unitPrice: "0",
-									totalPrice: "0",
-								})
-
-							}
+							// An empty line is always waiting at the end: go to it.
+							onClick={focusWaiting}
 						>
 							<Add size={16} variant="Bold" />
-							Add Item
-						</Button>
-						<Button
-							type="submit"
-							disabled={isPending}
-							size="sm"
-							className="zen-glow-teal h-8 gap-2 rounded-xl text-xs font-bold"
-						>
-							{isPending ? (
-								<Refresh size={14} className="animate-spin" />
-							) : (
-								<Save2 size={14} variant="Bold" />
-							)}
-							Save Items
+							Add item
 						</Button>
 					</div>
 				</div>
@@ -182,7 +196,9 @@ export function EditableDocumentLines({
 							</TableRow>
 						</TableHeader>
 						<TableBody className="divide-secondary/15 divide-y">
-							{fields.map((field, index) => (
+							{fields.map((field, index) => {
+								const waiting = isWaiting(index);
+								return (
 								<TableRow
 									key={field.id}
 									className="hover:bg-primary/5 border-none transition-colors"
@@ -197,16 +213,16 @@ export function EditableDocumentLines({
 														<DescriptionAutocomplete
 															value={f.value}
 															onChange={f.onChange}
-															disabled={isPending}
+															placeholder={waiting ? "Add a line…" : "Description…"}
+															inputProps={{
+																"aria-label": waiting ? "Add a line" : `Description, line ${index + 1}`,
+																onKeyDown: keyDown(index, "description"),
+																...cellProps(index, "description"),
+															}}
+															inputClassName={waiting ? "border-dashed" : undefined}
 															onSelectTier={(tier) => {
-																form.setValue(
-																	`lines.${index}.description`,
-																	tier.name,
-																);
-																form.setValue(
-																	`lines.${index}.unitPrice`,
-																	tier.price.toString(),
-																);
+																form.setValue(`lines.${index}.description`, tier.name, { shouldDirty: true });
+																form.setValue(`lines.${index}.unitPrice`, tier.price.toString(), { shouldDirty: true });
 
 															}}
 															pricingTiers={pricingTiers}
@@ -217,16 +233,20 @@ export function EditableDocumentLines({
 										/>
 									</TableCell>
 									<TableCell className="px-2 py-3 align-top">
+										{waiting ? null : (
 										<FormField
 											control={form.control}
 											name={`lines.${index}.quantity`}
 											render={({ field: f }) => (
 												<Input
 													inputMode="decimal"
+													aria-label={`Quantity, line ${index + 1}`}
+													onKeyDown={keyDown(index, "quantity")}
+													onFocus={(event) => event.currentTarget.select()}
+													{...cellProps(index, "quantity")}
 													{...f}
 													value={f.value ?? ""}
 													className="focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold"
-													disabled={isPending}
 													onChange={(e) => {
 														const val = normalizeDecimalInput(e.target.value);
 														const parts = val.split(".");
@@ -240,8 +260,10 @@ export function EditableDocumentLines({
 												/>
 											)}
 										/>
+									)}
 									</TableCell>
 									<TableCell className="px-2 py-3 align-top">
+										{waiting ? null : (
 										<FormField
 											control={form.control}
 											name={`lines.${index}.unitPrice`}
@@ -249,15 +271,16 @@ export function EditableDocumentLines({
 												<div className="relative">
 													<Input
 														inputMode="decimal"
+														aria-label={`Unit price, line ${index + 1}`}
+														onKeyDown={keyDown(index, "unitPrice")}
+														onFocus={(event) => event.currentTarget.select()}
+														{...cellProps(index, "unitPrice")}
 														{...f}
 														value={f.value ?? ""}
 														className="focus-visible:ring-primary/20 bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold"
-														disabled={isPending}
 														onChange={(e) => {
-															const val = e.target.value.replace(
-																/[^0-9.]/g,
-																"",
-															);
+															// A French comma is the decimal mark ("450,50"), not dropped.
+															const val = normalizeDecimalInput(e.target.value);
 															const parts = val.split(".");
 															const sanitized =
 																parts[0] +
@@ -273,8 +296,10 @@ export function EditableDocumentLines({
 												</div>
 											)}
 										/>
+									)}
 									</TableCell>
 									<TableCell className="px-2 py-4 text-right align-top">
+										{waiting ? null : (
 										<span className="text-foreground font-mono text-sm font-black tabular-nums">
 											{(
 												(Number(linesWatcher[index]?.quantity) || 0) *
@@ -284,21 +309,25 @@ export function EditableDocumentLines({
 												MAD
 											</span>
 										</span>
+									)}
 									</TableCell>
 
 									<TableCell className="py-3 text-center align-top">
+										{waiting ? null : (
 										<Button
 											type="button"
 											size="icon"
+											aria-label={`Remove line ${index + 1}`}
 											className="text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90"
-											onClick={() => remove(index)}
-											disabled={fields.length === 1 || isPending}
+											onClick={() => removeLine(index)}
 										>
 											<Trash size={15} variant="Bold" />
 										</Button>
+										)}
 									</TableCell>
 								</TableRow>
-							))}
+								);
+							})}
 						</TableBody>
 					</Table>
 				</div>
@@ -330,7 +359,7 @@ export function EditableDocumentLines({
 												inputMode="decimal"
 												{...f}
 												className="h-5 w-12 border-0 bg-transparent p-0 text-center font-mono text-xs font-bold shadow-none focus-visible:ring-0"
-												disabled={isPending}
+												
 												onChange={(e) => {
 													const val = normalizeDecimalInput(e.target.value);
 													const parts = val.split(".");

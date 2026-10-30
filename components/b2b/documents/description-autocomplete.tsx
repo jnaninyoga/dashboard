@@ -19,6 +19,7 @@ import {
 	PopoverTrigger,
 } from "@/components/ui/popover";
 import { type B2BPricingTier } from "@/lib/types/b2b";
+import { cn } from "@/lib/utils/ui";
 
 import { HamburgerMenu } from "iconsax-reactjs";
 
@@ -29,6 +30,12 @@ interface DescriptionAutocompleteProps {
 	pricingTiers: B2BPricingTier[];
 	disabled?: boolean;
 	placeholder?: string;
+	/** Extra attributes for the input (an aria-label, data-* to focus it, key handling). */
+	inputProps?: Omit<React.ComponentProps<"input">, "value" | "onChange" | "disabled" | "placeholder"> & {
+		[data: `data-${string}`]: string | number | undefined;
+	};
+	/** Classes for the input, to restyle it (the document editor's inline fields). */
+	inputClassName?: string;
 }
 
 /**
@@ -48,6 +55,8 @@ export function DescriptionAutocomplete({
 	pricingTiers,
 	disabled,
 	placeholder = "Description…",
+	inputProps,
+	inputClassName,
 }: DescriptionAutocompleteProps) {
 	const [open, setOpen] = useState(false);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -70,8 +79,10 @@ export function DescriptionAutocomplete({
 				</PopoverTrigger>
 				<PopoverAnchor asChild>
 					<Input
+						{...inputProps}
 						value={value}
-						onFocus={() => {
+						onFocus={(e) => {
+							inputProps?.onFocus?.(e);
 							if (!open) setOpen(true);
 						}}
 						onChange={(e) => {
@@ -79,7 +90,7 @@ export function DescriptionAutocomplete({
 							if (!open) setOpen(true);
 						}}
 						disabled={disabled}
-						className="bg-card h-8 border pl-9 text-sm font-medium"
+						className={cn("bg-card h-8 border pl-9 text-sm font-medium", inputClassName)}
 						placeholder={placeholder}
 					/>
 				</PopoverAnchor>

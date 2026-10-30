@@ -53,6 +53,15 @@ export const createDocumentWithLinesSchema = z.object({
 		.min(1, "At least one line item is required"),
 });
 
+/**
+ * The lines worth keeping: a row left completely empty (no description and
+ * no price) is the line waiting at the end of the table, or one she didn't
+ * use, not a line to complain about.
+ */
+export function withoutBlankLines<T extends { description: string; unitPrice: string }>(lines: T[]): T[] {
+	return lines.filter((line) => line.description.trim() || Number(line.unitPrice) > 0);
+}
+
 // --- RECORD PAYMENT SCHEMA ---
 export const recordPaymentSchema = z.object({
 	amountPaid: z.string().refine((val) => parseAmountInput(val) > 0, {

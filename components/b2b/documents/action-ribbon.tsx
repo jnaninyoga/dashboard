@@ -4,6 +4,7 @@ import { useState,useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useFlushDraft } from "@/components/b2b/documents/draft-save";
 import { useConfirm } from "@/components/feedback/confirm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
 	confirmInvoiceWithBackorderAction,
 	convertQuoteToInvoiceAction,
 	deleteDocumentAction,
+	getDocumentByIdAction,
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
 import { isPayableInvoice, orderPaymentQueue } from "@/lib/domain/billing/payments";
@@ -52,6 +54,8 @@ export function DocumentActionRibbon({
 	const [isPending, startTransition] = useTransition();
 	const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 	const [isBackorderOpen, setIsBackorderOpen] = useState(false);
+	const [isFlushing, setIsFlushing] = useState(false);
+	const flushDraft = useFlushDraft();
 	const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
 	const handleStatusUpdate = (status: B2BDocumentStatus) => {
@@ -107,7 +111,7 @@ export function DocumentActionRibbon({
 	const isQuote = doc.type === "quote";
 	const isInvoice = doc.type === "invoice";
 
-	// Block "Confirm & Send" until the partner has *some* numeric tax id.
+	// Block "Mark as sent" until the partner has *some* numeric tax id.
 	// Length isn't enforced — partners outside Morocco may use shorter
 	// formats, and we don't want Odoo-style rigidity here.
 	const partnerIceDigits = (doc.partner?.taxId ?? "").replace(/\D/g, "");
@@ -209,12 +213,25 @@ export function DocumentActionRibbon({
 					</Link>
 				) : null}
 
-				{/* Draft -> Confirm & Send (With Backorder Logic) */}
+				{/* Draft -> Mark as sent (with the backorder check) */}
 				{!doc.archivedAt && doc.status === "draft" ? (
 					<>
 						<Button
-							onClick={() => {
-								const hasBilledItems = doc.lines?.some(l => l.sourceLineId && Number(l.quantity) > 0);
+							onClick={async () => {
+								// What she just typed (lines, notes) is saved first.
+								setIsFlushing(true);
+								const saved = await flushDraft();
+								// An invoice's backorder check needs its lines as now saved.
+								const current =
+									saved && isInvoice && doc.parentDocumentId
+										? ((await getDocumentByIdAction(doc.id)).document ?? doc)
+										: doc;
+								setIsFlushing(false);
+								if (!saved) {
+									notify.warning("Some changes aren't saved yet", "Fix what's marked on the page, then try again.");
+									return;
+								}
+								const hasBilledItems = current.lines?.some(l => l.sourceLineId && Number(l.quantity) > 0);
 								
 								// Smart Backorder Check:
 								// Does this invoice (plus previous ones) leave any unbilled quantity from the parent quote?
@@ -242,8 +259,8 @@ export function DocumentActionRibbon({
 											});
 										});
 									
-									// Add quantities from the CURRENT draft invoice
-									doc.lines?.forEach(line => {
+									// Add quantities from the CURRENT draft invoice (as saved)
+									current.lines?.forEach(line => {
 										if (line.sourceLineId) {
 											billedTotals[line.sourceLineId] = (billedTotals[line.sourceLineId] || 0) + Number(line.quantity);
 										}
@@ -262,7 +279,7 @@ export function DocumentActionRibbon({
 									handleStatusUpdate("sent");
 								}
 							}}
-							disabled={isPending || blockSendForMissingIce}
+							disabled={isPending || isFlushing || blockSendForMissingIce}
 							title={
 								blockSendForMissingIce
 									? "Add the partner's ICE (Tax ID) before issuing this invoice"
@@ -271,7 +288,7 @@ export function DocumentActionRibbon({
 							className="zen-glow-teal gap-2 rounded-xl font-bold"
 						>
 							<Send size={18} variant="Bold" />
-							Confirm & Send
+							Mark as sent
 						</Button>
 						<BackorderDialog
 							open={isBackorderOpen}

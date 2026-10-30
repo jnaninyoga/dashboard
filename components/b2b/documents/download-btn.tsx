@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 
+import { useFlushDraft } from "@/components/b2b/documents/draft-save";
 import { Button } from "@/components/ui/button";
+import { getDocumentByIdAction } from "@/lib/actions/b2b/documents";
 import { notify } from "@/lib/feedback/notify";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
 
@@ -17,6 +19,7 @@ interface PDFDownloadBtnProps {
 
 export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 	const [isGenerating, setIsGenerating] = useState(false);
+	const flushDraft = useFlushDraft();
 
 	const isQuote = doc.type === "quote";
 	const prefix = isQuote ? "Quote" : "Invoice";
@@ -30,12 +33,19 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 		try {
 			setIsGenerating(true);
 
+			// A draft prints as saved, with what she just typed: save it, read it back.
+			let latest = doc;
+			if (doc.status === "draft") {
+				await flushDraft();
+				latest = (await getDocumentByIdAction(doc.id)).document ?? doc;
+			}
+
 			// 1. Dynamically import the pdf builder to ensure no SSR issues
 			const { pdf } = await import("@react-pdf/renderer");
 
 			// 2. Generate the PDF Blob on the fly
 			const blob = await pdf(
-				<B2BDocumentPDF doc={doc} profile={profile} />,
+				<B2BDocumentPDF doc={latest} profile={profile} />,
 			).toBlob();
 
 			// 3. Create a temporary URL and trigger the browser download

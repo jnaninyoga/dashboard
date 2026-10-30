@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { ContactDialog } from "@/components/b2b/contacts/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +43,7 @@ import {
 	type B2BPricingTier,
 } from "@/lib/types/b2b";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
-import { createDocumentWithLinesSchema } from "@/lib/validators/document";
+import { createDocumentWithLinesSchema, withoutBlankLines } from "@/lib/validators/document";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -57,10 +58,12 @@ import {
 	Refresh,
 	Save2,
 	Trash,
+	UserAdd,
 } from "iconsax-reactjs";
 import { type z } from "zod";
 
 import { DescriptionAutocomplete } from "./description-autocomplete";
+import { blankLine, cellProps, useFluidLines } from "./fluid-lines";
 
 type CreateValues = z.input<typeof createDocumentWithLinesSchema>;
 
@@ -90,8 +93,8 @@ export function NewQuoteForm({
 		defaultValues: {
 			document: {
 				partnerId: partner.id,
-				contactId:
-					contacts.find((c) => c.isPrimary)?.id || contacts[0]?.id || "",
+				// Optional: without one, the quotation is addressed to the company.
+				contactId: contacts.find((c) => c.isPrimary)?.id ?? contacts[0]?.id ?? null,
 				type: "quote",
 				status: "draft",
 				// Preview only — the server reserves the real number at insert.
@@ -104,7 +107,8 @@ export function NewQuoteForm({
 				notes: "",
 				parentDocumentId: null,
 			},
-			lines: [{ description: "", quantity: "1", unitPrice: "0", totalPrice: "0" }],
+			// The line waiting at the end of the table (see useFluidLines).
+			lines: [blankLine()],
 		},
 	});
 
@@ -119,6 +123,14 @@ export function NewQuoteForm({
 		);
 	}, []);
 
+	// A contact added from this page becomes the recipient.
+	const knownContacts = useRef(new Set(contacts.map((c) => c.id)));
+	useEffect(() => {
+		const added = contacts.find((c) => !knownContacts.current.has(c.id));
+		knownContacts.current = new Set(contacts.map((c) => c.id));
+		if (added) form.setValue("document.contactId", added.id);
+	}, [contacts, form]);
+
 	useEffect(() => {
 		if (!state || handledStateRef.current === state) return;
 		handledStateRef.current = state;
@@ -131,6 +143,12 @@ export function NewQuoteForm({
 	}, [state, router]);
 
 	const linesWatcher = useWatch({ control: form.control, name: "lines" });
+	const { isWaiting, removeLine, keyDown, focusWaiting } = useFluidLines({
+		count: fields.length,
+		lines: linesWatcher,
+		append,
+		remove,
+	});
 	const taxRateWatcher = useWatch({
 		control: form.control,
 		name: "document.taxRate",
@@ -154,23 +172,41 @@ export function NewQuoteForm({
 	});
 	const dueDate = useWatch({ control: form.control, name: "document.dueDate" });
 
+	// The waiting line (and any she emptied) isn't a line: drop it, then check.
+	const submit = (event: React.FormEvent) => {
+		event.preventDefault();
+		form.setValue("lines", withoutBlankLines(form.getValues("lines")));
+		void form.handleSubmit(onSubmit, (errors) => {
+			const lineError = errors.lines?.root?.message ?? errors.lines?.message;
+			const first = Array.isArray(errors.lines) ? errors.lines.find(Boolean) : undefined;
+			const message =
+				lineError ??
+				first?.description?.message ??
+				first?.quantity?.message ??
+				first?.unitPrice?.message ??
+				errors.document?.issueDate?.message;
+			notify.warning("A few things are missing", message ? String(message) : undefined);
+		})();
+	};
+
 	const onSubmit = (values: CreateValues) => {
 		// Server recomputes totals from lines + taxRate; we still send sane
 		// strings so the existing validator passes.
-		formAction({
+		// Inside a transition, so the pending state (spinner, disabled button) shows.
+		startTransition(() => formAction({
 			...values,
 			document: {
 				...values.document,
 				subtotal: subtotal.toFixed(2),
 				totalAmount: totalAmount.toFixed(2),
 			},
-		});
+		}));
 	};
 
 	return (
 		<Form {...form}>
 			<form
-				onSubmit={form.handleSubmit(onSubmit)}
+				onSubmit={submit}
 				className="flex flex-col gap-6"
 			>
 				{/* Breadcrumb */}
@@ -289,26 +325,20 @@ export function NewQuoteForm({
 									<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
 										Recipient contact
 									</FormLabel>
-									<Select
-										value={field.value ?? ""}
-										disabled={isPending}
-										onValueChange={(val) =>
-											field.onChange(val === "" ? null : val)
-										}
-									>
-										<FormControl>
-											<SelectTrigger className="bg-card w-full max-w-sm border font-semibold">
-												<SelectValue placeholder="Select contact" />
-											</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-											{contacts.length > 0 ? (
-												contacts.map((c) => (
-													<SelectItem
-														key={c.id}
-														value={c.id}
-														className="font-semibold"
-													>
+									{contacts.length > 0 ? (
+										<Select
+											value={field.value ?? "none"}
+											disabled={isPending}
+											onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+										>
+											<FormControl>
+												<SelectTrigger className="bg-card w-full max-w-sm border font-semibold">
+													<SelectValue />
+												</SelectTrigger>
+											</FormControl>
+											<SelectContent>
+												{contacts.map((c) => (
+													<SelectItem key={c.id} value={c.id} className="font-semibold">
 														<span>{c.fullName}</span>
 														{c.role ? (
 															<span className="text-[10px] opacity-50">
@@ -322,14 +352,26 @@ export function NewQuoteForm({
 															</span>
 														) : null}
 													</SelectItem>
-												))
-											) : (
-												<div className="text-muted-foreground p-4 text-center text-xs">
-													Add a contact to this partner first.
-												</div>
-											)}
-										</SelectContent>
-									</Select>
+												))}
+												<SelectItem value="none">No contact (addressed to the company)</SelectItem>
+											</SelectContent>
+										</Select>
+									) : (
+										// No contact is fine: say so, instead of blocking the quotation.
+										<p className="text-muted-foreground text-sm">
+											No contact yet: the quotation is addressed to {partner.companyName}.
+										</p>
+									)}
+									<ContactDialog partnerId={partner.id} onSaved={() => router.refresh()}>
+										<button
+											type="button"
+											disabled={isPending}
+											className="text-primary focus-visible:ring-ring inline-flex min-h-10 w-fit items-center gap-1.5 rounded-full text-sm font-semibold outline-none hover:underline focus-visible:ring-2"
+										>
+											<UserAdd size={18} variant="Bulk" />
+											Add a contact
+										</button>
+									</ContactDialog>
 									<FormMessage />
 								</FormItem>
 							)}
@@ -348,18 +390,12 @@ export function NewQuoteForm({
 							size="sm"
 							variant="outline"
 							className="h-8 gap-1.5 rounded-xl text-xs font-bold"
-							onClick={() =>
-								append({
-									description: "",
-									quantity: "1",
-									unitPrice: "0",
-									totalPrice: "0",
-								})
-							}
+							// An empty line is always waiting at the end: go to it.
+							onClick={focusWaiting}
 							disabled={isPending}
 						>
 							<Add size={16} variant="Bold" />
-							Add Item
+							Add item
 						</Button>
 					</div>
 
@@ -377,7 +413,9 @@ export function NewQuoteForm({
 								</TableRow>
 							</TableHeader>
 							<TableBody className="divide-secondary/15 divide-y">
-								{fields.map((field, index) => (
+								{fields.map((field, index) => {
+									const waiting = isWaiting(index);
+									return (
 									<TableRow key={field.id} className="hover:bg-primary/5 border-none">
 										<TableCell className="px-4 py-3 align-top">
 											<FormField
@@ -391,6 +429,19 @@ export function NewQuoteForm({
 																onChange={f.onChange}
 																disabled={isPending}
 																pricingTiers={pricingTiers}
+																placeholder={
+																	waiting
+																		? fields.length === 1
+																			? "Write the first line, or pick one of your prices…"
+																			: "Add a line…"
+																		: "Description…"
+																}
+																inputProps={{
+																	"aria-label": waiting ? "Add a line" : `Description, line ${index + 1}`,
+																	onKeyDown: keyDown(index, "description"),
+																	...cellProps(index, "description"),
+																}}
+																inputClassName={waiting ? "border-dashed" : undefined}
 																onSelectTier={(tier) => {
 																	form.setValue(
 																		`lines.${index}.description`,
@@ -409,12 +460,17 @@ export function NewQuoteForm({
 											/>
 										</TableCell>
 										<TableCell className="px-2 py-3 align-top">
-											<FormField
+											{waiting ? null : (
+												<FormField
 												control={form.control}
 												name={`lines.${index}.quantity`}
 												render={({ field: f }) => (
 													<Input
 														inputMode="decimal"
+														aria-label={`Quantity, line ${index + 1}`}
+														onKeyDown={keyDown(index, "quantity")}
+												onFocus={(event) => event.currentTarget.select()}
+														{...cellProps(index, "quantity")}
 														{...f}
 														value={f.value ?? ""}
 														className="bg-card h-8 w-full border text-center font-mono text-sm font-bold"
@@ -432,15 +488,21 @@ export function NewQuoteForm({
 													/>
 												)}
 											/>
+										)}
 										</TableCell>
 										<TableCell className="px-2 py-3 align-top">
-											<FormField
+											{waiting ? null : (
+												<FormField
 												control={form.control}
 												name={`lines.${index}.unitPrice`}
 												render={({ field: f }) => (
 													<div className="relative">
 														<Input
 															inputMode="decimal"
+															aria-label={`Unit price, line ${index + 1}`}
+															onKeyDown={keyDown(index, "unitPrice")}
+												onFocus={(event) => event.currentTarget.select()}
+															{...cellProps(index, "unitPrice")}
 															{...f}
 															value={f.value ?? ""}
 															className="bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold"
@@ -462,8 +524,10 @@ export function NewQuoteForm({
 													</div>
 												)}
 											/>
+										)}
 										</TableCell>
 										<TableCell className="px-2 py-4 text-right align-top">
+											{waiting ? null : (
 											<span className="text-foreground font-mono text-sm font-black tabular-nums">
 												{(
 													(Number(linesWatcher[index]?.quantity) || 0) *
@@ -473,24 +537,34 @@ export function NewQuoteForm({
 													MAD
 												</span>
 											</span>
+										)}
 										</TableCell>
 										<TableCell className="py-3 text-center align-top">
-											<Button
-												type="button"
-												size="icon"
-												variant="ghost"
-												className="text-destructive hover:bg-destructive/10 h-8 w-8 rounded-xl"
-												onClick={() => remove(index)}
-												disabled={fields.length === 1 || isPending}
-											>
-												<Trash size={15} variant="Bold" />
-											</Button>
+											{waiting ? null : (
+												<Button
+													type="button"
+													size="icon"
+													variant="ghost"
+													aria-label={`Remove line ${index + 1}`}
+													className="text-destructive hover:bg-destructive/10 h-8 w-8 rounded-xl"
+													onClick={() => removeLine(index)}
+													disabled={isPending}
+												>
+													<Trash size={15} variant="Bold" />
+												</Button>
+											)}
 										</TableCell>
 									</TableRow>
-								))}
+									);
+								})}
 							</TableBody>
 						</Table>
 					</div>
+					{form.formState.errors.lines?.root?.message ?? form.formState.errors.lines?.message ? (
+						<p role="alert" className="text-destructive mt-2 px-4 text-sm">
+							{form.formState.errors.lines?.root?.message ?? form.formState.errors.lines?.message}
+						</p>
+					) : null}
 
 					{/* Totals strip */}
 					<div className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-end">
@@ -611,14 +685,14 @@ export function NewQuoteForm({
 						<Button
 							type="submit"
 							className="zen-glow-teal gap-2 rounded-xl font-black"
-							disabled={isPending || contacts.length === 0}
+							disabled={isPending}
 						>
 							{isPending ? (
 								<Refresh size={18} className="animate-spin" />
 							) : (
 								<Save2 size={18} variant="Bold" />
 							)}
-							Create Quote
+							Create quotation
 						</Button>
 					</div>
 				</div>

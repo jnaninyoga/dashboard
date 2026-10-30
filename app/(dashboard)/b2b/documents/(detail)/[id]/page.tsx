@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { DocumentActionRibbon } from "@/components/b2b/documents/action-ribbon";
 import { ChainStrip } from "@/components/b2b/documents/chain-strip";
 import { DocumentTotals } from "@/components/b2b/documents/document-totals";
+import { DraftSaveProvider } from "@/components/b2b/documents/draft-save";
 import { EditableDocumentLines } from "@/components/b2b/documents/editable-lines";
 import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { EditableNotes } from "@/components/b2b/editable-notes";
@@ -66,7 +67,8 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 	const amountDue = currentTotal - amountPaid;
 
 	return (
-		<>
+		// A draft's lines and notes save themselves; its actions wait for them.
+		<DraftSaveProvider>
 			{/* Breadcrumb */}
 			<Link
 				href="/b2b/documents"
@@ -290,8 +292,8 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 			<EditableNotes
 				documentId={document.id}
 				initialNotes={document.notes}
-				readOnly={!!document.archivedAt}
+				readOnly={!!document.archivedAt || document.status !== "draft"}
 			/>
-		</>
+		</DraftSaveProvider>
 	);
 }

@@ -23,6 +23,8 @@ interface ContactDialogProps {
 	// Controlled mode (used when the trigger lives inside a dropdown menu).
 	open?: boolean;
 	onOpenChange?: (open: boolean) => void;
+	/** After a successful save (the document editor refreshes its contacts). */
+	onSaved?: () => void;
 }
 
 export function ContactDialog({
@@ -31,6 +33,7 @@ export function ContactDialog({
 	contact,
 	open: controlledOpen,
 	onOpenChange: controlledOnOpenChange,
+	onSaved,
 }: ContactDialogProps) {
 	const formId = useId();
 	const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
@@ -54,6 +57,7 @@ export function ContactDialog({
 			if (state.warning) notify.warning(isEdit ? "Contact updated" : "Contact added", state.warning);
 			else notify.success(isEdit ? "Contact updated" : "Contact added");
 			startTransition(() => setOpen(false));
+			onSaved?.();
 		} else if (state?.ref) {
 			notifyActionError(state, isEdit ? "Couldn't update this contact" : "Couldn't add this contact");
 		}
