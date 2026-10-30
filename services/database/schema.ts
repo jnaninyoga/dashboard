@@ -41,6 +41,8 @@ export const slotTypeEnum = pgEnum("slot_type", [
 	"b2b",
 ]);
 
+export const sessionStatusEnum = pgEnum("session_status", ["scheduled", "cancelled"]);
+
 export const healthCategoryEnum = pgEnum("health_category", [
 	"physical", // (Body): Includes: Medical history, Surgery, Trauma, Medications, Current Pain
 	"mental", // (Mind): Includes: Anxiety, Depression, Stress, Emotional Shock
@@ -166,8 +168,39 @@ export const attendanceLedger = pgTable("attendance_ledger", {
 	checkInTime: timestamp("check_in_time").defaultNow().notNull(),
 	slotType: slotTypeEnum("slot_type").notNull(),
 	note: text("note"),
+	/** Set when the session was cancelled: kept in history, credit given back. */
+	cancelledAt: timestamp("cancelled_at"),
 });
 export type AttendanceLedger = typeof attendanceLedger.$inferSelect;
+
+/**
+ * Every session the dashboard creates, kept after it's cancelled (Google
+ * Calendar forgets a deleted event; her history shouldn't). Sessions made
+ * before this table, or directly in Google Calendar, have no row until they
+ * are cancelled here.
+ */
+export const studioSessions = pgTable(
+	"studio_sessions",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		googleEventId: text("google_event_id").notNull(),
+		title: text("title").notNull(),
+		type: slotTypeEnum("type").notNull(),
+		startsAt: timestamp("starts_at").notNull(),
+		endsAt: timestamp("ends_at").notNull(),
+		status: sessionStatusEnum("status").notNull().default("scheduled"),
+		cancelledAt: timestamp("cancelled_at"),
+		cancelReason: text("cancel_reason"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(t) => [
+		unique("studio_sessions_google_event_id_unique").on(t.googleEventId),
+		// The Schedule and the week strip read sessions by time range.
+		index("studio_sessions_starts_at_idx").on(t.startsAt),
+	],
+);
+export type StudioSession = typeof studioSessions.$inferSelect;
+export type NewStudioSession = typeof studioSessions.$inferInsert;
 export type NewAttendanceLedger = typeof attendanceLedger.$inferInsert;
 
 export const clientsRelations = relations(clients, ({ many, one }) => ({

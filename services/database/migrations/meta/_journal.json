@@ -57,6 +57,13 @@
       "when": 1793186466328,
       "tag": "0007_add_unpaid_document_status",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793354800744,
+      "tag": "0008_session_record",
+      "breakpoints": true
     }
   ]
 }
