@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
-import { categorySchema } from "./category";
+import { discountSchema } from "./discount";
 import { partnerServiceSchema, productSchema } from "./product";
 import { numberFromInput } from "./shared";
 
@@ -28,8 +28,8 @@ describe("numberFromInput", () => {
 describe("forms that hold numbers as text", () => {
 	// These failed with 'expected number, received string' once a number
 	// field had been typed into, so the forms could not be saved.
-	it("saves a category with a typed discount", () => {
-		const parsed = categorySchema.parse({ name: "Senior", discountType: "percentage", discountValue: "12.5" });
+	it("saves a discount typed with a French comma", () => {
+		const parsed = discountSchema.parse({ name: "Senior", discountType: "percentage", discountValue: "12,5" });
 		expect(parsed.discountValue).toBe(12.5);
 	});
 

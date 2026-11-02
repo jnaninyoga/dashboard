@@ -6,11 +6,12 @@ import { requireUser } from "@/lib/auth/require-user";
 import { fold } from "@/lib/domain/billing/price-list";
 import { type ProductKind, productLabel } from "@/lib/domain/price-list/product";
 import { logServerError } from "@/lib/errors/server";
+import { studioDateString } from "@/lib/utils/time";
 import { type ProductFormValues, productSchema } from "@/lib/validators";
 import { db } from "@/services/database";
-import { b2bDocumentLines, clientWallets, type NewProduct, products } from "@/services/database/schema";
+import { b2bDocumentLines, b2bDocuments, clientWallets, type NewProduct, products } from "@/services/database/schema";
 
-import { and, asc, eq, ne } from "drizzle-orm";
+import { and, asc, countDistinct, desc, eq, gte, isNull, max, ne, or, sql } from "drizzle-orm";
 
 export type PriceListState = { success?: boolean; error?: string; ref?: string; id?: string };
 
@@ -31,6 +32,71 @@ export async function getProducts(kind: ProductKind, { withArchived = false } = 
 		.from(products)
 		.where(withArchived ? eq(products.kind, kind) : and(eq(products.kind, kind), eq(products.isArchived, false)))
 		.orderBy(...(kind === "membership" ? [asc(products.price), asc(products.name)] : [asc(products.name), asc(products.groupMin)]));
+}
+
+/** What a product of her price list is doing: the cards in use, or the quotations it's on. */
+export type ProductUsage = {
+	/** A membership: cards a client can use today. */
+	inUse: number;
+	/** A membership: the day its last card was sold. */
+	lastSoldAt: Date | null;
+	/** A partner service: the quotations (not archived or cancelled) it's on. */
+	documents: number;
+	/** A partner service: the latest quotation it's on. */
+	lastDocument: { id: string; documentNumber: string | null; issueDate: string } | null;
+};
+
+/** Per product of `kind`, what it's doing (see ProductUsage); a product never sold has no entry. */
+export async function getProductUsage(kind: ProductKind): Promise<Record<string, ProductUsage>> {
+	await requireUser();
+	const usage: Record<string, ProductUsage> = {};
+	const entry = (id: string) => (usage[id] ??= { inUse: 0, lastSoldAt: null, documents: 0, lastDocument: null });
+
+	if (kind === "membership") {
+		const today = studioDateString();
+		const rows = await db
+			.select({
+				productId: clientWallets.productId,
+				inUse: sql<number>`count(*) filter (where ${and(
+					eq(clientWallets.status, "active"),
+					sql`${clientWallets.remainingCredits} > 0`,
+					or(isNull(clientWallets.expiresOn), gte(clientWallets.expiresOn, today)),
+				)})`.mapWith(Number),
+				lastSoldAt: max(clientWallets.activatedAt),
+			})
+			.from(clientWallets)
+			.groupBy(clientWallets.productId);
+		for (const row of rows) {
+			if (!row.productId) continue;
+			Object.assign(entry(row.productId), { inUse: row.inUse, lastSoldAt: row.lastSoldAt });
+		}
+		return usage;
+	}
+
+	const live = and(eq(b2bDocuments.type, "quote"), isNull(b2bDocuments.archivedAt), ne(b2bDocuments.status, "cancelled"));
+	const counts = await db
+		.select({ productId: b2bDocumentLines.productId, documents: countDistinct(b2bDocumentLines.documentId) })
+		.from(b2bDocumentLines)
+		.innerJoin(b2bDocuments, eq(b2bDocuments.id, b2bDocumentLines.documentId))
+		.where(live)
+		.groupBy(b2bDocumentLines.productId);
+	const latest = await db
+		.selectDistinctOn([b2bDocumentLines.productId], {
+			productId: b2bDocumentLines.productId,
+			id: b2bDocuments.id,
+			documentNumber: b2bDocuments.documentNumber,
+			issueDate: b2bDocuments.issueDate,
+		})
+		.from(b2bDocumentLines)
+		.innerJoin(b2bDocuments, eq(b2bDocuments.id, b2bDocumentLines.documentId))
+		.where(live)
+		.orderBy(b2bDocumentLines.productId, desc(b2bDocuments.issueDate), desc(b2bDocuments.createdAt));
+	for (const row of counts) if (row.productId) entry(row.productId).documents = row.documents;
+	for (const row of latest) {
+		if (!row.productId) continue;
+		entry(row.productId).lastDocument = { id: row.id, documentNumber: row.documentNumber, issueDate: row.issueDate };
+	}
+	return usage;
 }
 
 /** A product as it's stored: only the fields of its kind are kept. */

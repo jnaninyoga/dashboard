@@ -4,11 +4,11 @@ import { useState } from "react";
 
 import { ContactDialog } from "@/components/b2b/contacts/dialog";
 import { PartnerDialog } from "@/components/b2b/partners/dialog";
-import { CategoryDialog } from "@/components/clients/categories/dialog";
 import { ClientForm } from "@/components/clients/form";
-import { CreateMembershipDialog } from "@/components/clients/memberships/actions";
 import { HealthTab } from "@/components/clients/tabs/health";
 import { WalletTab } from "@/components/clients/tabs/wallet";
+import { DiscountSheet } from "@/components/price-list/discount-sheet";
+import { NewProductButton } from "@/components/price-list/product-grid";
 import { ProductSheet } from "@/components/price-list/product-sheet";
 import { NewSessionDialog } from "@/components/schedule/sessions/new-dialog";
 import { Button } from "@/components/ui/button";
@@ -41,9 +41,9 @@ export function FormsDemo() {
 					Partner rate
 				</Button>
 				<Button variant="outline" onClick={() => setCategoryOpen(true)}>
-					Category
+					Discount
 				</Button>
-				<CreateMembershipDialog />
+				<NewProductButton kind="membership" />
 				<Button variant="outline" onClick={() => setSessionOpen(true)}>
 					Session
 				</Button>
@@ -57,7 +57,7 @@ export function FormsDemo() {
 				</div>
 			) : null}
 			<ProductSheet kind="partner_service" open={tierOpen} onOpenChange={setTierOpen} />
-			<CategoryDialog open={categoryOpen} onOpenChange={setCategoryOpen} />
+			<DiscountSheet memberships={[]} open={categoryOpen} onOpenChange={setCategoryOpen} />
 			<NewSessionDialog open={sessionOpen} onOpenChange={setSessionOpen} />
 			<div data-testid="wallet-tab">
 				<WalletTab clientId={demoClient.id} wallets={[]} products={[]} />

@@ -38,29 +38,37 @@ export function EntityCard({
 	);
 }
 
-/** Picture, title (a link covering the whole card) and a status line. */
+const titleClass =
+	"font-heading text-foreground hover:text-primary focus-visible:after:ring-ring line-clamp-2 text-left text-xl leading-snug font-bold transition-colors outline-none after:absolute after:inset-0 after:rounded-3xl focus-visible:after:ring-2";
+
+/**
+ * Picture, title and a status line. The title covers the whole card: a link
+ * to its page (`href`), or a button that opens it in place (`onOpen`).
+ */
 export function EntityCardHeader({
 	media,
 	title,
 	href,
+	onOpen,
 	children,
 }: {
 	media: React.ReactNode;
 	title: string;
-	href: string;
 	children?: React.ReactNode;
-}) {
+} & ({ href: string; onOpen?: never } | { onOpen: () => void; href?: never })) {
 	return (
 		<div className="flex items-start gap-4">
 			<div className="relative shrink-0">{media}</div>
 			<div className="flex min-w-0 flex-col gap-1.5 pt-0.5">
-				<Link
-					href={href}
-					title={title}
-					className="font-heading text-foreground hover:text-primary focus-visible:after:ring-ring line-clamp-2 text-xl leading-snug font-bold transition-colors outline-none after:absolute after:inset-0 after:rounded-3xl focus-visible:after:ring-2"
-				>
-					{title}
-				</Link>
+				{href ? (
+					<Link href={href} title={title} className={titleClass}>
+						{title}
+					</Link>
+				) : (
+					<button type="button" onClick={onOpen} title={title} className={cn(titleClass, "cursor-pointer")}>
+						{title}
+					</button>
+				)}
 				{children ? <div className="flex flex-wrap items-center gap-1.5">{children}</div> : null}
 			</div>
 		</div>

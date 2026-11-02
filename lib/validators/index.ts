@@ -1,6 +1,6 @@
 export * from "./b2b";
-export * from "./category";
 export * from "./client";
+export * from "./discount";
 export * from "./document";
 export * from "./membership-sale";
 export * from "./product";
