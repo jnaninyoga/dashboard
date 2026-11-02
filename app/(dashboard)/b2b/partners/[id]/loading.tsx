@@ -1,99 +1,64 @@
+import { LoadingScreen, SkeletonDocumentList, SkeletonLine, SkeletonTabs } from "@/components/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 
+// A partner's page (app/(dashboard)/b2b/partners/[id]/page.tsx): the way
+// back, the partner's card with its counts, then the tabs, open on
+// Documents.
 export default function Loading() {
 	return (
-		<div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-			{/* Back link skeleton */}
-			<Skeleton className="bg-muted-foreground/10 h-4 w-28" />
+		<LoadingScreen label="Loading the partner" className="mx-auto w-full max-w-6xl gap-8">
+			{/* "Back to Partners" */}
+			<SkeletonLine className="w-32 text-sm" />
 
-			{/* Header Card Skeleton */}
 			<div className="border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-8 shadow-sm md:flex-row">
 				<div className="flex flex-col gap-4">
-					<div className="flex items-center gap-4">
-						<Skeleton className="bg-muted-foreground/10 h-16 w-16 rounded-2xl" />
-						<div className="space-y-2.5">
-							<Skeleton className="bg-muted-foreground/10 h-9 w-52" />
-							<div className="flex gap-2">
-								<Skeleton className="bg-muted-foreground/10 h-6 w-24 rounded-full" />
-								<Skeleton className="bg-muted-foreground/10 h-6 w-32 rounded-full" />
+					{/* pr-12: clear of the ⋮ menu. */}
+					<div className="flex items-center gap-4 pr-12">
+						<Skeleton className="size-16 shrink-0 rounded-2xl" />
+						<div className="min-w-0 space-y-1">
+							{/* A name in this size wraps on a phone. */}
+							<div>
+								<SkeletonLine className="w-56 text-4xl" />
+								<SkeletonLine className="w-24 text-4xl sm:hidden" />
 							</div>
+							<SkeletonLine className="w-36 text-sm" />
 						</div>
 					</div>
-					<Skeleton className="bg-muted-foreground/10 h-4 w-44" />
+					<div className="mt-2 flex max-w-sm items-start gap-2">
+						<Skeleton className="mt-0.5 size-4.5 shrink-0 rounded-full" />
+						<SkeletonLine className="w-60 text-sm leading-relaxed" />
+					</div>
 				</div>
-				<div className="flex shrink-0 items-center">
-					<div className="border-secondary/10 bg-background/80 flex items-center gap-8 rounded-2xl border px-6 py-4 shadow-xs">
-						<div className="flex flex-col items-center gap-1.5">
-							<Skeleton className="bg-muted-foreground/10 h-8 w-8" />
-							<Skeleton className="bg-muted-foreground/10 h-3 w-14" />
+
+				{/* Contacts and documents, counted. */}
+				<div className="flex shrink-0 flex-col justify-center gap-3">
+					<div className="border-secondary-3/20 bg-secondary/70 flex items-center gap-4 rounded-2xl border px-6 py-4 shadow-xs">
+						<div className="flex flex-col items-center">
+							<SkeletonLine className="w-6 text-2xl" />
+							<SkeletonLine className="w-18 text-xs" />
 						</div>
-						<Skeleton className="bg-muted-foreground/10 h-8 w-px" />
-						<div className="flex flex-col items-center gap-1.5">
-							<Skeleton className="bg-muted-foreground/10 h-8 w-8" />
-							<Skeleton className="bg-muted-foreground/10 h-3 w-10" />
+						<div className="bg-secondary-3/20 mx-2 h-8 w-px" />
+						<div className="flex flex-col items-center">
+							<SkeletonLine className="w-6 text-2xl" />
+							<SkeletonLine className="w-10 text-xs" />
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{/* Content Grid Skeleton */}
-			<div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-				{/* Contacts Column */}
-				<div className="space-y-6 lg:col-span-1">
+			<SkeletonTabs className="grid-cols-2 lg:w-80" tabs={["w-20", "w-18"]}>
+				{/* DocumentsTab: its heading and button, then the partner's documents. */}
+				<div className="space-y-6">
 					<div className="flex items-center justify-between px-2">
-						<Skeleton className="bg-muted-foreground/10 h-6 w-28" />
-						<Skeleton className="bg-muted-foreground/10 h-9 w-20 rounded-full" />
-					</div>
-					<div className="flex flex-col gap-4">
-						{Array.from({ length: 2 }).map((_, i) => (
-							<div key={i} className="border-secondary/10 bg-card flex items-center justify-between rounded-2xl border p-4 shadow-xs">
-								<div className="flex items-center gap-4">
-									<Skeleton className="bg-muted-foreground/10 h-12 w-12 rounded-xl" />
-									<div className="space-y-2">
-										<Skeleton className="bg-muted-foreground/10 h-4 w-32" />
-										<Skeleton className="bg-muted-foreground/10 h-3 w-20" />
-									</div>
-								</div>
-								<div className="flex gap-1.5">
-									<Skeleton className="bg-muted-foreground/10 h-9 w-9 rounded-xl" />
-									<Skeleton className="bg-muted-foreground/10 h-9 w-9 rounded-xl" />
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-
-				{/* Documents Column */}
-				<div className="space-y-6 lg:col-span-2">
-					<div className="flex items-center justify-between px-2">
-						<Skeleton className="bg-muted-foreground/10 h-6 w-48" />
-						<Skeleton className="bg-muted-foreground/10 h-9 w-36 rounded-full" />
-					</div>
-					<div className="border-secondary/10 overflow-hidden rounded-3xl border shadow-sm">
-						{/* Table header */}
-						<div className="border-secondary/10 bg-secondary/5 grid grid-cols-4 gap-4 border-b px-6 py-4">
-							{["Document", "Type", "Status", "Amount"].map((h) => (
-								<Skeleton key={h} className="bg-muted-foreground/10 h-3 w-16" />
-							))}
+						<div className="flex items-center gap-2">
+							<Skeleton className="size-6 shrink-0 rounded-lg" />
+							<SkeletonLine className="w-28 text-xl" />
 						</div>
-						{/* Table rows */}
-						{Array.from({ length: 3 }).map((_, i) => (
-							<div key={i} className="border-secondary/10 grid grid-cols-4 items-center gap-4 border-b px-6 py-5 last:border-0">
-								<div className="flex items-center gap-3">
-									<Skeleton className="bg-muted-foreground/10 h-10 w-10 shrink-0 rounded-xl" />
-									<div className="space-y-1.5">
-										<Skeleton className="bg-muted-foreground/10 h-3.5 w-24" />
-										<Skeleton className="bg-muted-foreground/10 h-3 w-16" />
-									</div>
-								</div>
-								<Skeleton className="bg-muted-foreground/10 h-3.5 w-14" />
-								<Skeleton className="bg-muted-foreground/10 h-6 w-20 rounded-full" />
-								<Skeleton className="bg-muted-foreground/10 h-4 w-20" />
-							</div>
-						))}
+						<Skeleton className="h-9 w-32 rounded-xl" />
 					</div>
+					<SkeletonDocumentList who="contact" rows={4} />
 				</div>
-			</div>
-		</div>
+			</SkeletonTabs>
+		</LoadingScreen>
 	);
 }

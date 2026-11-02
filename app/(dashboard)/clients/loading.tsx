@@ -1,47 +1,22 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingScreen, SkeletonEntityCards, SkeletonListFilters, SkeletonPageHeader } from "@/components/skeletons";
 
+// The clients' default view (app/(dashboard)/clients/page.tsx): the
+// heading, the filters, then ClientCards in the card grid.
 export default function Loading() {
 	return (
-		<>
-			{/* Header Skeleton */}
-			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<div className="space-y-2">
-					<Skeleton className="bg-muted-foreground/10 h-9 w-32" />
-					<Skeleton className="bg-muted-foreground/10 h-4 w-64" />
-				</div>
-				<Skeleton className="bg-muted-foreground/10 h-10 w-32" />
-			</div>
-
-			{/* Filters Skeleton */}
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-				<div className="flex gap-2">
-					<Skeleton className="bg-muted-foreground/10 h-10 w-[200px]" />
-					<Skeleton className="bg-muted-foreground/10 h-10 w-[100px]" />
-				</div>
-				<Skeleton className="bg-muted-foreground/10 h-10 w-[100px]" />
-			</div>
-
-			{/* Content Skeleton (Grid View Mimic) */}
-			<div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-				{Array.from({ length: 8 }).map((_, i) => (
-					<div
-						key={i}
-						className="border-border/50 bg-card flex flex-col space-y-3 rounded-xl border p-4 shadow-sm"
-					>
-						<div className="flex items-center gap-4">
-							<Skeleton className="bg-muted-foreground/10 h-12 w-12 rounded-full" />
-							<div className="space-y-2">
-								<Skeleton className="bg-muted-foreground/10 h-4 w-[150px]" />
-								<Skeleton className="bg-muted-foreground/10 h-4 w-[100px]" />
-							</div>
-						</div>
-						<div className="space-y-2 pt-4">
-							<Skeleton className="bg-muted-foreground/10 h-4 w-full" />
-							<Skeleton className="bg-muted-foreground/10 h-4 w-[80%]" />
-						</div>
-					</div>
-				))}
-			</div>
-		</>
+		<LoadingScreen label="Loading clients">
+			<SkeletonPageHeader title="w-28 md:w-32" action="w-32" />
+			{/* The view toggle only shows from md (ClientViewToggle). */}
+			<SkeletonListFilters search="xl:w-[300px]" select="xl:w-[180px]" toggle="hidden md:inline-flex" />
+			<SkeletonEntityCards
+				media="round"
+				lines={["w-32"]}
+				figures={[
+					{ label: "w-20", value: "w-6", unit: "w-9" },
+					{ label: "w-18", value: "w-6", unit: "w-10" },
+				]}
+				aside
+			/>
+		</LoadingScreen>
 	);
 }

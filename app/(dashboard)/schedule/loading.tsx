@@ -1,82 +1,75 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+	LoadingScreen,
+	SkeletonEventCard,
+	SkeletonLine,
+	SkeletonPageHeader,
+	SkeletonSessionRow,
+} from "@/components/skeletons";
 
-// One event card placeholder — matches the remastered card shape
-// (rounded-3xl, left accent gradient, right pattern area, title + meta + CTA).
-function EventCardSkeleton() {
-	return (
-		<div className="bg-card border-border/70 relative flex flex-col justify-between overflow-hidden rounded-3xl border p-6 md:flex-row md:items-center">
-			{/* left edge accent placeholder */}
-			<div className="bg-muted-foreground/5 pointer-events-none absolute inset-y-0 left-0 w-32" />
-			{/* right pattern placeholder */}
-			<div className="bg-muted-foreground/5 pointer-events-none absolute -top-10 -right-16 h-[280px] w-[280px] rounded-full" />
+// The days of the week (WeekList): what's over is a row, what's ahead its
+// full card. Which days have sessions is a guess.
+const WEEK = [
+	{ day: "w-20", sessions: ["row"] },
+	{ day: "w-20", sessions: ["row"] },
+	{ day: "w-28", sessions: ["card"] },
+	{ day: "w-24", sessions: ["card"] },
+	{ day: "w-16", sessions: [] },
+	{ day: "w-24", sessions: [] },
+	{ day: "w-20", sessions: [] },
+];
 
-			<div className="relative flex flex-1 flex-col gap-3">
-				<Skeleton className="bg-muted-foreground/10 h-5 w-24 rounded-full" />
-				<Skeleton className="bg-muted-foreground/15 h-7 w-56" />
-				<div className="flex items-center gap-3 pt-1">
-					<Skeleton className="bg-muted-foreground/10 h-4 w-28" />
-					<Skeleton className="bg-muted-foreground/10 h-4 w-24" />
-				</div>
-			</div>
-			<div className="relative mt-4 md:mt-0">
-				<Skeleton className="bg-muted-foreground/15 h-12 w-32 rounded-2xl" />
-			</div>
-		</div>
-	);
-}
+// Chips' words: All, Group, Private, Outdoor, B2B.
+const TYPES = ["w-5", "w-10", "w-12", "w-14", "w-7"];
 
-// Collapsed accordion row — just the date label + count pill + chevron.
-function AccordionCollapsedSkeleton() {
-	return (
-		<div className="bg-card border-border/70 zen-shadow flex items-center justify-between rounded-2xl border px-5 py-4">
-			<div className="flex items-center gap-3">
-				<Skeleton className="bg-muted-foreground/15 h-6 w-52" />
-			</div>
-			<div className="flex items-center gap-3">
-				<Skeleton className="bg-muted-foreground/10 h-6 w-24 rounded-full" />
-				<Skeleton className="bg-muted-foreground/10 h-4 w-4 rounded-full" />
-			</div>
-		</div>
-	);
-}
-
+// This week on the Schedule (app/(dashboard)/schedule/page.tsx).
 export default function Loading() {
 	return (
-		<>
-			{/* Header */}
-			<header className="flex flex-col space-y-2">
-				<Skeleton className="bg-muted-foreground/10 h-9 w-48" />
-				<Skeleton className="bg-muted-foreground/10 h-4 w-72" />
-			</header>
+		<LoadingScreen label="Loading the schedule">
+			{/* Its heading wraps rather than stacks: the button follows the words. */}
+			<SkeletonPageHeader
+				className="flex-row flex-wrap items-end md:items-end"
+				title="w-36 md:w-44"
+				description={["w-[30rem] max-md:w-full", "w-28 md:hidden"]}
+				action="w-34 rounded-full"
+			/>
 
-			{/* New Session button (right-aligned) */}
-			<div className="flex justify-end">
-				<Skeleton className="bg-muted-foreground/15 h-10 w-44 rounded-xl" />
-			</div>
-
-			{/* Accordion list — a few collapsed days and one expanded (today) with event cards */}
-			<div className="flex flex-col gap-3">
-				{/* Expanded (today) */}
-				<div className="bg-card border-border/70 zen-shadow rounded-2xl border px-5 pt-4 pb-5">
-					<div className="mb-3 flex items-center justify-between">
-						<div className="flex items-center gap-3">
-							<Skeleton className="bg-muted-foreground/15 h-6 w-52" />
-							<Skeleton className="bg-primary/20 h-5 w-14 rounded-full" />
-						</div>
-						<div className="flex items-center gap-3">
-							<Skeleton className="bg-muted-foreground/10 h-6 w-24 rounded-full" />
-							<Skeleton className="bg-muted-foreground/10 h-4 w-4 rounded-full" />
-						</div>
+			<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+				{/* WeekNav: the arrows either side of the week's dates. */}
+				<div className="flex w-full items-center gap-3 lg:w-auto">
+					<div className="bg-card border-border/70 size-11 shrink-0 rounded-full border" />
+					<div className="flex min-w-0 flex-1 flex-col items-center lg:w-56 lg:flex-none">
+						<SkeletonLine className="w-16 text-xs" />
+						<SkeletonLine className="w-40 text-lg" />
 					</div>
-					<div className="flex flex-col gap-3 pt-2">
-						<EventCardSkeleton />
-						<EventCardSkeleton />
-					</div>
+					<div className="bg-card border-border/70 size-11 shrink-0 rounded-full border" />
 				</div>
-				<AccordionCollapsedSkeleton />
-				<AccordionCollapsedSkeleton />
-				<AccordionCollapsedSkeleton />
+				{/* TypeFilter */}
+				<div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:gap-2 sm:px-0">
+					{TYPES.map((word) => (
+						<div
+							key={word}
+							className="bg-card border-border/70 flex h-10 shrink-0 items-center rounded-full border px-3 sm:px-4"
+						>
+							<SkeletonLine className={`${word} text-sm`} />
+						</div>
+					))}
+				</div>
 			</div>
-		</>
+
+			<div className="flex flex-col gap-6">
+				{WEEK.map(({ day, sessions }, i) => (
+					<div key={i} className="flex flex-col gap-3">
+						<div className="flex items-center gap-2.5">
+							<SkeletonLine className={`${day} text-xl`} />
+							<SkeletonLine className="w-20 text-sm" />
+							<SkeletonLine className="ml-auto w-16 text-sm" />
+						</div>
+						{sessions.map((kind, j) =>
+							kind === "row" ? <SkeletonSessionRow key={j} /> : <SkeletonEventCard key={j} />,
+						)}
+					</div>
+				))}
+			</div>
+		</LoadingScreen>
 	);
 }
