@@ -63,9 +63,11 @@ export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenPro
 	return (
 		<div
 			role="alert"
+			// In the dashboard, the scene takes the page's whole area, past the gutter.
+			data-full-bleed
 			className={cn(
 				"relative flex w-full items-center justify-center overflow-hidden px-5 py-10",
-				fullScreen ? "bg-background fixed inset-0 z-100 min-h-dvh" : "min-h-[70vh]",
+				fullScreen ? "bg-background fixed inset-0 z-100 min-h-dvh" : "min-h-[70vh] flex-1",
 			)}
 		>
 			<LotusPond />

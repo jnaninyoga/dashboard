@@ -65,9 +65,11 @@ export default async function DashboardLayout({
 							Google isn&apos;t answering right now, so your calendar and contacts may be out of date. What you save here is safe.
 						</p>
 					) : null}
+					{/* The one gutter for every page. A page whose root is marked
+					    data-full-bleed (the error screen's scene) takes the whole area. */}
 					<div
 						data-page-content
-						className="animate-slide-up mx-auto flex w-full max-w-screen-2xl flex-1 flex-col px-4 py-5 sm:px-6 sm:py-6 lg:px-8 lg:py-8"
+						className="animate-slide-up mx-auto flex w-full max-w-screen-2xl flex-1 flex-col px-4 py-5 has-[>[data-full-bleed]]:max-w-none! has-[>[data-full-bleed]]:p-0! sm:px-6 sm:py-6 lg:px-8 lg:py-8"
 					>
 						{children}
 					</div>
