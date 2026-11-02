@@ -20,6 +20,13 @@ describe("creditsSummary", () => {
 		expect(creditsSummary([card(6), card(4, "2026-12-01")], today)).toEqual({ count: 10, total: null, tone: "ok" });
 	});
 
+	it("gives the last day they can come when every card ends, and leaves cancelled sales out", () => {
+		expect(creditsSummary([card(6, "2026-11-20"), card(2, "2026-12-01")], today).endsOn).toBe("2026-12-01");
+		expect(creditsSummary([card(6, "2026-11-20"), card(2)], today).endsOn).toBeUndefined();
+		expect(creditsSummary([{ ...card(10), status: "cancelled" }], today)).toEqual({ count: null, total: null, tone: "none" });
+		expect(creditsSummary([{ ...card(10), status: "cancelled" }, card(3)], today)).toEqual({ count: 3, total: 10, tone: "ok" });
+	});
+
 	it("warns when two or fewer are left, or none", () => {
 		expect(creditsSummary([card(2)], today).tone).toBe("low");
 		expect(creditsSummary([card(3)], today).tone).toBe("ok");

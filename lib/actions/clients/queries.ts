@@ -15,7 +15,7 @@ import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, desc, eq, gte, ilike, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 export async function getClientsAction(
 	page = 1,
@@ -72,9 +72,9 @@ export async function getClientsAction(
 			orderBy: [desc(clients.createdAt)],
 			with: {
 				discount: true,
-				// Every card still open (an expired one too, to say so on the card).
+				// Every card sold (an expired or used-up one too, to say so on the card).
 				wallets: {
-					where: eq(clientWallets.status, "active"),
+					where: ne(clientWallets.status, "cancelled"),
 					with: { product: true },
 					orderBy: desc(clientWallets.activatedAt),
 				},

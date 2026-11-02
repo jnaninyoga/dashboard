@@ -68,7 +68,8 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                 }
             } else {
                 setRefusal(null);
-                notify.success(res.message);
+                const who = clientData?.fullName || selectedClient?.fullName;
+                notify.success(who ? `${who} is checked in` : res.message, res.note);
                 
                 const newRecord: AttendanceRecord = {
                     id: Math.random().toString(), 

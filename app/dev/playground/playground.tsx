@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { ClientSearch } from "@/components/clients/search";
 import { FormSheet } from "@/components/form-sheet";
 import {
 	Accordion,
@@ -54,6 +55,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { notify } from "@/lib/feedback/notify";
 
 import { Buildings } from "iconsax-reactjs";
 
@@ -117,6 +119,11 @@ export function Playground() {
 				</section>
 
 				<FeedbackDemo />
+				<section className="bg-card grid gap-3 rounded-3xl border p-6">
+					<h2 className="text-xl">Check-in search</h2>
+					<p className="text-muted-foreground text-sm">Real clients when signed in, with their card as the door sees it.</p>
+					<ClientSearch onSelectClient={(client) => notify.success(client.fullName)} />
+				</section>
 				<FormsDemo />
 				<MenusDemo />
 				<TablesDemo />

@@ -7,7 +7,7 @@ import { formatDay, STUDIO_TIME_ZONE, studioDateString } from "@/lib/utils/time"
 export type CreditsTone = "ok" | "low" | "none" | "expired";
 
 /** Two or fewer credits left is worth noticing at the door. */
-const LOW_CREDITS = 2;
+export const LOW_CREDITS = 2;
 
 type WalletCard = Parameters<typeof cardState>[0] & { product?: { credits: number | null } | null };
 
@@ -15,19 +15,23 @@ type WalletCard = Parameters<typeof cardState>[0] & { product?: { credits: numbe
  * The credits a client can use on `today` (a studio day), across their
  * cards, out of the card's total when there's one card. An expired card's
  * credits can't be used: with nothing else to pay, it says the card
- * expired, and when.
+ * expired, and when. `endsOn` is the last day they can come, when every
+ * card they can use has an end.
  */
 export function creditsSummary(
 	wallets: WalletCard[] | null | undefined,
 	today: string = studioDateString(),
-): { count: number | null; total: number | null; tone: CreditsTone; expiredOn?: string } {
-	const cards = wallets ?? [];
+): { count: number | null; total: number | null; tone: CreditsTone; expiredOn?: string; endsOn?: string } {
+	// A cancelled sale is no card at all.
+	const cards = (wallets ?? []).filter((card) => card.status !== "cancelled");
 	if (!cards.length) return { count: null, total: null, tone: "none" };
 	const usable = cards.filter((card) => cardState(card, today) === "active");
 	if (usable.length) {
 		const count = usable.reduce((sum, card) => sum + card.remainingCredits, 0);
 		const total = usable.length === 1 ? (usable[0].product?.credits ?? null) : null;
-		return { count, total, tone: count <= LOW_CREDITS ? "low" : "ok" };
+		const summary = { count, total, tone: count <= LOW_CREDITS ? ("low" as const) : ("ok" as const) };
+		const ends = usable.map((card) => card.expiresOn);
+		return ends.every(Boolean) ? { ...summary, endsOn: ends.sort().at(-1)! } : summary;
 	}
 	const [expired] = expiredCards(cards, today);
 	if (expired?.expiresOn) return { count: 0, total: null, tone: "expired", expiredOn: expired.expiresOn };

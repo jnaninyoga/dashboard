@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
+import { creditsSummary, LOW_CREDITS, shortDay } from "@/lib/domain/clients/card";
 import { cardForCheckIn, checkInRefusal } from "@/lib/domain/clients/membership-sale";
+import { renewalFor } from "@/lib/domain/clients/renewal";
 import { logServerError } from "@/lib/errors/server";
 import { formatDay, studioDateString } from "@/lib/utils/time";
 import { db } from "@/services/database";
@@ -43,10 +45,10 @@ export async function checkInClientAction(
 	clientId: string,
 	eventId: string,
 	slotType: JnaninEventType
-): Promise<{ success: boolean; message: string; ref?: string; needsCard?: boolean }> {
+): Promise<{ success: boolean; message: string; note?: string; ref?: string; needsCard?: boolean }> {
 	await requireUser();
 	try {
-		const message = await db.transaction(async (tx) => {
+		const { message, note } = await db.transaction(async (tx): Promise<{ message: string; note?: string }> => {
 			const [session] = await tx
 				.select({ status: studioSessions.status, startsAt: studioSessions.startsAt })
 				.from(studioSessions)
@@ -85,13 +87,13 @@ export async function checkInClientAction(
 
 			if (slotType === "outdoor") {
 				// For outdoor events, we bypass standard credit deduction.
-				// Attach to their most recent wallet for logging.
+				// Attach to their most recent card (a sold one) for logging.
 				await tx.insert(attendanceLedger).values({
-					walletId: allWallets[0].id,
+					walletId: (allWallets.find((w) => w.status !== "cancelled") ?? allWallets[0]).id,
 					googleEventId: eventId,
 					slotType: slotType,
 				});
-				return "Outdoor Check-in Successful (No credit deducted).";
+				return { message: "Checked in", note: "Outdoor session: no credit taken." };
 			}
 
 			// A credit from a card that can be used on the session's day: the
@@ -131,11 +133,21 @@ export async function checkInClientAction(
 				slotType: slotType,
 			});
 
-			return "Check-in Successful. 1 credit deducted.";
+			// What's left, and a word when it's time to renew.
+			const after = allWallets.map((w) => (w.id === activeWallet.id ? { ...w, remainingCredits: newRemaining, status: newRemaining === 0 ? "empty" : w.status } : w));
+			const left = creditsSummary(after, sessionDay);
+			const renewal = renewalFor(after, sessionDay);
+			const ends = renewal?.reason === "ends" ? ` Their card ends ${shortDay(renewal.day, sessionDay)}.` : "";
+			return {
+				message: "Checked in",
+				note: !left.count
+					? "That was their last credit: time for a new card."
+					: `1 credit taken, ${left.count <= LOW_CREDITS ? "only " : ""}${left.count} left.${ends}`,
+			};
 		});
 
 		revalidatePath(`/check-in/${eventId}`);
-		return { success: true, message };
+		return { success: true, message, note };
 	} catch (error) {
 		if (error instanceof CheckInRefused) {
 			return { success: false, message: error.message, needsCard: error.needsCard };

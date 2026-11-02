@@ -4,16 +4,41 @@ import * as React from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getClientsAction } from "@/lib/actions/clients/queries";
+import { creditsSummary } from "@/lib/domain/clients/card";
+import { RENEW_WITHIN_DAYS } from "@/lib/domain/clients/renewal";
 import { useDebounce } from "@/lib/hooks/use-debounce";
+import { type ClientWithRelations } from "@/lib/types";
+import { addDays, formatDay, studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
-import { type Client, type HealthLog } from "@/services/database/schema";
 
-import { CloseCircle,Refresh, SearchNormal1 } from "iconsax-reactjs";
+import { CloseCircle, Danger, Refresh, SearchNormal1 } from "iconsax-reactjs";
 
-export function ClientSearch({ onSelectClient }: { onSelectClient: (client: Client & { healthLogs?: HealthLog[] }) => void }) {
+const weekDay = (date: string) => formatDay(date, { weekday: "short", day: "numeric", month: "short" });
+
+/**
+ * Their card, as the door sees it, before she taps: the credits they can
+ * use (and an end within the week), or why a check-in would be refused.
+ */
+function CardAtTheDoor({ wallets }: { wallets: ClientWithRelations["wallets"] }) {
+	const today = studioDateString();
+	const credits = creditsSummary(wallets, today);
+	if (credits.count === null) return <span className="text-muted-foreground">No card</span>;
+	if (credits.tone === "expired") return <span className="text-destructive font-medium">Card expired {weekDay(credits.expiredOn!)}</span>;
+	if (!credits.count) return <span className="text-destructive font-medium">No credits left</span>;
+	const ends = credits.endsOn && credits.endsOn <= addDays(today, RENEW_WITHIN_DAYS) ? credits.endsOn : null;
+	return (
+		<span className={cn("tabular-nums", credits.tone === "low" ? "text-warning font-medium" : "text-muted-foreground")}>
+			{credits.count} {credits.count === 1 ? "credit" : "credits"}
+			{credits.tone === "low" ? " left" : ""}
+			{ends ? <span className="text-warning font-medium">, ends {ends === today ? "today" : weekDay(ends)}</span> : null}
+		</span>
+	);
+}
+
+export function ClientSearch({ onSelectClient }: { onSelectClient: (client: ClientWithRelations) => void }) {
 	const [searchQuery, setSearchQuery] = React.useState("");
 	const [isLoading, setIsLoading] = React.useState(false);
-	const [clients, setClients] = React.useState<(Client & { healthLogs?: HealthLog[] })[]>([]);
+	const [clients, setClients] = React.useState<ClientWithRelations[]>([]);
 	const [isFocused, setIsFocused] = React.useState(false);
 	const debouncedQuery = useDebounce(searchQuery, 300);
 	const inputRef = React.useRef<HTMLInputElement>(null);
@@ -107,14 +132,16 @@ export function ClientSearch({ onSelectClient }: { onSelectClient: (client: Clie
 										<AvatarFallback className="bg-primary/10 text-primary font-semibold">{client.fullName[0]}</AvatarFallback>
 									</Avatar>
 									<div className="flex min-w-0 flex-1 flex-col">
-										<span className="text-foreground truncate text-base font-semibold">{client.fullName}</span>
-										<span className="text-muted-foreground truncate text-sm">{client.phone} • {client.email}</span>
+										<span className="flex min-w-0 items-center gap-1.5">
+											<span className="text-foreground truncate text-base font-semibold">{client.fullName}</span>
+											{(client.healthLogs || []).some((l) => l.isAlert) ? (
+												<Danger size={16} variant="Bold" className="text-destructive shrink-0" aria-label="Health alerts" role="img" />
+											) : null}
+										</span>
+										<span className="truncate text-sm">
+											<CardAtTheDoor wallets={client.wallets} />
+										</span>
 									</div>
-									{(client.healthLogs || []).some((l) => l.isAlert) ? (
-										<div className="bg-destructive/10 text-destructive shrink-0 rounded-full px-3 py-1 text-xs font-bold">
-											Alerts
-										</div>
-									) : null}
 								</button>
 							))}
 						</div>
