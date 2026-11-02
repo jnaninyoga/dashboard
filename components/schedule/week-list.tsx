@@ -1,7 +1,8 @@
 import Link from "next/link";
 
 import { EmptyState } from "@/components/empty-state";
-import { EventCard, TYPE_META } from "@/components/schedule/events/card";
+import { EventCard } from "@/components/schedule/events/card";
+import { typeLabel } from "@/components/schedule/events/type-labels";
 import { dayCountLabel, type FeedSession, summarize } from "@/lib/domain/schedule/feed";
 import { formatDay } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
@@ -27,7 +28,7 @@ export function SessionRow({ session, ended }: { session: FeedSession; ended: bo
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="text-foreground truncate font-medium">{session.title}</span>
 				<span className="text-muted-foreground text-sm">
-					{session.external ? "Calendar event" : TYPE_META[session.type].label}
+					{session.external ? "Calendar event" : typeLabel(session.type)}
 					{session.checkIns ? (
 						<>
 							{" · "}

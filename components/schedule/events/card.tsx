@@ -33,6 +33,7 @@ import {
 	MandalaPattern,
 	SunPattern,
 } from "./patterns";
+import { TYPE_LABEL } from "./type-labels";
 
 export type EventTypeKey = "group" | "private" | "b2b" | "outdoor";
 
@@ -59,7 +60,7 @@ const CTA_AMBER =
 
 export const TYPE_META: Record<EventTypeKey, TypeMeta> = {
 	group: {
-		label: "Group Class",
+		label: TYPE_LABEL.group,
 		Icon: Profile2User,
 		Pattern: MandalaPattern,
 		accent: "text-primary",
@@ -69,7 +70,7 @@ export const TYPE_META: Record<EventTypeKey, TypeMeta> = {
 		liveGlow: "shadow-[0_6px_24px_rgba(29,126,142,0.45)]",
 	},
 	private: {
-		label: "Private",
+		label: TYPE_LABEL.private,
 		Icon: User,
 		Pattern: LotusPattern,
 		accent: "text-secondary-foreground",
@@ -79,7 +80,7 @@ export const TYPE_META: Record<EventTypeKey, TypeMeta> = {
 		liveGlow: "shadow-[0_6px_24px_rgba(214,127,125,0.5)]",
 	},
 	b2b: {
-		label: "B2B",
+		label: TYPE_LABEL.b2b,
 		Icon: Buildings,
 		Pattern: HexPattern,
 		accent: "text-violet-700 dark:text-violet-300",
@@ -89,7 +90,7 @@ export const TYPE_META: Record<EventTypeKey, TypeMeta> = {
 		liveGlow: "shadow-[0_6px_24px_rgba(139,92,246,0.45)]",
 	},
 	outdoor: {
-		label: "Outdoor",
+		label: TYPE_LABEL.outdoor,
 		Icon: Sun1,
 		Pattern: SunPattern,
 		accent: "text-amber-700 dark:text-amber-400",
