@@ -1,6 +1,6 @@
+import { Money } from "@/components/money";
 import { Separator } from "@/components/ui/separator";
 import { DocumentWithRelations } from "@/lib/types/b2b";
-import { formatAmount } from "@/lib/utils/currency";
 
 /**
  * An issued document's totals: before tax, the tax, and the total, labelled
@@ -16,23 +16,20 @@ export function DocumentTotals({ document }: { document: DocumentWithRelations }
 			<div className="flex items-center justify-between gap-4">
 				<span className="text-muted-foreground text-sm">Subtotal</span>
 				<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-					{formatAmount(subtotal)}
-					<span className="text-muted-foreground ml-1 text-xs font-normal">MAD</span>
+					<Money amount={subtotal} />
 				</span>
 			</div>
 			<div className="flex items-center justify-between gap-4">
 				<span className="text-muted-foreground text-sm">Tax {taxRate}%</span>
 				<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-					{formatAmount(total - subtotal)}
-					<span className="text-muted-foreground ml-1 text-xs font-normal">MAD</span>
+					<Money amount={total - subtotal} />
 				</span>
 			</div>
 			<Separator />
 			<div className="flex items-center justify-between gap-4">
 				<span className="text-foreground font-semibold">Total</span>
 				<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
-					{formatAmount(total)}
-					<span className="text-primary ml-1.5 text-sm font-semibold">MAD</span>
+					<Money amount={total} />
 				</span>
 			</div>
 		</div>

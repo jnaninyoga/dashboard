@@ -19,6 +19,7 @@ import { createMembershipProduct, updateMembershipProduct } from "@/lib/actions/
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type Membership } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { CURRENCY } from "@/lib/utils/currency";
 import {
 	type MembershipProductFormInput,
 	type MembershipProductFormValues,
@@ -118,7 +119,7 @@ export function MembershipSheet({ open, onOpenChange, initialData, trigger }: Me
 							name="basePrice"
 							render={({ field }) => (
 								<FormItem>
-									<FormLabel>Price (MAD)</FormLabel>
+									<FormLabel>Price ({CURRENCY})</FormLabel>
 									<FormControl>
 										<Input
 											inputMode="decimal"

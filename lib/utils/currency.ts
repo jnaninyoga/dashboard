@@ -17,19 +17,26 @@ export function parseAmountInput(input: string | number | null | undefined): num
 	return /^-?\d+(\.\d+)?$/.test(s) ? Number(s) : NaN;
 }
 
+/** The studio's currency, by its ISO code: every price is in it. */
+export const CURRENCY = "MAD";
+
 const money = new Intl.NumberFormat("fr-FR", {
 	minimumFractionDigits: 2,
 	maximumFractionDigits: 2,
 });
 
-/** "1 234,50": an amount alone, for layouts that set "MAD" apart. */
-export function formatAmount(amount: number): string {
-	return money.format(amount);
+/**
+ * "1 234,50": an amount alone, in the studio's way (French grouping, two
+ * decimals). The groups are held by non-breaking spaces, so an amount never
+ * wraps in the middle. Every price goes through here, on screen and on paper.
+ */
+export function formatAmount(amount: number | string): string {
+	return money.format(Number(amount)).replace(/\u202F/g, "\u00A0");
 }
 
-/** "1 234,50 MAD": amounts shown the way she types them. */
-export function formatMoney(amount: number): string {
-	return `${money.format(amount)} MAD`;
+/** "1 234,50 MAD": a price in words (toasts, messages, labels). On screen, use <Money>. */
+export function formatMoney(amount: number | string): string {
+	return `${formatAmount(amount)}\u00A0${CURRENCY}`;
 }
 
 /**

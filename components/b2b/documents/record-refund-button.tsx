@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { recordRefundAction } from "@/lib/actions/b2b/documents";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { formatMoney, normalizeDecimalInput, parseAmountInput } from "@/lib/utils/currency";
+import { CURRENCY, formatMoney, normalizeDecimalInput,parseAmountInput } from "@/lib/utils/currency";
 import { studioDateString } from "@/lib/utils/time";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/validators/document";
 
@@ -111,7 +111,7 @@ export function RecordRefundButton({
 									onChange={(e) => setAmount(normalizeDecimalInput(e.target.value))}
 									className="h-12 rounded-xl pr-14 text-right font-mono text-lg font-bold"
 								/>
-								<span className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-sm">MAD</span>
+								<span className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-sm">{CURRENCY}</span>
 							</span>
 							{tooMuch ? (
 								<span role="alert" className="text-destructive font-normal">

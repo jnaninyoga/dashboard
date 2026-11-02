@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 
+import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import {
 	FormControl,
@@ -13,6 +14,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
 import { type Discount } from "@/lib/types";
+import { formatMoney } from "@/lib/utils/currency";
 import { ClientFormValues } from "@/lib/validators";
 import { type Membership } from "@/services/database/schema";
 
@@ -89,7 +91,7 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 					<Badge variant="outline" className="text-primary mt-2">
 						Discount: {selectedDiscount.name}
 						{parseFloat(selectedDiscount.discountValue) > 0 ? (
-							` (${selectedDiscount.discountType === "percentage" ? `-${selectedDiscount.discountValue}%` : `-${selectedDiscount.discountValue} MAD`})`
+							` (${selectedDiscount.discountType === "percentage" ? `-${selectedDiscount.discountValue}%` : `−${formatMoney(selectedDiscount.discountValue)}`})`
 						) : null}
 					</Badge>
 				) : null}
@@ -152,11 +154,11 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 													<div className="mt-auto flex flex-col items-end">
 														{isDiscounted ? (
 															<span className="text-muted-foreground text-xs line-through">
-																{originalPrice} MAD
+																<Money amount={originalPrice ?? price} />
 															</span>
 														) : null}
 														<Badge variant="secondary" className="w-fit">
-															{price} MAD
+															<Money amount={price} />
 														</Badge>
 													</div>
 												</label>

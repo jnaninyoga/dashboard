@@ -27,7 +27,7 @@ import {
 import { mergeSameLines } from "@/lib/domain/billing/same-lines";
 import { logServerError } from "@/lib/errors/server";
 import { B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
-import { parseAmountInput } from "@/lib/utils/currency";
+import { formatMoney, parseAmountInput } from "@/lib/utils/currency";
 import { addDays, fromStudioTime, studioDateString } from "@/lib/utils/time";
 import {
 	createDocumentWithLinesSchema,
@@ -850,7 +850,7 @@ export async function recordRefundAction(creditNoteId: string, refund: unknown, 
 			const left = round2(Number(note.totalAmount) - settled);
 			if (amount > left) {
 				throw new RefusedError(
-					`Only ${left.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD is left to refund.`,
+					`Only ${formatMoney(left)} is left to refund.`,
 				);
 			}
 			await tx.insert(b2bPayments).values({
@@ -1017,7 +1017,7 @@ export async function recordDocumentPaymentAction(
 	} catch (error) {
 		if (error instanceof OverpaymentError) {
 			return {
-				error: `Amount exceeds outstanding balance of ${error.outstanding.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD`,
+				error: `Amount exceeds outstanding balance of ${formatMoney(error.outstanding)}`,
 			};
 		}
 		// Postgres unique_violation → idempotent retry of an already-recorded payment.

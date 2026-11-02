@@ -3,6 +3,8 @@
 // are shared by the server (which enforces them) and the screens (which show
 // what's billed and what's left), so the two never disagree.
 
+import { formatMoney } from "@/lib/utils/currency";
+
 type Amount = number | string;
 
 export type QuoteLine = { id: string; description: string; quantity: Amount; unitPrice: Amount };
@@ -118,7 +120,7 @@ export function beyondTheQuote(balance: QuoteBalance, invoiceLines: InvoiceLineI
 	const total = invoiceLines.reduce((sum, line) => sum + lineCents(line.quantity, line.unitPrice), 0);
 	if (total > cents(balance.remaining)) {
 		const over = fromCents(total - cents(balance.remaining));
-		return `This ${words.document} goes ${over.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} MAD beyond what's left of the ${words.source}.`;
+		return `This ${words.document} goes ${formatMoney(over)} beyond what's left of the ${words.source}.`;
 	}
 	return null;
 }

@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { type Discount, Gender, ReferralSource } from "@/lib/types";
+import { formatMoney } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import type { ClientFormValues } from "@/lib/validators";
 
@@ -278,7 +279,7 @@ export function StepPersonalDetails({
 													cat.discountType === "percentage"
 														? ` (${cat.discountValue}%)`
 														: cat.discountValue && cat.discountValue !== "0"
-															? ` (${cat.discountValue} MAD)`
+															? ` (${formatMoney(cat.discountValue)})`
 															: ""}
 												</Badge>
 											</SelectItem>

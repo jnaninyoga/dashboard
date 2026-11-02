@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { useConfirm } from "@/components/feedback/confirm";
+import { Money } from "@/components/money";
 import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,7 +77,7 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 				<TableHeader>
 					<TableRow>
 						<TableHead className="pl-6">Name</TableHead>
-						<TableHead>Price (MAD)</TableHead>
+						<TableHead>Price</TableHead>
 						<TableHead className="pr-6 text-right">Actions</TableHead>
 					</TableRow>
 				</TableHeader>
@@ -91,7 +92,7 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 						activeTiers.map((tier) => (
 							<TableRow key={tier.id}>
 								<TableCell className="pl-6 font-medium">{tier.name}</TableCell>
-								<TableCell>{tier.price} MAD</TableCell>
+								<TableCell><Money amount={tier.price} /></TableCell>
 								<TableCell className="pr-6 text-right">
 									<DropdownMenu>
 										<DropdownMenuTrigger asChild>
@@ -139,7 +140,7 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 								{archivedTiers.map((tier) => (
 									<TableRow key={tier.id} className="bg-muted/50">
 										<TableCell className="font-medium">{tier.name}</TableCell>
-										<TableCell>{tier.price} MAD</TableCell>
+										<TableCell><Money amount={tier.price} /></TableCell>
 										<TableCell className="text-right">
 											<Button
 												variant="ghost"

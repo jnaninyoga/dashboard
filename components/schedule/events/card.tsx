@@ -3,9 +3,11 @@
 import type { ComponentType } from "react";
 import Link from "next/link";
 
+import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Card, CardTitle } from "@/components/ui/card";
 import { CalendarEvent } from "@/lib/types";
+import { formatMoney } from "@/lib/utils/currency";
 import { toStudioTime, wallClockOf } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
@@ -235,7 +237,7 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 					{eventType === "outdoor" && outdoorPrice ? (
 						<span className="flex items-center">
 							<Tag className="mr-2 h-4 w-4" variant="Bulk" />
-							{outdoorPrice} MAD
+							<Money amount={outdoorPrice} />
 						</span>
 					) : null}
 					{eventType === "outdoor" && event.attendees && event.attendees.length > 0 ? (
@@ -246,7 +248,7 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 					{eventType === "b2b" && (b2bPaxLabel || b2bPrice) ? (
 						<span className="flex items-center">
 							<Buildings className="mr-2 h-4 w-4" variant="Bulk" />
-							{[b2bPaxLabel, b2bPrice ? `${b2bPrice} MAD` : null]
+							{[b2bPaxLabel, b2bPrice ? formatMoney(b2bPrice) : null]
 								.filter(Boolean)
 								.join(" · ")}
 						</span>

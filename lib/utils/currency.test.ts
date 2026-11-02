@@ -39,7 +39,8 @@ describe("normalizeDecimalInput", () => {
 
 describe("formatMoney", () => {
 	it("writes French notation with two decimals, which parseAmountInput reads back", () => {
-		expect(formatMoney(1234.5)).toBe("1\u202f234,50 MAD");
-		expect(parseAmountInput(formatMoney(1234.5).replace(" MAD", ""))).toBe(1234.5);
+		// Held by non-breaking spaces: an amount never wraps, nor leaves "MAD" behind.
+		expect(formatMoney(1234.5)).toBe("1\u00A0234,50\u00A0MAD");
+		expect(parseAmountInput(formatMoney(1234.5).replace("\u00A0MAD", ""))).toBe(1234.5);
 	});
 });

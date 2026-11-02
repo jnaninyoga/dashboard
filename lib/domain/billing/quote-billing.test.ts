@@ -71,7 +71,7 @@ describe("beyondTheQuote", () => {
 				{ sourceLineId: "mats", description: "Location tapis", quantity: 60, unitPrice: 100 },
 				{ sourceLineId: null, description: "Extra", quantity: 1, unitPrice: 4500 },
 			]),
-		).toMatch(/goes 500,00 MAD beyond/);
+		).toMatch(/goes 500,00\u00A0MAD beyond/);
 	});
 });
 

@@ -18,6 +18,7 @@ import { createB2BTierAction, updateB2BTierAction } from "@/lib/actions/settings
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { CURRENCY } from "@/lib/utils/currency";
 import { type B2BTierFormValues,b2bTierSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -108,7 +109,7 @@ export function B2BTierDialog({ open, onOpenChange, tier }: B2BTierDialogProps) 
                         name="price"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Price (MAD)</FormLabel>
+                                <FormLabel>Price ({CURRENCY})</FormLabel>
                                 <FormControl>
                                     <Input
                                         inputMode="decimal"

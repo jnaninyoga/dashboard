@@ -17,6 +17,7 @@ import { RecordPaymentButton } from "@/components/b2b/documents/record-payment-b
 import { RecordRefundButton } from "@/components/b2b/documents/record-refund-button";
 import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { EditableNotes } from "@/components/b2b/editable-notes";
+import { Money } from "@/components/money";
 import {
 	Table,
 	TableBody,
@@ -34,7 +35,7 @@ import {
 	type B2BDocumentLine,
 	type DocumentWithRelations,
 } from "@/lib/types/b2b";
-import { formatAmount, formatMoney } from "@/lib/utils/currency";
+import { formatMoney } from "@/lib/utils/currency";
 import { studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
@@ -264,16 +265,10 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 										{line.quantity}
 									</TableCell>
 									<TableCell className="max-sm:before:text-muted-foreground text-right font-mono text-sm leading-none tabular-nums max-sm:p-0 max-sm:before:mr-2 max-sm:before:content-['×']">
-										{formatAmount(parseFloat(line.unitPrice))}
-										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
-											MAD
-										</span>
+										<Money amount={parseFloat(line.unitPrice)} />
 									</TableCell>
 									<TableCell className="pr-8 text-right font-mono text-sm font-black tabular-nums max-sm:ml-auto max-sm:p-0">
-										{formatAmount(parseFloat(line.totalPrice))}
-										<span className="text-muted-foreground ml-1 text-[10px] font-normal">
-											MAD
-										</span>
+										<Money amount={parseFloat(line.totalPrice)} />
 									</TableCell>
 								</TableRow>
 							))}

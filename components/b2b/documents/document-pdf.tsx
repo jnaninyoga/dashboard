@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 
 import type { BusinessProfile, DocumentLine, DocumentWithRelations } from "@/lib/types/b2b";
 import { formatCurrencyAmountToWords } from "@/lib/utils/currency";
+import { formatAmount } from "@/lib/utils/currency";
 
 import {
 	Document,
@@ -578,15 +579,9 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 		? format(new Date(doc.dueDate), "dd/MM/yyyy")
 		: null;
 
-	// Formatting currency without symbol inside the grid, add MAD to totals
-	const formatNum = (amount: number | string) => {
-		return Number(amount)
-			.toLocaleString("fr-FR", {
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 2,
-			})
-			.replace(/[\s\u202F\u00A0]/g, " ");
-	};
+	// The studio's one price format; the PDF font has no non-breaking
+	// space, so its groups are held by plain spaces here.
+	const formatNum = (amount: number | string) => formatAmount(amount).replace(/\u00A0/g, " ");
 
 	const totalAmount = Number(doc.totalAmount);
 	const subtotal = Number(doc.subtotal);

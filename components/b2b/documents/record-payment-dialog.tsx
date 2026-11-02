@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -31,7 +32,7 @@ import {
 } from "@/lib/domain/billing/payments";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type DocumentWithRelations } from "@/lib/types/b2b";
-import { parseAmountInput } from "@/lib/utils/currency";
+import { CURRENCY, formatAmount, formatMoney, parseAmountInput } from "@/lib/utils/currency";
 import { studioDateString } from "@/lib/utils/time";
 import {
 	PAYMENT_METHODS,
@@ -56,11 +57,6 @@ const REFERENCE_LABELS: Record<PaymentMethod, string> = {
 	card: "Card receipt number",
 };
 
-const formatMAD = (n: number) =>
-	n.toLocaleString("fr-FR", {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
 
 // crypto.randomUUID only exists in secure contexts; the server column is a
 // uuid, so the fallback must still produce a valid v4 UUID.
@@ -211,7 +207,7 @@ export function RecordPaymentDialog({
 													placeholder="0.00"
 												/>
 												<div className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-bold tracking-widest">
-													MAD
+													{CURRENCY}
 												</div>
 											</div>
 										</FormControl>
@@ -300,9 +296,9 @@ export function RecordPaymentDialog({
 													{a.documentNumber}
 												</span>
 												<span className="text-muted-foreground text-[10px]">
-													{formatMAD(a.due)} MAD due
+													{formatMoney(a.due)} due
 													{a.applied > 0
-														? ` · ${a.becomesPaid ? "fully paid" : `${formatMAD(stillDue)} remaining`}`
+														? ` · ${a.becomesPaid ? "fully paid" : `${formatMoney(stillDue)} remaining`}`
 														: null}
 												</span>
 											</div>
@@ -315,7 +311,7 @@ export function RecordPaymentDialog({
 														: "text-muted-foreground/40"
 												}`}
 											>
-												{a.applied > 0 ? `+${formatMAD(a.applied)}` : "—"}
+												{a.applied > 0 ? `+\u00A0${formatAmount(a.applied)}` : "—"}
 											</span>
 										</div>
 									);
@@ -325,7 +321,7 @@ export function RecordPaymentDialog({
 										Total outstanding
 									</span>
 									<span className="font-mono text-sm font-bold">
-										{formatMAD(totalOutstanding)} MAD
+										<Money amount={totalOutstanding} />
 									</span>
 								</div>
 							</div>
@@ -333,7 +329,7 @@ export function RecordPaymentDialog({
 							{isOverpayment ? (
 								<div className="text-destructive border-destructive/20 bg-destructive/5 flex items-center gap-2 rounded-xl border p-3 text-[11px] font-medium">
 									Payment exceeds outstanding balance by{" "}
-									{formatMAD(paidAmount - totalOutstanding)} MAD.
+									{formatMoney(paidAmount - totalOutstanding)}.
 								</div>
 							) : null}
 						</div>

@@ -1,6 +1,7 @@
+import { Money } from "@/components/money";
 import { documentAmounts, isOverdue } from "@/lib/domain/billing/payments";
 import { type DocumentWithRelations } from "@/lib/types/b2b";
-import { formatAmount, formatMoney } from "@/lib/utils/currency";
+import { formatMoney } from "@/lib/utils/currency";
 import { formatDay, studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 
@@ -47,8 +48,7 @@ export function HeroAmount({ doc }: { doc: DocumentWithRelations }) {
 		<div className="relative z-10 flex flex-col justify-end md:text-right">
 			<span className={cn("text-[10px] font-black tracking-widest uppercase opacity-60", view.tone)}>{view.label}</span>
 			<div className={cn("font-heading text-4xl font-black tabular-nums", view.tone, view.tone === "text-primary" && "zen-teal-glow")}>
-				{formatAmount(view.amount)}
-				<span className="ml-2 text-base font-bold opacity-60">MAD</span>
+				<Money amount={view.amount} />
 			</div>
 			{view.note ? <span className="text-muted-foreground text-sm">{view.note}</span> : null}
 		</div>

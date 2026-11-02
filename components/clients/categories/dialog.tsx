@@ -19,6 +19,7 @@ import { createClientCategory, updateClientCategory } from "@/lib/actions/settin
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type Discount } from "@/lib/types";
 import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { CURRENCY } from "@/lib/utils/currency";
 import {
     type CategoryFormInput,
     type CategoryFormValues,
@@ -129,7 +130,7 @@ export function CategoryDialog({ open, onOpenChange, category }: CategoryDialogP
                                             </FormControl>
                                             <SelectContent>
                                                 <SelectItem value="percentage">Percentage (%)</SelectItem>
-                                                <SelectItem value="fixed">Fixed Amount (MAD)</SelectItem>
+                                                <SelectItem value="fixed">Fixed amount ({CURRENCY})</SelectItem>
                                             </SelectContent>
                                         </Select>
                                         <FormMessage />

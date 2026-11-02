@@ -2,6 +2,7 @@ import {
 	CreateMembershipDialog,
 	MembershipActions,
 } from "@/components/clients/memberships/actions";
+import { Money } from "@/components/money";
 import {
 	Table,
 	TableBody,
@@ -55,7 +56,7 @@ export default async function MembershipSettingsPage() {
 								<TableCell className="pl-6 font-medium">
 									{product.name}
 								</TableCell>
-								<TableCell>{product.basePrice} MAD</TableCell>
+								<TableCell><Money amount={product.basePrice} /></TableCell>
 								<TableCell>{product.durationMonths} Months</TableCell>
 								<TableCell>{product.defaultCredits}</TableCell>
 								<TableCell>

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
+import { Money } from "@/components/money";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ import {
 	type B2BDocumentStatus,
 	type PartnerRate,
 } from "@/lib/types/b2b";
-import { formatAmount,normalizeDecimalInput } from "@/lib/utils/currency";
+import { CURRENCY, normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import { documentLineSchema, withoutBlankLines } from "@/lib/validators";
 
@@ -338,9 +339,7 @@ export function EditableDocumentLines({
 																		f.onChange(sanitized);
 																	}}
 																/>
-																<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">
-																	MAD
-																</span>
+																<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">{CURRENCY}</span>
 															</div>
 														)}
 													/>
@@ -349,11 +348,7 @@ export function EditableDocumentLines({
 											<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
 												{waiting ? null : (
 													<span className="text-foreground font-mono text-sm font-black tabular-nums">
-														{formatAmount((Number(linesWatcher[index]?.quantity) || 0) *
-															(Number(linesWatcher[index]?.unitPrice) || 0))}
-														<span className="text-foreground ml-1 text-xs font-normal">
-															MAD
-														</span>
+														<Money amount={(Number(linesWatcher[index]?.quantity) || 0) * (Number(linesWatcher[index]?.unitPrice) || 0)} />
 													</span>
 												)}
 											</TableCell>
@@ -383,10 +378,7 @@ export function EditableDocumentLines({
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-muted-foreground text-sm">Subtotal</span>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{formatAmount(subtotal)}
-									<span className="text-muted-foreground ml-1 text-xs font-normal">
-										MAD
-									</span>
+									<Money amount={subtotal} />
 								</span>
 							</div>
 							<div className="flex w-full items-center justify-between gap-4">
@@ -424,20 +416,14 @@ export function EditableDocumentLines({
 									</div>
 								</div>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{formatAmount(taxAmount)}
-									<span className="text-muted-foreground ml-1 text-xs font-normal">
-										MAD
-									</span>
+									<Money amount={taxAmount} />
 								</span>
 							</div>
 							<Separator className="w-full" />
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-foreground font-semibold">Total</span>
 								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
-									{formatAmount(totalAmount)}
-									<span className="text-primary ml-1.5 text-sm font-semibold">
-										MAD
-									</span>
+									<Money amount={totalAmount} />
 								</span>
 							</div>
 						</div>

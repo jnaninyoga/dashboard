@@ -27,6 +27,7 @@ import {
 } from "@/lib/actions/settings";
 import { notify } from "@/lib/feedback/notify";
 import { type Discount } from "@/lib/types";
+import { formatMoney } from "@/lib/utils/currency";
 
 import {
 	ArchiveBook as Archive,
@@ -120,7 +121,7 @@ export function CategoryList({
 								<TableCell>
 									{category.discountType === "percentage"
 										? `${category.discountValue}%`
-										: `${category.discountValue} MAD`}
+										: formatMoney(category.discountValue)}
 								</TableCell>
 								<TableCell className="pr-6 text-right">
 									<DropdownMenu>
@@ -179,7 +180,7 @@ export function CategoryList({
 										<TableCell>
 											{category.discountType === "percentage"
 												? `${category.discountValue}%`
-												: `${category.discountValue} MAD`}
+												: formatMoney(category.discountValue)}
 										</TableCell>
 										<TableCell className="text-right">
 											<Button

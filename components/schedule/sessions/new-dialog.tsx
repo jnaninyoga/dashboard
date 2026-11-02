@@ -19,7 +19,7 @@ import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
 import { getPartnerRates } from "@/lib/actions/settings";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
-import { normalizeDecimalInput } from "@/lib/utils/currency";
+import { CURRENCY, formatMoney, normalizeDecimalInput } from "@/lib/utils/currency";
 import { studioDateString, toStudioTime } from "@/lib/utils/time";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
 import { defaultSessionSlot } from "@/lib/validators/session";
@@ -183,7 +183,7 @@ export function NewSessionDialog({
 
 					{selectedType === "outdoor" ? (
 						<div className="space-y-2">
-							<Label>Price per person (MAD)</Label>
+							<Label>Price per person ({CURRENCY})</Label>
 							<Controller
 								control={control}
 								name="outdoorPrice"
@@ -229,7 +229,7 @@ export function NewSessionDialog({
 												.filter((t) => !t.isArchived)
 												.map((tier) => (
 													<SelectItem key={tier.id} value={tier.id}>
-														{tier.name} ({tier.price} MAD)
+														{tier.name} ({formatMoney(tier.price)})
 													</SelectItem>
 												))}
 										</SelectContent>

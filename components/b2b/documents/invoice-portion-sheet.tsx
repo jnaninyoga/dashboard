@@ -15,7 +15,7 @@ import {
 	type QuoteBalance,
 } from "@/lib/domain/billing/quote-billing";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { formatMoney, normalizeDecimalInput, parseAmountInput } from "@/lib/utils/currency";
+import { CURRENCY, formatMoney, normalizeDecimalInput,parseAmountInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 
 import { ReceiptAdd, Refresh } from "iconsax-reactjs";
@@ -209,7 +209,7 @@ export function InvoicePortionSheet({
 								onChange={(event) => setAmount(normalizeDecimalInput(event.target.value))}
 								className="h-12 pr-14 font-mono text-lg font-bold"
 							/>
-							<span className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-sm">MAD</span>
+							<span className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-sm">{CURRENCY}</span>
 						</div>
 						{amountTooHigh ? (
 							<p role="alert" className="text-destructive text-sm">

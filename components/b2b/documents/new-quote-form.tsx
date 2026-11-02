@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { ContactDialog } from "@/components/b2b/contacts/dialog";
+import { Money } from "@/components/money";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +44,7 @@ import {
 	type B2BPartner,
 	type PartnerRate,
 } from "@/lib/types/b2b";
-import { formatAmount,normalizeDecimalInput } from "@/lib/utils/currency";
+import { CURRENCY, normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import { createDocumentWithLinesSchema, withoutBlankLines } from "@/lib/validators/document";
 
@@ -565,9 +566,7 @@ export function NewQuoteForm({
 																);
 															}}
 														/>
-														<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">
-															MAD
-														</span>
+														<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">{CURRENCY}</span>
 													</div>
 												)}
 											/>
@@ -576,11 +575,7 @@ export function NewQuoteForm({
 										<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
 											{waiting ? null : (
 											<span className="text-foreground font-mono text-sm font-black tabular-nums">
-												{formatAmount((Number(linesWatcher[index]?.quantity) || 0) *
-													(Number(linesWatcher[index]?.unitPrice) || 0))}
-												<span className="text-muted-foreground ml-1 text-xs font-normal">
-													MAD
-												</span>
+												<Money amount={(Number(linesWatcher[index]?.quantity) || 0) * (Number(linesWatcher[index]?.unitPrice) || 0)} />
 											</span>
 										)}
 										</TableCell>
@@ -616,10 +611,7 @@ export function NewQuoteForm({
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-muted-foreground text-sm">Subtotal</span>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{formatAmount(subtotal)}
-									<span className="text-muted-foreground ml-1 text-xs font-normal">
-										MAD
-									</span>
+									<Money amount={subtotal} />
 								</span>
 							</div>
 							<div className="flex w-full items-center justify-between gap-4">
@@ -654,20 +646,14 @@ export function NewQuoteForm({
 									</div>
 								</div>
 								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
-									{formatAmount(taxAmount)}
-									<span className="text-muted-foreground ml-1 text-xs font-normal">
-										MAD
-									</span>
+									<Money amount={taxAmount} />
 								</span>
 							</div>
 							<Separator className="w-full" />
 							<div className="flex w-full items-center justify-between gap-4">
 								<span className="text-foreground font-semibold">Total</span>
 								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
-									{formatAmount(totalAmount)}
-									<span className="text-primary ml-1.5 text-sm font-semibold">
-										MAD
-									</span>
+									<Money amount={totalAmount} />
 								</span>
 							</div>
 						</div>

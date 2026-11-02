@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { assignProductToClient } from "@/lib/actions/clients/wallets";
 import { notify } from "@/lib/feedback/notify";
+import { formatMoney } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import { type ClientWallet, type Membership } from "@/services/database/schema";
 
@@ -138,7 +139,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 									{products.map((product) => (
 										<SelectItem key={product.id} value={product.id}>
 											{product.name} — {product.defaultCredits} Cr (
-											{product.basePrice} MAD)
+											{formatMoney(product.basePrice)})
 										</SelectItem>
 									))}
 								</SelectContent>
