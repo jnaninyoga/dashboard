@@ -103,20 +103,20 @@ export function Figure({
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
 			<dt className="text-muted-foreground text-sm">{label}</dt>
-			<dd className="flex items-baseline gap-1.5">
+			<dd className="flex flex-wrap items-baseline gap-x-1.5">
 				<span
 					className={cn(
 						tone === "muted"
 							? "text-muted-foreground text-base font-medium"
-							: tone === "alert"
-								? "text-destructive text-base font-semibold"
-								: "text-2xl leading-none font-semibold tabular-nums",
+							: "text-2xl leading-none font-semibold whitespace-nowrap tabular-nums",
 						tone === "low" && "text-warning",
+						tone === "alert" && "text-destructive",
 					)}
 				>
 					{value}
 				</span>
-				{unit ? <span className="text-muted-foreground text-sm">{unit}</span> : null}
+				{/* A unit moves under its figure whole, never word by word. */}
+				{unit ? <span className="text-muted-foreground text-sm whitespace-nowrap">{unit}</span> : null}
 			</dd>
 		</div>
 	);

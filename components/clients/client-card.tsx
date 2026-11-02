@@ -114,7 +114,7 @@ export function ClientCard({ client }: { client: Client }) {
 					{credits.count === null ? (
 						<Figure label="Credits left" value="No card" tone="muted" />
 					) : credits.tone === "expired" ? (
-						<Figure label="Card" value="Expired" unit={`on ${shortDay(credits.expiredOn!)}`} tone="alert" />
+						<Figure label="Card expired" value={shortDay(credits.expiredOn!)} tone="alert" />
 					) : (
 						<Figure
 							label="Credits left"
