@@ -2,25 +2,25 @@
 
 import { useState } from "react";
 
+import { ProductSheet } from "@/components/price-list/product-sheet";
 import { Button } from "@/components/ui/button";
 
 import { AddCircle } from "iconsax-reactjs";
-
-import { B2BTierDialog } from "./dialog";
 
 export function CreateB2BTierButton() {
 	const [isOpen, setIsOpen] = useState(false);
 
 	return (
-		<>
-			<Button
-				onClick={() => setIsOpen(true)}
-				className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all"
-			>
-				<AddCircle className="mr-2 h-4 w-4" variant="Bold" />
-				New B2B Tier
-			</Button>
-			<B2BTierDialog open={isOpen} onOpenChange={setIsOpen} />
-		</>
+		<ProductSheet
+			kind="partner_service"
+			open={isOpen}
+			onOpenChange={setIsOpen}
+			trigger={
+				<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
+					<AddCircle className="mr-2 h-4 w-4" variant="Bold" />
+					New rate
+				</Button>
+			}
+		/>
 	);
 }

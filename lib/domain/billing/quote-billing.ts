@@ -3,11 +3,19 @@
 // are shared by the server (which enforces them) and the screens (which show
 // what's billed and what's left), so the two never disagree.
 
+import { type ProductUnit, quantityOf } from "@/lib/domain/price-list/product";
 import { formatMoney } from "@/lib/utils/currency";
 
 type Amount = number | string;
 
-export type QuoteLine = { id: string; description: string; quantity: Amount; unitPrice: Amount };
+export type QuoteLine = {
+	id: string;
+	description: string;
+	quantity: Amount;
+	unitPrice: Amount;
+	productId?: string | null;
+	unit?: ProductUnit | null;
+};
 
 export type BillingInvoice = {
 	id: string;
@@ -21,12 +29,17 @@ export type InvoiceLineInput = {
 	description: string;
 	quantity: Amount;
 	unitPrice: Amount;
+	productId?: string | null;
+	unit?: ProductUnit | null;
 };
 
 export type QuoteLineBalance = {
 	lineId: string;
 	description: string;
 	unitPrice: number;
+	/** What the line sells from her price list, and what its quantity counts. */
+	productId: string | null;
+	unit: ProductUnit | null;
 	ordered: number;
 	billed: number;
 	remaining: number;
@@ -75,6 +88,8 @@ export function quoteBalance(quoteLines: QuoteLine[], invoices: BillingInvoice[]
 			lineId: line.id,
 			description: line.description,
 			unitPrice: Number(line.unitPrice),
+			productId: line.productId ?? null,
+			unit: line.unit ?? null,
 			ordered: fromCents(ordered),
 			billed: fromCents(billed),
 			remaining: fromCents(Math.max(0, ordered - billed)),
@@ -88,8 +103,6 @@ export function quoteBalance(quoteLines: QuoteLine[], invoices: BillingInvoice[]
 		remaining: fromCents(Math.max(0, quotedCents - billedCents)),
 	};
 }
-
-const formatQuantity = (n: number) => n.toLocaleString("en-US", { maximumFractionDigits: 2 });
 
 /** How a check speaks: of an invoice against its quotation, or of a credit note against its invoice. */
 export type BillingWords = { verb: string; document: string; source: string };
@@ -113,7 +126,7 @@ export function beyondTheQuote(balance: QuoteBalance, invoiceLines: InvoiceLineI
 		if (!quoted) return `A line of this ${words.document} isn't on its ${words.source} any more.`;
 		if (quantity > cents(quoted.remaining)) {
 			return quoted.remaining > 0
-				? `“${quoted.description}”: ${formatQuantity(quoted.remaining)} left to ${words.verb}, this ${words.document} has ${formatQuantity(fromCents(quantity))}.`
+				? `“${quoted.description}”: ${quantityOf(quoted.remaining, quoted.unit)} left to ${words.verb}, this ${words.document} has ${quantityOf(fromCents(quantity), quoted.unit)}.`
 				: `“${quoted.description}” is already fully ${words.verb === "credit" ? "credited" : "invoiced"}.`;
 		}
 	}
@@ -133,6 +146,8 @@ export function portionByQuantities(balance: QuoteBalance, quantities: Record<st
 			description: line.description,
 			quantity: fromCents(cents(quantities[line.lineId] ?? 0)),
 			unitPrice: line.unitPrice,
+			productId: line.productId,
+			unit: line.unit,
 		}))
 		.filter((line) => line.quantity > 0);
 }

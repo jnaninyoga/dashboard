@@ -17,7 +17,7 @@ import { HealthAlertButton } from "./health-alert-button";
 
 /** What the card reads: the grid's and the list's client shapes both provide it. */
 type Client = BaseClient & {
-	wallets?: { remainingCredits: number; product?: { defaultCredits: number } | null }[];
+	wallets?: { remainingCredits: number; product?: { credits: number | null } | null }[];
 	healthLogs?: HealthLog[];
 	checkedInToday?: boolean;
 	activeSessionName?: string;

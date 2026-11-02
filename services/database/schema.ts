@@ -134,18 +134,50 @@ export const healthLogs = pgTable("health_logs", {
 export type HealthLog = typeof healthLogs.$inferSelect;
 export type NewHealthLog = typeof healthLogs.$inferInsert;
 
-// What she sells to clients: a card of credits (10 sessions) that lasts a
-// number of months, at her price.
-export const memberships = pgTable("memberships", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	name: text("name").notNull(),
-	defaultCredits: integer("default_credits").notNull(),
-	durationMonths: integer("duration_months"),
-	basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
-	isArchived: boolean("is_archived").default(false).notNull(),
-});
-export type Membership = typeof memberships.$inferSelect;
-export type NewMembership = typeof memberships.$inferInsert;
+// What she sells, in one price list: membership cards to clients, and
+// services to partners (hotels).
+export const productKindEnum = pgEnum("product_kind", [
+	"membership",
+	"partner_service",
+]);
+
+// What a partner service's price is for: one session (séance), whoever
+// comes within the group size.
+export const productUnitEnum = pgEnum("product_unit", ["session"]);
+
+export const products = pgTable(
+	"products",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		kind: productKindEnum("kind").notNull(),
+		name: text("name").notNull(), // "Pass 10 séances", "Famille"
+		price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+		// A membership: the credits on the card (one per visit), and the months
+		// it lasts (empty: no end).
+		credits: integer("credits"),
+		durationMonths: integer("duration_months"),
+		// A partner service: what its price is for, and the group it takes, in
+		// people (pax): 3 to 5 for "Famille"; no maximum for "10+".
+		unit: productUnitEnum("unit"),
+		groupMin: integer("group_min"),
+		groupMax: integer("group_max"),
+		isArchived: boolean("is_archived").default(false).notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(t) => [
+		check("products_price_not_negative", sql`${t.price} >= 0`),
+		check(
+			"products_membership_has_credits",
+			sql`${t.kind} <> 'membership' OR ${t.credits} IS NOT NULL`,
+		),
+		check(
+			"products_group_in_order",
+			sql`${t.groupMin} IS NULL OR ${t.groupMax} IS NULL OR ${t.groupMin} <= ${t.groupMax}`,
+		),
+	],
+);
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;
 
 // Her discounts, given to a client and applied when they buy a membership.
 export const discounts = pgTable("discounts", {
@@ -172,7 +204,8 @@ export const clientWallets = pgTable("client_wallets", {
 	clientId: uuid("client_id")
 		.references(() => clients.id, { onDelete: "cascade" })
 		.notNull(),
-	membershipId: uuid("membership_id").references(() => memberships.id),
+	// The membership it was sold as.
+	productId: uuid("product_id").references(() => products.id),
 	physicalCardRef: text("physical_card_ref"),
 	remainingCredits: integer("remaining_credits").notNull(),
 	status: walletStatusEnum("status").notNull().default("active"),
@@ -250,9 +283,9 @@ export const clientWalletsRelations = relations(
 			fields: [clientWallets.clientId],
 			references: [clients.id],
 		}),
-		membership: one(memberships, {
-			fields: [clientWallets.membershipId],
-			references: [memberships.id],
+		product: one(products, {
+			fields: [clientWallets.productId],
+			references: [products.id],
 		}),
 		ledgerEntries: many(attendanceLedger),
 	}),
@@ -272,8 +305,9 @@ export const discountsRelations = relations(discounts, ({ many }) => ({
 	clients: many(clients),
 }));
 
-export const membershipsRelations = relations(memberships, ({ many }) => ({
+export const productsRelations = relations(products, ({ many }) => ({
 	wallets: many(clientWallets),
+	documentLines: many(b2bDocumentLines),
 }));
 
 
@@ -286,18 +320,6 @@ export const userTokens = pgTable("user_tokens", {
 	expiresAt: timestamp("expires_at").notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-
-// Her prices for hotels and partners ("Famille (3–5 pax)" 450 MAD), offered
-// while writing a quotation.
-export const partnerRates = pgTable("partner_rates", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	name: text("name").notNull(), // e.g., "Famille (3-5 pax)"
-	price: integer("price").notNull(), // Price in MAD
-	isArchived: boolean("is_archived").default(false).notNull(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-export type PartnerRate = typeof partnerRates.$inferSelect;
-export type NewPartnerRate = typeof partnerRates.$inferInsert;
 
 export const b2bPartners = pgTable("b2b_partners", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -403,6 +425,11 @@ export const b2bDocumentLines = pgTable("b2b_document_lines", {
 		(): AnyPgColumn => b2bDocumentLines.id,
 		{ onDelete: "restrict" },
 	),
+	// The service from her price list the line sells, and what its quantity
+	// counts ("10 séances"). Empty on a line she wrote herself, and on lines
+	// written before (an issued document prints as it was issued).
+	productId: uuid("product_id").references(() => products.id),
+	unit: productUnitEnum("unit"),
 	// Where the line sits on the document (lines saved together share one
 	// created_at, so that can't order them).
 	position: integer("position").notNull().default(0),
@@ -508,6 +535,10 @@ export const b2bDocumentLinesRelations = relations(
 		document: one(b2bDocuments, {
 			fields: [b2bDocumentLines.documentId],
 			references: [b2bDocuments.id],
+		}),
+		product: one(products, {
+			fields: [b2bDocumentLines.productId],
+			references: [products.id],
 		}),
 	}),
 );

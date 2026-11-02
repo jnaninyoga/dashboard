@@ -5,9 +5,9 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
-import { appSettings, clients,discounts, partnerRates } from "@/services/database/schema";
+import { appSettings, clients, discounts } from "@/services/database/schema";
 
-import { asc, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 // --- App Settings (Legacy/General) ---
 
@@ -136,91 +136,4 @@ export async function deleteClientCategory(id: string) {
 
     await db.delete(discounts).where(eq(discounts.id, id));
     revalidatePath("/price-list/discounts");
-}
-
-// --- B2B Pricing Tiers ---
-
-export async function getPartnerRates() {
-	await requireUser();
-    return await db.query.partnerRates.findMany({
-        orderBy: [asc(partnerRates.name)],
-    });
-}
-
-import { b2bTierSchema } from "@/lib/validators";
-
-export async function createB2BTierAction(_prevState: unknown, formData: FormData) {
-	await requireUser();
-    const rawData = {
-        name: formData.get("name") as string,
-        price: formData.get("price") as string,
-    };
-
-    const parsed = b2bTierSchema.safeParse(rawData);
-
-    if (!parsed.success) {
-        return { error: "Validation failed", issues: parsed.error.format() };
-    }
-
-    try {
-        await db.insert(partnerRates).values({
-            name: parsed.data.name,
-            price: Number(parsed.data.price),
-        });
-        revalidatePath("/price-list/partner-rates");
-        return { success: true };
-    } catch (error) {
-        return { error: "Failed to create B2B tier", ref: logServerError("Failed to create B2B tier", error) };
-    }
-}
-
-export async function updateB2BTierAction(id: string, _prevState: unknown, formData: FormData) {
-	await requireUser();
-    const rawData = {
-        name: formData.get("name") as string,
-        price: formData.get("price") as string,
-    };
-
-    const parsed = b2bTierSchema.safeParse(rawData);
-
-    if (!parsed.success) {
-        return { error: "Validation failed", issues: parsed.error.format() };
-    }
-
-    try {
-        await db.update(partnerRates)
-            .set({
-                name: parsed.data.name,
-                price: Number(parsed.data.price),
-            })
-            .where(eq(partnerRates.id, id));
-        revalidatePath("/price-list/partner-rates");
-        return { success: true };
-    } catch (error) {
-        return { error: "Failed to update B2B tier", ref: logServerError("Failed to update B2B tier", error) };
-    }
-}
-
-export async function deleteB2BTierAction(id: string) {
-	await requireUser();
-    try {
-        await db.delete(partnerRates).where(eq(partnerRates.id, id));
-        revalidatePath("/price-list/partner-rates");
-        return { success: true };
-    } catch (error) {
-        return { error: "Failed to delete B2B tier", ref: logServerError("Failed to delete B2B tier", error) };
-    }
-}
-
-export async function toggleArchiveB2BTierAction(id: string, isArchived: boolean) {
-	await requireUser();
-    try {
-        await db.update(partnerRates)
-            .set({ isArchived: !isArchived })
-            .where(eq(partnerRates.id, id));
-        revalidatePath("/price-list/partner-rates");
-        return { success: true };
-    } catch (error) {
-        return { error: "Failed to update archive status", ref: logServerError("Failed to update archive status", error) };
-    }
 }

@@ -31,6 +31,7 @@ import { getBusinessProfileAction } from "@/lib/actions/business-profile";
 import { documentKind, documentName } from "@/lib/domain/billing/document-name";
 import { displayStatus, documentAmounts } from "@/lib/domain/billing/payments";
 import { quoteTape } from "@/lib/domain/billing/quote-tape";
+import { quantityOf } from "@/lib/domain/price-list/product";
 import {
 	type B2BDocumentLine,
 	type DocumentWithRelations,
@@ -262,7 +263,7 @@ export default async function DocumentDetailPage(props: { params: Params }) {
 										</p>
 									</TableCell>
 									<TableCell className="text-center font-mono text-sm leading-none tabular-nums max-sm:p-0">
-										{line.quantity}
+										{quantityOf(line.quantity, line.unit)}
 									</TableCell>
 									<TableCell className="max-sm:before:text-muted-foreground text-right font-mono text-sm leading-none tabular-nums max-sm:p-0 max-sm:before:mr-2 max-sm:before:content-['×']">
 										<Money amount={parseFloat(line.unitPrice)} />

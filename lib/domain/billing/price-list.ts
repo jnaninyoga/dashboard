@@ -9,16 +9,17 @@ export const fold = (text: string) =>
 		.toLowerCase()
 		.trim();
 
-export function suggestPrices<T extends { name: string; price: number | string }>(tiers: T[], typed: string): T[] {
+/** Her prices as they read on a line ("Famille (3–5 pax)"), matching what's typed. */
+export function suggestPrices<T extends { label: string; price: number | string }>(options: T[], typed: string): T[] {
 	const query = fold(typed);
 	const seen = new Set<string>();
-	const unique = tiers.filter((tier) => {
-		const key = `${fold(tier.name)}|${Number(tier.price)}`;
+	const unique = options.filter((option) => {
+		const key = `${fold(option.label)}|${Number(option.price)}`;
 		if (seen.has(key)) return false;
 		seen.add(key);
 		return true;
 	});
 	// A line already written in full needs no suggestion.
-	if (query && unique.some((tier) => fold(tier.name) === query)) return [];
-	return query ? unique.filter((tier) => fold(tier.name).includes(query)) : unique;
+	if (query && unique.some((option) => fold(option.label) === query)) return [];
+	return query ? unique.filter((option) => fold(option.label).includes(query)) : unique;
 }

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { categorySchema } from "./category";
-import { membershipProductSchema } from "./membership";
+import { partnerServiceSchema, productSchema } from "./product";
 import { numberFromInput } from "./shared";
 
 describe("numberFromInput", () => {
@@ -34,12 +34,16 @@ describe("forms that hold numbers as text", () => {
 	});
 
 	it("saves a membership with a typed price", () => {
-		const parsed = membershipProductSchema.parse({
-			name: "Pass 1 mois",
-			basePrice: "500,50",
-			durationMonths: 1,
-			defaultCredits: 12,
-		});
-		expect(parsed.basePrice).toBe(500.5);
+		const parsed = productSchema.parse({ kind: "membership", name: "Pass 1 mois", price: "500,50", durationMonths: "1", credits: "12" });
+		expect(parsed).toMatchObject({ price: 500.5, durationMonths: 1, credits: 12 });
+	});
+
+	it("saves a partner service for any group, or a group in order", () => {
+		const service = (groupMin: string, groupMax: string) => ({ kind: "partner_service", name: "Famille", price: "450", groupMin, groupMax });
+		expect(partnerServiceSchema.parse(service("", ""))).toMatchObject({ groupMin: null, groupMax: null });
+		expect(partnerServiceSchema.parse(service("10", ""))).toMatchObject({ groupMin: 10, groupMax: null });
+		const backwards = partnerServiceSchema.safeParse(service("5", "3"));
+		expect(backwards.success ? null : backwards.error.issues[0].path).toEqual(["groupMax"]);
+		expect(partnerServiceSchema.safeParse(service("2.5", "")).success).toBe(false);
 	});
 });

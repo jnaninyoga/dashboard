@@ -16,7 +16,7 @@ import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
 import { type Discount } from "@/lib/types";
 import { formatMoney } from "@/lib/utils/currency";
 import { ClientFormValues } from "@/lib/validators";
-import { type Membership } from "@/services/database/schema";
+import { type Product } from "@/services/database/schema";
 
 import { Refresh } from "iconsax-reactjs";
 
@@ -27,7 +27,7 @@ interface StepMembershipProps {
 }
 
 export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
-	const [products, setProducts] = useState<Membership[]>([]);
+	const [products, setProducts] = useState<Product[]>([]);
 	const [isLoading, setIsLoading] = useState(mode !== "edit");
 
 	const discountId = useWatch({
@@ -130,7 +130,7 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 
 									{products.map((product) => {
 										const { price, originalPrice, isDiscounted } = calculatePrice(
-											product.basePrice,
+											product.price,
 										);
 										return (
 											<div key={product.id}>
@@ -148,7 +148,7 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 															{product.name}
 														</div>
 														<div className="text-muted-foreground text-sm">
-															{product.defaultCredits} Credits
+															{product.credits} Credits
 														</div>
 													</div>
 													<div className="mt-auto flex flex-col items-end">

@@ -17,12 +17,12 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { updateDocumentLinesAction } from "@/lib/actions/b2b/documents";
-import { getPartnerRates } from "@/lib/actions/settings";
+import { getProducts } from "@/lib/actions/price-list";
 import { mergeSameLines } from "@/lib/domain/billing/same-lines";
+import { type Product } from "@/lib/types";
 import {
 	type B2BDocumentLine,
 	type B2BDocumentStatus,
-	type PartnerRate,
 } from "@/lib/types/b2b";
 import { CURRENCY, normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
@@ -32,9 +32,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash } from "iconsax-reactjs";
 import { z } from "zod";
 
-import { DescriptionAutocomplete } from "./description-autocomplete";
+import { DescriptionAutocomplete, LineUnitNote } from "./description-autocomplete";
 import { DocumentSection } from "./document-section";
-import { cellProps, focusCell, useFluidLines } from "./fluid-lines";
+import { cellProps, useFluidLines } from "./fluid-lines";
 import { phoneLine } from "./phone-line";
 import { SaveStatus, useAutosave } from "./use-autosave";
 
@@ -61,7 +61,7 @@ export function EditableDocumentLines({
 	status,
 	taxLocked = false,
 }: EditableDocumentLinesProps) {
-	const [pricingTiers, setPricingTiers] = useState<PartnerRate[]>([]);
+	const [services, setServices] = useState<Product[]>([]);
 	const isDraft = status === "draft";
 
 	const form = useForm<LinesFormValues>({
@@ -69,6 +69,8 @@ export function EditableDocumentLines({
 		defaultValues: {
 			lines: initialLines.map((l) => ({
 				sourceLineId: l.sourceLineId,
+				productId: l.productId,
+				unit: l.unit,
 				description: l.description,
 				quantity: String(l.quantity),
 				unitPrice: String(l.unitPrice),
@@ -84,11 +86,7 @@ export function EditableDocumentLines({
 	});
 
 	useEffect(() => {
-		if (isDraft) {
-			getPartnerRates().then((tiers) =>
-				setPricingTiers(tiers as PartnerRate[]),
-			);
-		}
+		if (isDraft) getProducts("partner_service").then(setServices);
 	}, [isDraft]);
 
 	const linesWatcher = useWatch({ control: form.control, name: "lines" });
@@ -101,15 +99,16 @@ export function EditableDocumentLines({
 	const taxAmount = subtotal * (parseFloat(taxRateWatcher) / 100 || 0);
 	const totalAmount = subtotal + taxAmount;
 
-	const { isWaiting, removeLine, keyDown, mergeLine, leaveLine, grownId, announcement } = useFluidLines({
+	const { isWaiting, removeLine, keyDown, pick, describe, leaveLine, grownId, announcement } = useFluidLines({
 		count: fields.length,
 		lines: linesWatcher,
 		ids: fields.map((field) => field.id),
 		getLines: () => form.getValues("lines"),
-		setQuantity: (index, quantity) =>
-			form.setValue(`lines.${index}.quantity`, quantity, { shouldDirty: true }),
+		set: (index, patch) =>
+			form.setValue(`lines.${index}`, { ...form.getValues(`lines.${index}`), ...patch }, { shouldDirty: true }),
 		append,
 		remove,
+		services,
 	});
 
 	const withTotals = (lines: LinesFormValues["lines"]) =>
@@ -241,7 +240,10 @@ export function EditableDocumentLines({
 															<FormControl>
 																<DescriptionAutocomplete
 																	value={f.value}
-																	onChange={f.onChange}
+																	onChange={(text) => {
+																		f.onChange(text);
+																		describe(index, text);
+																	}}
 																	placeholder={
 																		waiting ? "Add a line…" : "Description…"
 																	}
@@ -253,25 +255,16 @@ export function EditableDocumentLines({
 																		...cellProps(index, "description"),
 																	}}
 																	inputClassName={cn(phoneLine.input, waiting && "border-dashed")}
-																	onSelectTier={(tier) => {
-																		const picked = {
-																			description: tier.name,
-																			unitPrice: tier.price.toString(),
-																		};
-																		// Already on the quotation: that line's quantity grows.
-																		const into = mergeLine(index, picked);
-																		if (into < 0) {
-																			form.setValue(`lines.${index}.description`, picked.description, { shouldDirty: true });
-																			form.setValue(`lines.${index}.unitPrice`, picked.unitPrice, { shouldDirty: true });
-																		}
-																		setTimeout(() => focusCell(into < 0 ? index : into, "quantity"));
-																	}}
-																	pricingTiers={pricingTiers}
+																	onPick={(service, label) =>
+																		pick(index, { description: label, unitPrice: service.price, productId: service.id, unit: service.unit })
+																	}
+																	services={services}
 																/>
 															</FormControl>
 														</FormItem>
 													)}
 												/>
+												<LineUnitNote unit={linesWatcher[index]?.unit} fromQuote={!!linesWatcher[index]?.sourceLineId} />
 											</TableCell>
 											<TableCell className={cn("px-2 py-3 align-top", phoneLine.cell)}>
 												{waiting ? null : (

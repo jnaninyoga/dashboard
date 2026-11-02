@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { useConfirm } from "@/components/feedback/confirm";
 import { Money } from "@/components/money";
+import { ProductSheet } from "@/components/price-list/product-sheet";
 import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,12 +22,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import {
-	deleteB2BTierAction,
-	toggleArchiveB2BTierAction,
-} from "@/lib/actions/settings";
+import { deleteProductAction, setProductArchivedAction } from "@/lib/actions/price-list";
+import { groupSize } from "@/lib/domain/price-list/product";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { type B2BTier } from "@/lib/types";
+import { type Product } from "@/lib/types";
 
 import {
 	ArchiveBook as Archive,
@@ -35,11 +34,8 @@ import {
 	Trash,
 } from "iconsax-reactjs";
 
-import { B2BTierDialog } from "./dialog";
-
-export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
-	const [isCreateOpen, setIsCreateOpen] = useState(false);
-	const [editingTier, setEditingTier] = useState<B2BTier | null>(null);
+export function B2BTierList({ initialTiers }: { initialTiers: Product[] }) {
+	const [editingTier, setEditingTier] = useState<Product | null>(null);
 
 	const activeTiers = initialTiers.filter((t) => !t.isArchived);
 	const archivedTiers = initialTiers.filter((t) => t.isArchived);
@@ -48,26 +44,26 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 
 	const handleDelete = async (id: string) => {
 		const ok = await confirm({
-			title: "Delete this tier?",
+			title: "Delete this rate?",
 			description: "This can't be undone. Archive it instead to keep it for reference.",
 			confirmLabel: "Delete",
 			destructive: true,
 		});
 		if (!ok) return;
-		const result = await deleteB2BTierAction(id);
+		const result = await deleteProductAction(id);
 		if (result.error) {
 			notifyActionError(result, "Something went wrong");
 		} else {
-			notify.success("Tier deleted");
+			notify.success("Rate deleted");
 		}
 	};
 
-	const handleToggleArchive = async (tier: B2BTier) => {
-		const result = await toggleArchiveB2BTierAction(tier.id, tier.isArchived);
+	const handleToggleArchive = async (tier: Product) => {
+		const result = await setProductArchivedAction(tier.id, !tier.isArchived);
 		if (result.error) {
 			notifyActionError(result, "Something went wrong");
 		} else {
-			notify.success(tier.isArchived ? "Tier restored" : "Tier archived");
+			notify.success(tier.isArchived ? "Rate restored" : "Rate archived");
 		}
 	};
 
@@ -77,21 +73,23 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 				<TableHeader>
 					<TableRow>
 						<TableHead className="pl-6">Name</TableHead>
-						<TableHead>Price</TableHead>
+						<TableHead>Group</TableHead>
+						<TableHead>Per session</TableHead>
 						<TableHead className="pr-6 text-right">Actions</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
 					{activeTiers.length === 0 ? (
 						<TableRow>
-							<TableCell colSpan={3} className="h-24 text-center">
-								No active B2B tiers.
+							<TableCell colSpan={4} className="h-24 text-center">
+								No partner rates yet.
 							</TableCell>
 						</TableRow>
 					) : (
 						activeTiers.map((tier) => (
 							<TableRow key={tier.id}>
 								<TableCell className="pl-6 font-medium">{tier.name}</TableCell>
+								<TableCell>{groupSize(tier) ?? "Any group"}</TableCell>
 								<TableCell><Money amount={tier.price} /></TableCell>
 								<TableCell className="pr-6 text-right">
 									<DropdownMenu>
@@ -132,7 +130,7 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 			{archivedTiers.length > 0 ? (
 				<div className="opacity-70">
 					<h3 className="text-muted-foreground mb-2 text-sm font-medium">
-						Archived Tiers
+						Archived
 					</h3>
 					<div>
 						<Table>
@@ -140,6 +138,7 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 								{archivedTiers.map((tier) => (
 									<TableRow key={tier.id} className="bg-muted/50">
 										<TableCell className="font-medium">{tier.name}</TableCell>
+										<TableCell>{groupSize(tier) ?? "Any group"}</TableCell>
 										<TableCell><Money amount={tier.price} /></TableCell>
 										<TableCell className="text-right">
 											<Button
@@ -158,13 +157,12 @@ export function B2BTierList({ initialTiers }: { initialTiers: B2BTier[] }) {
 				</div>
 			) : null}
 
-			<B2BTierDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
-
 			{editingTier ? (
-				<B2BTierDialog
+				<ProductSheet
+					kind="partner_service"
 					open={!!editingTier}
 					onOpenChange={(open) => !open && setEditingTier(null)}
-					tier={editingTier}
+					product={editingTier}
 				/>
 			) : null}
 		</div>

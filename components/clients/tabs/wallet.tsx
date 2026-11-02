@@ -17,17 +17,17 @@ import { assignProductToClient } from "@/lib/actions/clients/wallets";
 import { notify } from "@/lib/feedback/notify";
 import { formatMoney } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
-import { type ClientWallet, type Membership } from "@/services/database/schema";
+import { type ClientWallet, type Product } from "@/services/database/schema";
 
 import { format } from "date-fns";
 import { Bag2 as ShoppingCart, Card as CreditCard, CardAdd, Tag } from "iconsax-reactjs";
 
-type WalletWithProduct = ClientWallet & { membership?: Membership | null };
+type WalletWithProduct = ClientWallet & { product?: Product | null };
 
 interface WalletTabProps {
 	clientId: string;
 	wallets: WalletWithProduct[];
-	products: Membership[];
+	products: Product[];
 }
 
 export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
@@ -138,8 +138,8 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 								<SelectContent>
 									{products.map((product) => (
 										<SelectItem key={product.id} value={product.id}>
-											{product.name} — {product.defaultCredits} Cr (
-											{formatMoney(product.basePrice)})
+											{product.name} — {product.credits} Cr (
+											{formatMoney(product.price)})
 										</SelectItem>
 									))}
 								</SelectContent>
@@ -185,7 +185,7 @@ export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
 									<div className="flex flex-col gap-2">
 										<div className="flex items-center gap-2">
 											<span className="text-secondary-foreground text-lg leading-none font-bold">
-												{wallet.membership?.name || "Member Pack"}
+												{wallet.product?.name || "Member Pack"}
 											</span>
 											{wallet.status === "active" ? (
 												<div className="bg-success h-2 w-2 animate-pulse rounded-full" />

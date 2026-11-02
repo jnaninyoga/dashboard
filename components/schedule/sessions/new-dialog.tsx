@@ -15,10 +15,11 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { getProducts } from "@/lib/actions/price-list";
 import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
-import { getPartnerRates } from "@/lib/actions/settings";
+import { productLabel } from "@/lib/domain/price-list/product";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
+import { type Product, type ScheduleEventInput } from "@/lib/types";
 import { CURRENCY, formatMoney, normalizeDecimalInput } from "@/lib/utils/currency";
 import { studioDateString, toStudioTime } from "@/lib/utils/time";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
@@ -46,7 +47,7 @@ export function NewSessionDialog({
 	onOpenChange: (open: boolean) => void;
 }) {
 	const formId = useId();
-	const [tiers, setTiers] = useState<B2BTier[]>([]);
+	const [rates, setRates] = useState<Product[]>([]);
 	const router = useRouter();
 
 	const [state, formAction, isPending] = useActionState(
@@ -70,9 +71,9 @@ export function NewSessionDialog({
 	useEffect(() => {
 		if (!open) return;
 		reset(freshSession());
-		getPartnerRates()
-			.then(setTiers)
-			.catch((error) => notify.error("Couldn't load the B2B tiers", { error }));
+		getProducts("partner_service")
+			.then(setRates)
+			.catch((error) => notify.error("Couldn't load your partner rates", { error }));
 	}, [open, reset]);
 
 	useEffect(() => {
@@ -100,10 +101,10 @@ export function NewSessionDialog({
 			let b2bPaxLabel = null;
 
 			if (data.type === "b2b" && data.b2bTierId) {
-				const tier = tiers.find((t) => t.id === data.b2bTierId);
-				if (tier) {
-					b2bPrice = tier.price;
-					b2bPaxLabel = tier.name;
+				const rate = rates.find((r) => r.id === data.b2bTierId);
+				if (rate) {
+					b2bPrice = Number(rate.price);
+					b2bPaxLabel = productLabel(rate);
 				}
 			}
 
@@ -212,7 +213,7 @@ export function NewSessionDialog({
 
 					{selectedType === "b2b" ? (
 						<div className="space-y-2">
-							<Label>Pricing Tier</Label>
+							<Label>Partner rate</Label>
 							<Controller
 								control={control}
 								name="b2bTierId"
@@ -222,16 +223,14 @@ export function NewSessionDialog({
 										value={field.value}
 									>
 										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select tier" />
+											<SelectValue placeholder="Choose a rate" />
 										</SelectTrigger>
 										<SelectContent className="w-full">
-											{tiers
-												.filter((t) => !t.isArchived)
-												.map((tier) => (
-													<SelectItem key={tier.id} value={tier.id}>
-														{tier.name} ({formatMoney(tier.price)})
-													</SelectItem>
-												))}
+											{rates.map((rate) => (
+												<SelectItem key={rate.id} value={rate.id}>
+													{productLabel(rate)} ({formatMoney(rate.price)} / session)
+												</SelectItem>
+											))}
 										</SelectContent>
 									</Select>
 								)}

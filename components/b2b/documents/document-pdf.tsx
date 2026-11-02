@@ -1,6 +1,7 @@
 import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 
+import { quantityOf } from "@/lib/domain/price-list/product";
 import type { BusinessProfile, DocumentLine, DocumentWithRelations } from "@/lib/types/b2b";
 import { formatCurrencyAmountToWords } from "@/lib/utils/currency";
 import { formatAmount } from "@/lib/utils/currency";
@@ -416,9 +417,10 @@ const S = StyleSheet.create({
 		fontSize: 10,
 		color: C.text,
 	},
-	colDesc: { flex: 4 },
+	colDesc: { flex: 3.7 },
 	colPrice: { flex: 1.5, textAlign: "center" },
-	colQty: { flex: 1, textAlign: "center" },
+	// Wide enough for "100 séances".
+	colQty: { flex: 1.3, textAlign: "center" },
 	colTotal: { flex: 1.5, textAlign: "right" },
 
 	// ── Bottom Section Layout ──
@@ -706,7 +708,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 								<Text style={[S.td, S.colPrice]}>
 									{formatNum(line.unitPrice)} MAD
 								</Text>
-								<Text style={[S.td, S.colQty]}>{Number(line.quantity)}</Text>
+								<Text style={[S.td, S.colQty]}>{quantityOf(line.quantity, line.unit, "fr").replace(/\u00A0/g, " ")}</Text>
 								<Text style={[S.td, S.colTotal]}>
 									{formatNum(line.totalPrice)} MAD
 								</Text>

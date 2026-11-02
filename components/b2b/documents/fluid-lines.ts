@@ -3,8 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { addQuantities, findSameLine } from "@/lib/domain/billing/same-lines";
+import { namesProduct, type ProductUnit } from "@/lib/domain/price-list/product";
 
-type Line = { description: string; quantity: string; unitPrice: string; totalPrice: string; sourceLineId?: string | null };
+type Line = {
+	description: string;
+	quantity: string;
+	unitPrice: string;
+	totalPrice: string;
+	sourceLineId?: string | null;
+	productId?: string | null;
+	unit?: ProductUnit | null;
+};
+
+/** What picking from her price list puts on a line. */
+export type PickedLine = Pick<Line, "description" | "unitPrice" | "productId" | "unit">;
 
 export type LineColumn = "description" | "quantity" | "unitPrice";
 
@@ -32,15 +44,20 @@ export function focusCell(row: number, column: LineColumn) {
  * The same item never takes two lines: picking a price already on the
  * document, or leaving a line written the same as another, adds its
  * quantity to that line instead (see same-lines), which lights up a moment.
+ *
+ * A line picked from her price list sells that service (its quantity counts
+ * sessions) until its words no longer name it: written over as something
+ * else, it's a line of her own (the server holds the same rule).
  */
 export function useFluidLines({
 	count,
 	lines,
 	ids,
 	getLines,
-	setQuantity,
+	set,
 	append,
 	remove,
+	services = [],
 }: {
 	count: number;
 	lines: Line[] | undefined;
@@ -48,9 +65,12 @@ export function useFluidLines({
 	ids: string[];
 	/** The lines as they are now (form.getValues), not as last rendered. */
 	getLines: () => Line[];
-	setQuantity: (index: number, quantity: string) => void;
+	/** Changes some fields of line `index`. */
+	set: (index: number, patch: Partial<Line>) => void;
 	append: (line: Line, options: { shouldFocus: boolean }) => void;
 	remove: (index: number) => void;
+	/** Her price list, to tell whether a line still names its service. */
+	services?: { id: string; name: string }[];
 }) {
 	// Re-checked when the rows change or the last one fills in. The check
 	// reads the form as it is now: the watched values can lag a render behind
@@ -113,22 +133,46 @@ export function useFluidLines({
 	 * `picked` is a price just chosen for the line: then the line already
 	 * there stays and this one goes (the waiting line, if picked from before
 	 * a word was typed, simply keeps waiting). Leaving a line keeps the upper
-	 * of the two.
+	 * of the two. The line kept sells the service either of them was picked as.
 	 */
-	const mergeLine = (index: number, picked?: Pick<Line, "description" | "unitPrice">) => {
+	const mergeLine = (index: number, picked?: PickedLine) => {
 		const current = getLines();
 		const line = { ...current[index], ...picked };
 		const same = findSameLine(current, line, index);
 		if (same < 0) return -1;
 		const keep = picked ? same : Math.min(same, index);
 		const drop = keep === same ? index : same;
+		const [kept, dropped] = keep === same ? [current[same], line] : [line, current[same]];
 		const quantity = addQuantities(current[same].quantity, line.quantity);
-		setQuantity(keep, quantity);
+		set(keep, {
+			quantity,
+			...(kept.productId || !dropped.productId ? null : { productId: dropped.productId, unit: dropped.unit }),
+		});
 		if (!(picked && isBlankLine(current[index]))) remove(drop);
 		clearTimeout(grownTimer.current);
 		setGrown({ id: ids[keep], message: `${line.description.trim()} was already there: quantity ${quantity}.` });
 		grownTimer.current = setTimeout(() => setGrown(null), 1400);
 		return drop < keep ? keep - 1 : keep;
+	};
+
+	/**
+	 * Fills line `index` from her price list (or grows the line that already
+	 * has it), then puts the cursor in its quantity.
+	 */
+	const pick = (index: number, picked: PickedLine) => {
+		const into = mergeLine(index, picked);
+		if (into < 0) set(index, picked);
+		setTimeout(() => focusCell(into < 0 ? index : into, "quantity"));
+	};
+
+	/** For the description's onChange: a line written over as something else lets its service go. */
+	const describe = (index: number, text: string) => {
+		const line = getLines()[index];
+		// An invoice's line sells what its quotation line sold, whatever it's called.
+		if (!line?.productId || line.sourceLineId) return;
+		const service = services.find((s) => s.id === line.productId);
+		// A service taken off her price list since: only emptying the line lets it go.
+		if (service ? !namesProduct(text, service.name) : !text.trim()) set(index, { productId: null, unit: null });
 	};
 
 	/** For a row's onBlur: once the cursor leaves the line, a repeat of another merges into it. */
@@ -141,7 +185,8 @@ export function useFluidLines({
 		removeLine,
 		keyDown,
 		focusWaiting,
-		mergeLine,
+		pick,
+		describe,
 		leaveLine,
 		/** The id of the row that just took a repeat's quantity. */
 		grownId: grown?.id ?? null,

@@ -75,7 +75,7 @@ export async function getClientsAction(
 				wallets: {
 					where: eq(clientWallets.status, "active"),
 					with: {
-						membership: true,
+						product: true,
 						// Fetch recent ledger entries to check for "Online" status
 						ledgerEntries: {
 							// A cancelled session's check-in is history, not a visit.
@@ -192,7 +192,7 @@ export async function getClientByIdAction(id: string) {
 				},
 				wallets: {
 					with: {
-						membership: true,
+						product: true,
 					},
 					orderBy: desc(clientWallets.activatedAt),
 				},
@@ -210,7 +210,7 @@ export async function getClientByIdAction(id: string) {
 			success: true,
 			client: {
 				...client,
-				activeProductId: activeWallet?.membershipId,
+				activeProductId: activeWallet?.productId,
 			},
 		};
 	} catch (error) {

@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
-import {clients, clientWallets, memberships } from "@/services/database/schema";
+import { clients, clientWallets, products } from "@/services/database/schema";
 import { createClient } from "@/services/supabase/server";
 
-import {eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export async function assignProductToClient(clientId: string, productId: string) {
 	const supabase = await createClient();
@@ -36,8 +36,8 @@ export async function assignProductToClient(clientId: string, productId: string)
         const clientCategory = clientData.discount;
 
 		// 2. Fetch product details
-		const product = await db.query.memberships.findFirst({
-			where: eq(memberships.id, productId),
+		const product = await db.query.products.findFirst({
+			where: and(eq(products.id, productId), eq(products.kind, "membership")),
 		});
 
 		if (!product) {
@@ -45,7 +45,7 @@ export async function assignProductToClient(clientId: string, productId: string)
 		}
 
 		// 3. Calculate Final Price
-		let finalPrice = parseFloat(product.basePrice);
+		let finalPrice = parseFloat(product.price);
 
 		// Apply Dynamic Category Discount
 		if (clientCategory && !Array.isArray(clientCategory)) {
@@ -65,8 +65,8 @@ export async function assignProductToClient(clientId: string, productId: string)
 		// 4. Insert into client_wallets
 		await db.insert(clientWallets).values({
 			clientId,
-			membershipId: productId,
-			remainingCredits: product.defaultCredits,
+			productId,
+			remainingCredits: product.credits ?? 0,
 			status: "active",
             amountPaid: finalPrice.toFixed(2),
 			activatedAt: new Date(),
@@ -93,11 +93,11 @@ export async function getMembershipProductsAction() {
 
 	try {
         // Fetch all active products
-		const products = await db.query.memberships.findMany({
-            where: eq(memberships.isArchived, false),
-            orderBy: (products, { asc }) => [asc(products.basePrice)]
+		const memberships = await db.query.products.findMany({
+            where: and(eq(products.kind, "membership"), eq(products.isArchived, false)),
+            orderBy: (product, { asc }) => [asc(product.price)]
         });
-		return { success: true, products };
+		return { success: true, products: memberships };
 	} catch (error) {
 		return { error: "Failed to fetch products", ref: logServerError("Error fetching products", error) };
 	}

@@ -7,6 +7,11 @@ import { numericStr } from "./shared";
 // --- DOCUMENT LINE SCHEMA ---
 export const documentLineSchema = z.object({
 	sourceLineId: z.string().uuid().optional().nullable(),
+	// The service picked from her price list. What the line's quantity
+	// counts (its unit) is the server's to say, from the service or the
+	// source line; the screens send it back only as they last saw it.
+	productId: z.string().uuid().optional().nullable(),
+	unit: z.enum(["session"]).optional().nullable(),
 	description: z.string().min(1, "Description is required"),
 	quantity: numericStr(0.01, "Min 0.01"),
 	unitPrice: numericStr(0, "Min 0"),

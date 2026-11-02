@@ -79,7 +79,7 @@ async function ProfileContent({ id }: { id: string }) {
         .reduce((sum, w) => sum + w.remainingCredits, 0);
     
     const activeWallet = wallets.find(w => w.status === 'active'); // Just take first active for now
-    const activeProductName = activeWallet?.membership?.name;
+    const activeProductName = activeWallet?.product?.name;
 
 	return (
 		<>

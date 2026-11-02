@@ -4,14 +4,14 @@ import { alertChipLabel, alertsSummary, creditsSummary, lastVisitLabel, sortAler
 
 describe("creditsSummary", () => {
 	it("gives the credits left and the card's total", () => {
-		expect(creditsSummary({ remainingCredits: 6, membership: { defaultCredits: 10 } })).toEqual({ count: 6, total: 10, tone: "ok" });
-		expect(creditsSummary({ remainingCredits: 6, membership: null })).toEqual({ count: 6, total: null, tone: "ok" });
+		expect(creditsSummary({ remainingCredits: 6, product: { credits: 10 } })).toEqual({ count: 6, total: 10, tone: "ok" });
+		expect(creditsSummary({ remainingCredits: 6, product: null })).toEqual({ count: 6, total: null, tone: "ok" });
 	});
 
 	it("warns when two or fewer are left, or none", () => {
-		expect(creditsSummary({ remainingCredits: 2, membership: { defaultCredits: 10 } }).tone).toBe("low");
-		expect(creditsSummary({ remainingCredits: 3, membership: { defaultCredits: 10 } }).tone).toBe("ok");
-		expect(creditsSummary({ remainingCredits: 0, membership: { defaultCredits: 10 } })).toEqual({ count: 0, total: 10, tone: "low" });
+		expect(creditsSummary({ remainingCredits: 2, product: { credits: 10 } }).tone).toBe("low");
+		expect(creditsSummary({ remainingCredits: 3, product: { credits: 10 } }).tone).toBe("ok");
+		expect(creditsSummary({ remainingCredits: 0, product: { credits: 10 } })).toEqual({ count: 0, total: 10, tone: "low" });
 	});
 
 	it("says so when there is no active card", () => {

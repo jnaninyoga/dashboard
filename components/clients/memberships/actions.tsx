@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-import { MembershipSheet } from "@/components/clients/memberships/form";
 import { useConfirm } from "@/components/feedback/confirm";
+import { ProductSheet } from "@/components/price-list/product-sheet";
 import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +14,9 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-	archiveMembershipProduct,
-	deleteMembershipProduct,
-} from "@/lib/actions/clients/memberships";
-import { notify } from "@/lib/feedback/notify";
+import { deleteProductAction, setProductArchivedAction } from "@/lib/actions/price-list";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
+import { type Product } from "@/lib/types";
 
 import {
 	AddCircle,
@@ -26,16 +24,6 @@ import {
 	Edit2 as Edit,
 	Trash,
 } from "iconsax-reactjs";
-
-type Product = {
-	id: string;
-	name: string;
-	basePrice: string;
-	description?: string;
-	defaultCredits: number;
-	durationMonths: number | null;
-	isArchived: boolean;
-};
 
 export function MembershipActions({ product }: { product: Product }) {
 	const [isEditOpen, setIsEditOpen] = useState(false);
@@ -49,12 +37,9 @@ export function MembershipActions({ product }: { product: Product }) {
 			confirmLabel: "Archive",
 		});
 		if (!ok) return;
-		try {
-			await archiveMembershipProduct(product.id);
-			notify.success("Membership archived");
-		} catch (error) {
-			notify.error("Couldn't archive this membership", { error });
-		}
+		const result = await setProductArchivedAction(product.id, true);
+		if (result.success) notify.success("Membership archived");
+		else notifyActionError(result, "Couldn't archive this membership");
 	};
 
 	const handleDelete = async () => {
@@ -65,12 +50,9 @@ export function MembershipActions({ product }: { product: Product }) {
 			destructive: true,
 		});
 		if (!ok) return;
-		try {
-			await deleteMembershipProduct(product.id);
-			notify.success("Membership deleted");
-		} catch (error) {
-			notify.error("Couldn't delete this membership", { error });
-		}
+		const result = await deleteProductAction(product.id);
+		if (result.success) notify.success("Membership deleted");
+		else notifyActionError(result, "Couldn't delete this membership");
 	};
 
 	return (
@@ -100,11 +82,7 @@ export function MembershipActions({ product }: { product: Product }) {
 				</DropdownMenuContent>
 			</DropdownMenu>
 
-			<MembershipSheet
-				open={isEditOpen}
-				onOpenChange={setIsEditOpen}
-				initialData={product}
-			/>
+			<ProductSheet kind="membership" open={isEditOpen} onOpenChange={setIsEditOpen} product={product} />
 		</>
 	);
 }
@@ -112,7 +90,8 @@ export function MembershipActions({ product }: { product: Product }) {
 export function CreateMembershipDialog() {
 	const [open, setOpen] = useState(false);
 	return (
-		<MembershipSheet
+		<ProductSheet
+			kind="membership"
 			open={open}
 			onOpenChange={setOpen}
 			trigger={

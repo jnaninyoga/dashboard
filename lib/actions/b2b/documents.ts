@@ -25,6 +25,7 @@ import {
 	quoteBalance,
 } from "@/lib/domain/billing/quote-billing";
 import { mergeSameLines } from "@/lib/domain/billing/same-lines";
+import { lineProduct, type ProductUnit } from "@/lib/domain/price-list/product";
 import { logServerError } from "@/lib/errors/server";
 import { B2BDocumentStatus, B2BDocumentType, type DocumentWithRelations } from "@/lib/types/b2b";
 import { formatMoney, parseAmountInput } from "@/lib/utils/currency";
@@ -42,6 +43,7 @@ import {
 	b2bDocumentSequences,
 	b2bPartners,
 	b2bPayments,
+	products,
 } from "@/services/database/schema";
 
 import { and, asc, desc, eq, ilike, inArray, isNull, lt, not, or, sql } from "drizzle-orm";
@@ -84,14 +86,44 @@ function computeTotals(lines: LineInput[], taxRate: number | string) {
 	return { lines: linesPriced, subtotal, taxRate: tax, totalAmount };
 }
 
+/**
+ * The product each line sells, and what its quantity counts, as the server
+ * says (see lineProduct): an invoice's line, what its quotation line sold;
+ * a line picked from her price list, that service while its words name it.
+ * Whatever the browser sent as the unit is replaced.
+ */
+async function withProducts<T extends InvoiceLineInput>(
+	tx: DbTx,
+	lines: T[],
+	sourceLines: { id: string; productId: string | null; unit: ProductUnit | null }[] = [],
+): Promise<T[]> {
+	const ids = [...new Set(lines.flatMap((line) => (line.productId && !line.sourceLineId ? [line.productId] : [])))];
+	const services = ids.length
+		? await tx
+				.select({ id: products.id, name: products.name, unit: products.unit })
+				.from(products)
+				.where(and(inArray(products.id, ids), eq(products.kind, "partner_service")))
+		: [];
+	return lines.map((line) => ({
+		...line,
+		...lineProduct(
+			line,
+			sourceLines.find((source) => source.id === line.sourceLineId),
+			services.find((service) => service.id === line.productId),
+		),
+	}));
+}
+
 /** Rows for b2b_document_lines, in the order given, totals recomputed. */
-function lineRows(documentId: string, lines: (InvoiceLineInput & { sourceLineId?: string | null })[], taxRate: number | string) {
+function lineRows(documentId: string, lines: InvoiceLineInput[], taxRate: number | string) {
 	const computed = computeTotals(lines, taxRate);
 	return {
 		computed,
 		rows: lines.map((line, i) => ({
 			documentId,
 			sourceLineId: line.sourceLineId ?? null,
+			productId: line.productId ?? null,
+			unit: line.unit ?? null,
 			description: line.description.trim(),
 			quantity: computed.lines[i].quantity.toString(),
 			unitPrice: computed.lines[i].unitPrice.toFixed(2),
@@ -198,11 +230,11 @@ export async function createDocumentAction(
 	}
 
 	const { document } = validated.data;
-	const lines = mergeSameLines(validated.data.lines);
 
 	try {
 		let newId: string;
 		await db.transaction(async (tx) => {
+			const lines = mergeSameLines(await withProducts(tx, validated.data.lines));
 			const documentNumber =
 				document.type === "quote"
 					? await reserveNextDocumentNumber(tx, "quote", document.issueDate)
@@ -1192,15 +1224,18 @@ export async function updateDocumentLinesAction(
 		if (doc.archivedAt) return { error: "Archived documents cannot be edited" };
 		if (doc.status !== "draft") return { error: "Only draft documents can be edited" };
 
-		const lines = mergeSameLines(parsed.data.lines);
 		// An invoice keeps its quotation's tax; a credit note, its invoice's.
 		const taxRate = doc.type !== "quote" && doc.parent ? doc.parent.taxRate : parsed.data.taxRate;
 
 		await db.transaction(async (tx) => {
+			const sourceLines =
+				doc.type !== "quote" && doc.parentDocumentId
+					? await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, doc.parentDocumentId))
+					: [];
+			const lines = mergeSameLines(await withProducts(tx, parsed.data.lines, sourceLines));
 			// Within what's left of its source: a quotation for an invoice, an
 			// invoice for a credit note.
 			if (doc.type !== "quote" && doc.parentDocumentId) {
-				const sourceLines = await tx.select().from(b2bDocumentLines).where(eq(b2bDocumentLines.documentId, doc.parentDocumentId));
 				const siblings = await tx.query.b2bDocuments.findMany({
 					where: and(eq(b2bDocuments.parentDocumentId, doc.parentDocumentId), eq(b2bDocuments.type, doc.type)),
 					with: { lines: true },

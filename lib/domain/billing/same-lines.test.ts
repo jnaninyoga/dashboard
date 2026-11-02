@@ -29,6 +29,12 @@ describe("findSameLine", () => {
 		expect(findSameLine(lines, line("Mat rental", "", "90"), 3)).toBe(-1);
 	});
 
+	it("keeps two products of her price list apart, even written the same", () => {
+		const famille = { ...line("Famille", "1", "450"), productId: "famille" };
+		expect(findSameLine([famille], { ...line("Famille", "1", "450"), productId: "other" }, 1)).toBe(-1);
+		expect(findSameLine([famille], line("Famille", "1", "450"), 1)).toBe(0);
+	});
+
 	it("keeps an invoice's lines for different quotation lines apart", () => {
 		const invoice = [line("Famille (3–5 pax)", "1", "450", "q1")];
 		expect(findSameLine(invoice, line("Famille (3–5 pax)", "1", "450", "q2"), 1)).toBe(-1);
@@ -56,5 +62,10 @@ describe("mergeSameLines", () => {
 	it("leaves distinct lines as they are", () => {
 		const lines = [line("Famille (3–5 pax)", "1", "450"), line("Famille (3–5 pax)", "1", "400")];
 		expect(mergeSameLines(lines)).toEqual(lines);
+	});
+
+	it("keeps the product when a line she typed repeats one she picked", () => {
+		const merged = mergeSameLines([line("Famille", "1", "450"), { ...line("famille", "2", "450"), productId: "famille", unit: "session" }]);
+		expect(merged).toEqual([{ ...line("Famille", "3", "450"), productId: "famille", unit: "session" }]);
 	});
 });

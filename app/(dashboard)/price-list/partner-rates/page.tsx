@@ -1,9 +1,9 @@
 import { CreateB2BTierButton } from "@/components/b2b/tiers/create-button";
 import { B2BTierList } from "@/components/b2b/tiers/list";
-import { getPartnerRates } from "@/lib/actions/settings";
+import { getProducts } from "@/lib/actions/price-list";
 
 export default async function B2BSettingsPage() {
-	const tiers = await getPartnerRates();
+	const tiers = await getProducts("partner_service", { withArchived: true });
 
 	return (
 		<>

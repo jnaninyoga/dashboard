@@ -11,10 +11,10 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import { getMembershipProducts } from "@/lib/actions/clients/memberships";
+import { getProducts } from "@/lib/actions/price-list";
 
 export default async function MembershipSettingsPage() {
-	const products = await getMembershipProducts();
+	const products = await getProducts("membership");
 
 	return (
 		<div className="flex flex-col gap-6">
@@ -56,9 +56,9 @@ export default async function MembershipSettingsPage() {
 								<TableCell className="pl-6 font-medium">
 									{product.name}
 								</TableCell>
-								<TableCell><Money amount={product.basePrice} /></TableCell>
+								<TableCell><Money amount={product.price} /></TableCell>
 								<TableCell>{product.durationMonths} Months</TableCell>
-								<TableCell>{product.defaultCredits}</TableCell>
+								<TableCell>{product.credits}</TableCell>
 								<TableCell>
 									<MembershipActions product={product} />
 								</TableCell>

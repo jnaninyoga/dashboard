@@ -8,9 +8,10 @@ import {
 	quoteBalance,
 } from "./quote-billing";
 
-// A 30,000 MAD quotation: 30 sessions at 800, and 60 mat rentals at 100.
+// A 30,000 MAD quotation: 30 sessions at 800 (from her price list), and 60
+// mat rentals at 100 (a line of her own).
 const quote = [
-	{ id: "sessions", description: "Séance hôtel", quantity: "30", unitPrice: "800" },
+	{ id: "sessions", description: "Séance hôtel", quantity: "30", unitPrice: "800", productId: "hotel", unit: "session" as const },
 	{ id: "mats", description: "Location tapis", quantity: "60", unitPrice: "100" },
 ];
 const invoice = (id: string, status: string, lines: [string | null, number, number][], archivedAt: string | null = null) => ({
@@ -61,8 +62,10 @@ describe("beyondTheQuote", () => {
 
 	it("refuses more sessions than are left, naming the line", () => {
 		expect(beyondTheQuote(balance, [{ sourceLineId: "sessions", description: "Séance hôtel", quantity: 6, unitPrice: 800 }])).toBe(
-			"“Séance hôtel”: 5 left to invoice, this invoice has 6.",
+			"“Séance hôtel”: 5\u00A0sessions left to invoice, this invoice has 6\u00A0sessions.",
 		);
+		const mats = beyondTheQuote(balance, [{ sourceLineId: "mats", description: "Location tapis", quantity: 61, unitPrice: 100 }]);
+		expect(mats).toBe("“Location tapis”: 60 left to invoice, this invoice has 61.");
 	});
 
 	it("refuses more money than is left, even through a raised price or an extra line", () => {
@@ -78,9 +81,11 @@ describe("beyondTheQuote", () => {
 describe("portions", () => {
 	const balance = quoteBalance(quote, []);
 
-	it("bills chosen quantities at the quotation's prices", () => {
+	it("bills chosen quantities at the quotation's prices, selling what the quotation sold", () => {
 		const lines = portionByQuantities(balance, { sessions: 10, mats: 0 });
-		expect(lines).toEqual([{ sourceLineId: "sessions", description: "Séance hôtel", quantity: 10, unitPrice: 800 }]);
+		expect(lines).toEqual([
+			{ sourceLineId: "sessions", description: "Séance hôtel", quantity: 10, unitPrice: 800, productId: "hotel", unit: "session" },
+		]);
 		expect(linesSubtotal(lines)).toBe(8000);
 	});
 

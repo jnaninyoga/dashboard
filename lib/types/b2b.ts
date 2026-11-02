@@ -4,12 +4,10 @@ import {
 	b2bDocuments,
 	b2bPartners,
 	b2bPayments,
-	partnerRates,
 } from "@/services/database/schema";
 
 export type B2BPartner = typeof b2bPartners.$inferSelect;
 export type B2BContact = typeof b2bContacts.$inferSelect;
-export type PartnerRate = typeof partnerRates.$inferSelect;
 export type B2BDocument = typeof b2bDocuments.$inferSelect;
 export type B2BDocumentLine = typeof b2bDocumentLines.$inferSelect;
 export type B2BPayment = typeof b2bPayments.$inferSelect;

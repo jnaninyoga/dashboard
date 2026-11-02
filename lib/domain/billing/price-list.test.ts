@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { suggestPrices } from "./price-list";
 
-const tier = (id: string, name: string, price: number) => ({ id, name, price });
+const tier = (id: string, label: string, price: number) => ({ id, label, price });
 
 describe("suggestPrices", () => {
 	const tiers = [
-		tier("a", "Famille (3-5 pax)", 450),
-		tier("b", "Famille (3-5 pax)", 450),
+		tier("a", "Famille (3–5 pax)", 450),
+		tier("b", "Famille (3–5 pax)", 450),
 		tier("c", "Séance privée", 600),
 		tier("d", "Groupe hôtel", 300),
 	];

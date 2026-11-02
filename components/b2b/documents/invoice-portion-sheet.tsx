@@ -14,6 +14,7 @@ import {
 	portionByQuantities,
 	type QuoteBalance,
 } from "@/lib/domain/billing/quote-billing";
+import { quantityOf } from "@/lib/domain/price-list/product";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { CURRENCY, formatMoney, normalizeDecimalInput,parseAmountInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
@@ -172,8 +173,10 @@ export function InvoicePortionSheet({
 									<div className="min-w-0 flex-1">
 										<p className="truncate font-medium">{line.description}</p>
 										<p className={cn("text-sm", over ? "text-destructive" : "text-muted-foreground")}>
-											{over ? `Only ${quantity(line.remaining)} left` : `${quantity(line.remaining)} left of ${quantity(line.ordered)}`} ·{" "}
-											{formatMoney(line.unitPrice)} each
+											{over
+												? `Only ${quantityOf(line.remaining, line.unit)} left`
+												: `${quantityOf(line.remaining, line.unit)} left of ${quantityOf(line.ordered, line.unit)}`}{" "}
+											· {formatMoney(line.unitPrice)} {line.unit ? `per ${line.unit}` : "each"}
 										</p>
 									</div>
 									<Input
@@ -245,7 +248,7 @@ export function InvoicePortionSheet({
 								<li key={line.sourceLineId} className="flex items-baseline gap-2">
 									<span className="min-w-0 flex-1 truncate">{line.description}</span>
 									<span className="text-muted-foreground font-mono tabular-nums">
-										{quantity(Number(line.quantity))} × {formatMoney(Number(line.unitPrice))}
+										{quantityOf(line.quantity, line.unit)} × {formatMoney(Number(line.unitPrice))}
 									</span>
 								</li>
 							))}

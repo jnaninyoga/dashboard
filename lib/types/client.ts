@@ -3,9 +3,9 @@ import {
     type ClientWallet,
     type Discount,
     type HealthLog,
-    type Membership,
     type NewClient, 
     type NewDiscount,
+    type Product,
 } from "@/services/database/schema";
 
 export type Client = ClientSchema;
@@ -15,7 +15,7 @@ export type ClientWithRelations = Client & {
     /** The discount she gives this client on memberships. */
     discount?: Discount | null;
     wallets?: (ClientWallet & {
-        membership: Membership | null;
+        product: Product | null;
     })[];
     healthLogs?: HealthLog[];
     /** Check-ins since the start of the studio's month, and the latest one. */

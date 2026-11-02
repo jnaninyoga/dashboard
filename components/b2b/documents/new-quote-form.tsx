@@ -36,13 +36,13 @@ import {
 	TableRow,
 } from "@/components/ui/table";
 import { createDocumentAction } from "@/lib/actions/b2b/documents";
-import { getPartnerRates } from "@/lib/actions/settings";
+import { getProducts } from "@/lib/actions/price-list";
 import { mergeSameLines } from "@/lib/domain/billing/same-lines";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
+import { type Product } from "@/lib/types";
 import {
 	type B2BContact,
 	type B2BPartner,
-	type PartnerRate,
 } from "@/lib/types/b2b";
 import { CURRENCY, normalizeDecimalInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
@@ -63,7 +63,7 @@ import {
 } from "iconsax-reactjs";
 import { type z } from "zod";
 
-import { DescriptionAutocomplete } from "./description-autocomplete";
+import { DescriptionAutocomplete, LineUnitNote } from "./description-autocomplete";
 import { DocumentSection } from "./document-section";
 import { blankLine, cellProps, focusCell, useFluidLines } from "./fluid-lines";
 import { type DocumentNotice, DocumentNotices, NoticeAction } from "./notices";
@@ -85,7 +85,7 @@ export function NewQuoteForm({
 	previewNumber: string;
 }) {
 	const router = useRouter();
-	const [pricingTiers, setPricingTiers] = useState<PartnerRate[]>([]);
+	const [services, setServices] = useState<Product[]>([]);
 	const [state, formAction, isPending] = useActionState(
 		createDocumentAction,
 		null,
@@ -122,9 +122,7 @@ export function NewQuoteForm({
 	});
 
 	useEffect(() => {
-		getPartnerRates().then((tiers) =>
-			setPricingTiers(tiers as PartnerRate[]),
-		);
+		getProducts("partner_service").then(setServices);
 	}, []);
 
 	// A contact added from this page becomes the recipient.
@@ -147,14 +145,15 @@ export function NewQuoteForm({
 	}, [state, router]);
 
 	const linesWatcher = useWatch({ control: form.control, name: "lines" });
-	const { isWaiting, removeLine, keyDown, focusWaiting, mergeLine, leaveLine, grownId, announcement } = useFluidLines({
+	const { isWaiting, removeLine, keyDown, focusWaiting, pick, describe, leaveLine, grownId, announcement } = useFluidLines({
 		count: fields.length,
 		lines: linesWatcher,
 		ids: fields.map((field) => field.id),
 		getLines: () => form.getValues("lines"),
-		setQuantity: (index, quantity) => form.setValue(`lines.${index}.quantity`, quantity),
+		set: (index, patch) => form.setValue(`lines.${index}`, { ...form.getValues(`lines.${index}`), ...patch }),
 		append,
 		remove,
+		services,
 	});
 	const taxRateWatcher = useWatch({
 		control: form.control,
@@ -479,9 +478,12 @@ export function NewQuoteForm({
 														<FormControl>
 															<DescriptionAutocomplete
 																value={f.value}
-																onChange={f.onChange}
+																onChange={(text) => {
+																	f.onChange(text);
+																	describe(index, text);
+																}}
 																disabled={isPending}
-																pricingTiers={pricingTiers}
+																services={services}
 																// Her prices open by themselves on an empty line: no need to say so.
 																placeholder={waiting ? "Add a line…" : "Description…"}
 																inputProps={{
@@ -490,22 +492,16 @@ export function NewQuoteForm({
 																	...cellProps(index, "description"),
 																}}
 																inputClassName={cn(phoneLine.input, waiting && "border-dashed")}
-																onSelectTier={(tier) => {
-																	const picked = { description: tier.name, unitPrice: tier.price.toString() };
-																	// Already on the quotation: that line's quantity grows.
-																	const into = mergeLine(index, picked);
-																	if (into < 0) {
-																		form.setValue(`lines.${index}.description`, picked.description);
-																		form.setValue(`lines.${index}.unitPrice`, picked.unitPrice);
-																	}
-																	setTimeout(() => focusCell(into < 0 ? index : into, "quantity"));
-																}}
+																onPick={(service, label) =>
+																	pick(index, { description: label, unitPrice: service.price, productId: service.id, unit: service.unit })
+																}
 															/>
 														</FormControl>
 														<FormMessage className="text-[10px]" />
 													</FormItem>
 												)}
 											/>
+											<LineUnitNote unit={linesWatcher[index]?.unit} />
 										</TableCell>
 										<TableCell className={cn("px-2 py-3 align-top", phoneLine.cell)}>
 											{waiting ? null : (

@@ -12,7 +12,7 @@ import {
 	type ClientWallet,
 	type Discount,
 	type HealthLog,
-	type Membership,
+	type Product,
 } from "@/services/database/schema";
 
 import { type ColumnDef } from "@tanstack/react-table";
@@ -24,7 +24,7 @@ import { HealthAlertButton } from "./health-alert-button";
 
 export type ClientWithRelations = Client & {
 	discount?: Discount | null;
-	wallets?: (ClientWallet & { membership?: Membership | null })[];
+	wallets?: (ClientWallet & { product?: Product | null })[];
 	healthLogs?: HealthLog[];
 	/** Check-ins since the start of the studio's month, and the latest one. */
 	visitsThisMonth?: number;

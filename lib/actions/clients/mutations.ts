@@ -14,7 +14,7 @@ import {
 	clientWallets,
 	discounts,
 	healthLogs,
-	memberships,
+	products,
 } from "@/services/database/schema";
 import {
 	syncClientToGoogleContacts,
@@ -183,17 +183,17 @@ export async function createClientAction(
 			}
 
 			if (initialProductId) {
-				const product = await tx.query.memberships.findFirst({
-					where: eq(memberships.id, initialProductId),
+				const product = await tx.query.products.findFirst({
+					where: and(eq(products.id, initialProductId), eq(products.kind, "membership")),
 				});
 
 				if (product) {
 					await tx.insert(clientWallets).values({
 						clientId: newClientId,
-						membershipId: initialProductId,
-						remainingCredits: product.defaultCredits,
+						productId: initialProductId,
+						remainingCredits: product.credits ?? 0,
 						status: "active",
-						amountPaid: product.basePrice,
+						amountPaid: product.price,
 						activatedAt: new Date(),
 					});
 				}
