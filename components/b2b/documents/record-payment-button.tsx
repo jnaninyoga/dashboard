@@ -36,7 +36,9 @@ export function RecordPaymentButton({
 			id: inv.id,
 			documentNumber: inv.documentNumber ?? "",
 			totalAmount: Number(inv.totalAmount),
-			amountPaid: documentAmounts(inv).paid,
+			// What's settled (payments and credit notes, less undone payments),
+			// as the server counts it: what's left is what can still be paid.
+			amountPaid: documentAmounts(inv).settled,
 		})),
 	);
 
