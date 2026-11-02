@@ -6,15 +6,17 @@ import { Button } from "@/components/ui/button";
 import { creditsSummary } from "@/lib/domain/clients/card";
 import { type CardState,cardState } from "@/lib/domain/clients/membership-sale";
 import { type Discount } from "@/lib/types";
+import { formatMoney } from "@/lib/utils/currency";
 import { formatDay, studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 import { type ClientWallet, type Product } from "@/services/database/schema";
 
 import { Bag2, Card } from "iconsax-reactjs";
 
+import { CancelSaleButton } from "../cancel-sale-button";
 import { discountTerms, SellMembershipSheet } from "../sell-membership-sheet";
 
-type WalletWithProduct = ClientWallet & { product?: Product | null };
+type WalletWithProduct = ClientWallet & { product?: Product | null; ledgerEntries?: { id: string }[] };
 
 const longDay = (date: string) => formatDay(date, { day: "numeric", month: "long", year: "numeric" });
 
@@ -22,7 +24,7 @@ const STATE: Record<CardState, { label: string; dot: string; text: string }> = {
 	active: { label: "In use", dot: "bg-success", text: "text-success" },
 	expired: { label: "Expired", dot: "bg-destructive", text: "text-destructive" },
 	empty: { label: "Used up", dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
-	cancelled: { label: "Cancelled", dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+	cancelled: { label: "Sale undone", dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
 };
 // Cards she can use first, the one ending soonest on top; then the rest, latest first.
 const ORDER: CardState[] = ["active", "expired", "empty", "cancelled"];
@@ -119,6 +121,7 @@ export function WalletTab({
 							const look = STATE[state];
 							const total = wallet.product?.credits;
 							const sold = wallet.activatedAt ? studioDateString(new Date(wallet.activatedAt)) : null;
+							const undone = state === "cancelled";
 							const sale = [
 								sold ? `Sold ${formatDay(sold, { day: "numeric", month: "short", year: "numeric" })}` : null,
 								wallet.paymentMethod ? PAYMENT_METHOD[wallet.paymentMethod].label : null,
@@ -147,7 +150,9 @@ export function WalletTab({
 											</span>
 										</p>
 										<p className={cn("text-sm", state === "expired" ? "text-destructive" : "text-muted-foreground")}>
-											{state === "expired"
+											{undone
+												? `Undone${wallet.cancelledAt ? ` ${formatDay(studioDateString(new Date(wallet.cancelledAt)), { day: "numeric", month: "short", year: "numeric" })}` : ""}${wallet.cancelReason ? `. ${wallet.cancelReason}` : ""}`
+												: state === "expired"
 												? `Ended ${longDay(wallet.expiresOn!)}: its ${wallet.remainingCredits} ${wallet.remainingCredits === 1 ? "credit" : "credits"} can't be used.`
 												: wallet.expiresOn
 													? `${state === "active" ? "Until" : "Ran until"} ${longDay(wallet.expiresOn)}`
@@ -157,13 +162,23 @@ export function WalletTab({
 									</div>
 									<div className="shrink-0 text-right">
 										<p className="tabular-nums">
-											<span className={cn("text-xl font-semibold", state !== "active" && "text-muted-foreground")}>
+											<span className={cn("text-xl font-semibold", state !== "active" && "text-muted-foreground", undone && "line-through")}>
 												{wallet.remainingCredits}
 											</span>
 											{total ? <span className="text-muted-foreground text-sm"> of {total}</span> : null}
 										</p>
-										{wallet.amountPaid ? <Money amount={wallet.amountPaid} className="text-muted-foreground text-sm" /> : null}
+										{wallet.amountPaid ? (
+											<Money amount={wallet.amountPaid} className={cn("text-muted-foreground text-sm", undone && "line-through")} />
+										) : null}
 									</div>
+									{undone ? null : (
+										<CancelSaleButton
+											walletId={wallet.id}
+											summary={`${wallet.product?.name ?? "Membership"}${sold ? `, sold ${formatDay(sold, { day: "numeric", month: "short" })}` : ""}${wallet.amountPaid ? ` for ${formatMoney(wallet.amountPaid)}` : ""}`}
+											creditsLeft={wallet.remainingCredits}
+											visitsTaken={wallet.ledgerEntries?.length ?? 0}
+										/>
+									)}
 								</li>
 							);
 						})}

@@ -16,6 +16,8 @@ export type ClientWithRelations = Client & {
     discount?: Discount | null;
     wallets?: (ClientWallet & {
         product: Product | null;
+        /** The visits it paid for (on the profile only). */
+        ledgerEntries?: { id: string }[];
     })[];
     healthLogs?: HealthLog[];
     /** Check-ins since the start of the studio's month, and the latest one. */

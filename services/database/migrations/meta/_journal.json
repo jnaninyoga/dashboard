@@ -99,6 +99,13 @@
       "when": 1793617406569,
       "tag": "0013_card_sales",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793625207776,
+      "tag": "0014_cancel_card_sale",
+      "breakpoints": true
     }
   ]
 }

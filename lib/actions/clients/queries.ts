@@ -184,6 +184,11 @@ export async function getClientByIdAction(id: string) {
 				wallets: {
 					with: {
 						product: true,
+						// The visits each card paid for (outdoor sessions take no credit).
+						ledgerEntries: {
+							columns: { id: true },
+							where: and(isNull(attendanceLedger.cancelledAt), ne(attendanceLedger.slotType, "outdoor")),
+						},
 					},
 					orderBy: desc(clientWallets.activatedAt),
 				},

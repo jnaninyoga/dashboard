@@ -65,6 +65,8 @@ export async function getProductUsage(kind: ProductKind): Promise<Record<string,
 				lastSoldAt: max(clientWallets.activatedAt),
 			})
 			.from(clientWallets)
+			// An undone sale wasn't a sale.
+			.where(ne(clientWallets.status, "cancelled"))
 			.groupBy(clientWallets.productId);
 		for (const row of rows) {
 			if (!row.productId) continue;

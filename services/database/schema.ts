@@ -224,6 +224,10 @@ export const clientWallets = pgTable("client_wallets", {
 	expiresOn: date("expires_on"),
 	activatedAt: timestamp("activated_at").defaultNow(),
 	lastUsedAt: timestamp("last_used_at"),
+	// A sale undone (sold by mistake, or the money given back): the card
+	// stays on record, its credits no longer count.
+	cancelledAt: timestamp("cancelled_at"),
+	cancelReason: text("cancel_reason"),
 });
 export type ClientWallet = typeof clientWallets.$inferSelect;
 export type NewClientWallet = typeof clientWallets.$inferInsert;

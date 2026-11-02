@@ -20,3 +20,12 @@ export const sellMembershipSchema = z.object({
 });
 
 export type SellMembershipValues = z.infer<typeof sellMembershipSchema>;
+
+// Undoing a sale: why (it decides the words on record), and a note.
+export const CANCEL_SALE_REASONS = ["mistake", "refunded"] as const;
+export type CancelSaleReason = (typeof CANCEL_SALE_REASONS)[number];
+
+export const cancelSaleSchema = z.object({
+	reason: z.enum(CANCEL_SALE_REASONS, { error: "Say why" }),
+	note: z.string().trim().max(200, "Keep it under 200 characters").optional(),
+});

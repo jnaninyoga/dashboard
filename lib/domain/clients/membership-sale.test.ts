@@ -64,6 +64,8 @@ describe("cards at the door", () => {
 		);
 		expect(checkInRefusal([card("A", 0, "2026-11-30")], "2026-12-02", day)).toBe("No credits left. Sell a new membership to check them in.");
 		expect(checkInRefusal([], "2026-12-02", day)).toBe("No membership card yet. Sell one to check them in.");
+		// A cancelled sale is no card, even with credits on it.
+		expect(checkInRefusal([card("A", 10, null, "cancelled")], "2026-12-02", day)).toBe("No membership card yet. Sell one to check them in.");
 		expect(checkInRefusal([card("A", 4, "2026-11-30"), card("B", 1, null)], "2026-12-02", day)).toBeNull();
 		expect(expiredCards([card("A", 4, "2026-11-30"), card("B", 3, "2026-11-25")], "2026-12-02").map((c) => c.id)).toEqual(["A", "B"]);
 	});

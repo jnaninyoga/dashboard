@@ -82,7 +82,9 @@ export function checkInRefusal(
 		const credits = `${expired.remainingCredits} credit${expired.remainingCredits === 1 ? "" : "s"}`;
 		return `Card expired: ${expired.name ?? "the membership"} ended on ${formatDay(expired.expiresOn!)} with ${credits} left. Sell a new membership to check them in.`;
 	}
-	return cards.length ? "No credits left. Sell a new membership to check them in." : "No membership card yet. Sell one to check them in.";
+	return cards.some((card) => card.status !== "cancelled")
+		? "No credits left. Sell a new membership to check them in."
+		: "No membership card yet. Sell one to check them in.";
 }
 
 /**
