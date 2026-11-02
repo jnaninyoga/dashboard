@@ -48,6 +48,7 @@ export function SellMembershipSheet({
 	open,
 	onOpenChange,
 	trigger,
+	onSold,
 }: {
 	clientId: string;
 	/** Her memberships on sale. */
@@ -58,6 +59,8 @@ export function SellMembershipSheet({
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 	trigger?: React.ReactNode;
+	/** After the sale is recorded (check-in lets the client in with it). */
+	onSold?: () => void;
 }) {
 	const formId = useId();
 	const [pending, startTransition] = useTransition();
@@ -113,6 +116,7 @@ export function SellMembershipSheet({
 			if (result.success) {
 				notify.success(`${membership?.name ?? "Card"} sold${until ? `, until ${longDay(until)}` : ""}`);
 				onOpenChange(false);
+				onSold?.();
 			} else {
 				notifyActionError(result, "Couldn't record the sale");
 			}

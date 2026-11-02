@@ -6,14 +6,16 @@ import { requireUser } from "@/lib/auth/require-user";
 import { creditsSummary, LOW_CREDITS, shortDay } from "@/lib/domain/clients/card";
 import { cardForCheckIn, checkInRefusal } from "@/lib/domain/clients/membership-sale";
 import { renewalFor } from "@/lib/domain/clients/renewal";
+import { walletAfterRefund } from "@/lib/domain/schedule/cancel";
 import { logServerError } from "@/lib/errors/server";
+import { type ClientWithRelations } from "@/lib/types";
 import { formatDay, studioDateString } from "@/lib/utils/time";
 import { db } from "@/services/database";
 import { attendanceLedger, clients, clientWallets, healthLogs, products, studioSessions } from "@/services/database/schema";
 import { HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, ne, sql } from "drizzle-orm";
 
 export interface AttendanceRecord {
 	id: string;
@@ -45,10 +47,18 @@ export async function checkInClientAction(
 	clientId: string,
 	eventId: string,
 	slotType: JnaninEventType
-): Promise<{ success: boolean; message: string; note?: string; ref?: string; needsCard?: boolean }> {
+): Promise<{
+	success: boolean;
+	message: string;
+	note?: string;
+	/** The check-in made: its id lets her undo a mistaken tap. */
+	record?: { id: string; checkInTime: string };
+	ref?: string;
+	needsCard?: boolean;
+}> {
 	await requireUser();
 	try {
-		const { message, note } = await db.transaction(async (tx): Promise<{ message: string; note?: string }> => {
+		const { message, note, record } = await db.transaction(async (tx): Promise<{ message: string; note?: string; record: { id: string; checkInTime: Date } }> => {
 			const [session] = await tx
 				.select({ status: studioSessions.status, startsAt: studioSessions.startsAt })
 				.from(studioSessions)
@@ -88,12 +98,15 @@ export async function checkInClientAction(
 			if (slotType === "outdoor") {
 				// For outdoor events, we bypass standard credit deduction.
 				// Attach to their most recent card (a sold one) for logging.
-				await tx.insert(attendanceLedger).values({
-					walletId: (allWallets.find((w) => w.status !== "cancelled") ?? allWallets[0]).id,
-					googleEventId: eventId,
-					slotType: slotType,
-				});
-				return { message: "Checked in", note: "Outdoor session: no credit taken." };
+				const [record] = await tx
+					.insert(attendanceLedger)
+					.values({
+						walletId: (allWallets.find((w) => w.status !== "cancelled") ?? allWallets[0]).id,
+						googleEventId: eventId,
+						slotType: slotType,
+					})
+					.returning({ id: attendanceLedger.id, checkInTime: attendanceLedger.checkInTime });
+				return { message: "Checked in", note: "Outdoor session: no credit taken.", record };
 			}
 
 			// A credit from a card that can be used on the session's day: the
@@ -127,11 +140,14 @@ export async function checkInClientAction(
 				})
 				.where(eq(clientWallets.id, activeWallet.id));
 
-			await tx.insert(attendanceLedger).values({
-				walletId: activeWallet.id,
-				googleEventId: eventId,
-				slotType: slotType,
-			});
+			const [record] = await tx
+				.insert(attendanceLedger)
+				.values({
+					walletId: activeWallet.id,
+					googleEventId: eventId,
+					slotType: slotType,
+				})
+				.returning({ id: attendanceLedger.id, checkInTime: attendanceLedger.checkInTime });
 
 			// What's left, and a word when it's time to renew.
 			const after = allWallets.map((w) => (w.id === activeWallet.id ? { ...w, remainingCredits: newRemaining, status: newRemaining === 0 ? "empty" : w.status } : w));
@@ -140,6 +156,7 @@ export async function checkInClientAction(
 			const ends = renewal?.reason === "ends" ? ` Their card ends ${shortDay(renewal.day, sessionDay)}.` : "";
 			return {
 				message: "Checked in",
+				record,
 				note: !left.count
 					? "That was their last credit: time for a new card."
 					: `1 credit taken, ${left.count <= LOW_CREDITS ? "only " : ""}${left.count} left.${ends}`,
@@ -147,7 +164,7 @@ export async function checkInClientAction(
 		});
 
 		revalidatePath(`/check-in/${eventId}`);
-		return { success: true, message, note };
+		return { success: true, message, note, record: { id: record.id, checkInTime: record.checkInTime.toISOString() } };
 	} catch (error) {
 		if (error instanceof CheckInRefused) {
 			return { success: false, message: error.message, needsCard: error.needsCard };
@@ -158,6 +175,84 @@ export async function checkInClientAction(
 			ref: logServerError("Check-in failed", error),
 		};
 	}
+}
+
+/**
+ * Takes back a check-in tapped by mistake, while the session isn't over:
+ * the visit didn't happen, so the row goes and the credit returns to its
+ * card (outdoor sessions took none).
+ */
+export async function undoCheckInAction(checkInId: string): Promise<{ success: boolean; message: string; ref?: string }> {
+	await requireUser();
+	try {
+		const message = await db.transaction(async (tx) => {
+			const [checkIn] = await tx
+				.select()
+				.from(attendanceLedger)
+				.where(eq(attendanceLedger.id, checkInId))
+				.for("update");
+			if (!checkIn) throw new CheckInRefused("This check-in was already taken back.");
+			if (checkIn.cancelledAt) throw new CheckInRefused("This session was cancelled: its credits already went back.");
+			const [session] = await tx
+				.select({ endsAt: studioSessions.endsAt })
+				.from(studioSessions)
+				.where(eq(studioSessions.googleEventId, checkIn.googleEventId ?? ""));
+			if (session && session.endsAt < new Date()) throw new CheckInRefused("This session is over: its attendance stays as it was.");
+
+			await tx.delete(attendanceLedger).where(eq(attendanceLedger.id, checkIn.id));
+			if (checkIn.slotType === "outdoor") return "Check-in taken back";
+			const [wallet] = await tx.select().from(clientWallets).where(eq(clientWallets.id, checkIn.walletId)).for("update");
+			await tx.update(clientWallets).set(walletAfterRefund(wallet, 1)).where(eq(clientWallets.id, wallet.id));
+			return "Check-in taken back, credit returned";
+		});
+		return { success: true, message };
+	} catch (error) {
+		if (error instanceof CheckInRefused) return { success: false, message: error.message };
+		return { success: false, message: "Couldn't take the check-in back", ref: logServerError("Undoing a check-in", error) };
+	}
+}
+
+/**
+ * Who usually comes to this class and isn't checked in yet, to check in with
+ * one tap: the clients seen most at sessions of the same name over the last
+ * six weeks (or, for a new class, the studio's regulars of the last two),
+ * with their cards and active health alerts, as the search gives them.
+ */
+export async function getUsualAttendees(eventId: string, title: string, limit = 8): Promise<ClientWithRelations[]> {
+	await requireUser();
+	const visits = sql<number>`count(*)`.mapWith(Number);
+	const seen = (since: Date, sameClass: boolean) =>
+		db
+			.select({ clientId: clientWallets.clientId, visits })
+			.from(attendanceLedger)
+			.innerJoin(clientWallets, eq(attendanceLedger.walletId, clientWallets.id))
+			.innerJoin(studioSessions, eq(studioSessions.googleEventId, attendanceLedger.googleEventId))
+			.where(
+				and(
+					isNull(attendanceLedger.cancelledAt),
+					gte(attendanceLedger.checkInTime, since),
+					ne(attendanceLedger.googleEventId, eventId),
+					sameClass ? sql`lower(trim(${studioSessions.title})) = lower(trim(${title}))` : undefined,
+				),
+			)
+			.groupBy(clientWallets.clientId)
+			.orderBy(desc(visits))
+			.limit(limit);
+
+	const days = (n: number) => new Date(Date.now() - n * 86_400_000);
+	let regulars = await seen(days(42), true);
+	if (!regulars.length) regulars = await seen(days(14), false);
+	if (!regulars.length) return [];
+
+	const rows = (await db.query.clients.findMany({
+		where: inArray(clients.id, regulars.map((r) => r.clientId)),
+		with: {
+			wallets: { where: ne(clientWallets.status, "cancelled"), with: { product: true }, orderBy: desc(clientWallets.activatedAt) },
+			healthLogs: { where: and(eq(healthLogs.isAlert, true), isNull(healthLogs.endDate)) },
+		},
+	})) as ClientWithRelations[];
+	const order = new Map(regulars.map((r, i) => [r.clientId, i]));
+	return rows.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
 }
 
 export async function getEventAttendanceAction(eventId: string): Promise<AttendanceRecord[]> {

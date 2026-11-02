@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Check-in Portal — JnaninYoga",
+	title: "Check-in — JnaninYoga",
 	description:
 		"Manage client attendance and check-ins for today's yoga sessions.",
 };

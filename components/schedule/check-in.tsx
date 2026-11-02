@@ -2,311 +2,394 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
+import { HealthAlertButton } from "@/components/clients/health-alert-button";
+import { CardAtTheDoor, ClientSearch } from "@/components/clients/search";
+import { SellMembershipSheet } from "@/components/clients/sell-membership-sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { checkInClientAction } from "@/lib/actions/schedule/attendance";
-import { type AttendanceRecord } from "@/lib/actions/schedule/attendance";
+import { type AttendanceRecord, checkInClientAction, undoCheckInAction } from "@/lib/actions/schedule/attendance";
+import { creditsSummary, sortAlerts } from "@/lib/domain/clients/card";
 import { notify } from "@/lib/feedback/notify";
+import { type ClientWithRelations, type Discount, type Product } from "@/lib/types";
 import { toStudioTime } from "@/lib/utils/time";
-import { type Client, type HealthLog } from "@/services/database/schema";
+import { cn } from "@/lib/utils/ui";
 import { type JnaninEventType } from "@/services/google";
 
 import { format } from "date-fns";
-import { ArrowRotateLeft, CloseCircle, Danger, Location, People, SecurityUser, TickCircle, User } from "iconsax-reactjs";
-
-import { ClientSearch } from "../clients/search";
+import { ArrowRotateLeft, CloseCircle, Danger, Profile2User, TickCircle } from "iconsax-reactjs";
 
 import { HealthGuardrailDialog } from "./health-guardrail";
 
-type ClientWithLogs = Client & { healthLogs?: HealthLog[] };
+type Person = { id: string; fullName: string; photoUrl: string | null };
 
-interface CheckInManagerProps {
-    eventId: string;
-    eventType: JnaninEventType | string;
-    initialAttendance: AttendanceRecord[];
-    isPast?: boolean;
-    /** The session was cancelled: history only, and the credits went back. */
-    cancelled?: boolean;
+/** A client's photo, or their initial on the brand's teal or blush (the same one every time). */
+function PersonAvatar({ person, className }: { person: Person; className?: string }) {
+	const blush = [...person.fullName].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 2 === 1;
+	return (
+		<Avatar className={cn("size-11", className)}>
+			<AvatarImage src={person.photoUrl || undefined} alt="" />
+			<AvatarFallback className={cn("font-semibold", blush ? "bg-secondary text-secondary-3" : "bg-primary/10 text-primary")}>
+				{person.fullName.charAt(0)}
+			</AvatarFallback>
+		</Avatar>
+	);
 }
 
-export function CheckInManager({ eventId, eventType, initialAttendance, isPast = false, cancelled = false }: CheckInManagerProps) {
-    const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance);
-    const [selectedClient, setSelectedClient] = useState<ClientWithLogs | null>(null);
-    const [showGuardrail, setShowGuardrail] = useState(false);
-    const [isCheckingIn, setIsCheckingIn] = useState(false);
-    // Why the last client tapped wasn't let in. It stays until she acts on
-    // it or checks someone in: a toast would be gone before she reads it.
-    const [refusal, setRefusal] = useState<{ clientId: string; name: string; message: string; needsCard: boolean } | null>(null);
+const firstName = (fullName: string) => fullName.trim().split(/\s+/)[0];
 
-    const onClientSelected = (client: ClientWithLogs) => {
-        if (isPast) return; // safety: past events are read-only
-        const hasAlerts = client.healthLogs?.some((log) => log.isAlert);
-        if (hasAlerts) {
-            setSelectedClient(client);
-            setShowGuardrail(true);
-        } else {
-            performCheckIn(client.id, client);
-        }
-    };
+/** A check-in would be refused for want of a card (outdoor sessions take none). */
+const needsCard = (client: ClientWithRelations) => {
+	const credits = creditsSummary(client.wallets);
+	return credits.count === null || credits.count === 0;
+};
 
-    // Synchronous latch: state updates land a render late, so a fast double
-    // tap would otherwise fire two check-ins.
-    const checkInInFlight = useRef(false);
+interface CheckInManagerProps {
+	eventId: string;
+	eventType: JnaninEventType | string;
+	initialAttendance: AttendanceRecord[];
+	/** Over or cancelled: who came, read-only. */
+	isPast?: boolean;
+	/** The session was cancelled: history only, and the credits went back. */
+	cancelled?: boolean;
+	/** Who usually comes to this class, to check in with one tap. */
+	usual?: ClientWithRelations[];
+	/** Her memberships on sale and her discounts, to sell a card at the door. */
+	memberships?: Product[];
+	discounts?: Discount[];
+}
 
-    const performCheckIn = async (clientId: string, clientData?: ClientWithLogs) => {
-        if (checkInInFlight.current) return;
-        checkInInFlight.current = true;
-        setIsCheckingIn(true);
-        try {
-            const res = await checkInClientAction(clientId, eventId, eventType as JnaninEventType);
-            if (!res.success) {
-                if (res.ref) notify.error(res.message, { code: res.ref });
-                else {
-                    const name = clientData?.fullName || selectedClient?.fullName || "This client";
-                    setRefusal({ clientId, name, message: res.message, needsCard: !!res.needsCard });
-                }
-            } else {
-                setRefusal(null);
-                const who = clientData?.fullName || selectedClient?.fullName;
-                notify.success(who ? `${who} is checked in` : res.message, res.note);
-                
-                const newRecord: AttendanceRecord = {
-                    id: Math.random().toString(), 
-                    checkInTime: new Date().toISOString(),
-                    cancelledAt: null,
-                    slotType: eventType as JnaninEventType,
-                    client: {
-                        id: clientId,
-                        fullName: clientData?.fullName || selectedClient?.fullName || "Unknown",
-                        photoUrl: clientData?.photoUrl || selectedClient?.photoUrl || null,
-                        healthLogs: clientData?.healthLogs || selectedClient?.healthLogs 
-                    }
-                };
-                setAttendance(prev => [newRecord, ...prev]);
-            }
-        } catch (error: unknown) {
-            const err = error as { message?: string };
-            notify.error(err.message || "Failed to check-in client.");
-        } finally {
-            checkInInFlight.current = false;
-            setIsCheckingIn(false);
-            setShowGuardrail(false);
-            setSelectedClient(null);
-        }
-    };
+/**
+ * The door of a session. She finds a client (or taps one of the regulars),
+ * reads their health alerts when they have some, and they're in; a client
+ * whose card can't pay can be sold one right here, and is then let in. The
+ * clients here are listed beside it, newest first, a mistaken tap a tap away
+ * from undone while the session runs.
+ */
+export function CheckInManager({
+	eventId,
+	eventType,
+	initialAttendance,
+	isPast = false,
+	cancelled = false,
+	usual = [],
+	memberships = [],
+	discounts = [],
+}: CheckInManagerProps) {
+	const router = useRouter();
+	const [attendance, setAttendance] = useState<AttendanceRecord[]>(initialAttendance);
+	const [guarded, setGuarded] = useState<ClientWithRelations | null>(null);
+	const [busy, setBusy] = useState<string | null>(null);
+	// Why the last client tapped wasn't let in. It stays until she acts on
+	// it or checks someone in: a toast would be gone before she reads it.
+	const [refusal, setRefusal] = useState<{ client: ClientWithRelations; message: string; needsCard: boolean } | null>(null);
+	// The client she's selling a card to, at the door; checked in once it's sold.
+	const [sellTo, setSellTo] = useState<ClientWithRelations | null>(null);
+	const [fresh, setFresh] = useState<string | null>(null);
 
-    const refusalNotice = refusal ? (
-        <div role="alert" className="border-destructive/25 bg-destructive/5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border p-4 md:p-5">
-            <Danger className="text-destructive size-7 shrink-0" variant="Bulk" />
-            <div className="min-w-0 flex-1 basis-56">
-                <p className="text-foreground font-semibold">{refusal.name} isn&apos;t checked in</p>
-                <p className="text-muted-foreground text-sm">{refusal.message}</p>
-            </div>
-            <div className="flex items-center gap-2">
-                {refusal.needsCard ? (
-                    <Button asChild className="h-10 rounded-xl font-semibold">
-                        <Link href={`/clients/${refusal.clientId}?sell=1`}>Sell a membership</Link>
-                    </Button>
-                ) : null}
-                <Button variant="ghost" size="icon" aria-label="Dismiss" className="size-10 rounded-xl" onClick={() => setRefusal(null)}>
-                    <CloseCircle className="size-5" variant="Outline" />
-                </Button>
-            </div>
-        </div>
-    ) : null;
+	const present = attendance.filter((record) => !record.cancelledAt);
+	const here = new Set(present.map((record) => record.client.id));
+	const isPrivate = eventType === "private";
+	// A private session is one client: once they're in, the door closes.
+	const doorOpen = !isPast && !(isPrivate && present.length > 0);
+	const waiting = usual.filter((client) => !here.has(client.id));
 
-    if (eventType === "private") {
-        const checkedInClient = attendance.length > 0 ? attendance[0].client : null;
+	// Synchronous latch: state updates land a render late, so a fast double
+	// tap would otherwise fire two check-ins.
+	const inFlight = useRef(false);
 
-        return (
-            <div className="animate-slide-up flex w-full flex-col gap-6">
-                {refusalNotice}
-                {!checkedInClient ? (
-                    <div className="bg-card zen-shadow-lg flex min-h-[50vh] flex-col items-center justify-center gap-8 rounded-3xl p-8 transition-all md:p-12">
-                        <div className="bg-muted rounded-full p-6">
-                            <User className="text-muted-foreground h-16 w-16" variant="Outline" />
-                        </div>
-                        <div className="flex flex-col gap-2 text-center">
-                            <h2 className="font-heading text-foreground text-2xl font-bold">
-                                {isPast ? "No Attendance Recorded" : "Private Session Ready"}
-                            </h2>
-                            <p className="text-muted-foreground">
-                                {isPast
-                                    ? "This private session ended with no client checked in."
-                                    : "Scan or search for the single client attending."}
-                            </p>
-                        </div>
-                        {!isPast ? (
-                            <div className="mt-4 w-full max-w-md">
-                                <ClientSearch onSelectClient={onClientSelected} />
-                            </div>
-                        ) : null}
-                    </div>
-                ) : (
-                    <div className="bg-card zen-shadow-lg relative flex flex-col gap-8 overflow-hidden rounded-3xl p-6 transition-all md:p-10">
-                        <div className="from-primary to-accent absolute top-0 left-0 h-1.5 w-full rounded-t-3xl bg-linear-to-r"></div>
-                        <div className="border-muted flex flex-col items-center gap-5 border-b pb-8">
-                            <div className="relative">
-                                <Avatar className="zen-shadow-md ring-card size-32 ring-4">
-                                    <AvatarImage src={checkedInClient.photoUrl || undefined} />
-                                    <AvatarFallback className="bg-primary/10 text-primary text-4xl font-bold">{checkedInClient.fullName[0]}</AvatarFallback>
-                                </Avatar>
-                                <div className="bg-card zen-shadow absolute right-2 bottom-2 rounded-full p-1">
-                                    <TickCircle className="text-success h-8 w-8" variant="Bulk" />
-                                </div>
-                            </div>
-                            <div className="flex flex-col gap-1 text-center">
-                                <h2 className="font-heading text-foreground text-3xl font-bold">{checkedInClient.fullName}</h2>
-                                <span className="bg-success/10 text-success mx-auto mt-2 flex w-max items-center justify-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-semibold tracking-wide uppercase">
-                                    <span className="relative flex size-2.5">
-                                      <span className="bg-success/70 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
-                                      <span className="bg-success relative inline-flex size-2.5 rounded-full"></span>
-                                    </span>
-                                    Successfully Checked In
-                                </span>
-                            </div>
-                        </div>
+	const checkIn = async (client: ClientWithRelations) => {
+		if (inFlight.current) return;
+		inFlight.current = true;
+		setBusy(client.id);
+		try {
+			const res = await checkInClientAction(client.id, eventId, eventType as JnaninEventType);
+			if (!res.success) {
+				if (res.ref) notify.error(res.message, { code: res.ref });
+				else setRefusal({ client, message: res.message, needsCard: !!res.needsCard });
+				return;
+			}
+			setRefusal(null);
+			notify.success(`${client.fullName} is checked in`, res.note);
+			const record: AttendanceRecord = {
+				id: res.record?.id ?? crypto.randomUUID(),
+				checkInTime: res.record?.checkInTime ?? new Date().toISOString(),
+				cancelledAt: null,
+				slotType: eventType as JnaninEventType,
+				client: {
+					id: client.id,
+					fullName: client.fullName,
+					photoUrl: client.photoUrl ?? null,
+					healthLogs: (client.healthLogs ?? []).filter((log) => log.isAlert),
+				},
+			};
+			setAttendance((current) => [record, ...current]);
+			setFresh(record.id);
+		} catch {
+			notify.error("Check-in failed. Please try again.");
+		} finally {
+			inFlight.current = false;
+			setBusy(null);
+			setGuarded(null);
+		}
+	};
 
-                        <div className="flex flex-col gap-4">
-                            <h3 className="font-heading text-foreground flex items-center gap-2 text-xl font-bold">
-                                <SecurityUser className="text-warning h-6 w-6" variant="Outline" />
-                                Health Guardrails
-                            </h3>
-                            <div className="bg-muted max-h-[45vh] overflow-y-auto rounded-2xl p-5 md:p-6">
-                                {(checkedInClient.healthLogs || []).filter((l)=> l.isAlert).length > 0 ? (
-                                    <ul className="grid gap-4 md:grid-cols-2">
-                                        {(checkedInClient.healthLogs || []).filter((l)=> l.isAlert).map((log) => (
-                                            <li key={log.id} className="bg-card zen-shadow hover:zen-shadow-md relative overflow-hidden rounded-2xl border-l-4 border-l-amber-400 p-5 transition-all hover:-translate-y-0.5">
-                                                <div className="flex items-start justify-between">
-                                                    <strong className="text-foreground block text-lg font-bold capitalize">{log.category}</strong>
-                                                    <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                                                        log.severity === 'critical' ? 'bg-destructive/10 text-destructive' : 'bg-warning/10 text-warning'
-                                                    }`}>{log.severity}</span>
-                                                </div>
-                                                <p className="text-muted-foreground mt-2 font-medium">{log.condition}</p>
-                                                {log.treatment ? (
-                                                    <p className="text-muted-foreground border-muted mt-2 border-t pt-2 text-sm">
-                                                        {log.treatment}
-                                                    </p>
-                                                ) : null}
-                                            </li>
-                                        ))}
-                                    </ul>
-                                ) : (
-                                    <div className="text-muted-foreground flex flex-col items-center justify-center py-8">
-                                        <div className="bg-success/10 mb-3 flex size-12 items-center justify-center rounded-full">
-                                            <TickCircle className="text-success h-6 w-6" variant="Bulk" />
-                                        </div>
-                                        <p className="font-medium">No active health alerts.</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
+	// Health alerts are read first; everyone else goes straight in.
+	const onPick = (client: ClientWithRelations) => {
+		if (isPast || here.has(client.id)) return;
+		if (client.healthLogs?.some((log) => log.isAlert)) setGuarded(client);
+		else checkIn(client);
+	};
 
-                <HealthGuardrailDialog
-                    isOpen={showGuardrail}
-                    clientData={selectedClient}
-                    onAcknowledge={() => selectedClient && performCheckIn(selectedClient.id)}
-                    onCancel={() => { setShowGuardrail(false); setSelectedClient(null); }}
-                    isPending={isCheckingIn}
-                />
-            </div>
-        );
-    }
+	const undo = async (record: AttendanceRecord) => {
+		setBusy(record.id);
+		const res = await undoCheckInAction(record.id);
+		setBusy(null);
+		if (!res.success) {
+			notify.error(res.message, res.ref ? { code: res.ref } : undefined);
+			return;
+		}
+		setAttendance((current) => current.filter((r) => r.id !== record.id));
+		// The credit went back: the regulars' cards say so.
+		router.refresh();
+		notify.success(res.message, firstName(record.client.fullName) + " isn't on the list any more.");
+	};
 
-    // Group / Outdoor View
-    return (
-        <div className="animate-slide-up flex w-full flex-col gap-6">
-            {/* Search Bar — hidden in read-only history mode so operators can't backfill attendees */}
-            {!isPast ? (
-                <div className="zen-glass zen-shadow-glow sticky top-[72px] z-30 rounded-3xl p-5 transition-all md:p-6">
-                    <ClientSearch onSelectClient={onClientSelected} />
-                </div>
-            ) : null}
-            {refusalNotice}
+	return (
+		<div
+			className={cn(
+				"grid gap-6",
+				doorOpen ? "lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start xl:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]" : "max-w-3xl",
+			)}
+		>
+			{doorOpen ? (
+				<section aria-label="Check in" className="flex min-w-0 flex-col gap-6">
+					{/* Stays in reach on a phone while she scrolls the regulars. */}
+					<div className="bg-background/85 sticky top-14 z-30 -mx-4 flex items-center gap-2 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:static lg:m-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+						<div className="min-w-0 flex-1">
+							<ClientSearch onSelectClient={onPick} here={here} autoFocus />
+						</div>
+						{/* On a phone the list is below the regulars: how many are in, a tap away. */}
+						{present.length ? (
+							<a
+								href="#here-title"
+								aria-label={`${present.length} checked in: see who`}
+								className="bg-card text-foreground focus-visible:ring-ring flex h-14 shrink-0 flex-col items-center justify-center rounded-2xl border px-3 leading-none outline-none focus-visible:ring-2 lg:hidden"
+							>
+								<span className="font-heading text-primary text-xl font-semibold tabular-nums">{present.length}</span>
+								<span className="text-muted-foreground text-xs">here</span>
+							</a>
+						) : null}
+					</div>
 
-            {/* Manifest List */}
-            <div className="bg-card zen-shadow-lg min-h-[50vh] flex-1 rounded-3xl p-6 md:p-8">
-                <div className="border-muted mb-8 flex items-center justify-between border-b pb-4">
-                    <h2 className="font-heading text-foreground flex items-center gap-3 text-lg font-bold md:text-xl">
-                        {eventType === "outdoor" ? (
-                            <div className="bg-success/10 rounded-2xl p-2"><Location className="text-success h-5 w-5" variant="Outline" /></div>
-                        ) : (
-                            <div className="bg-primary/10 rounded-2xl p-2"><People className="text-primary h-5 w-5" variant="Outline" /></div>
-                        )}
-                        {cancelled ? "Cancelled session" : isPast ? "Attendance Record" : "Active Manifest"}
-                    </h2>
-                    <div className="flex items-center gap-2">
-                        <span className="text-muted-foreground hidden text-sm font-medium sm:block">
-                            {isPast ? "Total Present" : "Total Check-ins"}
-                        </span>
-                        <span className="bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 font-bold">
-                            {attendance.length}
-                        </span>
-                    </div>
-                </div>
+					{refusal ? (
+						<div
+							role="alert"
+							className="border-destructive/25 bg-destructive/5 animate-in fade-in-0 slide-in-from-top-1 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border p-4 duration-200 motion-reduce:animate-none md:p-5"
+						>
+							<Danger className="text-destructive size-7 shrink-0" variant="Bulk" />
+							<div className="min-w-0 flex-1 basis-56">
+								<p className="text-foreground font-semibold">{refusal.client.fullName} isn&apos;t checked in</p>
+								<p className="text-muted-foreground text-sm">{refusal.message}</p>
+							</div>
+							<div className="flex items-center gap-2">
+								{refusal.needsCard ? (
+									<Button onClick={() => setSellTo(refusal.client)} className="h-11 rounded-xl px-4 font-semibold">
+										Sell and check in
+									</Button>
+								) : null}
+								<Button variant="ghost" size="icon" aria-label="Dismiss" className="size-11 rounded-xl" onClick={() => setRefusal(null)}>
+									<CloseCircle className="size-5" variant="Outline" />
+								</Button>
+							</div>
+						</div>
+					) : null}
 
-                {attendance.length === 0 ? (
-                    <div className="text-muted-foreground flex flex-col items-center justify-center py-20">
-                        <People className="mb-6 h-20 w-20 opacity-15" variant="Outline" />
-                        <h3 className="font-heading text-foreground/60 text-xl font-semibold">
-                            {cancelled ? "No one had checked in" : isPast ? "No one was checked in" : "The studio is empty"}
-                        </h3>
-                        <p className="text-muted-foreground mt-2 max-w-sm text-center">
-                            {cancelled
-                                ? "The session was cancelled before anyone checked in."
-                                : isPast
-                                ? "This session ended with no attendance recorded."
-                                : "Use the search bar above to begin checking clients into the session."}
-                        </p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                        {attendance.map((record, index) => (
-                            <div 
-                                key={record.id} 
-                                className="group bg-card zen-shadow hover:zen-shadow-md animate-slide-up flex items-center gap-4 rounded-2xl p-4 transition-all duration-300 ease-out hover:-translate-y-0.5"
-                                style={{ animationFillMode: "both", animationDelay: `${index * 50}ms`, animationDuration: '400ms' }}
-                            >
-                                <div className="relative">
-                                    <Avatar className="zen-shadow ring-card size-14 ring-2 md:size-16">
-                                        <AvatarImage src={record.client.photoUrl || undefined} />
-                                        <AvatarFallback className="bg-muted text-muted-foreground text-lg font-bold">{record.client.fullName[0]}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="bg-card absolute -right-1 -bottom-1 rounded-full p-0.5 shadow-sm">
-                                        {record.cancelledAt ? (
-                                            <ArrowRotateLeft className="text-muted-foreground h-5 w-5" variant="Bulk" />
-                                        ) : (
-                                            <TickCircle className="text-success h-5 w-5" variant="Bulk" />
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="flex min-w-0 flex-1 flex-col">
-                                    <span className="text-foreground group-hover:text-primary truncate pr-2 text-lg font-bold transition-colors">{record.client.fullName}</span>
-                                    <span className="text-muted-foreground mt-0.5 text-sm font-medium">
-                                        Checked in at {format(toStudioTime(new Date(record.checkInTime)), "HH:mm")}
-                                        {record.cancelledAt ? " · credit given back" : null}
-                                    </span>
-                                </div>
-                                <div className="bg-muted ml-2 hidden items-center rounded-full px-3 py-2 sm:flex">
-                                    <span className="text-muted-foreground text-xs font-extrabold tracking-wider uppercase">Ready</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+					{waiting.length ? (
+						<section aria-labelledby="usual-title" className="flex flex-col gap-3">
+							<div className="flex flex-col gap-0.5">
+								<h2 id="usual-title" className="font-heading text-foreground text-xl font-semibold">
+									Usually here
+								</h2>
+								<p className="text-muted-foreground text-sm">Seen most at this class lately. Tap to check in.</p>
+							</div>
+							<ul className="bg-card divide-border divide-y rounded-3xl border">
+								{waiting.map((client) => (
+									<li key={client.id} className="flex items-center gap-3 px-4 py-3">
+										<PersonAvatar person={{ id: client.id, fullName: client.fullName, photoUrl: client.photoUrl ?? null }} />
+										<span className="flex min-w-0 flex-1 flex-col">
+											<span className="flex min-w-0 items-center gap-1.5">
+												<span className="text-foreground truncate font-semibold">{client.fullName}</span>
+												{client.healthLogs?.some((log) => log.isAlert) ? (
+													<Danger size={16} variant="Bold" className="text-destructive shrink-0" aria-label="Health alerts" role="img" />
+												) : null}
+											</span>
+											<span className="truncate text-sm">
+												<CardAtTheDoor wallets={client.wallets} />
+											</span>
+										</span>
+										{eventType !== "outdoor" && needsCard(client) ? (
+											// Their card can't pay: sell one, and they're in.
+											<Button
+												variant="outline"
+												onClick={() => setSellTo(client)}
+												disabled={busy !== null}
+												aria-label={`Sell ${client.fullName} a membership and check them in`}
+												className="h-11 shrink-0 rounded-full px-4 font-semibold"
+											>
+												Sell
+											</Button>
+										) : (
+											<Button
+												onClick={() => onPick(client)}
+												disabled={busy !== null}
+												aria-label={`Check in ${client.fullName}`}
+												className="h-11 shrink-0 rounded-full px-4 font-semibold"
+											>
+												{busy === client.id ? "Checking…" : "Check in"}
+											</Button>
+										)}
+									</li>
+								))}
+							</ul>
+						</section>
+					) : null}
+				</section>
+			) : null}
 
-            <HealthGuardrailDialog
-                isOpen={showGuardrail}
-                clientData={selectedClient}
-                onAcknowledge={() => selectedClient && performCheckIn(selectedClient.id)}
-                onCancel={() => { setShowGuardrail(false); setSelectedClient(null); }}
-                isPending={isCheckingIn}
-            />
-        </div>
-    );
+			<section aria-labelledby="here-title" className={cn("flex min-w-0 scroll-mt-36 flex-col gap-3", doorOpen && "lg:sticky lg:top-20")}>
+				<div className="flex items-end justify-between gap-3">
+					<div className="flex flex-col gap-0.5">
+						<h2 id="here-title" className="font-heading text-foreground text-xl font-semibold">
+							{cancelled ? "Checked in before it was cancelled" : isPast ? "Who came" : "Here"}
+						</h2>
+						<p className="text-muted-foreground text-sm">
+							{cancelled
+								? "Their credits went back."
+								: present.length
+									? `${present.length} ${present.length === 1 ? "client" : "clients"}${isPast ? "" : " checked in"}`
+									: isPast
+										? "No one was checked in."
+										: "No one yet."}
+						</p>
+					</div>
+					{present.length ? (
+						<span className="font-heading text-primary text-4xl leading-none font-semibold tabular-nums" aria-hidden>
+							{present.length}
+						</span>
+					) : null}
+				</div>
+
+				{attendance.length === 0 ? (
+					<div className="text-muted-foreground flex flex-col items-center gap-3 rounded-3xl border border-dashed px-6 py-10 text-center">
+						<Profile2User size={36} variant="Bulk" className="text-primary/40" />
+						<p className="max-w-64 text-sm">
+							{isPast
+								? cancelled
+									? "The session was cancelled before anyone checked in."
+									: "This session ended with no attendance recorded."
+								: "Find a client above, or tap one of the regulars, and they appear here."}
+						</p>
+					</div>
+				) : (
+					<ul className="bg-card divide-border divide-y rounded-3xl border">
+						{attendance.map((record) => {
+							const alerts = sortAlerts(record.client.healthLogs ?? []);
+							const gone = !!record.cancelledAt;
+							return (
+								<li
+									key={record.id}
+									className={cn(
+										"flex flex-col gap-3 px-4 py-3 transition-colors duration-1000",
+										record.id === fresh && "bg-success/5 animate-in fade-in-0 slide-in-from-top-2 duration-300 motion-reduce:animate-none",
+									)}
+								>
+									<div className="flex items-center gap-3">
+										<span className="relative shrink-0">
+											<PersonAvatar person={record.client} />
+											<span className="bg-card absolute -right-1 -bottom-1 rounded-full p-0.5">
+												{gone ? (
+													<ArrowRotateLeft className="text-muted-foreground size-4" variant="Bold" />
+												) : (
+													<TickCircle className="text-success size-4" variant="Bold" />
+												)}
+											</span>
+										</span>
+										<span className="flex min-w-0 flex-1 flex-col">
+											<Link
+												href={`/clients/${record.client.id}`}
+												className="text-foreground hover:text-primary truncate font-semibold transition-colors"
+											>
+												{record.client.fullName}
+											</Link>
+											<span className="text-muted-foreground text-sm tabular-nums">
+												{format(toStudioTime(new Date(record.checkInTime)), "HH:mm")}
+												{gone ? ", credit given back" : ""}
+											</span>
+										</span>
+										{alerts.length && !isPrivate ? <HealthAlertButton clientName={record.client.fullName} alerts={alerts} /> : null}
+										{!isPast && !gone ? (
+											<Button
+												variant="ghost"
+												size="icon"
+												onClick={() => undo(record)}
+												disabled={busy !== null}
+												aria-label={`Take back ${record.client.fullName}'s check-in`}
+												title="Checked in by mistake? Take it back"
+												className="text-muted-foreground hover:text-destructive size-11 shrink-0 rounded-full"
+											>
+												<ArrowRotateLeft size={18} />
+											</Button>
+										) : null}
+									</div>
+
+									{/* A private session is one client: their alerts stay in view for the whole hour. */}
+									{isPrivate && alerts.length ? (
+										<ul className="grid gap-2">
+											{alerts.map((log) => (
+												<li
+													key={log.id}
+													className={cn(
+														"rounded-2xl border-l-4 px-4 py-3",
+														log.severity === "critical" ? "bg-destructive/5 border-l-destructive" : "bg-warning/5 border-l-warning",
+													)}
+												>
+													<p className="text-foreground font-medium">{log.condition}</p>
+													{log.treatment ? <p className="text-muted-foreground text-sm">{log.treatment}</p> : null}
+												</li>
+											))}
+										</ul>
+									) : null}
+								</li>
+							);
+						})}
+					</ul>
+				)}
+			</section>
+
+			{sellTo ? (
+				<SellMembershipSheet
+					clientId={sellTo.id}
+					memberships={memberships}
+					discounts={discounts}
+					clientDiscountId={sellTo.discountId}
+					open
+					onOpenChange={(open) => !open && setSellTo(null)}
+					onSold={() => {
+						router.refresh();
+						onPick(sellTo);
+					}}
+				/>
+			) : null}
+
+			<HealthGuardrailDialog
+				isOpen={!!guarded}
+				clientData={guarded}
+				onAcknowledge={() => guarded && checkIn(guarded)}
+				onCancel={() => setGuarded(null)}
+				isPending={busy !== null}
+			/>
+		</div>
+	);
 }

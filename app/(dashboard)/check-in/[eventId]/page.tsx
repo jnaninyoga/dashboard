@@ -2,23 +2,16 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import { CheckInManager } from "@/components/schedule/check-in";
-import { getEventAttendanceAction } from "@/lib/actions/schedule/attendance";
+import { CheckInHeader, type SessionMoment } from "@/components/schedule/check-in-header";
+import { getProducts } from "@/lib/actions/price-list";
+import { getEventAttendanceAction, getUsualAttendees } from "@/lib/actions/schedule/attendance";
 import { getStudioSession } from "@/lib/actions/schedule/feed";
+import { getDiscounts } from "@/lib/actions/settings";
 import { formatDay, studioDateString, toStudioTime, wallClockOf, weekStart } from "@/lib/utils/time";
 import { getEventById, type JnaninEventType, withGoogle } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 import { format } from "date-fns";
-import { ArrowLeft2,Calendar as CalendarIcon } from "iconsax-reactjs";
-
-/** "Wednesday 28 October 2026 at 18:00", from Google's wall clock when there is one. */
-function sessionWhen(googleDateTime: string | undefined, instant: Date) {
-    const wall = wallClockOf(googleDateTime);
-    if (wall) {
-        return `${formatDay(wall.date, { weekday: "long", day: "numeric", month: "long", year: "numeric" })} at ${wall.time}`;
-    }
-    return format(toStudioTime(instant), "EEEE d MMMM yyyy 'at' HH:mm");
-}
 
 interface PageProps {
     params: Promise<{ eventId: string }>;
@@ -75,46 +68,43 @@ export default async function CheckInPage({ params }: PageProps) {
     const sessionDay = wallClockOf(details?.start?.dateTime)?.date ?? (startTime ? studioDateString(new Date(startTime)) : null);
     const scheduleWeek = sessionDay ? `/schedule?week=${weekStart(sessionDay)}` : "/schedule";
 
-    // Fetch currently checked-in clients
-    const attendanceRecords = await getEventAttendanceAction(eventId);
+    // Who's in, and, while the door is open, the regulars and what she can sell.
+    const [attendanceRecords, usual, memberships, discounts] = await Promise.all([
+        getEventAttendanceAction(eventId),
+        isPast ? [] : getUsualAttendees(eventId, title),
+        isPast ? [] : getProducts("membership"),
+        isPast ? [] : getDiscounts(),
+    ]);
+
+    const now = new Date();
+    const starts = startTime ? new Date(startTime) : null;
+    const moment: SessionMoment = cancelled
+        ? "cancelled"
+        : isPast
+            ? "ended"
+            : starts && now < new Date(starts.getTime() - 15 * 60_000)
+                ? "upcoming"
+                : "live";
+    const fromTo = [details?.start?.dateTime ?? startTime, details?.end?.dateTime ?? endTime].map(
+        (iso) => (iso ? (wallClockOf(iso)?.time ?? format(toStudioTime(new Date(iso)), "HH:mm")) : null),
+    );
+    const when = sessionDay
+        ? `${formatDay(sessionDay, { weekday: "long", day: "numeric", month: "long" })}${fromTo[0] ? ` · ${fromTo[0]}${fromTo[1] ? ` – ${fromTo[1]}` : ""}` : ""}`
+        : "Time to be set";
 
     return (
-        <div className="bg-background flex min-h-screen flex-col pb-24 font-sans">
-            {/* Zen Header — soft, borderless, with warm surface */}
-            <header className="bg-primary/70 zen-shadow relative z-10 rounded-b-3xl px-6 py-8 md:py-10">
-                <div className="mx-auto flex max-w-4xl flex-col gap-4">
-                    <div className="mb-1 flex items-center justify-between text-sm md:text-base">
-                        <Link href={scheduleWeek} className="group text-primary-foreground flex min-h-[48px] items-center font-semibold transition-colors hover:text-white">
-                            <ArrowLeft2 className="mr-2 h-5 w-5 transition-transform group-hover:-translate-x-1" />
-                            <span>Back to Schedule</span>
-                        </Link>
-                        <span className="bg-secondary text-secondary-foreground rounded-full px-4 py-1.5 text-xs font-bold tracking-widest uppercase">
-                            {cancelled ? `${type} · Cancelled` : isPast ? `${type} · History` : `${type} Session`}
-                        </span>
-                    </div>
-                    
-                    <h1 className="font-vibes text-primary-foreground text-5xl tracking-tight capitalize md:text-7xl">
-                        {title}
-                    </h1>
-                    
-                    <div className="text-primary-foreground mt-1 flex items-center gap-2 text-base font-medium">
-                        <CalendarIcon className="h-5 w-5 shrink-0" variant="Outline" />
-                        {/* The studio's clock: as Google wrote it, or from our record. */}
-                        {startTime ? sessionWhen(details?.start?.dateTime, new Date(startTime)) : "Time TBA"}
-                    </div>
-                </div>
-            </header>
-
-            {/* Main Content Area */}
-            <div className="relative z-20 mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
-                <CheckInManager
-                    eventId={eventId}
-                    eventType={type}
-                    initialAttendance={attendanceRecords}
-                    isPast={isPast}
-                    cancelled={cancelled}
-                />
-            </div>
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+            <CheckInHeader title={title} type={type} when={when} moment={moment} startsAt={fromTo[0] ?? undefined} backHref={scheduleWeek} />
+            <CheckInManager
+                eventId={eventId}
+                eventType={type}
+                initialAttendance={attendanceRecords}
+                isPast={isPast}
+                cancelled={cancelled}
+                usual={usual}
+                memberships={memberships}
+                discounts={discounts.filter((discount) => !discount.isArchived)}
+            />
         </div>
     );
 }

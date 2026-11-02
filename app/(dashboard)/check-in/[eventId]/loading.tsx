@@ -1,53 +1,59 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+/** A client row: avatar, name and card line, the action at the end. */
+function Row({ action = "h-11 w-24 rounded-full" }: { action?: string }) {
+	return (
+		<div className="flex items-center gap-3 px-4 py-3">
+			<Skeleton className="size-11 shrink-0 rounded-full" />
+			<div className="flex min-w-0 flex-1 flex-col gap-2">
+				<Skeleton className="h-4 w-40 max-w-full" />
+				<Skeleton className="h-3.5 w-24" />
+			</div>
+			<Skeleton className={action} />
+		</div>
+	);
+}
+
+/** The door as it lands: the session's header, the search and the regulars, and who's here. */
 export default function Loading() {
 	return (
-		<div className="bg-background flex min-h-screen flex-col pb-24 font-sans">
-			{/* Header Skeleton Mimic */}
-			<header className="bg-muted-foreground/10 px-6 py-8 md:py-10">
-				<div className="mx-auto flex max-w-4xl flex-col gap-4">
-					<div className="mb-1 flex items-center justify-between">
-						<Skeleton className="bg-muted-foreground/10 h-5 w-32" />
-						<Skeleton className="bg-muted-foreground/10 h-6 w-24 rounded-full" />
-					</div>
-					
-					<Skeleton className="bg-muted-foreground/10 h-16 w-3/4 md:h-20" />
-					
-					<div className="mt-1 flex items-center gap-2">
-						<Skeleton className="bg-muted-foreground/10 h-5 w-5 rounded-full" />
-						<Skeleton className="bg-muted-foreground/10 h-5 w-64" />
+		<div aria-busy="true" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+			<span className="sr-only">Loading the session</span>
+			<div aria-hidden className="bg-card border-border/70 flex flex-col gap-3 rounded-3xl border px-5 pt-5 pb-6 sm:px-7 sm:pb-7">
+				<Skeleton className="h-4 w-20" />
+				<div className="flex gap-2">
+					<Skeleton className="h-7 w-28 rounded-full" />
+					<Skeleton className="h-7 w-28 rounded-full" />
+				</div>
+				<Skeleton className="h-9 w-56 max-w-full" />
+				<Skeleton className="h-5 w-64 max-w-full" />
+			</div>
+
+			<div aria-hidden className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] lg:items-start xl:grid-cols-[minmax(0,1fr)_minmax(0,28rem)]">
+				<div className="flex flex-col gap-6">
+					<Skeleton className="h-14 w-full rounded-2xl" />
+					<div className="flex flex-col gap-3">
+						<div className="flex flex-col gap-2">
+							<Skeleton className="h-6 w-32" />
+							<Skeleton className="h-4 w-64 max-w-full" />
+						</div>
+						<div className="bg-card divide-border divide-y rounded-3xl border">
+							{Array.from({ length: 4 }, (_, i) => (
+								<Row key={i} />
+							))}
+						</div>
 					</div>
 				</div>
-			</header>
-
-			{/* Main Content Area Skeleton */}
-			<div className="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-5 py-6 md:px-6">
-                {/* Search Bar Skeleton */}
-                <div className="flex flex-col gap-2">
-                    <Skeleton className="bg-muted-foreground/10 h-12 w-full rounded-2xl" />
-                </div>
-
-                {/* List Skeleton */}
-				<div className="border-border/50 space-y-4 rounded-2xl border p-6 shadow-sm">
-                    <div className="mb-4 flex items-center justify-between">
-                        <Skeleton className="bg-muted-foreground/10 h-6 w-32" />
-                        <Skeleton className="bg-muted-foreground/10 h-6 w-20" />
-                    </div>
-					{Array.from({ length: 3 }).map((_, i) => (
-						<div
-							key={i}
-							className="border-border/10 flex items-center justify-between rounded-xl border-b pb-4 last:border-0 last:pb-0"
-						>
-							<div className="flex items-center gap-4">
-                                <Skeleton className="bg-muted-foreground/10 h-10 w-10 rounded-full" />
-								<div className="space-y-2">
-									<Skeleton className="bg-muted-foreground/10 h-4 w-32" />
-									<Skeleton className="bg-muted-foreground/10 h-3 w-48" />
-								</div>
-							</div>
-							<Skeleton className="bg-muted-foreground/10 h-8 w-8 rounded-lg" />
-						</div>
-					))}
+				<div className="flex flex-col gap-3">
+					<div className="flex flex-col gap-2">
+						<Skeleton className="h-6 w-16" />
+						<Skeleton className="h-4 w-28" />
+					</div>
+					<div className="bg-card divide-border divide-y rounded-3xl border">
+						{Array.from({ length: 2 }, (_, i) => (
+							<Row key={i} action="size-11 rounded-full" />
+						))}
+					</div>
 				</div>
 			</div>
 		</div>

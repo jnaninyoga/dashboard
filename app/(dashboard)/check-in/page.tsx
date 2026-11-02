@@ -14,11 +14,11 @@ export default async function CheckInIndexPage() {
     return (
         <>
             <header className="flex flex-col space-y-1">
-                <h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Check-in Portal</h1>
-                <p className="text-md text-muted-foreground">Select a group or private studio session from today to manage client attendance.</p>
+                <h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Check-in</h1>
+                <p className="text-muted-foreground">Today&apos;s classes and private sessions. Open one to check clients in.</p>
             </header>
 
-            <CockpitClient sessions={sessions} error={feed.error ?? null} />
+            <CockpitClient sessions={sessions} error={feed.error ?? null} bare />
         </>
     );
 }
