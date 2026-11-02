@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -20,8 +21,6 @@ import { studioDateString } from "@/lib/utils/time";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/validators/document";
 
 import { MoneySend } from "iconsax-reactjs";
-
-import { PAYMENT_METHOD } from "./payment-methods";
 
 const REFERENCE: Record<PaymentMethod, string> = {
 	transfer: "Transfer reference",

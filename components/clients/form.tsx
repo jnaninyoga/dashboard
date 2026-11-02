@@ -273,6 +273,7 @@ function ClientFormBody({
 
 			if (values.initialProductId) {
 				formData.append("initialProductId", values.initialProductId);
+				formData.append("initialPaymentMethod", values.initialPaymentMethod ?? "cash");
 			}
 
 			if (values.intakeData) {

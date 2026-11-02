@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
-import { creditsSummary, lastVisitLabel } from "@/lib/domain/clients/card";
+import { creditsSummary, lastVisitLabel, shortDay } from "@/lib/domain/clients/card";
 import { formatPhone, whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
 import {
@@ -101,10 +101,13 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 		id: "credits",
 		meta: { className: figureColumn },
 		header: "Credits left",
-		accessorFn: (c) => c.wallets?.[0]?.remainingCredits ?? -1,
+		accessorFn: (c) => creditsSummary(c.wallets).count ?? -1,
 		cell: ({ row }) => {
-			const credits = creditsSummary(row.original.wallets?.[0]);
+			const credits = creditsSummary(row.original.wallets);
 			if (credits.count === null) return <span className="text-muted-foreground">No card</span>;
+			if (credits.tone === "expired") {
+				return <span className="text-destructive font-medium">Expired on {shortDay(credits.expiredOn!)}</span>;
+			}
 			return (
 				<span className="flex items-baseline gap-1">
 					<span

@@ -1,239 +1,175 @@
 "use client";
 
-import { useState } from "react";
-
-import { FormSheet } from "@/components/form-sheet";
-import { Badge } from "@/components/ui/badge";
+import { Money } from "@/components/money";
+import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
-import { assignProductToClient } from "@/lib/actions/clients/wallets";
-import { notify } from "@/lib/feedback/notify";
-import { formatMoney } from "@/lib/utils/currency";
+import { creditsSummary } from "@/lib/domain/clients/card";
+import { type CardState,cardState } from "@/lib/domain/clients/membership-sale";
+import { type Discount } from "@/lib/types";
+import { formatDay, studioDateString } from "@/lib/utils/time";
 import { cn } from "@/lib/utils/ui";
 import { type ClientWallet, type Product } from "@/services/database/schema";
 
-import { format } from "date-fns";
-import { Bag2 as ShoppingCart, Card as CreditCard, CardAdd, Tag } from "iconsax-reactjs";
+import { Bag2, Card } from "iconsax-reactjs";
+
+import { discountTerms, SellMembershipSheet } from "../sell-membership-sheet";
 
 type WalletWithProduct = ClientWallet & { product?: Product | null };
+
+const longDay = (date: string) => formatDay(date, { day: "numeric", month: "long", year: "numeric" });
+
+const STATE: Record<CardState, { label: string; dot: string; text: string }> = {
+	active: { label: "In use", dot: "bg-success", text: "text-success" },
+	expired: { label: "Expired", dot: "bg-destructive", text: "text-destructive" },
+	empty: { label: "Used up", dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+	cancelled: { label: "Cancelled", dot: "bg-muted-foreground/40", text: "text-muted-foreground" },
+};
+// Cards she can use first, the one ending soonest on top; then the rest, latest first.
+const ORDER: CardState[] = ["active", "expired", "empty", "cancelled"];
 
 interface WalletTabProps {
 	clientId: string;
 	wallets: WalletWithProduct[];
+	/** Her memberships on sale. */
 	products: Product[];
+	discounts?: Discount[];
+	clientDiscountId?: string | null;
+	/** The sale sheet, opened from here or from the profile's alert. */
+	selling?: boolean;
+	onSellingChange?: (open: boolean) => void;
 }
 
-export function WalletTab({ clientId, wallets, products }: WalletTabProps) {
-	const [isOpen, setIsOpen] = useState(false);
-	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [selectedProductId, setSelectedProductId] = useState<string>("");
-
-	// Calculate total credits
-	const totalCredits = wallets
-		.filter((w) => w.status === "active")
-		.reduce((sum, w) => sum + (w.remainingCredits || 0), 0);
-
-	const handleSellProduct = async () => {
-		if (!selectedProductId) return;
-		setIsSubmitting(true);
-
-		try {
-			const result = await assignProductToClient(clientId, selectedProductId);
-			if (result.success) {
-				setIsOpen(false);
-				setSelectedProductId("");
-				notify.success("Card sold");
-			} else {
-				notify.error("Couldn't sell this card");
-			}
-		} catch (error) {
-			notify.error("Couldn't sell this card", { error });
-		} finally {
-			setIsSubmitting(false);
-		}
-	};
+/**
+ * The client's membership cards: what they can use today, and every card
+ * they were sold, with where it stands (in use until a day, expired with
+ * the credits it held, used up), how it was sold, and a way to sell one.
+ */
+export function WalletTab({
+	clientId,
+	wallets,
+	products,
+	discounts = [],
+	clientDiscountId,
+	selling = false,
+	onSellingChange = () => {},
+}: WalletTabProps) {
+	const today = studioDateString();
+	const credits = creditsSummary(wallets, today);
+	const cards = wallets
+		.map((wallet) => ({ wallet, state: cardState(wallet, today) }))
+		.sort((a, b) => {
+			const byState = ORDER.indexOf(a.state) - ORDER.indexOf(b.state);
+			if (byState) return byState;
+			if (a.state === "active") return (a.wallet.expiresOn ?? "9999").localeCompare(b.wallet.expiresOn ?? "9999");
+			return new Date(b.wallet.activatedAt ?? 0).getTime() - new Date(a.wallet.activatedAt ?? 0).getTime();
+		});
+	const paying = cards.find((c) => c.state === "active")?.wallet;
 
 	return (
-		<div className="mx-auto max-w-3xl space-y-8">
-			{/* Overview Row */}
-			<div className="grid gap-6 sm:grid-cols-2">
-				{/* Total Credits Summary Bubble - Now with stronger background */}
-				<div className="group bg-secondary/30 hover:bg-secondary/50 hover:zen-glow-blush relative overflow-hidden rounded-3xl border p-6 shadow-sm transition-all">
-					<div className="relative z-10">
-						<h4 className="text-foreground text-xs font-bold tracking-wider uppercase opacity-40">
-							Total Available
-						</h4>
-						<div className="mt-2 flex items-baseline gap-2">
-							<span className="text-foreground text-5xl font-black">
-								{totalCredits}
-							</span>
-							<span className="text-foreground/60 text-lg font-bold">
-								credits
-							</span>
-						</div>
-					</div>
-					{/* Decorative ambient icon */}
-					<CreditCard
-						className="text-secondary-foreground group-hover:text-foreground absolute -right-4 -bottom-4 h-32 w-32 rotate-12 opacity-10 transition-all group-hover:scale-110 group-hover:rotate-6"
-						variant="Bulk"
-					/>
+		<div className="mx-auto grid max-w-3xl gap-8">
+			<div className="flex flex-wrap items-end justify-between gap-4">
+				<div>
+					<p className="text-muted-foreground text-sm">Credits to use</p>
+					<p className="flex items-baseline gap-2">
+						<span
+							className={cn(
+								"font-heading text-5xl font-bold tabular-nums",
+								credits.tone === "low" || credits.tone === "expired" ? "text-destructive" : "text-foreground",
+							)}
+						>
+							{credits.count ?? 0}
+						</span>
+						{credits.total ? <span className="text-muted-foreground">of {credits.total}</span> : null}
+					</p>
+					<p className="text-muted-foreground text-sm">
+						{credits.tone === "expired"
+							? `Their card expired on ${longDay(credits.expiredOn!)}.`
+							: paying
+								? `${paying.product?.name ?? "Their card"}${paying.expiresOn ? `, until ${longDay(paying.expiresOn)}` : ", no end date"}`
+								: "No card in use."}
+					</p>
 				</div>
-
-				{/* Quick Sell Action Bubble - Now with stronger background */}
-				<div className="bg-muted border-secondary/30 hover:zen-glow-teal hover:bg-card flex flex-col items-center justify-center rounded-3xl border p-6 shadow-sm transition-all">
-					<div className="mb-4 text-center">
-						<h4 className="text-secondary-foreground text-xs font-bold tracking-wider uppercase opacity-60">
-							Top-up Wallet
-						</h4>
-						<p className="text-muted-foreground text-xs font-medium">
-							Add credits or membership
-						</p>
-					</div>
-					<FormSheet
-						open={isOpen}
-						onOpenChange={(open) => {
-							if (open) setSelectedProductId("");
-							setIsOpen(open);
-						}}
-						busy={isSubmitting}
-						dirty={selectedProductId !== ""}
-						trigger={
-							<Button className="zen-glow-teal h-12 w-full rounded-2xl px-6 font-bold transition-all active:scale-95">
-								<ShoppingCart className="mr-2 size-5" variant="Bold" />
-								Sell a card
-							</Button>
-						}
-						icon={<CardAdd size={28} variant="Bulk" />}
-						title="Sell a card"
-						description="The credits are added to this client's wallet right away."
-						footer={
-							<Button
-								type="button"
-								onClick={handleSellProduct}
-								disabled={isSubmitting || !selectedProductId}
-								className="h-11 rounded-xl font-bold"
-							>
-								{isSubmitting ? "Selling…" : "Sell card"}
-							</Button>
-						}
-					>
-						<div className="space-y-2 py-2">
-							<Label className="text-xs font-bold tracking-wider uppercase opacity-60">
-								Membership
-							</Label>
-							<Select
-								value={selectedProductId}
-								onValueChange={setSelectedProductId}
-							>
-								<SelectTrigger className="h-11 w-full rounded-xl border">
-									<SelectValue placeholder="Choose a membership..." />
-								</SelectTrigger>
-								<SelectContent>
-									{products.map((product) => (
-										<SelectItem key={product.id} value={product.id}>
-											{product.name} — {product.credits} Cr (
-											{formatMoney(product.price)})
-										</SelectItem>
-									))}
-								</SelectContent>
-							</Select>
-						</div>
-					</FormSheet>
-				</div>
+				<SellMembershipSheet
+					clientId={clientId}
+					memberships={products}
+					discounts={discounts}
+					clientDiscountId={clientDiscountId}
+					open={selling}
+					onOpenChange={onSellingChange}
+					trigger={
+						<Button className="zen-glow-teal h-11 rounded-xl px-5 font-semibold">
+							<Bag2 className="mr-2 size-5" variant="Bold" />
+							Sell a membership
+						</Button>
+					}
+				/>
 			</div>
 
-			{/* Active Wallets Timeline */}
-			<div className="space-y-4">
-				<div className="mb-2 flex items-center gap-2 px-1">
-					<div className="bg-secondary-3 h-1 w-8 rounded-full" />
-					<h4 className="text-secondary-foreground text-xs font-bold tracking-wider uppercase opacity-40">
-						Active Wallets
-					</h4>
-				</div>
-
-				<div className="space-y-3">
-					{wallets.length === 0 ? (
-						<div className="bg-muted rounded-3xl border border-dashed py-8 text-center shadow-sm">
-							<p className="text-muted-foreground text-sm italic">
-								No active products or credit packs.
-							</p>
-						</div>
-					) : (
-						wallets.map((wallet) => (
-							<div
-								key={wallet.id}
-								className="group border/50 hover:zen-glow-teal bg-card flex items-center justify-between gap-4 rounded-3xl border p-4 shadow-xs transition-all hover:shadow-md"
-							>
-								<div className="flex items-center gap-4">
-									<div
+			<section aria-labelledby="cards-title" className="grid gap-3">
+				<h3 id="cards-title" className="font-heading text-lg font-semibold">
+					Cards
+				</h3>
+				{cards.length === 0 ? (
+					<p className="text-muted-foreground bg-card rounded-2xl border border-dashed p-6 text-center text-sm">
+						No card sold yet.
+					</p>
+				) : (
+					<ul className="bg-card divide-border divide-y rounded-2xl border">
+						{cards.map(({ wallet, state }) => {
+							const look = STATE[state];
+							const total = wallet.product?.credits;
+							const sold = wallet.activatedAt ? studioDateString(new Date(wallet.activatedAt)) : null;
+							const sale = [
+								sold ? `Sold ${formatDay(sold, { day: "numeric", month: "short", year: "numeric" })}` : null,
+								wallet.paymentMethod ? PAYMENT_METHOD[wallet.paymentMethod].label : null,
+								wallet.discountName && wallet.discountType && wallet.discountValue
+									? `${wallet.discountName} ${discountTerms({ discountType: wallet.discountType, discountValue: wallet.discountValue })}`
+									: null,
+								wallet.physicalCardRef ? `Card no. ${wallet.physicalCardRef}` : null,
+							].filter(Boolean);
+							return (
+								<li key={wallet.id} className="flex items-start gap-3 p-4">
+									<span
 										className={cn(
-											"flex h-12 w-12 items-center justify-center rounded-2xl shadow-sm",
-											wallet.status === "active"
-												? "bg-success/5 text-success"
-												: "bg-secondary-3/10 text-secondary-3",
+											"bg-secondary/50 flex size-10 shrink-0 items-center justify-center rounded-xl",
+											state === "active" && "bg-success/10 text-success",
+											state === "expired" && "bg-destructive/10 text-destructive",
 										)}
 									>
-										<Tag className="h-6 w-6" variant="Bulk" />
-									</div>
-									<div className="flex flex-col gap-2">
-										<div className="flex items-center gap-2">
-											<span className="text-secondary-foreground text-lg leading-none font-bold">
-												{wallet.product?.name || "Member Pack"}
+										<Card size={20} variant="Bulk" />
+									</span>
+									<div className="min-w-0 flex-1">
+										<p className="flex flex-wrap items-center gap-x-2">
+											<span className="truncate font-semibold">{wallet.product?.name ?? "Membership"}</span>
+											<span className={cn("inline-flex items-center gap-1.5 text-sm font-medium", look.text)}>
+												<span aria-hidden className={cn("size-1.5 rounded-full", look.dot)} />
+												{look.label}
 											</span>
-											{wallet.status === "active" ? (
-												<div className="bg-success h-2 w-2 animate-pulse rounded-full" />
-											) : null}
-										</div>
-										<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-40">
-											Activated{" "}
-											{wallet.activatedAt
-												? format(new Date(wallet.activatedAt), "MMMM d, yyyy")
-												: "Pending"}
-										</span>
+										</p>
+										<p className={cn("text-sm", state === "expired" ? "text-destructive" : "text-muted-foreground")}>
+											{state === "expired"
+												? `Ended ${longDay(wallet.expiresOn!)}: its ${wallet.remainingCredits} ${wallet.remainingCredits === 1 ? "credit" : "credits"} can't be used.`
+												: wallet.expiresOn
+													? `${state === "active" ? "Until" : "Ran until"} ${longDay(wallet.expiresOn)}`
+													: "No end date"}
+										</p>
+										{sale.length ? <p className="text-muted-foreground text-sm">{sale.join(" · ")}</p> : null}
 									</div>
-								</div>
-
-								<div className="flex flex-col items-end">
-									<div className="flex items-baseline gap-1">
-										<span
-											className={cn(
-												"text-2xl font-black",
-												(wallet.remainingCredits || 0) <= 2
-													? "text-destructive"
-													: "text-primary",
-											)}
-										>
-											{wallet.remainingCredits}
-										</span>
-										<span className="text-[10px] font-bold tracking-wider uppercase opacity-60">
-											Credits
-										</span>
+									<div className="shrink-0 text-right">
+										<p className="tabular-nums">
+											<span className={cn("text-xl font-semibold", state !== "active" && "text-muted-foreground")}>
+												{wallet.remainingCredits}
+											</span>
+											{total ? <span className="text-muted-foreground text-sm"> of {total}</span> : null}
+										</p>
+										{wallet.amountPaid ? <Money amount={wallet.amountPaid} className="text-muted-foreground text-sm" /> : null}
 									</div>
-									<Badge
-										variant={
-											wallet.status === "active" ? "outline" : "secondary"
-										}
-										className={cn(
-											"mt-1 px-1.5 py-0 text-[9px] font-bold tracking-tighter uppercase",
-											wallet.status === "active" &&
-												"border-success/25 bg-success/10 text-success",
-										)}
-									>
-										{wallet.status}
-									</Badge>
-								</div>
-							</div>
-						))
-					)}
-				</div>
-			</div>
+								</li>
+							);
+						})}
+					</ul>
+				)}
+			</section>
 		</div>
 	);
 }

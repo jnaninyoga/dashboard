@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
+import { cardForCheckIn, checkInRefusal } from "@/lib/domain/clients/membership-sale";
 import { logServerError } from "@/lib/errors/server";
+import { formatDay, studioDateString } from "@/lib/utils/time";
 import { db } from "@/services/database";
-import { attendanceLedger, clients, clientWallets, healthLogs, studioSessions } from "@/services/database/schema";
+import { attendanceLedger, clients, clientWallets, healthLogs, products, studioSessions } from "@/services/database/schema";
 import { HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
@@ -27,18 +29,26 @@ export interface AttendanceRecord {
 
 // Expected refusals, shown to the operator as-is. Anything else is a bug and
 // gets a generic message (Next.js hides thrown messages in production).
-class CheckInRefused extends Error {}
+// `needsCard`: a sale would let the client in (no card, used up, expired).
+class CheckInRefused extends Error {
+	constructor(
+		message: string,
+		readonly needsCard = false,
+	) {
+		super(message);
+	}
+}
 
 export async function checkInClientAction(
 	clientId: string,
 	eventId: string,
 	slotType: JnaninEventType
-): Promise<{ success: boolean; message: string; ref?: string }> {
+): Promise<{ success: boolean; message: string; ref?: string; needsCard?: boolean }> {
 	await requireUser();
 	try {
 		const message = await db.transaction(async (tx) => {
 			const [session] = await tx
-				.select({ status: studioSessions.status })
+				.select({ status: studioSessions.status, startsAt: studioSessions.startsAt })
 				.from(studioSessions)
 				.where(eq(studioSessions.googleEventId, eventId));
 			if (session?.status === "cancelled") {
@@ -55,7 +65,7 @@ export async function checkInClientAction(
 				.for("update");
 
 			if (allWallets.length === 0) {
-				throw new CheckInRefused("Client has no wallet. Please sell a new card to record attendance.");
+				throw new CheckInRefused("No membership card yet. Sell one to check them in.", true);
 			}
 
 			const existingCheckIns = await tx
@@ -84,11 +94,23 @@ export async function checkInClientAction(
 				return "Outdoor Check-in Successful (No credit deducted).";
 			}
 
-			// Standard logic (group, private, b2b) - needs an active wallet with > 0 credits
-			const activeWallet = allWallets.find(w => w.status === "active" && w.remainingCredits > 0);
+			// A credit from a card that can be used on the session's day: the
+			// one that ends soonest first. An expired card can't pay; she's told
+			// which card, when it ended and what it held.
+			const sessionDay = studioDateString(session?.startsAt ?? new Date());
+			const activeWallet = cardForCheckIn(allWallets, sessionDay);
 
 			if (!activeWallet) {
-				throw new CheckInRefused("No active credits. Please sell a new card.");
+				const productIds = allWallets.flatMap((w) => (w.productId ? [w.productId] : []));
+				const names = productIds.length
+					? await tx.select({ id: products.id, name: products.name }).from(products).where(inArray(products.id, productIds))
+					: [];
+				const cards = allWallets.map((w) => ({ ...w, name: names.find((n) => n.id === w.productId)?.name }));
+				throw new CheckInRefused(
+					checkInRefusal(cards, sessionDay, (day) => formatDay(day, { day: "numeric", month: "long", year: "numeric" })) ??
+						"No credits left. Sell a new membership to check them in.",
+					true,
+				);
 			}
 
 			// Safe to compute in JS: the row is locked for this transaction.
@@ -116,7 +138,7 @@ export async function checkInClientAction(
 		return { success: true, message };
 	} catch (error) {
 		if (error instanceof CheckInRefused) {
-			return { success: false, message: error.message };
+			return { success: false, message: error.message, needsCard: error.needsCard };
 		}
 		return {
 			success: false,

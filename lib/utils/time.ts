@@ -108,6 +108,17 @@ export function addDays(date: string, days: number): string {
 	return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
 }
 
+/**
+ * A "YYYY-MM-DD" date plus `months`, on the same day of the month, or the
+ * month's last day when it has fewer (31 Jan + 1 month = 28 Feb).
+ */
+export function addMonths(date: string, months: number): string {
+	const [year, month, day] = date.split("-").map(Number);
+	const last = new Date(Date.UTC(year, month - 1 + months + 1, 0)).getUTCDate();
+	const t = new Date(Date.UTC(year, month - 1 + months, Math.min(day, last)));
+	return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
+}
+
 /** The Monday of the week holding `date`: the studio's weeks run Monday to Sunday. */
 export function weekStart(date: string): string {
 	return addDays(date, -((weekdayOf(date) + 6) % 7));

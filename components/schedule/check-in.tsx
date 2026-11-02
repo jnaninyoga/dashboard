@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { checkInClientAction } from "@/lib/actions/schedule/attendance";
 import { type AttendanceRecord } from "@/lib/actions/schedule/attendance";
 import { notify } from "@/lib/feedback/notify";
@@ -11,7 +13,7 @@ import { type Client, type HealthLog } from "@/services/database/schema";
 import { type JnaninEventType } from "@/services/google";
 
 import { format } from "date-fns";
-import { ArrowRotateLeft, Location, People, SecurityUser, TickCircle, User } from "iconsax-reactjs";
+import { ArrowRotateLeft, CloseCircle, Danger, Location, People, SecurityUser, TickCircle, User } from "iconsax-reactjs";
 
 import { ClientSearch } from "../clients/search";
 
@@ -33,6 +35,9 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
     const [selectedClient, setSelectedClient] = useState<ClientWithLogs | null>(null);
     const [showGuardrail, setShowGuardrail] = useState(false);
     const [isCheckingIn, setIsCheckingIn] = useState(false);
+    // Why the last client tapped wasn't let in. It stays until she acts on
+    // it or checks someone in: a toast would be gone before she reads it.
+    const [refusal, setRefusal] = useState<{ clientId: string; name: string; message: string; needsCard: boolean } | null>(null);
 
     const onClientSelected = (client: ClientWithLogs) => {
         if (isPast) return; // safety: past events are read-only
@@ -56,8 +61,13 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
         try {
             const res = await checkInClientAction(clientId, eventId, eventType as JnaninEventType);
             if (!res.success) {
-                notify.error(res.message, { code: res.ref });
+                if (res.ref) notify.error(res.message, { code: res.ref });
+                else {
+                    const name = clientData?.fullName || selectedClient?.fullName || "This client";
+                    setRefusal({ clientId, name, message: res.message, needsCard: !!res.needsCard });
+                }
             } else {
+                setRefusal(null);
                 notify.success(res.message);
                 
                 const newRecord: AttendanceRecord = {
@@ -85,11 +95,32 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
         }
     };
 
+    const refusalNotice = refusal ? (
+        <div role="alert" className="border-destructive/25 bg-destructive/5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border p-4 md:p-5">
+            <Danger className="text-destructive size-7 shrink-0" variant="Bulk" />
+            <div className="min-w-0 flex-1 basis-56">
+                <p className="text-foreground font-semibold">{refusal.name} isn&apos;t checked in</p>
+                <p className="text-muted-foreground text-sm">{refusal.message}</p>
+            </div>
+            <div className="flex items-center gap-2">
+                {refusal.needsCard ? (
+                    <Button asChild className="h-10 rounded-xl font-semibold">
+                        <Link href={`/clients/${refusal.clientId}?sell=1`}>Sell a membership</Link>
+                    </Button>
+                ) : null}
+                <Button variant="ghost" size="icon" aria-label="Dismiss" className="size-10 rounded-xl" onClick={() => setRefusal(null)}>
+                    <CloseCircle className="size-5" variant="Outline" />
+                </Button>
+            </div>
+        </div>
+    ) : null;
+
     if (eventType === "private") {
         const checkedInClient = attendance.length > 0 ? attendance[0].client : null;
 
         return (
             <div className="animate-slide-up flex w-full flex-col gap-6">
+                {refusalNotice}
                 {!checkedInClient ? (
                     <div className="bg-card zen-shadow-lg flex min-h-[50vh] flex-col items-center justify-center gap-8 rounded-3xl p-8 transition-all md:p-12">
                         <div className="bg-muted rounded-full p-6">
@@ -194,6 +225,7 @@ export function CheckInManager({ eventId, eventType, initialAttendance, isPast =
                     <ClientSearch onSelectClient={onClientSelected} />
                 </div>
             ) : null}
+            {refusalNotice}
 
             {/* Manifest List */}
             <div className="bg-card zen-shadow-lg min-h-[50vh] flex-1 rounded-3xl p-6 md:p-8">

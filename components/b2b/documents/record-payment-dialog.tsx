@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import { Money } from "@/components/money";
+import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -43,8 +44,6 @@ import {
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MoneySend, TickCircle, Wallet3 } from "iconsax-reactjs";
-
-import { PAYMENT_METHOD } from "./payment-methods";
 
 export type PaymentQueueEntry = PaymentTarget;
 

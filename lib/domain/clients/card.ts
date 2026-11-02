@@ -1,20 +1,43 @@
 // What a client card says at a glance. Kept apart from the component so the
 // rules are tested and the same everywhere the card appears.
 
-import { STUDIO_TIME_ZONE, studioDateString } from "@/lib/utils/time";
+import { cardState, expiredCards } from "@/lib/domain/clients/membership-sale";
+import { formatDay, STUDIO_TIME_ZONE, studioDateString } from "@/lib/utils/time";
 
-export type CreditsTone = "ok" | "low" | "none";
+export type CreditsTone = "ok" | "low" | "none" | "expired";
 
 /** Two or fewer credits left is worth noticing at the door. */
 const LOW_CREDITS = 2;
 
-/** Credits left on the client's active membership card, out of the card's total. */
+type WalletCard = Parameters<typeof cardState>[0] & { product?: { credits: number | null } | null };
+
+/**
+ * The credits a client can use on `today` (a studio day), across their
+ * cards, out of the card's total when there's one card. An expired card's
+ * credits can't be used: with nothing else to pay, it says the card
+ * expired, and when.
+ */
 export function creditsSummary(
-	wallet: { remainingCredits: number; product?: { credits: number | null } | null } | null | undefined,
-): { count: number | null; total: number | null; tone: CreditsTone } {
-	if (!wallet) return { count: null, total: null, tone: "none" };
-	const count = Math.max(0, wallet.remainingCredits);
-	return { count, total: wallet.product?.credits ?? null, tone: count <= LOW_CREDITS ? "low" : "ok" };
+	wallets: WalletCard[] | null | undefined,
+	today: string = studioDateString(),
+): { count: number | null; total: number | null; tone: CreditsTone; expiredOn?: string } {
+	const cards = wallets ?? [];
+	if (!cards.length) return { count: null, total: null, tone: "none" };
+	const usable = cards.filter((card) => cardState(card, today) === "active");
+	if (usable.length) {
+		const count = usable.reduce((sum, card) => sum + card.remainingCredits, 0);
+		const total = usable.length === 1 ? (usable[0].product?.credits ?? null) : null;
+		return { count, total, tone: count <= LOW_CREDITS ? "low" : "ok" };
+	}
+	const [expired] = expiredCards(cards, today);
+	if (expired?.expiresOn) return { count: 0, total: null, tone: "expired", expiredOn: expired.expiresOn };
+	return { count: 0, total: cards[0].product?.credits ?? null, tone: "low" };
+}
+
+/** A card's day, short: "30 Nov"; with the year when it isn't this one ("30 Nov 2025"). */
+export function shortDay(date: string, today: string = studioDateString()) {
+	const sameYear = date.slice(0, 4) === today.slice(0, 4);
+	return formatDay(date, sameYear ? { day: "numeric", month: "short" } : { day: "numeric", month: "short", year: "numeric" });
 }
 
 // Dates are read in the studio's calendar, assembled from parts so the text

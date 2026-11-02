@@ -72,20 +72,11 @@ export async function getClientsAction(
 			orderBy: [desc(clients.createdAt)],
 			with: {
 				discount: true,
+				// Every card still open (an expired one too, to say so on the card).
 				wallets: {
 					where: eq(clientWallets.status, "active"),
-					with: {
-						product: true,
-						// Fetch recent ledger entries to check for "Online" status
-						ledgerEntries: {
-							// A cancelled session's check-in is history, not a visit.
-							where: isNull(attendanceLedger.cancelledAt),
-							orderBy: desc(attendanceLedger.checkInTime),
-							limit: 1,
-						},
-					},
+					with: { product: true },
 					orderBy: desc(clientWallets.activatedAt),
-					limit: 1,
 				},
 				healthLogs: {
 					where: and(

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 
 import { Money } from "@/components/money";
+import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { Badge } from "@/components/ui/badge";
 import {
 	FormControl,
@@ -13,9 +14,10 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
+import { priceAfterDiscount } from "@/lib/domain/clients/membership-sale";
 import { type Discount } from "@/lib/types";
 import { formatMoney } from "@/lib/utils/currency";
-import { ClientFormValues } from "@/lib/validators";
+import { ClientFormValues, PAYMENT_METHODS } from "@/lib/validators";
 import { type Product } from "@/services/database/schema";
 
 import { Refresh } from "iconsax-reactjs";
@@ -34,6 +36,7 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 		control: form.control,
 		name: "discountId",
 	});
+	const initialProductId = useWatch({ control: form.control, name: "initialProductId" });
 
 	useEffect(() => {
 		if (mode === "edit") return;
@@ -60,24 +63,10 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 
 	const selectedDiscount = discounts.find((c) => c.id === discountId);
 
+	// The shared sale rule: the same price the sale will record.
 	const calculatePrice = (basePrice: string) => {
-		const price = parseFloat(basePrice);
-		if (!selectedDiscount || isNaN(price)) return { price, isDiscounted: false };
-
-		let finalPrice = price;
-		const discountValue = parseFloat(selectedDiscount.discountValue);
-
-		if (selectedDiscount.discountType === "percentage") {
-			finalPrice = price * (1 - discountValue / 100);
-		} else {
-			finalPrice = Math.max(0, price - discountValue);
-		}
-
-		return {
-			price: finalPrice.toFixed(2),
-			originalPrice: price.toFixed(2),
-			isDiscounted: finalPrice !== price,
-		};
+		const { list, price, off } = priceAfterDiscount(basePrice, selectedDiscount ?? null);
+		return { price: price.toFixed(2), originalPrice: list.toFixed(2), isDiscounted: off > 0 };
 	};
 
 	return (
@@ -172,6 +161,39 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 					)}
 				/>
 			)}
+
+			{/* Her first membership is a sale: how was it paid? */}
+			{initialProductId ? (
+				<FormField
+					control={form.control}
+					name="initialPaymentMethod"
+					render={({ field }) => (
+						<FormItem className="space-y-2">
+							<p className="text-sm font-semibold">Paid by</p>
+							<FormControl>
+								<div role="radiogroup" aria-label="Paid by" className="bg-secondary/40 grid grid-cols-4 gap-1 rounded-2xl p-1">
+									{PAYMENT_METHODS.map((method) => (
+										<label
+											key={method}
+											className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+										>
+											<input
+												type="radio"
+												name={field.name}
+												value={method}
+												checked={(field.value ?? "cash") === method}
+												onChange={() => field.onChange(method)}
+												className="sr-only"
+											/>
+											{PAYMENT_METHOD[method].label}
+										</label>
+									))}
+								</div>
+							</FormControl>
+						</FormItem>
+					)}
+				/>
+			) : null}
 		</div>
 	);
 }

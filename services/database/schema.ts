@@ -87,8 +87,9 @@ export const b2bPaymentKindEnum = pgEnum("b2b_payment_kind", [
 	"refund",
 ]);
 
-// How a partner paid: hotels mostly by transfer or cheque.
-export const b2bPaymentMethodEnum = pgEnum("b2b_payment_method", [
+// How money was paid: hotels mostly by transfer or cheque, clients by cash
+// or card. Shared by partner payments and membership sales.
+export const paymentMethodEnum = pgEnum("payment_method", [
 	"transfer",
 	"cheque",
 	"cash",
@@ -210,6 +211,17 @@ export const clientWallets = pgTable("client_wallets", {
 	remainingCredits: integer("remaining_credits").notNull(),
 	status: walletStatusEnum("status").notNull().default("active"),
 	amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }), // Actual amount paid after discount
+	// The sale, as it was made (empty on cards sold before it was recorded):
+	// her price then, the discount she gave, and how she was paid.
+	listPrice: decimal("list_price", { precision: 10, scale: 2 }),
+	discountName: text("discount_name"),
+	discountType: discountTypeEnum("discount_type"),
+	discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
+	paymentMethod: paymentMethodEnum("payment_method"),
+	paymentReference: text("payment_reference"),
+	// The last day it can be used (the sale day, the membership's months
+	// later). Empty: no end (cards sold before expiry existed).
+	expiresOn: date("expires_on"),
 	activatedAt: timestamp("activated_at").defaultNow(),
 	lastUsedAt: timestamp("last_used_at"),
 });
@@ -449,7 +461,7 @@ export const b2bPayments = pgTable(
 		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
 		paymentDate: timestamp("payment_date").defaultNow().notNull(),
 		// Empty on payments recorded before it was asked.
-		method: b2bPaymentMethodEnum("method"),
+		method: paymentMethodEnum("method"),
 		// The cheque or transfer number, to match the bank statement.
 		reference: text("reference"),
 		kind: b2bPaymentKindEnum("kind").notNull().default("payment"),

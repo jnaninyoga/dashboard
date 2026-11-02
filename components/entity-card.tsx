@@ -90,7 +90,7 @@ export function Figure({
 	label: string;
 	value: React.ReactNode;
 	unit?: string;
-	tone?: "low" | "muted";
+	tone?: "low" | "muted" | "alert";
 }) {
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
@@ -100,7 +100,9 @@ export function Figure({
 					className={cn(
 						tone === "muted"
 							? "text-muted-foreground text-base font-medium"
-							: "text-2xl leading-none font-semibold tabular-nums",
+							: tone === "alert"
+								? "text-destructive text-base font-semibold"
+								: "text-2xl leading-none font-semibold tabular-nums",
 						tone === "low" && "text-warning",
 					)}
 				>

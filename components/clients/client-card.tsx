@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { EntityCard, EntityCardFigures, EntityCardHeader, Figure } from "@/components/entity-card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
-import { creditsSummary, lastVisitLabel } from "@/lib/domain/clients/card";
+import { creditsSummary, lastVisitLabel, shortDay } from "@/lib/domain/clients/card";
 import { type Client as BaseClient, type HealthLog } from "@/lib/types";
 import { whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
@@ -17,7 +17,7 @@ import { HealthAlertButton } from "./health-alert-button";
 
 /** What the card reads: the grid's and the list's client shapes both provide it. */
 type Client = BaseClient & {
-	wallets?: { remainingCredits: number; product?: { credits: number | null } | null }[];
+	wallets?: { status: string; remainingCredits: number; expiresOn?: string | null; product?: { credits: number | null } | null }[];
 	healthLogs?: HealthLog[];
 	checkedInToday?: boolean;
 	activeSessionName?: string;
@@ -62,7 +62,7 @@ export function ClientAvatar({ client, className }: { client: Client; className?
  * actions close the card. Tapping anywhere else opens the profile.
  */
 export function ClientCard({ client }: { client: Client }) {
-	const credits = creditsSummary(client.wallets?.[0]);
+	const credits = creditsSummary(client.wallets);
 	const visits = client.visitsThisMonth ?? 0;
 	// The list only loads active alerts.
 	const alerts = client.healthLogs ?? [];
@@ -113,6 +113,8 @@ export function ClientCard({ client }: { client: Client }) {
 				>
 					{credits.count === null ? (
 						<Figure label="Credits left" value="No card" tone="muted" />
+					) : credits.tone === "expired" ? (
+						<Figure label="Card" value="Expired" unit={`on ${shortDay(credits.expiredOn!)}`} tone="alert" />
 					) : (
 						<Figure
 							label="Credits left"

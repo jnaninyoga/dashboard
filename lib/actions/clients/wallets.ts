@@ -2,82 +2,65 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
+import { saleRow } from "@/lib/domain/clients/membership-sale";
 import { logServerError } from "@/lib/errors/server";
+import { parseAmountInput } from "@/lib/utils/currency";
+import { fromStudioTime, studioDateString } from "@/lib/utils/time";
+import { sellMembershipSchema } from "@/lib/validators/membership-sale";
 import { db } from "@/services/database";
-import { clients, clientWallets, products } from "@/services/database/schema";
+import { clients, clientWallets, discounts, products } from "@/services/database/schema";
 import { createClient } from "@/services/supabase/server";
 
 import { and, eq } from "drizzle-orm";
 
-export async function assignProductToClient(clientId: string, productId: string) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return { error: "Not authenticated" };
-	}
-
+/**
+ * Sells a membership to a client: her price, the discount she gives (the
+ * client's by default), the price she settles on, how she was paid. The
+ * card gets the membership's credits and its last day.
+ */
+export async function sellMembershipAction(
+	clientId: string,
+	input: unknown,
+): Promise<{ success?: true; error?: string; ref?: string }> {
+	await requireUser();
 	try {
-		// 1. Fetch Client with Category Relation
-		const clientData = await db.query.clients.findFirst({
-			where: eq(clients.id, clientId),
-			with: {
-				discount: true,
-			},
-		});
+		const parsed = sellMembershipSchema.safeParse(input);
+		if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the sale" };
+		const sale = parsed.data;
+		const today = studioDateString();
+		if (sale.soldOn > today) return { error: "The sale day can't be in the future." };
 
-		if (!clientData) {
-			return { error: "Client not found" };
-		}
-        
-        // Use the category relation (if exists) for discounts
-        const clientCategory = clientData.discount;
+		const [client, membership, discount] = await Promise.all([
+			db.query.clients.findFirst({ where: eq(clients.id, clientId), columns: { id: true } }),
+			db.query.products.findFirst({ where: and(eq(products.id, sale.membershipId), eq(products.kind, "membership")) }),
+			sale.discountId ? db.query.discounts.findFirst({ where: eq(discounts.id, sale.discountId) }) : null,
+		]);
+		if (!client) return { error: "Client not found" };
+		if (!membership || membership.isArchived) return { error: "This membership isn't on sale any more." };
+		if (sale.discountId && !discount) return { error: "This discount doesn't exist any more." };
 
-		// 2. Fetch product details
-		const product = await db.query.products.findFirst({
-			where: and(eq(products.id, productId), eq(products.kind, "membership")),
-		});
+		await db.insert(clientWallets).values(
+			saleRow({
+				clientId,
+				membership,
+				discount: discount ?? null,
+				price: Math.round(parseAmountInput(sale.price) * 100) / 100,
+				soldOn: sale.soldOn,
+				// Today's sale keeps its time; an earlier one, midday that day.
+				soldAt: sale.soldOn === today ? new Date() : fromStudioTime(sale.soldOn, "12:00"),
+				paymentMethod: sale.paymentMethod,
+				paymentReference: sale.paymentReference,
+				physicalCardRef: sale.physicalCardRef,
+			}),
+		);
 
-		if (!product) {
-			return { error: "Product not found" };
-		}
-
-		// 3. Calculate Final Price
-		let finalPrice = parseFloat(product.price);
-
-		// Apply Dynamic Category Discount
-		if (clientCategory && !Array.isArray(clientCategory)) {
-
-			const discountValue = parseFloat(clientCategory.discountValue || "0");
-			if (discountValue > 0) {
-				if (clientCategory.discountType === "percentage") {
-					const discountAmount = (finalPrice * discountValue) / 100;
-					finalPrice -= discountAmount;
-				} else {
-					// Fixed amount discount
-					finalPrice = Math.max(0, finalPrice - discountValue);
-				}
-			}
-		}
-
-		// 4. Insert into client_wallets
-		await db.insert(clientWallets).values({
-			clientId,
-			productId,
-			remainingCredits: product.credits ?? 0,
-			status: "active",
-            amountPaid: finalPrice.toFixed(2),
-			activatedAt: new Date(),
-		});
-
-		// 5. Revalidate
 		revalidatePath(`/clients/${clientId}`);
-        
+		revalidatePath("/clients");
+		revalidatePath("/price-list/memberships");
 		return { success: true };
 	} catch (error) {
-		return { error: "Failed to assign product", ref: logServerError("Error assigning product", error) };
+		return { error: "Couldn't record the sale", ref: logServerError("Error selling a membership", error) };
 	}
 }
 

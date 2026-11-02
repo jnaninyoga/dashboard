@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
+import { priceAfterDiscount, saleRow } from "@/lib/domain/clients/membership-sale";
 import { logServerError } from "@/lib/errors/server";
 import { Gender, type NewHealthLog } from "@/lib/types";
 import { studioDateString } from "@/lib/utils/time";
-import { clientSchema } from "@/lib/validators";
+import { clientSchema, PAYMENT_METHODS, type PaymentMethod } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
 	clients,
@@ -106,6 +107,11 @@ export async function createClientAction(
 	} = parsed.data;
 
 	const initialProductId = formData.get("initialProductId") as string | null;
+	// How she was paid for the first membership (cash unless she said otherwise).
+	const paidBy = formData.get("initialPaymentMethod");
+	const initialPaymentMethod = (PAYMENT_METHODS as readonly string[]).includes(String(paidBy))
+		? (paidBy as PaymentMethod)
+		: "cash";
 
 	try {
 		let clientWithId: { id: string }[] = [];
@@ -182,20 +188,28 @@ export async function createClientAction(
 				await tx.insert(healthLogs).values(logsToInsert);
 			}
 
+			// Her first membership is a sale like any other: with her
+			// discount (it used to be charged at the full price), and paid.
 			if (initialProductId) {
 				const product = await tx.query.products.findFirst({
 					where: and(eq(products.id, initialProductId), eq(products.kind, "membership")),
 				});
+				const discount = discountId
+					? await tx.query.discounts.findFirst({ where: eq(discounts.id, discountId as string) })
+					: null;
 
-				if (product) {
-					await tx.insert(clientWallets).values({
-						clientId: newClientId,
-						productId: initialProductId,
-						remainingCredits: product.credits ?? 0,
-						status: "active",
-						amountPaid: product.price,
-						activatedAt: new Date(),
-					});
+				if (product && !product.isArchived) {
+					await tx.insert(clientWallets).values(
+						saleRow({
+							clientId: newClientId,
+							membership: product,
+							discount: discount ?? null,
+							price: priceAfterDiscount(product.price, discount ?? null).price,
+							soldOn: studioDateString(),
+							soldAt: new Date(),
+							paymentMethod: initialPaymentMethod,
+						}),
+					);
 				}
 			}
 		});

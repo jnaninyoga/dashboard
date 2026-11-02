@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { type LedgerEntry, type LedgerInvoice, paymentLedger } from "@/lib/domain/billing/payment-ledger";
 import { documentAmounts } from "@/lib/domain/billing/payments";
 import { formatMoney } from "@/lib/utils/currency";
@@ -19,7 +20,6 @@ import {
 } from "iconsax-reactjs";
 
 import { DocumentSection } from "./document-section";
-import { PAYMENT_METHOD } from "./payment-methods";
 import { ReversePaymentButton } from "./reverse-payment-button";
 
 const day = (date: string | Date) =>

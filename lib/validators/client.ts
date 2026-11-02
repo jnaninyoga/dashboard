@@ -9,6 +9,8 @@ import { clients } from "@/services/database/schema";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+import { PAYMENT_METHODS } from "./document";
+
 // --- CLIENT SCHEMA ---
 export const clientSchema = createInsertSchema(clients, {
 	email: z
@@ -81,6 +83,8 @@ export const clientSchema = createInsertSchema(clients, {
 			)
 			.optional(),
 		initialProductId: z.string().optional(),
+		// How the first membership was paid.
+		initialPaymentMethod: z.enum(PAYMENT_METHODS).optional(),
 	});
 
 export type ClientFormValues = z.infer<typeof clientSchema>;

@@ -3,20 +3,39 @@ import { describe, expect, it } from "vitest";
 import { alertChipLabel, alertsSummary, creditsSummary, lastVisitLabel, sortAlerts } from "./card";
 
 describe("creditsSummary", () => {
+	const today = "2026-11-02";
+	const card = (remainingCredits: number, expiresOn: string | null = null, credits: number | null = 10) => ({
+		status: "active",
+		remainingCredits,
+		expiresOn,
+		product: credits === null ? null : { credits },
+	});
+
 	it("gives the credits left and the card's total", () => {
-		expect(creditsSummary({ remainingCredits: 6, product: { credits: 10 } })).toEqual({ count: 6, total: 10, tone: "ok" });
-		expect(creditsSummary({ remainingCredits: 6, product: null })).toEqual({ count: 6, total: null, tone: "ok" });
+		expect(creditsSummary([card(6)], today)).toEqual({ count: 6, total: 10, tone: "ok" });
+		expect(creditsSummary([card(6, null, null)], today)).toEqual({ count: 6, total: null, tone: "ok" });
+	});
+
+	it("adds up the cards she can use, without a total for several", () => {
+		expect(creditsSummary([card(6), card(4, "2026-12-01")], today)).toEqual({ count: 10, total: null, tone: "ok" });
 	});
 
 	it("warns when two or fewer are left, or none", () => {
-		expect(creditsSummary({ remainingCredits: 2, product: { credits: 10 } }).tone).toBe("low");
-		expect(creditsSummary({ remainingCredits: 3, product: { credits: 10 } }).tone).toBe("ok");
-		expect(creditsSummary({ remainingCredits: 0, product: { credits: 10 } })).toEqual({ count: 0, total: 10, tone: "low" });
+		expect(creditsSummary([card(2)], today).tone).toBe("low");
+		expect(creditsSummary([card(3)], today).tone).toBe("ok");
+		expect(creditsSummary([card(0)], today)).toEqual({ count: 0, total: 10, tone: "low" });
 	});
 
-	it("says so when there is no active card", () => {
-		expect(creditsSummary(undefined)).toEqual({ count: null, total: null, tone: "none" });
-		expect(creditsSummary(null)).toEqual({ count: null, total: null, tone: "none" });
+	it("leaves out an expired card's credits, and says it expired when nothing else can pay", () => {
+		expect(creditsSummary([card(4, "2026-11-01")], today)).toEqual({ count: 0, total: null, tone: "expired", expiredOn: "2026-11-01" });
+		expect(creditsSummary([card(4, "2026-11-01"), card(3)], today)).toEqual({ count: 3, total: 10, tone: "ok" });
+		// The last day is still a day she can come.
+		expect(creditsSummary([card(4, today)], today).tone).toBe("ok");
+	});
+
+	it("says so when there is no card", () => {
+		expect(creditsSummary(undefined, today)).toEqual({ count: null, total: null, tone: "none" });
+		expect(creditsSummary([], today)).toEqual({ count: null, total: null, tone: "none" });
 	});
 });
 

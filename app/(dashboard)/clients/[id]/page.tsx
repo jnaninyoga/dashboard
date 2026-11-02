@@ -11,6 +11,10 @@ import { Separator } from "@/components/ui/separator";
 import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
 import { getClientByIdAction } from "@/lib/actions/clients/queries";
 import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
+import { getDiscounts } from "@/lib/actions/settings";
+import { creditsSummary } from "@/lib/domain/clients/card";
+import { cardForCheckIn } from "@/lib/domain/clients/membership-sale";
+import { studioDateString } from "@/lib/utils/time";
 
 import {
 	Briefcase,
@@ -35,25 +39,25 @@ export async function generateMetadata(props: { params: Params }): Promise<Metad
 	};
 }
 
-export default async function ClientProfilePage(props: { params: Params }) {
+export default async function ClientProfilePage(props: { params: Params; searchParams: Promise<{ sell?: string }> }) {
 	const params = await props.params;
 	const { id } = params;
+	// From a refused check-in: straight to selling a membership.
+	const { sell } = await props.searchParams;
 
 	return (
 		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-			<ProfileContent id={id} />
+			<ProfileContent id={id} sell={sell === "1"} />
 		</div>
 	);
 }
 
-async function ProfileContent({ id }: { id: string }) {
+async function ProfileContent({ id, sell }: { id: string; sell: boolean }) {
 	// Parallel data fetching
-	const clientPromise = getClientByIdAction(id);
-	const productsPromise = getMembershipProductsAction();
-
-	const [{ client, error }, { products }] = await Promise.all([
-		clientPromise,
-		productsPromise,
+	const [{ client, error }, { products }, discounts] = await Promise.all([
+		getClientByIdAction(id),
+		getMembershipProductsAction(),
+		getDiscounts(),
 	]);
 
 	if (error || !client) {
@@ -72,14 +76,12 @@ async function ProfileContent({ id }: { id: string }) {
 		}
 	}
 
-    // Calculate Header Stats
+    // What they can use today: an expired card's credits don't count, and
+    // the card named is the one a check-in takes its credit from.
     const wallets = client.wallets || [];
-    const totalCredits = wallets
-        .filter((w) => w.status === "active")
-        .reduce((sum, w) => sum + w.remainingCredits, 0);
-    
-    const activeWallet = wallets.find(w => w.status === 'active'); // Just take first active for now
-    const activeProductName = activeWallet?.product?.name;
+    const today = studioDateString();
+    const totalCredits = creditsSummary(wallets, today).count ?? 0;
+    const activeProductName = cardForCheckIn(wallets, today)?.product?.name;
 
 	return (
 		<>
@@ -145,10 +147,13 @@ async function ProfileContent({ id }: { id: string }) {
 			<Separator />
 
 			{/* Tabs Layout */}
-			<ClientProfileTabs 
-                client={client} 
-                products={products || []} 
-            />
+			<ClientProfileTabs
+				client={client}
+				products={products || []}
+				// Her discounts on offer, and the client's own even if she stopped offering it.
+				discounts={discounts.filter((d) => !d.isArchived || d.id === client.discountId)}
+				sell={sell}
+			/>
 		</>
 	);
 }
