@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { NavUser } from "@/components/nav-user";
 import { QuickActionsMenu } from "@/components/quick-actions";
-import { SidebarScene } from "@/components/sidebar-scene";
+import { SidebarPattern } from "@/components/sidebar-pattern";
 import {
 	Sidebar,
 	SidebarContent,
@@ -84,23 +84,23 @@ export function AppSidebar({
 
 	return (
 		<Sidebar collapsible="icon" {...props} className="border-r">
-			<SidebarHeader className="gap-3 p-3 group-data-[collapsible=icon]:p-2">
+			<SidebarPattern />
+			<SidebarHeader className="gap-4 p-3 pt-4 group-data-[collapsible=icon]:p-2">
 				<Link
 					href="/"
 					onClick={closeOnMobile}
-					className="focus-visible:ring-sidebar-ring relative flex h-32 flex-col overflow-hidden rounded-2xl outline-none group-data-[collapsible=icon]:h-auto group-data-[collapsible=icon]:rounded-lg focus-visible:ring-2"
+					className="focus-visible:ring-sidebar-ring flex rounded-2xl outline-none focus-visible:ring-2"
 				>
-					<SidebarScene className="group-data-[collapsible=icon]:hidden" />
-					<div className="relative flex items-center gap-2.5 p-3 group-data-[collapsible=icon]:p-0">
-						{/* The pale lotus sits on its own tile so the dawn sky can't swallow it. */}
-						<span className="bg-card/90 ring-card/60 flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 backdrop-blur-sm group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:ring-0">
+					<div className="flex items-center gap-3 px-1 group-data-[collapsible=icon]:p-0">
+						{/* The pale lotus sits on its own tile so the pattern can't swallow it. */}
+						<span className="bg-card ring-sidebar-border/70 flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:ring-0">
 							<Image src="/logo.png" alt="JnaninYoga" width={40} height={40} className="size-10 object-contain group-data-[collapsible=icon]:size-8" />
 						</span>
 						<div className="grid min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
-							<span className="font-heading text-foreground truncate text-2xl font-bold tracking-tight uppercase">
+							<span className="font-heading text-sidebar-foreground truncate text-2xl font-bold tracking-tight uppercase">
 								Jnanin Yoga
 							</span>
-							<span className="font-heading text-foreground/70 truncate text-xs font-semibold tracking-widest uppercase">
+							<span className="font-heading text-sidebar-foreground/65 truncate text-xs font-semibold tracking-widest uppercase">
 								Command Center
 							</span>
 						</div>

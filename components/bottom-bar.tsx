@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { QuickActionsMenu } from "@/components/quick-actions";
+import { PatternLattice } from "@/components/sidebar-pattern";
 import { bottomBar, isCurrent, type NavItem } from "@/lib/config/dashboard";
 import { cn } from "@/lib/utils/ui";
 
@@ -22,7 +23,7 @@ function BarLink({ item }: { item: NavItem }) {
 			<span
 				className={cn(
 					"group-focus-visible:ring-ring flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200 group-focus-visible:ring-2",
-					current ? "bg-secondary text-primary" : "text-muted-foreground group-active:bg-secondary/60",
+					current ? "bg-sidebar-accent text-sidebar-primary" : "text-sidebar-foreground/60 group-active:bg-sidebar-accent/60",
 				)}
 			>
 				<item.icon
@@ -37,7 +38,7 @@ function BarLink({ item }: { item: NavItem }) {
 			<span
 				className={cn(
 					"text-xs leading-none",
-					current ? "text-secondary-foreground font-semibold" : "text-muted-foreground font-medium",
+					current ? "text-sidebar-accent-foreground font-semibold" : "text-sidebar-foreground/60 font-medium",
 				)}
 			>
 				{item.title}
@@ -49,14 +50,16 @@ function BarLink({ item }: { item: NavItem }) {
 /**
  * The phone's main navigation: her daily work in reach of the thumb, with
  * "New" raised in the middle. Clear of the home indicator; desktop has the
- * sidebar instead. The page leaves room for it (--bottom-bar).
+ * sidebar instead. It stands on the sidebar's ground (its mist and
+ * pattern), apart from the page. The page leaves room for it (--bottom-bar).
  */
 export function BottomBar() {
 	return (
 		<nav
 			aria-label="Main"
-			className="bg-card/90 border-border/60 fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_color-mix(in_oklab,var(--shadow-ink)_6%,transparent)] backdrop-blur-xl md:hidden"
+			className="bg-sidebar/95 border-sidebar-border fixed inset-x-0 bottom-0 isolate z-40 border-t pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_30px_color-mix(in_oklab,var(--shadow-ink)_6%,transparent)] backdrop-blur-xl md:hidden"
 		>
+			<PatternLattice id="lattice-bottom-bar" className="text-sidebar-primary -z-10 opacity-[0.12]" />
 			<div className="mx-auto grid h-16 max-w-md grid-cols-5 items-center px-2">
 				{bottomBar.start.map((item) => (
 					<BarLink key={item.url} item={item} />
@@ -66,7 +69,7 @@ export function BottomBar() {
 						<button
 							type="button"
 							aria-label="New session, client, card or quotation"
-							className="bg-primary text-primary-foreground zen-glow-teal ring-card focus-visible:ring-ring -mt-7 flex size-14 items-center justify-center rounded-full ring-4 outline-none active:scale-95 motion-safe:transition-transform data-[state=open]:[&>svg]:rotate-45"
+							className="bg-primary text-primary-foreground zen-glow-teal ring-sidebar focus-visible:ring-ring -mt-7 flex size-14 items-center justify-center rounded-full ring-4 outline-none active:scale-95 motion-safe:transition-transform data-[state=open]:[&>svg]:rotate-45"
 						>
 							<Add size={28} className="motion-safe:transition-transform motion-safe:duration-200" />
 						</button>
