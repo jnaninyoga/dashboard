@@ -8,9 +8,10 @@ import unusedImports from "eslint-plugin-unused-imports";
 const eslintConfig = defineConfig([
 	...nextVitals,
 	...nextTs,
-	...tailwindcss.configs["flat/recommended"],
+	tailwindcss.configs.recommended,
 	{
 		plugins: {
+			tailwindcss,
 			"unused-imports": unusedImports,
 			"simple-import-sort": simpleImportSort,
 		},
@@ -57,6 +58,10 @@ const eslintConfig = defineConfig([
 			"tailwindcss/enforces-negative-arbitrary-values": "error",
 			"tailwindcss/enforces-shorthand": "error",
 			"tailwindcss/no-custom-classname": "off",
+			// Its autofix turns opacity-[0.12] and scale-[0.98] into classes
+			// Tailwind doesn't generate; enforces-canonical-classname covers the
+			// rewrites that are correct.
+			"tailwindcss/no-unnecessary-arbitrary-value": "off",
 			// Vercel Best Practices: Prefer ternary over && for conditional rendering
 			"no-restricted-syntax": [
 				"error",
@@ -68,9 +73,8 @@ const eslintConfig = defineConfig([
 		},
 		settings: {
 			tailwindcss: {
-				callees: ["cn", "cva"],
-				cssFiles: ["styles/globals.css"],
-				config: {},
+				functions: ["cn", "cva"],
+				cssConfigPath: "app/globals.css",
 			},
 		},
 	},
