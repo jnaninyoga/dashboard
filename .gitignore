@@ -43,3 +43,6 @@ next-env.d.ts
 
 # AXON Ai Codebase Indexing
 .axon/
+
+# Playwright MCP output (screenshots, console logs)
+.playwright-mcp/

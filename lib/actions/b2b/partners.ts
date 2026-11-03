@@ -2,19 +2,27 @@
 
 import { revalidatePath } from "next/cache";
 
-import { B2BDocumentStatus, B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
+import { requireUser } from "@/lib/auth/require-user";
+import { type DocumentStatusFilter, OVERDUE_FILTER, OWED_FILTER, PAYABLE_INVOICE_STATUSES } from "@/lib/domain/billing/payments";
+import { logServerError } from "@/lib/errors/server";
+import { B2BDocumentType, type PartnerWithRelations } from "@/lib/types/b2b";
+import { studioDateString } from "@/lib/utils/time";
 import { contactSchema, partnerSchema } from "@/lib/validators";
 import { db } from "@/services/database";
 import { b2bContacts, b2bDocuments, b2bPartners } from "@/services/database/schema";
-import { syncPartnerContactToGoogle } from "@/services/google";
+import { syncPartnerContactToGoogle, updatePartnerContactInGoogle } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, count, eq, exists, ilike, or } from "drizzle-orm";
+import { and, count, eq, exists, ilike, inArray, isNull, lt, ne, or } from "drizzle-orm";
 
 export type ActionState = {
 	error?: string;
+	/** Code the failure was logged under; shown in the error toast. */
+	ref?: string;
 	success?: boolean;
+	/** Saved, but a side effect (e.g. Google sync) didn't go through. */
+	warning?: string;
 	issues?: Record<string, string[]>;
 };
 
@@ -22,6 +30,7 @@ export async function createPartnerAction(
 	prevState: ActionState | null,
 	formData: FormData
 ): Promise<ActionState> {
+	await requireUser();
 	const rawData = {
 		companyName: formData.get("companyName"),
 		address: formData.get("address") || null,
@@ -43,8 +52,7 @@ export async function createPartnerAction(
 		revalidatePath("/b2b/partners");
 		return { success: true };
 	} catch (error) {
-		console.error("Error creating partner:", error);
-		return { error: "Failed to create partner" };
+		return { error: "Failed to create partner", ref: logServerError("Error creating partner", error) };
 	}
 }
 
@@ -111,23 +119,118 @@ export async function createContactAction(
 			console.error("Google Sync failed for B2B contact:", e);
 		}
 
-		// 3. Insert into database
-		await db.insert(b2bContacts).values({
-			partnerId,
-			fullName,
-			role,
-			email,
-			phone,
-			isPrimary,
-			googleContactResourceName: googleResourceName,
-			googleEtag: googleEtag,
+		// 3. Insert into database. One primary contact per partner: a new
+		// primary demotes the previous one.
+		await db.transaction(async (tx) => {
+			if (isPrimary) {
+				await tx
+					.update(b2bContacts)
+					.set({ isPrimary: false, updatedAt: new Date() })
+					.where(eq(b2bContacts.partnerId, partnerId));
+			}
+			await tx.insert(b2bContacts).values({
+				partnerId,
+				fullName,
+				role,
+				email,
+				phone,
+				isPrimary,
+				googleContactResourceName: googleResourceName,
+				googleEtag: googleEtag,
+			});
 		});
 
 		revalidatePath(`/b2b/partners/${partnerId}`);
 		return { success: true };
 	} catch (error) {
-		console.error("Error creating B2B contact:", error);
-		return { error: "Failed to create contact" };
+		return { error: "Failed to create contact", ref: logServerError("Error creating B2B contact", error) };
+	}
+}
+
+export async function updateContactAction(
+	id: string,
+	prevState: ActionState | null,
+	formData: FormData,
+): Promise<ActionState> {
+	const validated = contactSchema.safeParse({
+		partnerId: formData.get("partnerId"),
+		fullName: formData.get("fullName"),
+		role: formData.get("role") || null,
+		email: formData.get("email") || null,
+		phone: formData.get("phone") || null,
+		isPrimary: formData.get("isPrimary") === "on",
+	});
+	if (!validated.success) {
+		return {
+			error: "Validation failed",
+			issues: validated.error.flatten().fieldErrors,
+		};
+	}
+
+	const supabase = await createClient();
+	const { data: { user } } = await supabase.auth.getUser();
+	if (!user) {
+		return { error: "Not authenticated" };
+	}
+
+	try {
+		const { fullName, role, email, phone, isPrimary } = validated.data;
+		const existing = await db.query.b2bContacts.findFirst({
+			where: eq(b2bContacts.id, id),
+			with: { partner: true },
+		});
+		if (!existing) {
+			return { error: "Contact not found" };
+		}
+
+		await db.transaction(async (tx) => {
+			// One primary contact per partner: choosing this one demotes the rest.
+			if (isPrimary) {
+				await tx
+					.update(b2bContacts)
+					.set({ isPrimary: false, updatedAt: new Date() })
+					.where(
+						and(
+							eq(b2bContacts.partnerId, existing.partnerId),
+							ne(b2bContacts.id, id),
+						),
+					);
+			}
+			await tx
+				.update(b2bContacts)
+				.set({ fullName, role, email, phone, isPrimary, updatedAt: new Date() })
+				.where(eq(b2bContacts.id, id));
+		});
+
+		revalidatePath(`/b2b/partners/${existing.partnerId}`);
+
+		// Keep the Google contact (what WhatsApp shows) in step. The edit is
+		// saved either way; a failed sync is reported, not fatal.
+		if (existing.googleContactResourceName) {
+			try {
+				const accessToken = await getValidAccessToken(user.id);
+				const etag = await updatePartnerContactInGoogle(
+					accessToken,
+					existing.googleContactResourceName,
+					{ fullName, role, email, phone },
+					existing.partner.companyName,
+				);
+				await db
+					.update(b2bContacts)
+					.set({ googleEtag: etag })
+					.where(eq(b2bContacts.id, id));
+			} catch (error) {
+				logServerError("Google sync failed for B2B contact update", error);
+				return {
+					success: true,
+					warning: "Saved, but Google Contacts couldn't be updated.",
+				};
+			}
+		}
+
+		return { success: true };
+	} catch (error) {
+		return { error: "Failed to update contact", ref: logServerError("Error updating B2B contact", error) };
 	}
 }
 
@@ -136,6 +239,7 @@ export async function updatePartnerAction(
 	prevState: ActionState | null,
 	formData: FormData,
 ): Promise<ActionState> {
+	await requireUser();
 	const rawData = {
 		companyName: formData.get("companyName"),
 		address: formData.get("address") || null,
@@ -162,12 +266,12 @@ export async function updatePartnerAction(
 		revalidatePath("/b2b/documents");
 		return { success: true };
 	} catch (error) {
-		console.error("Error updating partner:", error);
-		return { error: "Failed to update partner" };
+		return { error: "Failed to update partner", ref: logServerError("Error updating partner", error) };
 	}
 }
 
 export async function deletePartnerAction(id: string): Promise<ActionState> {
+	await requireUser();
 	try {
 		// Check for associated documents (prevent deleting partner if they have quotes/invoices)
 		const docsCount = await db
@@ -176,8 +280,10 @@ export async function deletePartnerAction(id: string): Promise<ActionState> {
 			.where(eq(b2bDocuments.partnerId, id));
 
 		if (docsCount[0].value > 0) {
-			return { 
-				error: "Cannot delete partner. They have associated documents (Quotes/Invoices). Delete those first." 
+			// Issued documents can only be archived, never deleted (audit trail),
+			// so there is nothing for the operator to clear first.
+			return {
+				error: "This partner has quotes or invoices, so it can't be deleted.",
 			};
 		}
 
@@ -186,16 +292,16 @@ export async function deletePartnerAction(id: string): Promise<ActionState> {
 		revalidatePath("/b2b/partners");
 		return { success: true };
 	} catch (error) {
-		console.error("Error deleting partner:", error);
-		return { error: "Failed to delete partner" };
+		return { error: "Failed to delete partner", ref: logServerError("Error deleting partner", error) };
 	}
 }
 
 export async function getPartnersAction(filters?: {
 	query?: string;
 	docType?: B2BDocumentType | "all";
-	docStatus?: B2BDocumentStatus | "all";
-}): Promise<{ partners?: PartnerWithRelations[]; error?: string }> {
+	docStatus?: DocumentStatusFilter;
+}): Promise<{ partners?: PartnerWithRelations[]; error?: string; ref?: string }> {
+	await requireUser();
 
 	const { query, docType, docStatus } = filters || {};
 
@@ -250,7 +356,14 @@ export async function getPartnersAction(filters?: {
 								.where(
 									and(
 										eq(b2bDocuments.partnerId, partners.id),
-										eq(b2bDocuments.status, docStatus)
+										docStatus === OWED_FILTER || docStatus === OVERDUE_FILTER
+											? and(
+													eq(b2bDocuments.type, "invoice"),
+													inArray(b2bDocuments.status, [...PAYABLE_INVOICE_STATUSES]),
+													isNull(b2bDocuments.archivedAt),
+													docStatus === OVERDUE_FILTER ? lt(b2bDocuments.dueDate, studioDateString()) : undefined,
+												)
+											: eq(b2bDocuments.status, docStatus),
 									)
 								)
 						)
@@ -268,12 +381,12 @@ export async function getPartnersAction(filters?: {
 
 		return { partners };
 	} catch (error) {
-		console.error("Error fetching partners:", error);
-		return { error: "Failed to fetch partners" };
+		return { error: "Failed to fetch partners", ref: logServerError("Error fetching partners", error) };
 	}
 }
 
 export async function getPartnerByIdAction(id: string) {
+	await requireUser();
 	try {
 		const partner = (await db.query.b2bPartners.findFirst({
 			where: eq(b2bPartners.id, id),
@@ -292,12 +405,12 @@ export async function getPartnerByIdAction(id: string) {
 		return { partner };
 
 	} catch (error) {
-		console.error("Error fetching partner:", error);
-		return { error: "Failed to fetch partner" };
+		return { error: "Failed to fetch partner", ref: logServerError("Error fetching partner", error) };
 	}
 }
 
 export async function deleteContactAction(id: string): Promise<ActionState> {
+	await requireUser();
 	try {
 		const contact = await db.query.b2bContacts.findFirst({
 			where: eq(b2bContacts.id, id),
@@ -307,12 +420,27 @@ export async function deleteContactAction(id: string): Promise<ActionState> {
 			return { error: "Contact not found" };
 		}
 
-		await db.delete(b2bContacts).where(eq(b2bContacts.id, id));
+		// Issued documents keep who they were addressed to; drafts just lose
+		// the contact (they'll be addressed to the company).
+		const named = await db
+			.select({ id: b2bDocuments.id, status: b2bDocuments.status })
+			.from(b2bDocuments)
+			.where(eq(b2bDocuments.contactId, id));
+		const issued = named.filter((doc) => doc.status !== "draft").length;
+		if (issued) {
+			return {
+				error: `${contact.fullName} is on ${issued} issued ${issued === 1 ? "document" : "documents"}, so they stay on record. Edit their details instead.`,
+			};
+		}
+
+		await db.transaction(async (tx) => {
+			await tx.update(b2bDocuments).set({ contactId: null }).where(eq(b2bDocuments.contactId, id));
+			await tx.delete(b2bContacts).where(eq(b2bContacts.id, id));
+		});
 
 		revalidatePath(`/b2b/partners/${contact.partnerId}`);
 		return { success: true };
 	} catch (error) {
-		console.error("Error deleting contact:", error);
-		return { error: "Failed to delete contact" };
+		return { error: "Failed to delete contact", ref: logServerError("Error deleting contact", error) };
 	}
 }

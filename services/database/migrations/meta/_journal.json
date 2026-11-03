@@ -57,6 +57,55 @@
       "when": 1793186466328,
       "tag": "0007_add_unpaid_document_status",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793354800744,
+      "tag": "0008_session_record",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793363238016,
+      "tag": "0009_b2b_erp_integrity",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793370295409,
+      "tag": "0010_refunds_the_right_way",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793372671645,
+      "tag": "0011_price_list_names",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793615842478,
+      "tag": "0012_product_catalog",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793617406569,
+      "tag": "0013_card_sales",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793625207776,
+      "tag": "0014_cancel_card_sale",
+      "breakpoints": true
     }
   ]
 }

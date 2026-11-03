@@ -1,9 +1,164 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* ─── Brand Colors (Extracted from Jnanin Yoga logo) ─── */
-/* Primary: Teal (#8CC9D2) — from "JNANIN" text */
-/* Secondary: Blush/Rose (#FCD0C7) — from lotus petals */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ─── Palette ───
+   From the JnaninYoga logo: teal (#8CC9D2, "JNANIN") and blush (#FCD0C7, the
+   lotus), on warm stone. shadcn's layout: the values live here, in OKLCH, and
+   @theme inline maps them to Tailwind's colours.
+   - Every neutral shares one warm hue (65), so surfaces never drift grey.
+   - Every text colour clears WCAG AA (4.5:1) on the page, on cards and on its
+     own 10% tint, in both modes: "bg-success/10 text-success" is always safe.
+     The deep blush (secondary-3) is for icons and large type (3:1).
+   - Status colours sit at the brand's calm chroma; in dark mode they turn
+     light and their -foreground turns to ink, as primary does. */
+:root {
+	color-scheme: light;
+
+	--background: oklch(0.969 0.007 65);
+	--foreground: oklch(0.216 0.006 56);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.216 0.006 56);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.216 0.006 56);
+
+	/* Deepened logo teal; 4.6:1 on the page, 5.2:1 under white text. */
+	--primary: oklch(0.525 0.087 211);
+	--primary-foreground: oklch(1 0 0);
+
+	/* Blush, from the lotus: surface, soft fill, deep (icons, large type). */
+	--secondary: oklch(0.949 0.022 24.4);
+	--secondary-foreground: oklch(0.419 0.105 23.5);
+	--secondary-2: oklch(0.854 0.061 23.4);
+	--secondary-3: oklch(0.62 0.11 22);
+
+	--muted: oklch(0.934 0.009 65);
+	--muted-foreground: oklch(0.51 0.012 58);
+
+	--accent: oklch(0.914 0.031 209);
+	--accent-foreground: oklch(0.417 0.062 212);
+
+	--destructive: oklch(0.545 0.17 25);
+	--destructive-foreground: oklch(1 0 0);
+	--success: oklch(0.51 0.105 155);
+	--success-foreground: oklch(1 0 0);
+	--warning: oklch(0.54 0.125 60);
+	--warning-foreground: oklch(1 0 0);
+	--info: oklch(0.52 0.12 250);
+	--info-foreground: oklch(1 0 0);
+
+	--border: oklch(0.885 0.01 65);
+	--input: oklch(0.918 0.009 65);
+	--ring: oklch(0.525 0.087 211);
+
+	/* The navigation's own ground: a cool aqua mist, apart from the warm
+	   page, where the blush of the current page stands out. */
+	--sidebar: oklch(0.974 0.007 200);
+	--sidebar-foreground: oklch(0.226 0.02 215);
+	--sidebar-primary: oklch(0.525 0.087 211);
+	--sidebar-primary-foreground: oklch(1 0 0);
+	--sidebar-accent: oklch(0.928 0.032 22);
+	--sidebar-accent-foreground: oklch(0.419 0.105 23.5);
+	--sidebar-border: oklch(0.895 0.011 202);
+	--sidebar-ring: oklch(0.525 0.087 211);
+
+	/* Shadows are warm ink on light surfaces, plain black on dark ones. */
+	--shadow-ink: oklch(0.216 0.006 56);
+
+	/* The phone's bottom bar (components/bottom-bar.tsx), home indicator
+	   included: pages and sticky footers keep this much room below. */
+	--bottom-bar: calc(4rem + env(safe-area-inset-bottom));
+}
+
+.dark {
+	/* Native controls (scrollbars, date pickers) follow the dark theme too. */
+	color-scheme: dark;
+
+	--background: oklch(0.152 0.004 50);
+	--foreground: oklch(0.966 0.006 60);
+	--card: oklch(0.204 0.008 50);
+	--card-foreground: oklch(0.966 0.006 60);
+	--popover: oklch(0.204 0.008 50);
+	--popover-foreground: oklch(0.966 0.006 60);
+
+	--primary: oklch(0.798 0.064 207.5);
+	--primary-foreground: oklch(0.229 0.03 218);
+
+	--secondary: oklch(0.243 0.031 23);
+	--secondary-foreground: oklch(0.893 0.051 31.6);
+	--secondary-2: oklch(0.31 0.059 22.6);
+	--secondary-3: oklch(0.72 0.09 22);
+
+	--muted: oklch(0.23 0.007 50);
+	--muted-foreground: oklch(0.716 0.009 56);
+
+	--accent: oklch(0.442 0.066 215.5);
+	--accent-foreground: oklch(0.913 0.028 208);
+
+	--destructive: oklch(0.7 0.165 25);
+	--destructive-foreground: oklch(0.2 0.04 25);
+	--success: oklch(0.78 0.11 155);
+	--success-foreground: oklch(0.2 0.04 155);
+	--warning: oklch(0.82 0.12 75);
+	--warning-foreground: oklch(0.22 0.04 60);
+	--info: oklch(0.76 0.1 250);
+	--info-foreground: oklch(0.2 0.04 250);
+
+	--border: oklch(0.285 0.01 60);
+	--input: oklch(0.285 0.01 60);
+	--ring: oklch(0.798 0.064 207.5);
+
+	/* A deep teal night, apart from the warm dark page, as the light one is. */
+	--sidebar: oklch(0.205 0.026 213);
+	--sidebar-foreground: oklch(0.955 0.01 205);
+	--sidebar-primary: oklch(0.798 0.064 207.5);
+	--sidebar-primary-foreground: oklch(0.229 0.03 218);
+	--sidebar-accent: oklch(0.29 0.04 23);
+	--sidebar-accent-foreground: oklch(0.893 0.051 31.6);
+	--sidebar-border: oklch(0.31 0.03 212);
+	--sidebar-ring: oklch(0.798 0.064 207.5);
+
+	--shadow-ink: oklch(0 0 0);
+}
+
+@theme inline {
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-secondary-2: var(--secondary-2);
+	--color-secondary-3: var(--secondary-3);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent: var(--accent);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-destructive-foreground: var(--destructive-foreground);
+	--color-success: var(--success);
+	--color-success-foreground: var(--success-foreground);
+	--color-warning: var(--warning);
+	--color-warning-foreground: var(--warning-foreground);
+	--color-info: var(--info);
+	--color-info-foreground: var(--info-foreground);
+	--color-border: var(--border);
+	--color-input: var(--input);
+	--color-ring: var(--ring);
+	--color-sidebar: var(--sidebar);
+	--color-sidebar-foreground: var(--sidebar-foreground);
+	--color-sidebar-primary: var(--sidebar-primary);
+	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+	--color-sidebar-accent: var(--sidebar-accent);
+	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+	--color-sidebar-border: var(--sidebar-border);
+	--color-sidebar-ring: var(--sidebar-ring);
+}
 
 @theme {
 	/* ─── Typography ─── */
@@ -14,56 +169,6 @@
 		var(--font-philosopher), ui-serif, Georgia, Cambria, "Times New Roman",
 		Times, serif;
 	--font-vibes: var(--font-great-vibes), cursive;
-
-	/* Light Mode — Warm Stone Base */
-	--color-background: #f8f4f0;
-	--color-foreground: #1c1917;
-
-	--color-primary: #1d7e8e; /* Deepened teal — AA 4.7:1 on white */
-	--color-primary-foreground: #ffffff;
-
-	--color-secondary: #fde9e7;
-	--color-secondary-foreground: #7c3130;
-	--color-secondary-2: #f5c0bc;
-	--color-secondary-3: #d67f7d;
-
-	--color-muted: #ede8e3;
-	--color-muted-foreground: #78716c;
-
-	--color-accent: #cce9ee;
-	--color-accent-foreground: #1a5560;
-
-	--color-destructive: #c94040;
-	--color-destructive-foreground: #ffffff;
-
-	--color-success: #10b981;
-	--color-success-foreground: #ffffff;
-
-	--color-info: #3b82f6;
-	--color-info-foreground: #ffffff;
-
-	--color-warning: #f59e0b;
-	--color-warning-foreground: #ffffff;
-
-	--color-border: #ddd8d2;
-	--color-input: #e8e3de;
-	--color-ring: #1d7e8e;
-
-	--color-card: #ffffff;
-	--color-card-foreground: #1c1917;
-
-	--color-popover: #ffffff;
-	--color-popover-foreground: #1c1917;
-
-	/* Sidebar Branding */
-	--color-sidebar: #fdf9f6;
-	--color-sidebar-foreground: #1c1917;
-	--color-sidebar-primary: #1d7e8e;
-	--color-sidebar-primary-foreground: #ffffff;
-	--color-sidebar-accent: #fde9e7;
-	--color-sidebar-accent-foreground: #7c3130;
-	--color-sidebar-border: #ddd8d2;
-	--color-sidebar-ring: #1d7e8e;
 
 	/* ─── Zen Radius Scale (Soft, Tactile, Pill-shaped) ─── */
 	--radius-sm: 0.5rem; /* 8px */
@@ -78,8 +183,19 @@
 	--animate-float: float 6s ease-in-out infinite;
 	--animate-breathe: breathe 4s ease-in-out infinite;
 	--animate-slide-up: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-	--animate-drift: drift 20s linear infinite;
-	--animate-sway: sway 8s ease-in-out infinite;
+	/* The current page's icon settling into its filled style. */
+	--animate-nav-pop: nav-pop 0.36s cubic-bezier(0.34, 1.56, 0.64, 1);
+	/* A quotation's tape: each invoice laid down, then filled as it's paid. */
+	--animate-tape-grow: tape-grow 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes tape-grow {
+	from {
+		transform: scaleX(0);
+	}
+	to {
+		transform: scaleX(1);
+	}
 }
 
 @keyframes float {
@@ -102,46 +218,6 @@
 	}
 }
 
-@keyframes drift {
-	from {
-		transform: translate(0, 0) rotate(0deg);
-	}
-	to {
-		transform: translate(150px, 150px) rotate(360deg);
-	}
-}
-
-@keyframes fall {
-	0% {
-		transform: translateY(-15vh);
-	}
-	100% {
-		transform: translateY(115vh);
-	}
-}
-
-@keyframes sway {
-	0%,
-	100% {
-		transform: translateX(-35px) rotate(-12deg);
-	}
-	50% {
-		transform: translateX(35px) rotate(12deg);
-	}
-}
-
-/* The blooming effect when the particle first enters the DOM */
-@keyframes lotus-bloom {
-	0% {
-		transform: scale(0) translateY(20px);
-		opacity: 0;
-	}
-	100% {
-		transform: scale(1) translateY(0);
-		opacity: 1;
-	}
-}
-
 @keyframes slide-up {
 	from {
 		opacity: 0;
@@ -150,6 +226,18 @@
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+@keyframes nav-pop {
+	0% {
+		scale: 0.8;
+	}
+	55% {
+		scale: 1.14;
+	}
+	100% {
+		scale: 1;
 	}
 }
 
@@ -186,47 +274,6 @@
 	}
 }
 
-@custom-variant dark (&:where(.dark, .dark *));
-
-.dark {
-	--color-background: #0d0b0a;
-	--color-foreground: #f7f3f0;
-	--color-card: #1a1614;
-	--color-card-foreground: #f7f3f0;
-	--color-popover: #1a1614;
-	--color-popover-foreground: #f7f3f0;
-
-	--color-primary: #8cc9d2;
-	--color-primary-foreground: #0a2026;
-
-	--color-secondary: #2d1a19;
-	--color-secondary-foreground: #fcd0c7;
-	--color-secondary-2: #4a2322;
-	--color-secondary-3: #7a3d3c;
-
-	--color-muted: #201c1a;
-	--color-muted-foreground: #a8a29e;
-
-	--color-accent: #1d5c6a;
-	--color-accent-foreground: #cee8ec;
-
-	--color-destructive: #ef4444;
-	--color-destructive-foreground: #ffffff;
-
-	--color-border: #2e2925;
-	--color-input: #2e2925;
-	--color-ring: #8cc9d2;
-
-	--color-sidebar: #0c0a09;
-	--color-sidebar-foreground: #f7f3f0;
-	--color-sidebar-primary: #8cc9d2;
-	--color-sidebar-primary-foreground: #0a2026;
-	--color-sidebar-accent: #2d1a19;
-	--color-sidebar-accent-foreground: #fcd0c7;
-	--color-sidebar-border: #2e2925;
-	--color-sidebar-ring: #8cc9d2;
-}
-
 /* ─── Base Layer ─── */
 @layer base {
 	* {
@@ -255,38 +302,453 @@
 	}
 }
 
+/* ─── Toasts (sileo) in the studio palette ───
+   sileo injects its own :root defaults after this file, so the overrides sit
+   on its viewport element, which every toast inherits from. Its toasts are
+   white in both modes, so these are the light tokens, written out: the
+   variables would turn light (unreadable on white) in dark mode. */
+[data-sileo-viewport] {
+	--sileo-state-success: oklch(0.525 0.087 211); /* primary */
+	--sileo-state-error: oklch(0.545 0.17 25); /* destructive */
+	--sileo-state-warning: oklch(0.54 0.125 60); /* warning */
+	--sileo-state-info: oklch(0.52 0.12 250); /* info */
+}
+/* Sentence case like the rest of the app ("Payment recorded"), not sileo's
+   Title Case. */
+[data-sileo-viewport] [data-sileo-title] {
+	text-transform: none;
+}
+
+/* ─── Lotus pond: backdrop of the login, error and not-found screens ───
+   Dawn over the High Atlas with a lotus pond in front: the sun rising behind
+   three ranges and laying its path on the water, pads in perspective, rings
+   around the lotus, tumbling petals, reeds, drifting haze and passing birds.
+   Transform/opacity only; each element reads its own timing from --custom
+   properties set by the component. */
+@keyframes petal-fall {
+	0% {
+		transform: translate3d(0, -12vh, 0);
+		opacity: 0;
+	}
+	10%,
+	86% {
+		opacity: calc(var(--petal-opacity) * var(--pond-dim));
+	}
+	100% {
+		transform: translate3d(var(--petal-wind), 112vh, 0);
+		opacity: 0;
+	}
+}
+@keyframes petal-sway {
+	from {
+		transform: translateX(calc(var(--petal-sway) * -1));
+	}
+	to {
+		transform: translateX(var(--petal-sway));
+	}
+}
+/* Rocking about two axes while turning slowly: a petal, not confetti. */
+@keyframes petal-flutter {
+	0% {
+		transform: rotateX(12deg) rotateY(-28deg) rotateZ(var(--petal-tilt));
+	}
+	50% {
+		transform: rotateX(68deg) rotateY(18deg) rotateZ(calc(var(--petal-tilt) + 28deg));
+	}
+	100% {
+		transform: rotateX(20deg) rotateY(-12deg) rotateZ(calc(var(--petal-tilt) + 56deg));
+	}
+}
+@keyframes pond-ripple {
+	0% {
+		transform: translate(-50%, -50%) scale(0.08);
+		opacity: 0;
+	}
+	14% {
+		opacity: var(--ripple-opacity);
+	}
+	100% {
+		transform: translate(-50%, -50%) scale(1);
+		opacity: 0;
+	}
+}
+@keyframes lily-bob {
+	from {
+		transform: translateY(0) rotate(-1.2deg);
+	}
+	to {
+		transform: translateY(-4px) rotate(1.2deg);
+	}
+}
+@keyframes shimmer {
+	0%,
+	100% {
+		transform: translateX(-50%) scaleX(0.65);
+		opacity: 0.2;
+	}
+	50% {
+		transform: translateX(-50%) scaleX(1);
+		opacity: 0.95;
+	}
+}
+@keyframes dawn-breath {
+	0%,
+	100% {
+		transform: scale(1);
+		opacity: 0.55;
+	}
+	40% {
+		transform: scale(1.07);
+		opacity: 0.95;
+	}
+}
+@keyframes glow-breath {
+	0%,
+	100% {
+		transform: translate(-50%, -50%) scale(1);
+		opacity: 0.7;
+	}
+	40% {
+		transform: translate(-50%, -50%) scale(1.08);
+		opacity: 1;
+	}
+}
+@keyframes haze-drift {
+	from {
+		transform: translateX(-4vw);
+	}
+	to {
+		transform: translateX(4vw);
+	}
+}
+@keyframes bird-cross {
+	from {
+		transform: translate3d(-8vw, 0, 0);
+	}
+	to {
+		transform: translate3d(108vw, -5vh, 0);
+	}
+}
+@keyframes bird-flap {
+	from {
+		transform: scaleY(1);
+	}
+	to {
+		transform: scaleY(0.35);
+	}
+}
+@keyframes reed-sway {
+	from {
+		transform: rotate(-2.5deg);
+	}
+	to {
+		transform: rotate(2deg);
+	}
+}
+
+@layer components {
+	.lotus-pond {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		overflow: hidden;
+		pointer-events: none;
+
+		--horizon: 60%;
+		--range-h: clamp(110px, 28vh, 300px);
+		--sun-size: clamp(64px, 10vmin, 128px);
+
+		--pond-petal: var(--secondary);
+		--pond-petal-tip: color-mix(in oklab, var(--secondary-3) 70%, var(--secondary));
+		--pond-petal-base: color-mix(in oklab, white 70%, var(--secondary));
+		--pond-petal-mid: var(--secondary-2);
+		--pond-petal-deep: var(--secondary-3);
+		--pond-petal-vein: color-mix(in oklab, var(--secondary-3) 40%, transparent);
+		--pond-heart: color-mix(in oklab, var(--secondary-3) 80%, var(--foreground));
+		--pond-teal: var(--accent);
+		--pond-teal-tip: color-mix(in oklab, var(--primary) 55%, var(--accent));
+		--pond-teal-base: color-mix(in oklab, white 70%, var(--accent));
+		--pond-teal-vein: color-mix(in oklab, var(--primary) 35%, transparent);
+		--pond-leaf: color-mix(in oklab, var(--primary) 30%, var(--accent));
+		--pond-leaf-deep: color-mix(in oklab, var(--primary) 62%, var(--accent));
+		--pond-vein: color-mix(in oklab, white 35%, transparent);
+		--pond-ring: color-mix(in oklab, var(--primary) 60%, transparent);
+		--pond-glint: color-mix(in oklab, var(--secondary) 50%, white);
+		--pond-mist: color-mix(in oklab, var(--accent) 55%, color-mix(in oklab, var(--primary) 25%, transparent));
+		--pond-glow: color-mix(in oklab, var(--secondary-2) 70%, transparent);
+		--pond-sky: color-mix(in oklab, var(--secondary-2) 55%, transparent);
+		--pond-sun: color-mix(in oklab, var(--secondary-2) 75%, white);
+		--pond-sun-core: color-mix(in oklab, white 80%, var(--secondary));
+		--pond-sun-glow: color-mix(in oklab, var(--secondary-2) 60%, transparent);
+		--pond-range-far: color-mix(in oklab, var(--accent) 45%, color-mix(in oklab, var(--secondary) 45%, var(--background)));
+		--pond-range-mid: color-mix(in oklab, var(--primary) 20%, color-mix(in oklab, var(--accent) 50%, var(--background)));
+		--pond-range-near: color-mix(in oklab, var(--primary) 34%, var(--accent));
+		--pond-haze: color-mix(in oklab, white 70%, transparent);
+		--pond-water-top: color-mix(in oklab, var(--accent) 55%, var(--background));
+		--pond-water-deep: color-mix(in oklab, var(--primary) 34%, var(--accent));
+		--pond-reflection: 0.3;
+		--pond-streak: color-mix(in oklab, white 65%, transparent);
+		--pond-bird: color-mix(in oklab, var(--foreground) 45%, transparent);
+		--pond-reed: color-mix(in oklab, var(--primary) 55%, var(--accent));
+		--pond-dim: 1;
+	}
+	/* By night the theme's blush turns to deep maroon, which would make the
+	   lotus muddy: the pond keeps pale petals glowing over dark leaves, and
+	   the sun becomes a moon over dark ranges. */
+	.dark .lotus-pond {
+		--pond-petal: #f3c9c2;
+		--pond-petal-tip: #d98e8a;
+		--pond-petal-base: #fbe7e3;
+		--pond-petal-mid: #e9aaa5;
+		--pond-petal-deep: #c97370;
+		--pond-petal-vein: color-mix(in oklab, #a85a58 50%, transparent);
+		--pond-heart: #a85a58;
+		--pond-teal: #8cc9d2;
+		--pond-teal-tip: #5fa9b4;
+		--pond-teal-base: #cfe9ed;
+		--pond-leaf: #24606b;
+		--pond-leaf-deep: #123840;
+		--pond-vein: color-mix(in oklab, #8cc9d2 30%, transparent);
+		--pond-ring: color-mix(in oklab, var(--primary) 40%, transparent);
+		--pond-glint: color-mix(in oklab, #e9eef0 80%, transparent);
+		--pond-mist: color-mix(in oklab, var(--accent) 50%, transparent);
+		--pond-glow: color-mix(in oklab, #d98e8a 28%, transparent);
+		--pond-sky: color-mix(in oklab, #1d5c6a 45%, transparent);
+		--pond-sun: #dfe8ea;
+		--pond-sun-core: #f7fafa;
+		--pond-sun-glow: color-mix(in oklab, #cfe9ed 22%, transparent);
+		--pond-range-far: #1a3a41;
+		--pond-range-mid: #122a30;
+		--pond-range-near: #0c1d21;
+		--pond-haze: color-mix(in oklab, #8cc9d2 14%, transparent);
+		--pond-water-top: #12292e;
+		--pond-water-deep: #0a181b;
+		--pond-reflection: 0.45;
+		--pond-streak: color-mix(in oklab, #8cc9d2 22%, transparent);
+		--pond-bird: color-mix(in oklab, #cfe9ed 40%, transparent);
+		--pond-reed: #1c464e;
+		--pond-dim: 0.8;
+	}
+	.lotus-pond .sky {
+		position: absolute;
+		inset: 0 0 auto 0;
+		height: var(--horizon);
+		background: linear-gradient(to bottom, transparent 25%, var(--pond-sky));
+	}
+	.lotus-pond .dawn {
+		position: absolute;
+		border-radius: 9999px;
+		animation: dawn-breath 10s ease-in-out infinite;
+	}
+	/* The sun sits low behind the ranges, half hidden by them. */
+	.lotus-pond .sun,
+	.lotus-pond .sun-glow {
+		position: absolute;
+		top: calc(var(--horizon) - var(--range-h) * 0.62);
+		border-radius: 9999px;
+		transform: translate(-50%, -50%);
+	}
+	.lotus-pond .sun {
+		width: var(--sun-size);
+		height: var(--sun-size);
+		background: radial-gradient(circle, var(--pond-sun-core) 0 38%, var(--pond-sun) 66%, transparent 71%);
+	}
+	.lotus-pond .sun-glow {
+		width: calc(var(--sun-size) * 7);
+		height: calc(var(--sun-size) * 7);
+		background: radial-gradient(circle, var(--pond-sun-glow), transparent 62%);
+		animation: glow-breath 10s ease-in-out infinite;
+	}
+	.lotus-pond .bird {
+		position: absolute;
+		left: 0;
+		animation: bird-cross linear infinite;
+	}
+	.lotus-pond .bird svg {
+		display: block;
+		stroke: var(--pond-bird);
+		animation: bird-flap 0.8s ease-in-out infinite alternate;
+	}
+	.lotus-pond .ranges,
+	.lotus-pond .reflection {
+		position: absolute;
+		inset-inline: 0;
+		height: var(--range-h);
+	}
+	.lotus-pond .ranges {
+		bottom: calc(100% - var(--horizon));
+	}
+	.lotus-pond .haze {
+		position: absolute;
+		inset-inline: -10%;
+		top: calc(var(--horizon) - 6vh);
+		height: 12vh;
+		background: radial-gradient(farthest-side, var(--pond-haze), transparent);
+		animation: haze-drift 40s ease-in-out infinite alternate;
+	}
+	.lotus-pond .water {
+		position: absolute;
+		inset: var(--horizon) 0 0 0;
+		background: linear-gradient(to bottom, var(--pond-water-top), var(--pond-water-deep));
+	}
+	/* The ranges mirrored in the water, fading with depth. */
+	.lotus-pond .reflection {
+		top: var(--horizon);
+		opacity: var(--pond-reflection);
+		filter: blur(1px);
+		mask-image: linear-gradient(to bottom, black, transparent 85%);
+	}
+	.lotus-pond .reflection svg {
+		transform: scaleY(-1);
+	}
+	.lotus-pond .sun-reflection {
+		position: absolute;
+		top: var(--horizon);
+		width: calc(var(--sun-size) * 1.6);
+		height: 34%;
+		transform: translateX(-50%);
+		background: radial-gradient(ellipse at top, var(--pond-sun-glow), transparent 70%);
+	}
+	.lotus-pond .glint {
+		position: absolute;
+		height: 2px;
+		border-radius: 9999px;
+		background: linear-gradient(90deg, transparent, var(--pond-glint), transparent);
+		opacity: 0;
+		transform: translateX(-50%);
+		animation: shimmer 6s ease-in-out infinite;
+	}
+	/* Faint wind lines that give the open water a surface. */
+	.lotus-pond .streak {
+		position: absolute;
+		height: 1px;
+		transform: translateX(-50%);
+		background: linear-gradient(90deg, transparent, var(--pond-streak), transparent);
+		animation: haze-drift 30s ease-in-out infinite alternate;
+	}
+	.lotus-pond .ripple {
+		position: absolute;
+		width: var(--ripple-size);
+		aspect-ratio: 3 / 1;
+		border-radius: 50%;
+		border: 1.5px solid var(--pond-ring);
+		opacity: 0;
+		animation: pond-ripple var(--ripple-time) cubic-bezier(0.2, 0.6, 0.3, 1) var(--ripple-delay) infinite;
+	}
+	/* Anchored at the pad's centre on the water line (y=92 of 120). */
+	.lotus-pond .lily {
+		position: absolute;
+		transform: translate(-50%, -76.7%);
+	}
+	.lotus-pond .lily > div {
+		animation: lily-bob 8s ease-in-out infinite alternate;
+	}
+	/* Distant pads are seen at a shallower angle. */
+	.lotus-pond .lily .pad {
+		transform: scaleY(var(--pad-squash, 1));
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+	.lotus-pond .lily .halo {
+		position: absolute;
+		inset: -45% -25% -10%;
+		border-radius: 9999px;
+		background: radial-gradient(closest-side, var(--pond-glow), transparent);
+		animation: dawn-breath 10s ease-in-out infinite;
+	}
+	.lotus-pond .reeds {
+		position: absolute;
+		bottom: -4px;
+		/* Phones are tall and narrow: size by width too, or they crowd the lotus. */
+		height: clamp(120px, min(30vh, 38vw), 320px);
+		aspect-ratio: 120 / 260;
+		overflow: visible;
+	}
+	.lotus-pond .reeds.left {
+		left: -12px;
+	}
+	.lotus-pond .reeds.right {
+		right: -12px;
+		transform: scaleX(-1);
+	}
+	.lotus-pond .reeds .blade {
+		transform-box: fill-box;
+		transform-origin: 50% 100%;
+		animation: reed-sway 7s ease-in-out infinite alternate;
+	}
+	.lotus-pond .petal {
+		position: absolute;
+		top: 0;
+		opacity: 0;
+		animation: petal-fall var(--petal-fall) linear var(--petal-delay) infinite;
+	}
+	.lotus-pond .petal > span {
+		display: block;
+		perspective: 240px;
+		animation: petal-sway var(--petal-sway-time) ease-in-out var(--petal-delay) infinite alternate;
+	}
+	.lotus-pond .petal svg {
+		display: block;
+		transform-style: preserve-3d;
+		animation: petal-flutter var(--petal-flutter-time) ease-in-out var(--petal-delay) infinite alternate;
+	}
+	/* Reduced motion: a still scene, everything resting where it is. */
+	@media (prefers-reduced-motion: reduce) {
+		.lotus-pond * {
+			animation: none !important;
+		}
+		.lotus-pond .petal {
+			top: var(--petal-rest);
+			opacity: calc(var(--petal-opacity) * var(--pond-dim));
+		}
+		.lotus-pond .petal svg {
+			transform: rotateX(35deg) rotateZ(var(--petal-tilt));
+		}
+		.lotus-pond .ripple {
+			opacity: calc(var(--ripple-opacity) * 0.45);
+			transform: translate(-50%, -50%) scale(var(--ripple-rest));
+		}
+		.lotus-pond .glint {
+			opacity: 0.6;
+		}
+		.lotus-pond .bird {
+			transform: translateX(var(--bird-rest));
+		}
+	}
+}
+
 /* ─── Zen Utility Classes ─── */
 @layer utilities {
 	/* Soft depth shadows — replaces borders */
 	.zen-shadow {
-		box-shadow: 0 8px 30px rgb(0 0 0 / 0.04);
+		box-shadow: 0 8px 30px color-mix(in oklab, var(--shadow-ink) 4%, transparent);
 	}
 	.zen-shadow-md {
-		box-shadow: 0 12px 40px rgb(0 0 0 / 0.06);
+		box-shadow: 0 12px 40px color-mix(in oklab, var(--shadow-ink) 6%, transparent);
 	}
 	.zen-shadow-lg {
-		box-shadow: 0 20px 50px rgb(0 0 0 / 0.08);
+		box-shadow: 0 20px 50px color-mix(in oklab, var(--shadow-ink) 8%, transparent);
 	}
 	.zen-shadow-glow {
 		box-shadow:
-			0 8px 30px rgb(0 0 0 / 0.04),
-			0 0 0 1px rgb(0 0 0 / 0.02);
+			0 8px 30px color-mix(in oklab, var(--shadow-ink) 4%, transparent),
+			0 0 0 1px color-mix(in oklab, var(--shadow-ink) 2%, transparent);
 	}
 
 	/* Glassmorphism surface */
 	.zen-glass {
-		background: rgba(255, 255, 255, 0.75);
+		background: color-mix(in oklab, var(--card) 75%, transparent);
 		backdrop-filter: blur(20px) saturate(180%);
 		-webkit-backdrop-filter: blur(20px) saturate(180%);
 	}
 
 	/* Teal glow for primary CTAs */
 	.zen-glow-teal {
-		box-shadow: 0 4px 20px rgba(84, 165, 179, 0.25);
+		box-shadow: 0 4px 20px color-mix(in oklab, var(--primary) 25%, transparent);
 	}
 
 	.zen-glow-blush {
-		box-shadow: 0 4px 20px rgba(252, 208, 199, 0.35);
+		box-shadow: 0 4px 20px color-mix(in oklab, var(--secondary-2) 45%, transparent);
 	}
 
 	/* Decorative Script utility */

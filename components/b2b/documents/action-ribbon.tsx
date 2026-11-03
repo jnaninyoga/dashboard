@@ -4,39 +4,37 @@ import { useState,useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { useFlushDraft } from "@/components/b2b/documents/draft-save";
+import { useNotice } from "@/components/b2b/documents/notices";
+import { useConfirm } from "@/components/feedback/confirm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	archiveDocumentAction,
-	confirmInvoiceWithBackorderAction,
-	convertQuoteToInvoiceAction,
 	deleteDocumentAction,
 	updateDocumentStatusAction,
 } from "@/lib/actions/b2b/documents";
-import { isPayableInvoice, orderPaymentQueue } from "@/lib/domain/billing/payments";
+import { documentName } from "@/lib/domain/billing/document-name";
+import { documentAmounts } from "@/lib/domain/billing/payments";
+import { quoteBalance } from "@/lib/domain/billing/quote-billing";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import type { BusinessProfile, DocumentWithRelations } from "@/lib/types/b2b";
-import { type B2BDocument, type B2BDocumentStatus } from "@/lib/types/b2b";
+import { type B2BDocumentStatus } from "@/lib/types/b2b";
 
 import {
 	Archive,
-	ArrowRight,
-	Convert,
-	Link1,
-	MoneySend,
+	ReceiptAdd,
+	ReceiptMinus,
 	Send,
 	TickCircle,
 	Trash,
-	Warning2,
 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 import { ArchiveDocumentDialog } from "./archive-dialog";
-import { BackorderDialog } from "./backorder-dialog";
 import { PDFDownloadBtn } from "./download-btn";
-import {
-	type PaymentQueueEntry,
-	RecordPaymentDialog,
-} from "./record-payment-dialog";
+import { InvoicePortionSheet } from "./invoice-portion-sheet";
+import { RecordPaymentButton } from "./record-payment-button";
+import { RecordRefundButton } from "./record-refund-button";
 
 export function DocumentActionRibbon({ 
 	doc, 
@@ -49,10 +47,16 @@ export function DocumentActionRibbon({
 }) {
 	const router = useRouter();
 	const [isPending, startTransition] = useTransition();
-	const [isPaymentOpen, setIsPaymentOpen] = useState(false);
-	const [isBackorderOpen, setIsBackorderOpen] = useState(false);
+	const [isPortionOpen, setIsPortionOpen] = useState(false);
+	const [isFlushing, setIsFlushing] = useState(false);
+	const flushDraft = useFlushDraft();
 	const [isArchiveOpen, setIsArchiveOpen] = useState(false);
 
+	const DONE: Partial<Record<B2BDocumentStatus, string>> = {
+		sent: "Quotation marked as sent",
+		unpaid: "Invoice issued",
+		accepted: "Quotation accepted",
+	};
 	const handleStatusUpdate = (status: B2BDocumentStatus) => {
 		startTransition(async () => {
 			const res = await updateDocumentStatusAction(
@@ -61,23 +65,31 @@ export function DocumentActionRibbon({
 				doc.partnerId,
 			);
 			if (res.success) {
-				toast.success(`Document marked as ${status}`);
+				notify.success(doc.type === "credit_note" ? "Credit note issued" : (DONE[status] ?? "Document updated"));
 				router.refresh();
 			} else {
-				toast.error(res.error || "Failed to update document");
+				notifyActionError(res, "Failed to update document");
 			}
 		});
 	};
 
-	const handleDeleteDraft = () => {
-		if (!confirm("Delete this draft? This cannot be undone.")) return;
+	const confirm = useConfirm();
+
+	const handleDeleteDraft = async () => {
+		const ok = await confirm({
+			title: `Delete ${doc.documentNumber ? `draft ${doc.documentNumber}` : "this draft invoice"}?`,
+			description: "This can't be undone.",
+			confirmLabel: "Delete draft",
+			destructive: true,
+		});
+		if (!ok) return;
 		startTransition(async () => {
 			const res = await deleteDocumentAction(doc.id, doc.partnerId);
 			if (res.success) {
-				toast.success("Draft deleted");
+				notify.success("Draft deleted");
 				router.push("/b2b/documents");
 			} else {
-				toast.error(res.error || "Failed to delete draft");
+				notifyActionError(res, "Failed to delete draft");
 			}
 		});
 	};
@@ -86,11 +98,11 @@ export function DocumentActionRibbon({
 		startTransition(async () => {
 			const res = await archiveDocumentAction(doc.id, reason, doc.partnerId);
 			if (res.success) {
-				toast.success("Document archived");
+				notify.success("Document archived");
 				setIsArchiveOpen(false);
 				router.refresh();
 			} else {
-				toast.error(res.error || "Failed to archive");
+				notifyActionError(res, "Failed to archive");
 			}
 		});
 	};
@@ -98,162 +110,89 @@ export function DocumentActionRibbon({
 	const isQuote = doc.type === "quote";
 	const isInvoice = doc.type === "invoice";
 
-	// Block "Confirm & Send" until the partner has *some* numeric tax id.
+	// Block "Mark as sent" until the partner has *some* numeric tax id.
 	// Length isn't enforced — partners outside Morocco may use shorter
 	// formats, and we don't want Odoo-style rigidity here.
 	const partnerIceDigits = (doc.partner?.taxId ?? "").replace(/\D/g, "");
 	const partnerIceValid = partnerIceDigits.length > 0;
 	const blockSendForMissingIce = isInvoice && !partnerIceValid;
-
-	const canRecordPayment = isPayableInvoice(doc);
-
-	// Same scope and order as recordDocumentPaymentAction, so the dialog's
-	// preview is exactly what the server will do.
-	const paymentQueue: PaymentQueueEntry[] = orderPaymentQueue(
-		doc.id,
-		[doc, ...previousInvoices.filter((inv) => inv.id !== doc.id)]
-			.filter(isPayableInvoice)
-			.map((inv) => ({
-				id: inv.id,
-				documentNumber: inv.documentNumber,
-				totalAmount: Number(inv.totalAmount),
-				amountPaid: (inv.payments || []).reduce(
-					(s, p) => s + Number(p.amount),
-					0,
-				),
-			})),
+	useNotice(
+		"missing-ice",
+		!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce
+			? {
+					tone: "warning",
+					message: `${doc.partner?.companyName ?? "This partner"} has no ICE yet: add it before marking this invoice as sent.`,
+					action: (
+						<Link
+							href={`/b2b/partners/${doc.partnerId}`}
+							className="inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold text-primary hover:underline"
+						>
+							Add it
+						</Link>
+					),
+				}
+			: null,
+		String(!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce),
 	);
 
+
+	// What's billed of a quotation and what's left (its invoices, drafts
+	// included, archived ones left out).
+	const balance = quoteBalance(doc.lines ?? [], (doc.children ?? []) as DocumentWithRelations[]);
+	const canInvoice =
+		!doc.archivedAt &&
+		isQuote &&
+		(doc.status === "sent" || doc.status === "accepted") &&
+		balance.remaining > 0;
+
+	// An issued invoice can be credited (an avoir) for as long as something
+	// of it is left to credit: its children are its credit notes.
+	const isCreditNote = doc.type === "credit_note";
+	const canCredit =
+		!doc.archivedAt &&
+		isInvoice &&
+		doc.status !== "draft" &&
+		doc.status !== "cancelled" &&
+		balance.remaining > 0;
+	const toRefund = documentAmounts(doc).toRefund;
+
+
 	return (
-		<div className="animate-slide-up bg-card flex flex-wrap items-center gap-4 rounded-2xl border p-4 shadow-sm backdrop-blur-sm transition-all delay-100 duration-300">
-			{/* Linked Documents / Relations (Left Side) */}
-			{doc.parent || doc.children?.length ? (
-				<div className="lg:border/50 flex flex-wrap items-center gap-4 lg:mr-2 lg:border-r lg:pr-5">
-					<div className="bg-primary/15 text-primary border-primary/20 zen-teal-glow flex size-9 shrink-0 items-center justify-center rounded-full border">
-						<Link1 size={18} variant="Bulk" />
-					</div>
-					<div className="flex flex-wrap gap-x-5 gap-y-2">
-						{doc.parent ? (
-							<div className="flex flex-col">
-								<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-									Source Quote
-								</span>
-								<Link href={`/b2b/documents/${doc.parent.id}`}>
-									<Badge
-										variant="outline"
-										className="text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200"
-									>
-										{doc.parent.documentNumber}
-									</Badge>
-								</Link>
-							</div>
-						) : null}
-						{doc.children?.length
-							? (doc.children as B2BDocument[]).map((child) => (
-									<div key={child.id} className="flex flex-col">
-										<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
-											Generated Invoice
-										</span>
-										<Link href={`/b2b/documents/${child.id}`}>
-											<Badge
-												variant="outline"
-												className={`text-primary border-primary/30 hover:bg-primary hover:text-primary-foreground h-5 border px-1.5 text-[9px] font-bold tracking-widest uppercase transition-all duration-200 ${child.status === 'paid' ? 'bg-green-500/10' : ''}`}
-											>
-												{child.documentNumber}
-											</Badge>
-										</Link>
-									</div>
-								))
-							: null}
-					</div>
-				</div>
-			) : null}
-
-			<div className="flex-1" />
-
-			{/* Actions (Right Side - Stable CTA) */}
-			<div className="flex flex-wrap items-center gap-3">
+		// The document's actions, as a row of buttons on the right (its
+		// quotation and payments have their own places on the page).
+		<div className="flex animate-slide-up flex-wrap items-center justify-end gap-3 delay-100">
+			<div className="flex flex-wrap items-center justify-end gap-3">
 				<PDFDownloadBtn doc={doc} profile={profile} />
 
 				{doc.archivedAt ? (
 					<Badge
 						variant="outline"
-						className="gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-amber-700 uppercase"
+						className="gap-1.5 rounded-xl border-warning/30 bg-warning/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-warning uppercase"
 					>
 						<Archive size={12} variant="Bold" />
 						Archived
 					</Badge>
 				) : null}
 
-				{!doc.archivedAt && doc.status === "draft" && blockSendForMissingIce ? (
-					<Link
-						href={`/b2b/partners/${doc.partnerId}`}
-						className="text-amber-700 hover:underline"
-					>
-						<Badge
-							variant="outline"
-							className="gap-1.5 rounded-xl border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-amber-700 uppercase"
-						>
-							<Warning2 size={12} variant="Bold" />
-							Partner ICE missing
-						</Badge>
-					</Link>
-				) : null}
-
-				{/* Draft -> Confirm & Send (With Backorder Logic) */}
+				{/* Draft -> Mark as sent */}
 				{!doc.archivedAt && doc.status === "draft" ? (
 					<>
 						<Button
-							onClick={() => {
-								const hasBilledItems = doc.lines?.some(l => l.sourceLineId && Number(l.quantity) > 0);
-								
-								// Smart Backorder Check:
-								// Does this invoice (plus previous ones) leave any unbilled quantity from the parent quote?
-								let hasUnbilledItems = false;
-								if (isInvoice && doc.parent?.lines) {
-									const parentLines = doc.parent.lines;
-									
-									// 1. Calculate how much has been billed so far across ALL invoices (previous + current)
-									// We group by sourceLineId
-									const billedTotals: Record<string, number> = {};
-									
-									// Add quantities from sibling invoices on the same quote.
-									// Skip the current doc — its lines are added below;
-									// double-counting them would hide remainders and bypass
-									// the backorder dialog.
-									previousInvoices
-										.filter((inv) => inv.id !== doc.id)
-										.forEach((inv) => {
-											inv.lines?.forEach((line) => {
-												if (line.sourceLineId) {
-													billedTotals[line.sourceLineId] =
-														(billedTotals[line.sourceLineId] || 0) +
-														Number(line.quantity);
-												}
-											});
-										});
-									
-									// Add quantities from the CURRENT draft invoice
-									doc.lines?.forEach(line => {
-										if (line.sourceLineId) {
-											billedTotals[line.sourceLineId] = (billedTotals[line.sourceLineId] || 0) + Number(line.quantity);
-										}
-									});
-									
-									// 2. Compare with the Quote's required quantities
-									hasUnbilledItems = parentLines.some(qLine => {
-										const totalBilled = billedTotals[qLine.id] || 0;
-										return totalBilled < Number(qLine.quantity);
-									});
+							onClick={async () => {
+								// What she just typed (lines, notes) is saved first.
+								setIsFlushing(true);
+								const saved = await flushDraft();
+								setIsFlushing(false);
+								if (!saved) {
+									notify.warning("Some changes aren't saved yet", "Fix what's marked on the page, then try again.");
+									return;
 								}
-
-								if (isInvoice && doc.parentDocumentId && hasBilledItems && hasUnbilledItems) {
-									setIsBackorderOpen(true);
-								} else {
-									handleStatusUpdate("sent");
-								}
+								// An invoice is issued (numbered, dated today, owed); a
+								// quotation is sent. What's left of a quotation stays
+								// there to invoice later: no need to decide now.
+								handleStatusUpdate(isInvoice ? "unpaid" : "sent");
 							}}
-							disabled={isPending || blockSendForMissingIce}
+							disabled={isPending || isFlushing || blockSendForMissingIce}
 							title={
 								blockSendForMissingIce
 									? "Add the partner's ICE (Tax ID) before issuing this invoice"
@@ -262,23 +201,8 @@ export function DocumentActionRibbon({
 							className="zen-glow-teal gap-2 rounded-xl font-bold"
 						>
 							<Send size={18} variant="Bold" />
-							Confirm & Send
+							{isCreditNote ? "Issue credit note" : "Mark as sent"}
 						</Button>
-						<BackorderDialog
-							open={isBackorderOpen}
-							onOpenChange={setIsBackorderOpen}
-							onConfirm={(createBackorder) => {
-								startTransition(async () => {
-									const res = await confirmInvoiceWithBackorderAction(doc.id, createBackorder);
-									if (res.success) {
-										toast.success(createBackorder ? "Invoice confirmed and backorder created" : "Invoice confirmed");
-										router.refresh();
-									} else {
-										toast.error(res.error || "Failed to confirm invoice");
-									}
-								});
-							}}
-						/>
 					</>
 				) : null}
 
@@ -287,54 +211,63 @@ export function DocumentActionRibbon({
 					<Button
 						onClick={() => handleStatusUpdate("accepted")}
 						disabled={isPending}
-						className="gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm hover:bg-green-700"
+						className="gap-2 rounded-xl bg-success font-bold text-success-foreground shadow-sm hover:bg-success/90"
 					>
 						<TickCircle size={18} variant="Bold" />
 						Accept Quote
 					</Button>
 				) : null}
 
-				{/* Quote Specific: Accepted -> Generate Invoice (Only if no invoices exist yet) */}
-				{!doc.archivedAt && isQuote && doc.status === "accepted" && (!doc.children || doc.children.length === 0) ? (
-					<Button
-						onClick={() => {
-							startTransition(async () => {
-								const res = await convertQuoteToInvoiceAction(doc.id);
-								if (res.success && res.id) {
-									toast.success("Draft invoice created");
-									router.push(`/b2b/documents/${res.id}`);
-								} else {
-									toast.error(res.error || "Failed to create draft invoice");
-								}
-							});
-						}}
-						disabled={isPending}
-						className="zen-glow-teal gap-2 rounded-xl font-bold shadow-md"
-					>
-						<Convert size={18} variant="Bold" />
-						Generate Invoice
-						<ArrowRight size={16} />
-					</Button>
+				{/* A sent or accepted quotation is invoiced in portions, for as long as something is left. */}
+				{canInvoice ? (
+					<>
+						<Button
+							onClick={() => setIsPortionOpen(true)}
+							disabled={isPending}
+							className="zen-glow-teal gap-2 rounded-xl font-bold shadow-md"
+						>
+							<ReceiptAdd size={18} variant="Bold" />
+							{balance.billed > 0 ? "Invoice next portion" : "Create invoice"}
+						</Button>
+						<InvoicePortionSheet
+							key={balance.remaining}
+							quote={doc}
+							balance={balance}
+							open={isPortionOpen}
+							onOpenChange={setIsPortionOpen}
+						/>
+					</>
 				) : null}
 
-				{/* Invoice Specific: any issued, not fully paid invoice -> Record Payment */}
-				{canRecordPayment ? (
+				{/* An issued invoice that still owes: record what came in. */}
+				<RecordPaymentButton doc={doc} siblings={previousInvoices} />
+
+				{/* An issued credit note with money owed back: record it given back. */}
+				{isCreditNote && !doc.archivedAt && toRefund > 0 ? (
+					<RecordRefundButton creditNoteId={doc.id} creditNoteName={documentName(doc)} toRefund={toRefund} />
+				) : null}
+
+				{/* Take back part of an issued invoice: sessions that didn't happen, a discount. */}
+				{canCredit ? (
 					<>
-                        <Button
-                            onClick={() => setIsPaymentOpen(true)}
-                            disabled={isPending}
-                            className="gap-2 rounded-xl bg-green-600 font-bold text-white shadow-sm hover:bg-green-700"
-                        >
-                            <MoneySend size={18} variant="Bold" />
-                            Record Payment
-                        </Button>
-                        <RecordPaymentDialog
-                            doc={doc}
-                            queue={paymentQueue}
-                            open={isPaymentOpen}
-                            onOpenChange={setIsPaymentOpen}
-                        />
-                    </>
+						<Button
+							onClick={() => setIsPortionOpen(true)}
+							disabled={isPending}
+							variant="outline"
+							className="gap-2 rounded-xl font-semibold"
+						>
+							<ReceiptMinus size={18} variant="Bulk" />
+							Credit note
+						</Button>
+						<InvoicePortionSheet
+							key={balance.remaining}
+							mode="credit"
+							quote={doc}
+							balance={balance}
+							open={isPortionOpen}
+							onOpenChange={setIsPortionOpen}
+						/>
+					</>
 				) : null}
 
 				{/* Retire action: drafts are deleted (irreversible);
@@ -344,26 +277,27 @@ export function DocumentActionRibbon({
 						onClick={handleDeleteDraft}
 						disabled={isPending}
 						variant="ghost"
-						className="text-muted-foreground hover:bg-destructive/5 hover:text-destructive gap-2 rounded-xl font-medium"
+						className="gap-2 rounded-xl font-medium text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
 					>
 						<Trash size={18} />
 						Delete Draft
 					</Button>
 				) : null}
 
-				{!doc.archivedAt && doc.status !== "draft" ? (
+				{/* An issued credit note is part of the books: it stays. */}
+				{!doc.archivedAt && doc.status !== "draft" && !isCreditNote ? (
 					<>
 						<Button
 							onClick={() => setIsArchiveOpen(true)}
 							disabled={isPending}
 							variant="ghost"
-							className="text-muted-foreground gap-2 rounded-xl font-medium hover:bg-amber-500/10 hover:text-amber-700"
+							className="gap-2 rounded-xl font-medium text-muted-foreground hover:bg-warning/10 hover:text-warning"
 						>
 							<Archive size={18} />
 							Archive
 						</Button>
 						<ArchiveDocumentDialog
-							documentNumber={doc.documentNumber}
+							documentNumber={documentName(doc)}
 							open={isArchiveOpen}
 							onOpenChange={setIsArchiveOpen}
 							onConfirm={handleArchive}

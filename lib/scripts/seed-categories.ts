@@ -1,6 +1,6 @@
 
 import { db } from "@/services/database";
-import { clientCategories } from "@/services/database/schema";
+import { discounts } from "@/services/database/schema";
 
 import { eq } from "drizzle-orm";
 
@@ -17,15 +17,15 @@ async function main() {
 
     for (const cat of categories) {
         // Check if exists (idempotency)
-        const existing = await db.query.clientCategories.findFirst({
-            where: eq(clientCategories.name, cat.name)
+        const existing = await db.query.discounts.findFirst({
+            where: eq(discounts.name, cat.name)
         });
 
         if (existing) {
             console.log(`Category ${cat.name} already exists.`);
         } else {
             console.log(`Creating category: ${cat.name}`);
-            await db.insert(clientCategories).values({
+            await db.insert(discounts).values({
                 name: cat.name,
                 discountType: "percentage",
                 discountValue: cat.value,

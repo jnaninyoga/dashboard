@@ -7,6 +7,11 @@ import { numericStr } from "./shared";
 // --- DOCUMENT LINE SCHEMA ---
 export const documentLineSchema = z.object({
 	sourceLineId: z.string().uuid().optional().nullable(),
+	// The service picked from her price list. What the line's quantity
+	// counts (its unit) is the server's to say, from the service or the
+	// source line; the screens send it back only as they last saw it.
+	productId: z.string().uuid().optional().nullable(),
+	unit: z.enum(["session"]).optional().nullable(),
 	description: z.string().min(1, "Description is required"),
 	quantity: numericStr(0.01, "Min 0.01"),
 	unitPrice: numericStr(0, "Min 0"),
@@ -53,11 +58,49 @@ export const createDocumentWithLinesSchema = z.object({
 		.min(1, "At least one line item is required"),
 });
 
+/**
+ * The lines worth keeping: a row left completely empty (no description and
+ * no price) is the line waiting at the end of the table, or one she didn't
+ * use, not a line to complain about.
+ */
+export function withoutBlankLines<T extends { description: string; unitPrice: string }>(lines: T[]): T[] {
+	return lines.filter((line) => line.description.trim() || Number(line.unitPrice) > 0);
+}
+
+// --- DRAFT LINES (autosave) ---
+export const documentLinesSchema = z.object({
+	lines: z.array(documentLineSchema),
+	taxRate: numericStr(0, "Tax can't be negative").refine((v) => Number(v) <= 100, "Tax is at most 100%"),
+});
+
 // --- RECORD PAYMENT SCHEMA ---
+export const PAYMENT_METHODS = ["transfer", "cheque", "cash", "card"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 export const recordPaymentSchema = z.object({
 	amountPaid: z.string().refine((val) => parseAmountInput(val) > 0, {
 		message: "Enter a positive amount",
 	}),
+	// The day the money arrived, not the day it's recorded.
+	paymentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the day it was paid"),
+	method: z.enum(PAYMENT_METHODS, { error: "Choose how it was paid" }),
+	// The cheque or transfer number, to find it on the bank statement.
+	reference: z.string().trim().max(80, "Keep it under 80 characters").optional(),
 });
 
 export type RecordPaymentFormValues = z.infer<typeof recordPaymentSchema>;
+
+// --- UNDO A PAYMENT ---
+// The payment stays on record; a reversal, dated the day it bounced (or the
+// mistake was found), says why. Giving money back to a partner is not this:
+// it's a credit note, then a refund.
+export const REVERSAL_REASONS = ["failed", "mistake"] as const;
+export type ReversalReason = (typeof REVERSAL_REASONS)[number];
+
+export const reversePaymentSchema = z.object({
+	reversedOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Pick the day"),
+	reason: z.enum(REVERSAL_REASONS, { error: "Say why" }),
+	note: z.string().trim().max(200, "Keep it under 200 characters").optional(),
+});
+
+export type ReversePaymentValues = z.infer<typeof reversePaymentSchema>;

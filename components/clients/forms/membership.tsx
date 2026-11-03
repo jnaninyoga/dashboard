@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { UseFormReturn, useWatch } from "react-hook-form";
 
+import { Money } from "@/components/money";
+import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { Badge } from "@/components/ui/badge";
 import {
 	FormControl,
@@ -12,26 +14,29 @@ import {
 } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
-import { type Category } from "@/lib/types";
-import { ClientFormValues } from "@/lib/validators";
-import { type MembershipProduct } from "@/services/database/schema";
+import { priceAfterDiscount } from "@/lib/domain/clients/membership-sale";
+import { type Discount } from "@/lib/types";
+import { formatMoney } from "@/lib/utils/currency";
+import { ClientFormValues, PAYMENT_METHODS } from "@/lib/validators";
+import { type Product } from "@/services/database/schema";
 
 import { Refresh } from "iconsax-reactjs";
 
 interface StepMembershipProps {
 	form: UseFormReturn<ClientFormValues>;
-	categories: Category[];
+	discounts: Discount[];
 	mode?: "create" | "edit";
 }
 
-export function StepMembership({ form, categories, mode }: StepMembershipProps) {
-	const [products, setProducts] = useState<MembershipProduct[]>([]);
+export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
+	const [products, setProducts] = useState<Product[]>([]);
 	const [isLoading, setIsLoading] = useState(mode !== "edit");
 
-	const categoryId = useWatch({
+	const discountId = useWatch({
 		control: form.control,
-		name: "categoryId",
+		name: "discountId",
 	});
+	const initialProductId = useWatch({ control: form.control, name: "initialProductId" });
 
 	useEffect(() => {
 		if (mode === "edit") return;
@@ -49,47 +54,33 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 		return (
 			<div className="flex flex-col items-center justify-center space-y-2 py-16 text-center">
 				<h3 className="text-lg font-semibold">Membership is managed from the client profile</h3>
-				<p className="text-muted-foreground text-sm">
+				<p className="text-sm text-muted-foreground">
 					You can assign or change memberships directly on the client&apos;s profile page.
 				</p>
 			</div>
 		);
 	}
 
-	const selectedCategory = categories.find((c) => c.id === categoryId);
+	const selectedDiscount = discounts.find((c) => c.id === discountId);
 
+	// The shared sale rule: the same price the sale will record.
 	const calculatePrice = (basePrice: string) => {
-		const price = parseFloat(basePrice);
-		if (!selectedCategory || isNaN(price)) return { price, isDiscounted: false };
-
-		let finalPrice = price;
-		const discountValue = parseFloat(selectedCategory.discountValue);
-
-		if (selectedCategory.discountType === "percentage") {
-			finalPrice = price * (1 - discountValue / 100);
-		} else {
-			finalPrice = Math.max(0, price - discountValue);
-		}
-
-		return {
-			price: finalPrice.toFixed(2),
-			originalPrice: price.toFixed(2),
-			isDiscounted: finalPrice !== price,
-		};
+		const { list, price, off } = priceAfterDiscount(basePrice, selectedDiscount ?? null);
+		return { price: price.toFixed(2), originalPrice: list.toFixed(2), isDiscounted: off > 0 };
 	};
 
 	return (
 		<div className="space-y-6">
 			<div className="mb-8 text-center">
 				<h3 className="text-lg font-medium">Select a Starting Membership</h3>
-				<p className="text-muted-foreground text-sm">
+				<p className="text-sm text-muted-foreground">
 					Optional: Choose a product to assign immediately upon registration.
 				</p>
-				{selectedCategory ? (
-					<Badge variant="outline" className="text-primary mt-2">
-						Applied Category: {selectedCategory.name}
-						{parseFloat(selectedCategory.discountValue) > 0 ? (
-							` (${selectedCategory.discountType === "percentage" ? `-${selectedCategory.discountValue}%` : `-${selectedCategory.discountValue} MAD`})`
+				{selectedDiscount ? (
+					<Badge variant="outline" className="mt-2 text-primary">
+						Discount: {selectedDiscount.name}
+						{parseFloat(selectedDiscount.discountValue) > 0 ? (
+							` (${selectedDiscount.discountType === "percentage" ? `-${selectedDiscount.discountValue}%` : `−${formatMoney(selectedDiscount.discountValue)}`})`
 						) : null}
 					</Badge>
 				) : null}
@@ -97,7 +88,7 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 
 			{isLoading ? (
 				<div className="flex justify-center py-12">
-					<Refresh className="text-primary h-8 w-8 animate-spin" variant="Outline" />
+					<Refresh className="size-8 animate-spin text-primary" variant="Outline" />
 				</div>
 			) : (
 				<FormField
@@ -120,7 +111,7 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 										/>
 										<label
 											htmlFor="no-product"
-											className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary flex cursor-pointer flex-col items-center justify-center rounded-md border-2 p-4"
+											className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary hover:bg-accent hover:text-accent-foreground"
 										>
 											<span className="font-semibold">No Membership for Now</span>
 										</label>
@@ -128,7 +119,7 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 
 									{products.map((product) => {
 										const { price, originalPrice, isDiscounted } = calculatePrice(
-											product.basePrice,
+											product.price,
 										);
 										return (
 											<div key={product.id}>
@@ -139,24 +130,24 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 												/>
 												<label
 													htmlFor={product.id}
-													className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary flex h-full cursor-pointer flex-col justify-between rounded-md border-2 p-4"
+													className="flex h-full cursor-pointer flex-col justify-between rounded-md border-2 border-muted bg-popover p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary hover:bg-accent hover:text-accent-foreground"
 												>
 													<div className="mb-2">
 														<div className="text-lg font-semibold">
 															{product.name}
 														</div>
-														<div className="text-muted-foreground text-sm">
-															{product.defaultCredits} Credits
+														<div className="text-sm text-muted-foreground">
+															{product.credits} Credits
 														</div>
 													</div>
 													<div className="mt-auto flex flex-col items-end">
 														{isDiscounted ? (
-															<span className="text-muted-foreground text-xs line-through">
-																{originalPrice} MAD
+															<span className="text-xs text-muted-foreground line-through">
+																<Money amount={originalPrice ?? price} />
 															</span>
 														) : null}
 														<Badge variant="secondary" className="w-fit">
-															{price} MAD
+															<Money amount={price} />
 														</Badge>
 													</div>
 												</label>
@@ -170,6 +161,39 @@ export function StepMembership({ form, categories, mode }: StepMembershipProps) 
 					)}
 				/>
 			)}
+
+			{/* Her first membership is a sale: how was it paid? */}
+			{initialProductId ? (
+				<FormField
+					control={form.control}
+					name="initialPaymentMethod"
+					render={({ field }) => (
+						<FormItem className="space-y-2">
+							<p className="text-sm font-semibold">Paid by</p>
+							<FormControl>
+								<div role="radiogroup" aria-label="Paid by" className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/40 p-1">
+									{PAYMENT_METHODS.map((method) => (
+										<label
+											key={method}
+											className="flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
+										>
+											<input
+												type="radio"
+												name={field.name}
+												value={method}
+												checked={(field.value ?? "cash") === method}
+												onChange={() => field.onChange(method)}
+												className="sr-only"
+											/>
+											{PAYMENT_METHOD[method].label}
+										</label>
+									))}
+								</div>
+							</FormControl>
+						</FormItem>
+					)}
+				/>
+			) : null}
 		</div>
 	);
 }

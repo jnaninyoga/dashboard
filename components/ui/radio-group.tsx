@@ -5,7 +5,7 @@ import * as React from "react"
 import { cn } from "@/lib/utils/ui"
 
 import { Record } from "iconsax-reactjs"
-import { RadioGroup as RadioGroupPrimitive } from "radix-ui"
+import { RadioGroup as RadioGroupPrimitive } from "@animate-ui/react/primitives/radix-ui"
 
 function RadioGroup({
   className,

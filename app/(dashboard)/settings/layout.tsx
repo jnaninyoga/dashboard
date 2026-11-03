@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
 	title: "Settings — JnaninYoga",
-	description: "Manage studio settings, categories, memberships, and schedule.",
+	description: "The studio itself: its profile and its hours.",
 };
 
 export default function SettingsLayout({
@@ -10,5 +10,5 @@ export default function SettingsLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	return <main className="flex flex-1 flex-col gap-6 p-6">{children}</main>;
+	return <div className="flex flex-1 flex-col gap-6">{children}</div>;
 }

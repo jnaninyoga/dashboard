@@ -48,9 +48,9 @@ export function FormWizard({
 			{/* Progress Indicator */}
 			<div className="relative">
 				{/* Progress Line */}
-				<div className="bg-secondary-foreground/20 absolute top-5 right-0 left-0 h-0.5">
+				<div className="absolute inset-x-0 top-5 h-0.5 bg-secondary-foreground/20">
 					<div
-						className="bg-primary h-full transition-all duration-300 ease-in-out"
+						className="h-full bg-primary transition-all duration-300 ease-in-out"
 						style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
 					/>
 				</div>
@@ -65,18 +65,18 @@ export function FormWizard({
 							<div key={step.id} className="flex flex-col items-center">
 								<div className="relative">
 									{isCurrent ? (
-										<span className="bg-primary/30 absolute inset-0 animate-ping rounded-full" />
+										<span className="absolute inset-0 animate-ping rounded-full bg-primary/30" />
 									) : null}
 									<div
 										className={cn(
-											"relative flex h-10 w-10 items-center justify-center rounded-full transition-all duration-200",
+											"relative flex size-10 items-center justify-center rounded-full transition-all duration-200",
 											isCompleted && "bg-primary text-primary-foreground",
-											isCurrent && "bg-primary text-primary-foreground scale-110",
-											!isCompleted && !isCurrent && "border-secondary-foreground/30 bg-background text-secondary-foreground/60 border-2",
+											isCurrent && "scale-110 bg-primary text-primary-foreground",
+											!isCompleted && !isCurrent && "border-2 border-secondary-foreground/30 bg-background text-secondary-foreground/60",
 										)}
 									>
 										{isCompleted ? (
-											<TickCircle className="h-5 w-5" variant="Bold" />
+											<TickCircle className="size-5" variant="Bold" />
 										) : (
 											<span className="text-sm font-semibold">
 												{index + 1}
@@ -97,7 +97,7 @@ export function FormWizard({
 										{step.title}
 									</p>
 									{step.description ? (
-										<p className="text-muted-foreground hidden text-xs sm:block">
+										<p className="hidden text-xs text-muted-foreground sm:block">
 											{step.description}
 										</p>
 									) : null}
@@ -119,7 +119,7 @@ export function FormWizard({
 					onClick={onBack}
 					disabled={isFirstStep || isSubmitting || isStepPending}
 				>
-					<ArrowLeft2 className="mr-2 h-4 w-4" variant="Outline" />
+					<ArrowLeft2 className="mr-2 size-4" variant="Outline" />
 					Back
 				</Button>
 
@@ -131,7 +131,7 @@ export function FormWizard({
 					>
 						{isSubmitting ? (
 							<>
-								<Refresh className="mr-2 h-4 w-4 animate-spin" variant="Outline" />
+								<Refresh className="mr-2 size-4 animate-spin" variant="Outline" />
 								{mode === "create" ? "Creating..." : "Updating..."}
 							</>
 						) : (
@@ -147,13 +147,13 @@ export function FormWizard({
 					>
 						{isStepPending ? (
 							<>
-								<Refresh className="mr-2 h-4 w-4 animate-spin" variant="Outline" />
+								<Refresh className="mr-2 size-4 animate-spin" variant="Outline" />
 								Validating...
 							</>
 						) : (
 							<>
 								Next
-								<ArrowRight2 className="ml-2 h-4 w-4" variant="Outline" />
+								<ArrowRight2 className="ml-2 size-4" variant="Outline" />
 							</>
 						)}
 					</Button>

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Great_Vibes,Philosopher, Plus_Jakarta_Sans } from "next/font/google";
 
+import { ConfirmProvider } from "@/components/feedback/confirm";
+import { FeedbackToaster } from "@/components/feedback/toaster";
 import { OfflineDetector } from "@/components/offline-detector";
 import { SerwistRegistration } from "@/components/serwist-registration";
-
-import { Toaster } from "sonner";
 
 import "./globals.css";
 
@@ -33,6 +33,9 @@ export const viewport: Viewport = {
 	themeColor: "#54A5B3",
 	width: "device-width",
 	initialScale: 1,
+	// Lets the page know the phone's home-indicator area (safe-area insets),
+	// which the bottom bar keeps clear of.
+	viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -69,17 +72,11 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} selection:bg-primary/20 font-sans antialiased`}
+				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} font-sans antialiased selection:bg-primary/20`}
 			>
-				{children}
+				<ConfirmProvider>{children}</ConfirmProvider>
 				<SerwistRegistration />
-				<Toaster
-					richColors
-					position="top-center"
-					toastOptions={{
-						className: "!rounded-2xl !shadow-lg !border-0",
-					}}
-				/>
+				<FeedbackToaster />
 				<OfflineDetector />
 			</body>
 		</html>

@@ -33,7 +33,8 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { type Category, Gender, ReferralSource } from "@/lib/types";
+import { type Discount, Gender, ReferralSource } from "@/lib/types";
+import { formatMoney } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import type { ClientFormValues } from "@/lib/validators";
 
@@ -45,15 +46,14 @@ import {
 
 interface StepPersonalDetailsProps {
 	form: UseFormReturn<ClientFormValues>;
-	categories: Category[];
+	discounts: Discount[];
 }
 
 export function StepPersonalDetails({
 	form,
-	categories,
+	discounts,
 }: StepPersonalDetailsProps) {
-	// ... (start of component unchanged until category field)
-
+	
 	return (
 		<div className="space-y-6">
 			<Card>
@@ -109,7 +109,7 @@ export function StepPersonalDetails({
 													!field.value && "text-muted-foreground",
 												)}
 											>
-												<CalendarIcon className="h-4 w-4" variant="Outline" />
+												<CalendarIcon className="size-4" variant="Outline" />
 											</Button>
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="end">
@@ -168,9 +168,9 @@ export function StepPersonalDetails({
 									<SelectContent>
 										<SelectItem
 											value={Gender.MALE}
-											className="focus:text-white focus:[&_svg]:text-blue-500"
+											className="focus:text-white focus:[&_svg]:text-info"
 										>
-											<User className="size-3.5 text-blue-500" variant="Bulk" />
+											<User className="size-3.5 text-info" variant="Bulk" />
 											<span className="text-foreground capitalize">Male</span>
 										</SelectItem>
 										<SelectItem
@@ -256,30 +256,30 @@ export function StepPersonalDetails({
 				<CardContent className="grid gap-4 sm:grid-cols-2">
 					<FormField
 						control={form.control}
-						name="categoryId"
+						name="discountId"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel>Category</FormLabel>
+								<FormLabel>Discount</FormLabel>
 								<Select
 									onValueChange={field.onChange}
 									value={field.value || undefined}
 								>
 									<FormControl>
 										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select a category" />
+											<SelectValue placeholder="No discount" />
 										</SelectTrigger>
 									</FormControl>
 									<SelectContent>
-										{categories.map((cat) => (
+										{discounts.map((cat) => (
 											<SelectItem key={cat.id} value={cat.id}>
-												<Badge className="bg-secondary text-secondary-foreground rounded-full border-0 px-2 py-0.5 text-[10px] font-semibold tracking-wide">
+												<Badge className="rounded-full border-0 bg-secondary px-2 py-0.5 text-[10px] font-semibold tracking-wide text-secondary-foreground">
 													{cat.name}
 													{cat.discountValue &&
 													cat.discountValue !== "0" &&
 													cat.discountType === "percentage"
 														? ` (${cat.discountValue}%)`
 														: cat.discountValue && cat.discountValue !== "0"
-															? ` (${cat.discountValue} MAD)`
+															? ` (${formatMoney(cat.discountValue)})`
 															: ""}
 												</Badge>
 											</SelectItem>

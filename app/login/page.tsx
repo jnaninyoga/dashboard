@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { BloomingBlossoms } from "@/components/ui/blooming-blossoms";
+import { LotusPond } from "@/components/ui/lotus-pond";
 import { loginWithGoogle } from "@/lib/actions/auth";
 
 import { Google } from "iconsax-reactjs";
@@ -8,23 +8,18 @@ import { Google } from "iconsax-reactjs";
 export default async function LoginPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ error?: string }>;
+	searchParams: Promise<{ error?: string; reason?: string; ref?: string }>;
 }) {
-	const { error } = await searchParams;
+	const { error, reason, ref } = await searchParams;
 
 	return (
-		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
-			{/* Blooming Blossoms Animation */}
-			<BloomingBlossoms />
+		<div className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-background px-5 py-10">
+			<LotusPond />
 
-			{/* Ambient background blobs */}
-			<div className="bg-primary/8 pointer-events-none absolute top-[-20%] right-[-10%] h-[500px] w-[500px] rounded-full blur-3xl" />
-			<div className="bg-secondary/15 pointer-events-none absolute bottom-[-15%] left-[-10%] h-[400px] w-[400px] rounded-full blur-3xl" />
-			
-			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-10">
+			<div className="relative z-10 flex w-full max-w-md animate-slide-up flex-col items-center gap-10">
 				{/* Logo & Brand */}
 				<div className="flex flex-col items-center gap-4">
-					<div className="zen-shadow-lg bg-card relative size-28 overflow-hidden rounded-full p-3">
+					<div className="zen-shadow-lg relative size-28 overflow-hidden rounded-full bg-card p-3">
 						<Image
 							src="/logo.png"
 							alt="Jnanin Yoga Studio"
@@ -34,22 +29,22 @@ export default async function LoginPage({
 						/>
 					</div>
 					<div className="flex flex-col gap-1.5 text-center">
-						<h1 className="font-heading text-foreground text-4xl font-bold tracking-tight uppercase">
+						<h1 className="font-heading text-4xl font-bold tracking-tight text-foreground uppercase">
 							Jnanin Yoga
 						</h1>
-						<p className="text-muted-foreground text-base font-medium tracking-wide">
+						<p className="text-base font-medium tracking-wide text-muted-foreground">
 							Digital Command Center
 						</p>
 					</div>
 				</div>
 
 				{/* Main Card */}
-				<div className="bg-card zen-shadow-lg flex w-full flex-col gap-6 rounded-3xl p-8">
+				<div className="zen-shadow-lg flex w-full flex-col gap-6 rounded-3xl bg-card p-8">
 					{/* MVP Notice
 					<div className="rounded-2xl bg-secondary/30 p-5 flex gap-3.5">
 						<div className="flex-shrink-0 mt-0.5">
-							<div className="size-8 rounded-full bg-amber-100 flex items-center justify-center">
-								<svg className="size-4 text-amber-600" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+							<div className="size-8 rounded-full bg-warning/10 flex items-center justify-center">
+								<svg className="size-4 text-warning" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
 									<path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
 								</svg>
 							</div>
@@ -62,12 +57,20 @@ export default async function LoginPage({
 						</div>
 					</div> */}
 
+					{reason === "google" && !error ? (
+						<p role="status" className="rounded-2xl bg-accent/50 p-4 text-center text-sm font-medium text-foreground">
+							Your Google connection expired. Sign in again to reconnect your calendar and contacts.
+						</p>
+					) : null}
+
 					{error ? (
 						<p
 							role="alert"
-							className="bg-destructive/5 text-destructive border-destructive/20 rounded-2xl border p-4 text-center text-sm font-medium"
+							className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center text-sm font-medium text-destructive"
 						>
-							Sign-in didn&apos;t complete. Please try again.
+							{error === "connection"
+								? `You're signed in, but your Google connection couldn't be saved. Try again in a moment${ref ? ` (code ${ref})` : ""}.`
+								: "Sign-in didn't complete. Please try again."}
 						</p>
 					) : null}
 
@@ -75,7 +78,7 @@ export default async function LoginPage({
 					<form action={loginWithGoogle}>
 						<button
 							type="submit"
-							className="group bg-primary text-primary-foreground zen-glow-teal relative flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl text-base font-semibold transition-all duration-200 ease-out hover:cursor-pointer hover:brightness-105 active:scale-[0.98]"
+							className="group zen-glow-teal relative flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl bg-primary text-base font-semibold text-primary-foreground transition-all duration-200 ease-out hover:cursor-pointer hover:brightness-105 active:scale-[0.98]"
 						>
 							<Google size={22} variant="Bold" />
 							Sign in with Google
@@ -84,7 +87,7 @@ export default async function LoginPage({
 				</div>
 
 				{/* Footer */}
-				<p className="text-muted-foreground/60 max-w-xs text-center text-xs">
+				<p className="max-w-xs text-center text-xs text-muted-foreground/60">
 					By signing in, you authorize access to Google Calendar and Contacts for studio management.
 				</p>
 			</div>

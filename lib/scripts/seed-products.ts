@@ -2,36 +2,36 @@
 import "dotenv/config";
 
 import { db } from "@/services/database";
-import { membershipProducts } from "@/services/database/schema";
+import { products } from "@/services/database/schema";
 
 async function main() {
 	console.log("Seeding membership products...");
 
-	const products = [
+	const memberships = [
 		{
 			name: "Pass Découverte (1)",
-			defaultCredits: 1,
-			basePrice: "100.00",
+			credits: 1,
+			price: "100.00",
 		},
 		{
 			name: "Carte 5 Cours",
-			defaultCredits: 5,
-			basePrice: "400.00",
+			credits: 5,
+			price: "400.00",
 		},
 		{
 			name: "Carte 10 Cours",
-			defaultCredits: 10,
-			basePrice: "700.00",
+			credits: 10,
+			price: "700.00",
 		},
 		{
 			name: "Pass Illimité (1 Mois)",
-			defaultCredits: 30, // Approx for unlimited? Or special handling? User said "30 Credits (approx)"
-			basePrice: "600.00",
+			credits: 30, // Approx for unlimited? Or special handling? User said "30 Credits (approx)"
+			price: "600.00",
 		},
 	];
 
-	for (const product of products) {
-		await db.insert(membershipProducts).values(product);
+	for (const product of memberships) {
+		await db.insert(products).values({ kind: "membership", ...product });
 		console.log(`Inserted: ${product.name}`);
 	}
 

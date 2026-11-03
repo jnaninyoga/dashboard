@@ -1,7 +1,7 @@
 import { ClientForm } from "@/components/clients/form";
-import { getClientCategories } from "@/lib/actions/settings";
+import { getDiscounts } from "@/lib/actions/settings";
 
 export default async function AddClientPage() {
-    const categories = await getClientCategories();
-	return <ClientForm mode="create" categories={categories} />;
+    const discounts = await getDiscounts();
+	return <ClientForm mode="create" discounts={discounts} />;
 }

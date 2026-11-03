@@ -41,6 +41,8 @@ export const slotTypeEnum = pgEnum("slot_type", [
 	"b2b",
 ]);
 
+export const sessionStatusEnum = pgEnum("session_status", ["scheduled", "cancelled"]);
+
 export const healthCategoryEnum = pgEnum("health_category", [
 	"physical", // (Body): Includes: Medical history, Surgery, Trauma, Medications, Current Pain
 	"mental", // (Mind): Includes: Anxiety, Depression, Stress, Emotional Shock
@@ -71,6 +73,27 @@ export const b2bDocumentStatusEnum = pgEnum("b2b_document_status", [
 export const b2bDocumentTypeEnum = pgEnum("b2b_document_type", [
 	"quote",
 	"invoice",
+	// An avoir: it takes back part or all of an issued invoice.
+	"credit_note",
+]);
+
+// What a money row is: a payment received, a payment undone (the cheque
+// bounced, or it was recorded by mistake), a credit note set against an
+// invoice, or money given back to the partner. Nothing is ever deleted.
+export const b2bPaymentKindEnum = pgEnum("b2b_payment_kind", [
+	"payment",
+	"reversal",
+	"credit",
+	"refund",
+]);
+
+// How money was paid: hotels mostly by transfer or cheque, clients by cash
+// or card. Shared by partner payments and membership sales.
+export const paymentMethodEnum = pgEnum("payment_method", [
+	"transfer",
+	"cheque",
+	"cash",
+	"card",
 ]);
 
 export const clients = pgTable("clients", {
@@ -86,7 +109,8 @@ export const clients = pgTable("clients", {
 	consultationReason: text("consultation_reason"),
 	referralSource: referralSourceEnum("referral_source"),
 	// category: categoryEnum("category").notNull().default("adult"), // Deprecated
-	categoryId: uuid("category_id").references(() => clientCategories.id), // New FK
+	// The discount she gives this client on memberships (Senior −12.5%…).
+	discountId: uuid("discount_id").references(() => discounts.id),
 	// Structured dossier for the detailed questionnaire
 	intakeData: jsonb("intake_data"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -111,20 +135,55 @@ export const healthLogs = pgTable("health_logs", {
 export type HealthLog = typeof healthLogs.$inferSelect;
 export type NewHealthLog = typeof healthLogs.$inferInsert;
 
-export const membershipProducts = pgTable("membership_products", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	name: text("name").notNull(),
-	defaultCredits: integer("default_credits").notNull(),
-	durationMonths: integer("duration_months"),
-	basePrice: decimal("base_price", { precision: 10, scale: 2 }).notNull(),
-	isArchived: boolean("is_archived").default(false).notNull(),
-});
-export type MembershipProduct = typeof membershipProducts.$inferSelect;
-export type NewMembershipProduct = typeof membershipProducts.$inferInsert;
+// What she sells, in one price list: membership cards to clients, and
+// services to partners (hotels).
+export const productKindEnum = pgEnum("product_kind", [
+	"membership",
+	"partner_service",
+]);
 
-export const clientCategories = pgTable("client_categories", {
+// What a partner service's price is for: one session (séance), whoever
+// comes within the group size.
+export const productUnitEnum = pgEnum("product_unit", ["session"]);
+
+export const products = pgTable(
+	"products",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		kind: productKindEnum("kind").notNull(),
+		name: text("name").notNull(), // "Pass 10 séances", "Famille"
+		price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+		// A membership: the credits on the card (one per visit), and the months
+		// it lasts (empty: no end).
+		credits: integer("credits"),
+		durationMonths: integer("duration_months"),
+		// A partner service: what its price is for, and the group it takes, in
+		// people (pax): 3 to 5 for "Famille"; no maximum for "10+".
+		unit: productUnitEnum("unit"),
+		groupMin: integer("group_min"),
+		groupMax: integer("group_max"),
+		isArchived: boolean("is_archived").default(false).notNull(),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(t) => [
+		check("products_price_not_negative", sql`${t.price} >= 0`),
+		check(
+			"products_membership_has_credits",
+			sql`${t.kind} <> 'membership' OR ${t.credits} IS NOT NULL`,
+		),
+		check(
+			"products_group_in_order",
+			sql`${t.groupMin} IS NULL OR ${t.groupMax} IS NULL OR ${t.groupMin} <= ${t.groupMax}`,
+		),
+	],
+);
+export type Product = typeof products.$inferSelect;
+export type NewProduct = typeof products.$inferInsert;
+
+// Her discounts, given to a client and applied when they buy a membership.
+export const discounts = pgTable("discounts", {
 	id: uuid("id").defaultRandom().primaryKey(),
-	name: text("name").notNull(), // e.g., "Student", "Adult"
+	name: text("name").notNull(), // e.g., "Senior", "Student"
 	discountType: discountTypeEnum("discount_type")
 		.notNull()
 		.default("percentage"),
@@ -133,8 +192,8 @@ export const clientCategories = pgTable("client_categories", {
 		.default("0"),
 	isArchived: boolean("is_archived").default(false).notNull(),
 });
-export type ClientCategory = typeof clientCategories.$inferSelect;
-export type NewClientCategory = typeof clientCategories.$inferInsert;
+export type Discount = typeof discounts.$inferSelect;
+export type NewDiscount = typeof discounts.$inferInsert;
 
 export const appSettings = pgTable("app_settings", {
 	key: text("key").primaryKey(), // e.g., 'discount_student'
@@ -146,13 +205,29 @@ export const clientWallets = pgTable("client_wallets", {
 	clientId: uuid("client_id")
 		.references(() => clients.id, { onDelete: "cascade" })
 		.notNull(),
-	productId: uuid("product_id").references(() => membershipProducts.id),
+	// The membership it was sold as.
+	productId: uuid("product_id").references(() => products.id),
 	physicalCardRef: text("physical_card_ref"),
 	remainingCredits: integer("remaining_credits").notNull(),
 	status: walletStatusEnum("status").notNull().default("active"),
 	amountPaid: decimal("amount_paid", { precision: 10, scale: 2 }), // Actual amount paid after discount
+	// The sale, as it was made (empty on cards sold before it was recorded):
+	// her price then, the discount she gave, and how she was paid.
+	listPrice: decimal("list_price", { precision: 10, scale: 2 }),
+	discountName: text("discount_name"),
+	discountType: discountTypeEnum("discount_type"),
+	discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
+	paymentMethod: paymentMethodEnum("payment_method"),
+	paymentReference: text("payment_reference"),
+	// The last day it can be used (the sale day, the membership's months
+	// later). Empty: no end (cards sold before expiry existed).
+	expiresOn: date("expires_on"),
 	activatedAt: timestamp("activated_at").defaultNow(),
 	lastUsedAt: timestamp("last_used_at"),
+	// A sale undone (sold by mistake, or the money given back): the card
+	// stays on record, its credits no longer count.
+	cancelledAt: timestamp("cancelled_at"),
+	cancelReason: text("cancel_reason"),
 });
 export type ClientWallet = typeof clientWallets.$inferSelect;
 export type NewClientWallet = typeof clientWallets.$inferInsert;
@@ -166,16 +241,47 @@ export const attendanceLedger = pgTable("attendance_ledger", {
 	checkInTime: timestamp("check_in_time").defaultNow().notNull(),
 	slotType: slotTypeEnum("slot_type").notNull(),
 	note: text("note"),
+	/** Set when the session was cancelled: kept in history, credit given back. */
+	cancelledAt: timestamp("cancelled_at"),
 });
 export type AttendanceLedger = typeof attendanceLedger.$inferSelect;
+
+/**
+ * Every session the dashboard creates, kept after it's cancelled (Google
+ * Calendar forgets a deleted event; her history shouldn't). Sessions made
+ * before this table, or directly in Google Calendar, have no row until they
+ * are cancelled here.
+ */
+export const studioSessions = pgTable(
+	"studio_sessions",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		googleEventId: text("google_event_id").notNull(),
+		title: text("title").notNull(),
+		type: slotTypeEnum("type").notNull(),
+		startsAt: timestamp("starts_at").notNull(),
+		endsAt: timestamp("ends_at").notNull(),
+		status: sessionStatusEnum("status").notNull().default("scheduled"),
+		cancelledAt: timestamp("cancelled_at"),
+		cancelReason: text("cancel_reason"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(t) => [
+		unique("studio_sessions_google_event_id_unique").on(t.googleEventId),
+		// The Schedule and the week strip read sessions by time range.
+		index("studio_sessions_starts_at_idx").on(t.startsAt),
+	],
+);
+export type StudioSession = typeof studioSessions.$inferSelect;
+export type NewStudioSession = typeof studioSessions.$inferInsert;
 export type NewAttendanceLedger = typeof attendanceLedger.$inferInsert;
 
 export const clientsRelations = relations(clients, ({ many, one }) => ({
 	healthLogs: many(healthLogs),
 	wallets: many(clientWallets),
-	category: one(clientCategories, {
-		fields: [clients.categoryId],
-		references: [clientCategories.id],
+	discount: one(discounts, {
+		fields: [clients.discountId],
+		references: [discounts.id],
 	}),
 }));
 
@@ -193,9 +299,9 @@ export const clientWalletsRelations = relations(
 			fields: [clientWallets.clientId],
 			references: [clients.id],
 		}),
-		product: one(membershipProducts, {
+		product: one(products, {
 			fields: [clientWallets.productId],
-			references: [membershipProducts.id],
+			references: [products.id],
 		}),
 		ledgerEntries: many(attendanceLedger),
 	}),
@@ -211,8 +317,13 @@ export const attendanceLedgerRelations = relations(
 	}),
 );
 
-export const clientCategoriesRelations = relations(clientCategories, ({ many }) => ({
+export const discountsRelations = relations(discounts, ({ many }) => ({
 	clients: many(clients),
+}));
+
+export const productsRelations = relations(products, ({ many }) => ({
+	wallets: many(clientWallets),
+	documentLines: many(b2bDocumentLines),
 }));
 
 
@@ -225,16 +336,6 @@ export const userTokens = pgTable("user_tokens", {
 	expiresAt: timestamp("expires_at").notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
-
-export const b2bPricingTiers = pgTable("b2b_pricing_tiers", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	name: text("name").notNull(), // e.g., "Famille (3-5 pax)"
-	price: integer("price").notNull(), // Price in MAD
-	isArchived: boolean("is_archived").default(false).notNull(),
-	createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-export type B2BPricingTier = typeof b2bPricingTiers.$inferSelect;
-export type NewB2BPricingTier = typeof b2bPricingTiers.$inferInsert;
 
 export const b2bPartners = pgTable("b2b_partners", {
 	id: uuid("id").defaultRandom().primaryKey(),
@@ -275,7 +376,10 @@ export const b2bDocuments = pgTable(
 		contactId: uuid("contact_id").references(() => b2bContacts.id),
 		type: b2bDocumentTypeEnum("type").notNull(),
 		status: b2bDocumentStatusEnum("status").notNull().default("draft"),
-		documentNumber: text("document_number").notNull(),
+		// A quotation is numbered when it's created; an invoice only when it's
+		// issued, so invoice numbers run without gaps in the order they were
+		// issued (a deleted draft takes no number with it).
+		documentNumber: text("document_number"),
 		issueDate: date("issue_date").notNull(),
 		dueDate: date("due_date"),
 		subtotal: decimal("subtotal", { precision: 10, scale: 2 })
@@ -337,6 +441,14 @@ export const b2bDocumentLines = pgTable("b2b_document_lines", {
 		(): AnyPgColumn => b2bDocumentLines.id,
 		{ onDelete: "restrict" },
 	),
+	// The service from her price list the line sells, and what its quantity
+	// counts ("10 séances"). Empty on a line she wrote herself, and on lines
+	// written before (an issued document prints as it was issued).
+	productId: uuid("product_id").references(() => products.id),
+	unit: productUnitEnum("unit"),
+	// Where the line sits on the document (lines saved together share one
+	// created_at, so that can't order them).
+	position: integer("position").notNull().default(0),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -352,6 +464,23 @@ export const b2bPayments = pgTable(
 			.notNull(),
 		amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
 		paymentDate: timestamp("payment_date").defaultNow().notNull(),
+		// Empty on payments recorded before it was asked.
+		method: paymentMethodEnum("method"),
+		// The cheque or transfer number, to match the bank statement.
+		reference: text("reference"),
+		kind: b2bPaymentKindEnum("kind").notNull().default("payment"),
+		// One receipt (a cheque) can pay several invoices of a quotation:
+		// its rows share this id, so undoing it undoes all of them.
+		receiptId: uuid("receipt_id"),
+		// A reversal names the payment it undoes; a payment is undone once.
+		reversesPaymentId: uuid("reverses_payment_id")
+			.references((): AnyPgColumn => b2bPayments.id)
+			.unique(),
+		// A credit's other document: the credit note on the invoice's row,
+		// the invoice on the credit note's.
+		counterpartId: uuid("counterpart_id").references((): AnyPgColumn => b2bDocuments.id),
+		// Why a payment was undone, or what a credit or refund was for.
+		reason: text("reason"),
 		notes: text("notes"),
 		// Idempotency key. Client sends a UUID per dialog open; unique index prevents
 		// duplicate writes from double-submit. Nullable so backfilled rows are fine.
@@ -422,6 +551,10 @@ export const b2bDocumentLinesRelations = relations(
 		document: one(b2bDocuments, {
 			fields: [b2bDocumentLines.documentId],
 			references: [b2bDocuments.id],
+		}),
+		product: one(products, {
+			fields: [b2bDocumentLines.productId],
+			references: [products.id],
 		}),
 	}),
 );

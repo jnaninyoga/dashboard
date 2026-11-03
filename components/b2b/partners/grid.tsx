@@ -2,110 +2,92 @@
 
 import Link from "next/link";
 
-import { Card, CardContent } from "@/components/ui/card";
+import { EmptyState } from "@/components/empty-state";
+import { EntityCard, EntityCardFigures, EntityCardGrid, EntityCardHeader, Figure } from "@/components/entity-card";
 import { type PartnerWithRelations } from "@/lib/types";
 
-import { Buildings, Document, User } from "iconsax-reactjs";
+import { Buildings, Call, DocumentText } from "iconsax-reactjs";
 
 import { CopyableTaxId } from "../copyable-tax-id";
 
 import { PartnerActions } from "./actions";
 
-export function PartnerGrid({
-	partners,
-}: {
-	partners: PartnerWithRelations[];
-}) {
+/**
+ * Partners in the dashboard's card language (EntityCard), like the client
+ * cards: who they are, the figures, and the next step (call the main
+ * contact, start a quotation).
+ */
+export function PartnerGrid({ partners }: { partners: PartnerWithRelations[] }) {
 	if (!partners.length) {
 		return (
-			<div className="border-secondary-foreground/10 bg-muted text-secondary-foreground flex h-64 flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 text-center">
-				<Buildings className="text-primary/40 size-16" variant="Bulk" />
-				<h3 className="font-heading text-foreground text-xl font-semibold">
-					No partners
-				</h3>
-				<p className="text-muted-foreground mt-1 max-w-xs">
-					Start by adding your first B2B client to manage their quotes and
-					invoices.
-				</p>
-			</div>
+			<EmptyState
+				icon={<Buildings size={40} variant="Bulk" />}
+				title="No partners yet"
+				description="Add a hotel, riad or company to prepare their quotes and invoices."
+			/>
 		);
 	}
 
 	return (
-		<div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
-			{partners.map((partner, index) => (
-				<Card
-					key={partner.id}
-					className="group animate-slide-up border-secondary/20 hover:zen-shadow-md relative overflow-hidden rounded-3xl transition-all duration-300"
-					style={{
-						animationDelay: `${index * 50}ms`,
-						animationFillMode: "both",
-					}}
-				>
-					<div className="absolute top-4 right-4 z-10">
-						<PartnerActions
-							partner={partner}
-							triggerClassName="bg-background/50 hover:bg-secondary h-8 w-8 rounded-xl backdrop-blur-sm transition-all"
-						/>
-					</div>
-
-					<CardContent className="relative p-0">
-						<div className="text-primary absolute -right-7 -bottom-14 rotate-6 opacity-5 transition-all duration-300 group-hover:-right-5 group-hover:-bottom-12 group-hover:rotate-0 group-hover:opacity-10">
-							<Buildings size={230} variant="Bulk" />
-						</div>
-						<div className="relative z-10 flex h-full w-full flex-col p-6">
-							<Link href={`/b2b/partners/${partner.id}`} className="group/link">
-								<div className="mb-4 flex items-center gap-4">
-									<div className="bg-primary/5 text-primary shadow-primary/10 group-hover/link:bg-primary/10 group-hover/link:text-primary flex h-14 w-14 items-center justify-center rounded-2xl transition-all group-hover/link:shadow-lg">
+		<EntityCardGrid>
+			{partners.map((partner) => {
+				const contacts = partner.contacts ?? [];
+				const mainContact = contacts.find((c) => c.isPrimary) ?? contacts[0];
+				const documents = partner.documents?.length ?? 0;
+				return (
+					<EntityCard
+						key={partner.id}
+						menu={<PartnerActions partner={partner} />}
+						header={
+							<EntityCardHeader
+								href={`/b2b/partners/${partner.id}`}
+								title={partner.companyName}
+								media={
+									<div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
 										<Buildings size={28} variant="Bulk" />
 									</div>
-									<div className="flex flex-col">
-										<h3 className="font-heading text-foreground group-hover/link:text-primary text-xl font-bold transition-colors">
-											{partner.companyName}
-										</h3>
-										<p className="text-muted-foreground/80 line-clamp-1 text-xs">
-											{partner.address || "No address provided"}
-										</p>
-									</div>
-								</div>
-							</Link>
-
-							<div className="mb-6 grid grid-cols-2 gap-3">
-								<div className="group bg-secondary/60 text-secondary-foreground shadow-secondary/10 border-secondary-3/20 flex flex-col gap-1 rounded-xl border p-3 transition-all">
-									<div className="flex items-center gap-2">
-										<User className="text-secondary-3 size-4" variant="Bold" />
-										<span className="text-[10px] font-bold tracking-wider uppercase opacity-60">
-											Contacts
-										</span>
-									</div>
-									<span className="text-sm font-semibold capitalize">
-										{partner.contacts?.length || 0}
+								}
+							>
+								{/* Its own line, so the ICE below starts at the same edge as the name. */}
+								<span className="line-clamp-1 basis-full text-sm text-muted-foreground">
+									{partner.address || "No address yet"}
+								</span>
+								{partner.taxId ? (
+									<span className="relative z-10">
+										<CopyableTaxId taxId={partner.taxId} />
 									</span>
-								</div>
-
-								<div className="group bg-secondary/60 text-secondary-foreground shadow-secondary/10 border-secondary-3/20 flex flex-col gap-1 rounded-xl border p-3 transition-all">
-									<div className="flex items-center gap-2">
-										<Document
-											className="text-secondary-3 size-4"
-											variant="Bold"
-										/>
-										<span className="text-[10px] font-bold tracking-wider uppercase opacity-60">
-											Documents
-										</span>
-									</div>
-									<span className="text-sm font-semibold capitalize">
-										{partner.documents?.length || 0}
-									</span>
-								</div>
+								) : null}
+							</EntityCardHeader>
+						}
+						figures={
+							<EntityCardFigures>
+								<Figure label="Documents" value={documents} />
+								<Figure label="Contacts" value={contacts.length} />
+							</EntityCardFigures>
+						}
+						actions={
+							<div className="flex w-full items-center gap-3">
+								{mainContact?.phone ? (
+									<a
+										href={`tel:${mainContact.phone}`}
+										aria-label={`Call ${mainContact.fullName}`}
+										className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:scale-95"
+									>
+										<Call size={20} variant="Bulk" />
+									</a>
+								) : null}
+								<Link
+									href={`/b2b/documents/new?partner=${partner.id}`}
+									className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
+								>
+									<DocumentText size={20} variant="Bold" />
+									New quotation
+								</Link>
 							</div>
-
-							{partner.taxId ? (
-								<CopyableTaxId taxId={partner.taxId} className="w-full" />
-							) : null}
-						</div>
-					</CardContent>
-				</Card>
-			))}
-		</div>
+						}
+					/>
+				);
+			})}
+		</EntityCardGrid>
 	);
 }

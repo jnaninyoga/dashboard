@@ -17,7 +17,7 @@ export function DocumentsTab({ partner }: DocumentsTabProps) {
 	return (
 		<TabsContent
 			value="documents"
-			className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500"
+			className="animate-in space-y-6 duration-500 fade-in slide-in-from-bottom-2"
 		>
 			<div className="flex items-center justify-between px-2">
 				<div className="flex items-center gap-2">
@@ -30,7 +30,7 @@ export function DocumentsTab({ partner }: DocumentsTabProps) {
 						className="zen-glow-teal h-9 gap-2 rounded-xl text-xs font-bold"
 					>
 						<Document size={16} className="mr-1" variant="Outline" />
-						New Quotation
+						New quotation
 					</Button>
 				</Link>
 			</div>

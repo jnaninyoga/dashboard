@@ -3,7 +3,6 @@ import { b2bContacts, b2bPartners } from "@/services/database/schema";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { numericStr } from "./shared";
 
 // --- B2B PARTNER SCHEMA ---
 export const partnerSchema = createInsertSchema(b2bPartners, {
@@ -39,11 +38,3 @@ export const contactSchema = createInsertSchema(b2bContacts, {
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;
-
-// --- B2B TIER SCHEMA ---
-export const b2bTierSchema = z.object({
-	name: z.string().min(1, "Name is required"),
-	price: numericStr(0, "Price must be positive"),
-});
-
-export type B2BTierFormValues = z.infer<typeof b2bTierSchema>;

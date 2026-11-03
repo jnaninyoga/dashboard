@@ -1,4 +1,24 @@
+import { currentHourStart, fromStudioTime, studioDateString, toStudioTime } from "@/lib/utils/time";
+
 import { z } from "zod";
+
+const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+
+/**
+ * Where a new session starts by default: the next full hour on the studio's
+ * clock, no earlier than 08:00 and no later than 19:00; after that, 08:00 the
+ * next morning. One hour long.
+ */
+export function defaultSessionSlot(now: Date = new Date()) {
+	const next = toStudioTime(now).getHours() + 1;
+	const tomorrow = next > 19;
+	const start = tomorrow ? 8 : Math.max(8, next);
+	return {
+		dateStr: studioDateString(tomorrow ? new Date(now.getTime() + 86_400_000) : now),
+		startTimeStr: hour(start),
+		endTimeStr: hour(start + 1),
+	};
+}
 
 // --- SESSION SCHEMA (Booking flow) ---
 export const sessionSchema = z
@@ -22,15 +42,14 @@ export const sessionSchema = z
 	)
 	.refine(
 		(data) => {
-			// Events can only start from the current hour onwards.
-			const eventStart = new Date(`${data.dateStr}T${data.startTimeStr}:00`);
+			// Events can only start from the current hour onwards, on the
+			// studio's clock (not the phone's or the server's).
+			const eventStart = fromStudioTime(data.dateStr, data.startTimeStr);
 			if (isNaN(eventStart.getTime())) return true; // format issues handled elsewhere
-			const hourFloor = new Date();
-			hourFloor.setMinutes(0, 0, 0);
-			return eventStart >= hourFloor;
+			return eventStart >= currentHourStart();
 		},
 		{
-			message: "Cannot schedule events in the past",
+			message: "This time has already passed. Pick a later start.",
 			path: ["startTimeStr"],
 		},
 	)

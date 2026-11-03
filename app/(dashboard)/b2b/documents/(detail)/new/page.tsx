@@ -42,22 +42,22 @@ async function PartnerPicker({ missing = false }: { missing?: boolean }) {
 		<>
 			<Link
 				href="/b2b/documents"
-				className="group text-muted-foreground hover:text-primary flex w-fit items-center gap-2 text-sm transition-colors"
+				className="group flex w-fit items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
 			>
 				<ArrowLeft size={16} className="transition-transform group-hover:-translate-x-1" />
 				Back to Documents
 			</Link>
 
-			<div className="bg-card animate-slide-up rounded-3xl border p-8 shadow-sm">
+			<div className="animate-slide-up rounded-3xl border bg-card p-8 shadow-sm">
 				<div className="mb-6 flex items-center gap-4">
-					<div className="border-primary/20 bg-primary/10 text-primary flex size-14 items-center justify-center rounded-2xl border shadow-inner">
+					<div className="flex size-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-inner">
 						<DocumentText size={28} variant="Bulk" />
 					</div>
 					<div>
-						<h1 className="font-heading text-foreground text-2xl font-black tracking-tight">
-							New Quotation
+						<h1 className="font-heading text-2xl font-black tracking-tight text-foreground">
+							New quotation
 						</h1>
-						<p className="text-muted-foreground text-sm">
+						<p className="text-sm text-muted-foreground">
 							{missing
 								? "We couldn't find that partner — choose another to continue."
 								: "Choose the partner this quotation is for."}
@@ -66,12 +66,12 @@ async function PartnerPicker({ missing = false }: { missing?: boolean }) {
 				</div>
 
 				{partners.length === 0 ? (
-					<div className="border-secondary/10 bg-secondary/5 rounded-2xl border-2 border-dashed p-10 text-center">
-						<p className="text-muted-foreground mb-4 text-sm">
+					<div className="rounded-2xl border-2 border-dashed border-secondary/10 bg-secondary/5 p-10 text-center">
+						<p className="mb-4 text-sm text-muted-foreground">
 							You don&apos;t have any partners yet.
 						</p>
 						<Link href="/b2b/partners">
-							<span className="text-primary text-sm font-bold hover:underline">
+							<span className="text-sm font-bold text-primary hover:underline">
 								Create your first partner →
 							</span>
 						</Link>

@@ -1,17 +1,11 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useId, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,18 +15,29 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { getProducts } from "@/lib/actions/price-list";
 import { scheduleNewEventAction } from "@/lib/actions/schedule/events";
-import { getB2BPricingTiers } from "@/lib/actions/settings";
-import { type B2BTier, type ScheduleEventInput } from "@/lib/types";
+import { productLabel } from "@/lib/domain/price-list/product";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
+import { type Product, type ScheduleEventInput } from "@/lib/types";
+import { CURRENCY, formatMoney, normalizeDecimalInput } from "@/lib/utils/currency";
+import { studioDateString, toStudioTime } from "@/lib/utils/time";
 import { type SessionFormValues,sessionSchema } from "@/lib/validators";
+import { defaultSessionSlot } from "@/lib/validators/session";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, parse } from "date-fns";
+import { CalendarAdd, Refresh } from "iconsax-reactjs";
 
-const todayStr = () => format(new Date(), "yyyy-MM-dd");
-const currentHourStr = () => format(new Date(), "HH:00");
-import { Refresh } from "iconsax-reactjs";
-import { toast } from "sonner";
+const hour = (h: number) => `${String(h).padStart(2, "0")}:00`;
+const currentHourStr = () => hour(toStudioTime().getHours());
+
+const freshSession = (): SessionFormValues => ({
+	title: "",
+	...defaultSessionSlot(),
+	type: "group",
+	outdoorPrice: "",
+	b2bTierId: "",
+});
 
 export function NewSessionDialog({
 	open,
@@ -41,7 +46,8 @@ export function NewSessionDialog({
 	open: boolean;
 	onOpenChange: (open: boolean) => void;
 }) {
-	const [tiers, setTiers] = useState<B2BTier[]>([]);
+	const formId = useId();
+	const [rates, setRates] = useState<Product[]>([]);
 	const router = useRouter();
 
 	const [state, formAction, isPending] = useActionState(
@@ -55,55 +61,37 @@ export function NewSessionDialog({
 		control,
 		handleSubmit,
 		reset,
-		formState: { errors },
+		formState: { errors, isDirty },
 	} = useForm<SessionFormValues>({
 		resolver: zodResolver(sessionSchema),
-		defaultValues: {
-			title: "",
-			dateStr: format(new Date(), "yyyy-MM-dd"),
-			startTimeStr: "08:00",
-			endTimeStr: "09:00",
-			type: "group",
-			outdoorPrice: "",
-			b2bTierId: "",
-		},
+		defaultValues: freshSession(),
 	});
 
+	// Each open starts a fresh session (today's date, not a discarded draft).
 	useEffect(() => {
-		if (open) {
-			getB2BPricingTiers().then(setTiers);
-		}
-	}, [open]);
+		if (!open) return;
+		reset(freshSession());
+		getProducts("partner_service")
+			.then(setRates)
+			.catch((error) => notify.error("Couldn't load your partner rates", { error }));
+	}, [open, reset]);
 
 	useEffect(() => {
 		if (state?.success) {
-			toast.success("Session scheduled successfully!");
-			reset();
+			notify.success("Session scheduled");
 			onOpenChange(false);
 			router.refresh();
 		} else if (state?.error) {
-			toast.error(state.error);
+			notifyActionError(state, "Something went wrong");
 		}
 	}, [state, reset, onOpenChange, router]);
 
 	const selectedType = useWatch({ control, name: "type" });
 	const selectedDate = useWatch({ control, name: "dateStr" });
-	const isToday = selectedDate === todayStr();
+	const isToday = selectedDate === studioDateString();
 
 	const onSubmit = async (data: SessionFormValues) => {
 		try {
-			const startDateTime = parse(
-				`${data.dateStr} ${data.startTimeStr}`,
-				"yyyy-MM-dd HH:mm",
-				new Date(),
-			);
-			const endDateTime = parse(
-				`${data.dateStr} ${data.endTimeStr}`,
-				"yyyy-MM-dd HH:mm",
-				new Date(),
-			);
-
-			const weekday = startDateTime.getDay();
 			const parsePrice =
 				data.type === "outdoor" && data.outdoorPrice
 					? Number(data.outdoorPrice)
@@ -113,47 +101,18 @@ export function NewSessionDialog({
 			let b2bPaxLabel = null;
 
 			if (data.type === "b2b" && data.b2bTierId) {
-				const tier = tiers.find((t) => t.id === data.b2bTierId);
-				if (tier) {
-					b2bPrice = tier.price;
-					b2bPaxLabel = tier.name;
+				const rate = rates.find((r) => r.id === data.b2bTierId);
+				if (rate) {
+					b2bPrice = Number(rate.price);
+					b2bPaxLabel = productLabel(rate);
 				}
 			}
-
-			const formatIsoWithOffset = (date: Date) => {
-				const tzOffset = -date.getTimezoneOffset();
-				const diff = tzOffset >= 0 ? "+" : "-";
-				const pad = (num: number) => {
-					const norm = Math.floor(Math.abs(num));
-					return (norm < 10 ? "0" : "") + norm;
-				};
-				return (
-					date.getFullYear() +
-					"-" +
-					pad(date.getMonth() + 1) +
-					"-" +
-					pad(date.getDate()) +
-					"T" +
-					pad(date.getHours()) +
-					":" +
-					pad(date.getMinutes()) +
-					":" +
-					pad(date.getSeconds()) +
-					diff +
-					pad(tzOffset / 60) +
-					":" +
-					pad(tzOffset % 60)
-				);
-			};
 
 			const payload: ScheduleEventInput = {
 				title: data.title,
 				dateStr: data.dateStr,
 				startTimeStr: data.startTimeStr,
 				endTimeStr: data.endTimeStr,
-				isoStart: formatIsoWithOffset(startDateTime),
-				isoEnd: formatIsoWithOffset(endDateTime),
-				weekday,
 				type: data.type,
 				outdoorPrice: parsePrice,
 				b2bPrice,
@@ -164,23 +123,27 @@ export function NewSessionDialog({
 				formAction(payload);
 			});
 		} catch (error) {
-			console.error(error);
-			toast.error("An unexpected error occurred.");
+			notify.error("Couldn't schedule this session", { error });
 		}
 	};
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="bg-card sm:max-w-[425px]">
-				<DialogHeader>
-					<DialogTitle>Nouveau Session</DialogTitle>
-					<DialogDescription>
-						Schedule a new class or private session. Validates against studio
-						hours and calendar availability.
-					</DialogDescription>
-				</DialogHeader>
-
-				<form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
+		<FormSheet
+			open={open}
+			onOpenChange={onOpenChange}
+			busy={isPending}
+			dirty={isDirty}
+			icon={<CalendarAdd size={28} variant="Bulk" />}
+			title="New session"
+			description="Checked against your Google Calendar (and studio hours for classes) before it's added."
+			footer={
+				<Button type="submit" form={formId} disabled={isPending} className="h-11 rounded-xl">
+					{isPending ? <Refresh className="mr-2 size-4 animate-spin" /> : null}
+					Schedule
+				</Button>
+			}
+		>
+				<form id={formId} onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
 					<div className="space-y-2">
 						<Label>Title</Label>
 						<Controller
@@ -191,7 +154,7 @@ export function NewSessionDialog({
 							)}
 						/>
 						{errors.title ? (
-							<p className="text-sm text-red-500">{errors.title.message}</p>
+							<p className="text-sm text-destructive">{errors.title.message}</p>
 						) : null}
 					</div>
 
@@ -203,7 +166,7 @@ export function NewSessionDialog({
 							render={({ field }) => (
 								<Select
 									onValueChange={field.onChange}
-									defaultValue={field.value}
+									value={field.value}
 								>
 									<SelectTrigger className="w-full">
 										<SelectValue placeholder="Select type" />
@@ -221,7 +184,7 @@ export function NewSessionDialog({
 
 					{selectedType === "outdoor" ? (
 						<div className="space-y-2">
-							<Label>Price per person (MAD)</Label>
+							<Label>Price per person ({CURRENCY})</Label>
 							<Controller
 								control={control}
 								name="outdoorPrice"
@@ -232,7 +195,7 @@ export function NewSessionDialog({
 										{...field} 
 										value={field.value ?? ""}
 										onChange={(e) => {
-											const val = e.target.value.replace(/[^0-9.]/g, "");
+											const val = normalizeDecimalInput(e.target.value);
 											const parts = val.split(".");
 											const sanitized = parts[0] + (parts.length > 1 ? "." + parts.slice(1).join("") : "");
 											field.onChange(sanitized);
@@ -241,7 +204,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.outdoorPrice ? (
-								<p className="text-sm text-red-500">
+								<p className="text-sm text-destructive">
 									{errors.outdoorPrice.message}
 								</p>
 							) : null}
@@ -250,32 +213,30 @@ export function NewSessionDialog({
 
 					{selectedType === "b2b" ? (
 						<div className="space-y-2">
-							<Label>Pricing Tier</Label>
+							<Label>Partner rate</Label>
 							<Controller
 								control={control}
 								name="b2bTierId"
 								render={({ field }) => (
 									<Select
 										onValueChange={field.onChange}
-										defaultValue={field.value}
+										value={field.value}
 									>
 										<SelectTrigger className="w-full">
-											<SelectValue placeholder="Select tier" />
+											<SelectValue placeholder="Choose a rate" />
 										</SelectTrigger>
 										<SelectContent className="w-full">
-											{tiers
-												.filter((t) => !t.isArchived)
-												.map((tier) => (
-													<SelectItem key={tier.id} value={tier.id}>
-														{tier.name} ({tier.price} MAD)
-													</SelectItem>
-												))}
+											{rates.map((rate) => (
+												<SelectItem key={rate.id} value={rate.id}>
+													{productLabel(rate)} ({formatMoney(rate.price)} / session)
+												</SelectItem>
+											))}
 										</SelectContent>
 									</Select>
 								)}
 							/>
 							{errors.b2bTierId ? (
-								<p className="text-sm text-red-500">
+								<p className="text-sm text-destructive">
 									{errors.b2bTierId.message}
 								</p>
 							) : null}
@@ -288,11 +249,11 @@ export function NewSessionDialog({
 							control={control}
 							name="dateStr"
 							render={({ field }) => (
-								<Input type="date" min={todayStr()} {...field} />
+								<Input type="date" min={studioDateString()} {...field} />
 							)}
 						/>
 						{errors.dateStr ? (
-							<p className="text-sm text-red-500">{errors.dateStr.message}</p>
+							<p className="text-sm text-destructive">{errors.dateStr.message}</p>
 						) : null}
 					</div>
 
@@ -311,7 +272,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.startTimeStr ? (
-								<p className="text-sm text-red-500">
+								<p className="text-sm text-destructive">
 									{errors.startTimeStr.message}
 								</p>
 							) : null}
@@ -324,30 +285,14 @@ export function NewSessionDialog({
 								render={({ field }) => <Input type="time" {...field} />}
 							/>
 							{errors.endTimeStr ? (
-								<p className="text-sm text-red-500">
+								<p className="text-sm text-destructive">
 									{errors.endTimeStr.message}
 								</p>
 							) : null}
 						</div>
 					</div>
 
-					<div className="flex justify-end space-x-2 pt-4">
-						<Button
-							type="button"
-							variant="outline"
-							onClick={() => onOpenChange(false)}
-						>
-							Cancel
-						</Button>
-						<Button type="submit" disabled={isPending}>
-							{isPending ? (
-								<Refresh className="mr-2 h-4 w-4 animate-spin" />
-							) : null}
-							Schedule
-						</Button>
-					</div>
 				</form>
-			</DialogContent>
-		</Dialog>
+		</FormSheet>
 	);
 }

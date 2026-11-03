@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from "react";
 
+import { ContactDialog } from "@/components/b2b/contacts/dialog";
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -14,7 +16,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -27,22 +28,23 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { deleteContactAction } from "@/lib/actions/b2b/partners";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type Contact } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
 
-import { Call, Edit, More, Sms, Star, Trash, User } from "iconsax-reactjs";
+import { Call, Edit, Sms, Star, Trash, User } from "iconsax-reactjs";
 
 export function ContactList({ contacts }: { contacts: Contact[] }) {
 	if (!contacts.length) {
 		return (
-			<div className="group border-foreground/10 bg-card/80 hover:bg-card flex flex-col items-center justify-center rounded-3xl border-2 border-dashed p-20 text-center transition-all">
-				<Avatar className="bg-secondary/60 border-secondary-3/20 zen-glow-blush mb-4 size-22 border shadow-sm transition-colors">
+			<div className="group flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-foreground/10 bg-card/80 p-20 text-center transition-all hover:bg-card">
+				<Avatar className="zen-glow-blush mb-4 size-22 border border-secondary-3/20 bg-secondary/60 shadow-sm transition-colors">
 					<AvatarFallback className="bg-transparent">
-						<User className="text-secondary-3/80 group-hover:text-secondary-3 size-10 transition-colors" variant="Bulk" />
+						<User className="size-10 text-secondary-3/80 transition-colors group-hover:text-secondary-3" variant="Bulk" />
 					</AvatarFallback>
 				</Avatar>
-				<h3 className="font-heading text-foreground text-xl font-bold">No contacts</h3>
-				<p className="text-muted-foreground mt-2 max-w-lg text-sm">
+				<h3 className="font-heading text-xl font-bold text-foreground">No contacts</h3>
+				<p className="mt-2 max-w-lg text-sm text-muted-foreground">
 					Add a collaborator to manage this partner.
 				</p>
 			</div>
@@ -61,14 +63,16 @@ export function ContactList({ contacts }: { contacts: Contact[] }) {
 function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 	const [isPending, startTransition] = useTransition();
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [editOpen, setEditOpen] = useState(false);
 
 	const handleDelete = async () => {
 		startTransition(async () => {
 			const res = await deleteContactAction(contact.id);
 			if (res.error) {
-				console.error(res.error);
+				notifyActionError(res, "Couldn't delete this contact");
 			} else {
 				setShowDeleteDialog(false);
+				notify.success("Contact deleted");
 			}
 		});
 	};
@@ -77,10 +81,10 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 		<>
 			<div
 				className={cn(
-					"group animate-slide-up bg-card relative flex items-center justify-between gap-4 rounded-3xl border p-3 pr-4 transition-all",
+					"group relative flex animate-slide-up items-center justify-between gap-4 rounded-3xl border bg-card p-3 pr-4 transition-all",
 					contact.isPrimary
-						? "hover:border-primary/50 hover:zen-glow-teal"
-						: "hover:border-secondary-3/50 hover:zen-glow-blush",
+						? "hover:zen-glow-teal hover:border-primary/50"
+						: "hover:zen-glow-blush hover:border-secondary-3/50",
 				)}
 				style={{
 					animationDelay: `${index * 50}ms`,
@@ -91,7 +95,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 					<div className="absolute top-5 right-5 -z-10 opacity-0 transition-all group-hover:-top-3.5 group-hover:z-10 group-hover:opacity-100">
 						<Badge
 							variant="outline"
-							className="bg-primary text-primary-foreground rounded-full border px-2 py-0 text-[10px] font-bold tracking-widest uppercase shadow-none"
+							className="rounded-full border bg-primary px-2 py-0 text-[10px] font-bold tracking-widest text-primary-foreground uppercase shadow-none"
 						>
 							Primary
 						</Badge>
@@ -101,10 +105,10 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 				<div className="flex shrink-0 items-center gap-4">
 					<Avatar
 						className={cn(
-							"h-12 w-12 rounded-full border transition-all",
+							"size-12 rounded-full border transition-all",
 							contact.isPrimary
 								? "border-primary/20 bg-primary/10 text-primary"
-								: "bg-secondary/10 text-muted-foreground border-transparent",
+								: "border-transparent bg-secondary/10 text-muted-foreground",
 						)}
 					>
 						<AvatarFallback className="rounded-full bg-transparent">
@@ -118,23 +122,23 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 				</div>
 
 				<div className="flex min-w-0 flex-1 flex-col justify-center">
-					<div className="font-heading group-hover:text-primary text-foreground truncate text-base font-bold transition-colors">
+					<div className="truncate font-heading text-base font-bold text-foreground transition-colors group-hover:text-primary">
 						{contact.fullName}
 					</div>
 
-					<div className="text-secondary-foreground truncate text-[10px] font-bold tracking-widest uppercase opacity-60">
+					<div className="truncate text-[10px] font-bold tracking-widest text-secondary-foreground uppercase opacity-60">
 						{contact.role || "Contact"}
 					</div>
 				</div>
 
 				<div className="flex shrink-0 items-center justify-end gap-1">
-					<div className="text-muted-foreground flex items-center gap-1 transition-all">
+					<div className="flex items-center gap-1 text-muted-foreground transition-all">
 						{contact.phone ? (
 							<Tooltip>
 								<TooltipTrigger asChild>
 									<a
 										href={`tel:${contact.phone}`}
-										className="bg-secondary/40 text-secondary-3 group-hover:bg-secondary/70 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+										className="flex size-8 items-center justify-center rounded-full bg-secondary/40 text-secondary-3 transition-colors group-hover:bg-secondary/70"
 									>
 										<Call size={16} variant="Bulk" />
 									</a>
@@ -149,7 +153,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 								<TooltipTrigger asChild>
 									<a
 										href={`mailto:${contact.email}`}
-										className="bg-secondary/40 text-secondary-3 group-hover:bg-secondary/70 flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+										className="flex size-8 items-center justify-center rounded-full bg-secondary/40 text-secondary-3 transition-colors group-hover:bg-secondary/70"
 									>
 										<Sms size={16} variant="Bulk" />
 									</a>
@@ -161,27 +165,24 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 						) : null}
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="bg-muted text-secondary-foreground group-hover:bg-background flex h-8 w-8 items-center justify-center rounded-full transition-colors"
-								>
-									<More size={16} className="rotate-90" />
-								</Button>
+								<RowActionsTrigger label={`Actions for ${contact.fullName}`} />
 							</DropdownMenuTrigger>
 							<DropdownMenuContent
 								align="end"
 								className="w-44 rounded-xl border"
 							>
-								<DropdownMenuItem className="cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase">
+								<DropdownMenuItem
+									onClick={() => setEditOpen(true)}
+									className="cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase"
+								>
 									<Edit className="mr-2 size-4" variant="Outline" />
 									Edit
 								</DropdownMenuItem>
 								<DropdownMenuItem
 									onClick={() => setShowDeleteDialog(true)}
-									className="text-destructive focus:bg-destructive/5 focus:text-destructive focus:[&_svg]:text-destructive cursor-pointer p-2.5 text-xs font-bold tracking-wide uppercase"
+									className="cursor-pointer p-2.5 text-xs font-bold tracking-wide text-destructive uppercase focus:bg-destructive/5 focus:text-destructive focus:[&_svg]:text-destructive"
 								>
-									<Trash className="text-destructive mr-2 size-4" variant="Outline" />
+									<Trash className="mr-2 size-4 text-destructive" variant="Outline" />
 									Delete
 								</DropdownMenuItem>
 							</DropdownMenuContent>
@@ -190,19 +191,26 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 				</div>
 			</div>
 
+			<ContactDialog
+				partnerId={contact.partnerId}
+				contact={contact}
+				open={editOpen}
+				onOpenChange={setEditOpen}
+			/>
+
 			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent className="rounded-3xl border-0 shadow-2xl">
 					<AlertDialogHeader>
 						<AlertDialogTitle className="font-heading text-xl font-bold">
 							Are you absolutely sure?
 						</AlertDialogTitle>
-						<AlertDialogDescription className="text-muted-foreground leading-relaxed">
+						<AlertDialogDescription className="leading-relaxed text-muted-foreground">
 							This will permanently delete <strong>{contact.fullName}</strong>{" "}
 							from this partner&apos;s contact list.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter className="gap-2">
-						<AlertDialogCancel className="bg-secondary/50 hover:bg-secondary rounded-xl border-0 font-bold">
+						<AlertDialogCancel className="rounded-xl border-0 bg-secondary/50 font-bold hover:bg-secondary">
 							Cancel
 						</AlertDialogCancel>
 						<AlertDialogAction
@@ -211,7 +219,7 @@ function ContactItem({ contact, index }: { contact: Contact, index: number }) {
 								handleDelete();
 							}}
 							disabled={isPending}
-							className="bg-destructive hover:bg-destructive/90 shadow-destructive/20 rounded-xl font-bold shadow-lg transition-all hover:scale-105 active:scale-95"
+							className="rounded-xl bg-destructive font-bold text-destructive-foreground shadow-lg shadow-destructive/20 transition-all hover:scale-105 hover:bg-destructive/90 active:scale-95"
 						>
 							{isPending ? "Deleting..." : "Delete Contact"}
 						</AlertDialogAction>

@@ -1,27 +1,12 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingScreen, SkeletonPageHeader } from "@/components/skeletons";
 
-export default function SettingsLoading() {
+// Nothing lives at /settings itself: this shows while one of its pages (the
+// business profile, the studio hours) starts loading, before that page's
+// own loading screen. It holds what both begin with: their heading.
+export default function Loading() {
 	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-6">
-			<div className="space-y-2">
-				<Skeleton className="bg-muted-foreground/10 h-9 w-48" />
-				<Skeleton className="bg-muted-foreground/10 h-4 w-64" />
-			</div>
-
-			<div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-				{Array.from({ length: 6 }).map((_, i) => (
-					<div key={i} className="border-border/50 space-y-4 rounded-2xl border p-6 shadow-sm">
-						<div className="flex items-center gap-4">
-							<Skeleton className="h-10 w-10 rounded-xl" />
-							<div className="space-y-2">
-								<Skeleton className="h-5 w-32" />
-								<Skeleton className="h-4 w-24" />
-							</div>
-						</div>
-						<Skeleton className="h-10 w-full rounded-xl" />
-					</div>
-				))}
-			</div>
-		</div>
+		<LoadingScreen label="Loading settings">
+			<SkeletonPageHeader title="w-48 md:w-56" description={["w-[36rem] max-md:w-full", "w-2/3 md:hidden"]} />
+		</LoadingScreen>
 	);
 }

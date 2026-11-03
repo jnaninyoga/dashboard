@@ -1,0 +1,151 @@
+import { describe, expect, it } from "vitest";
+
+import { dayCountLabel, type FeedSession, mergeFeed, summarize } from "./feed";
+
+const week = ["2026-06-15", "2026-06-16", "2026-06-17", "2026-06-18", "2026-06-19", "2026-06-20", "2026-06-21"];
+
+const event = (id: string, start: string, end: string, type?: string, summary = `Class ${id}`) => ({
+	id,
+	summary,
+	start: { dateTime: start },
+	end: { dateTime: end },
+	...(type ? { extendedProperties: { private: { jnaninEventType: type } } } : {}),
+});
+
+describe("mergeFeed", () => {
+	it("lists Google's sessions with their studio day, type and check-ins", () => {
+		const feed = mergeFeed({
+			days: week,
+			events: [event("a", "2026-06-16T09:00:00+01:00", "2026-06-16T10:00:00+01:00", "private")],
+			cancelled: [],
+			checkIns: new Map([["a", { live: 3, cancelled: 0 }]]),
+		});
+		expect(feed).toHaveLength(1);
+		expect(feed[0]).toMatchObject({
+			id: "a",
+			day: "2026-06-16",
+			type: "private",
+			status: "scheduled",
+			external: false,
+			checkIns: 3,
+		});
+		expect(feed[0].event?.id).toBe("a");
+	});
+
+	it("shows events made outside the dashboard, marked as such", () => {
+		const [only] = mergeFeed({
+			days: week,
+			events: [event("ext", "2026-06-17T18:00:00+01:00", "2026-06-17T19:00:00+01:00")],
+			cancelled: [],
+			checkIns: new Map(),
+		});
+		expect(only).toMatchObject({ external: true, checkIns: 0 });
+	});
+
+	it("takes the studio's day and time as Google wrote them (asked in Marrakech time)", () => {
+		// 23:30 UTC on the 15th is 00:30 on the 16th in Marrakech (UTC+1).
+		const [late] = mergeFeed({
+			days: week,
+			events: [event("n", "2026-06-16T00:30:00+01:00", "2026-06-16T01:30:00+01:00")],
+			cancelled: [],
+			checkIns: new Map(),
+		});
+		expect(late).toMatchObject({ day: "2026-06-16", startTime: "00:30", endTime: "01:30" });
+		expect(late.start).toBe("2026-06-15T23:30:00.000Z");
+	});
+
+	it("has no clock time for an all-day event", () => {
+		const [allDay] = mergeFeed({
+			days: week,
+			events: [{ id: "h", summary: "Holiday", start: { date: "2026-06-18" }, end: { date: "2026-06-19" } }],
+			cancelled: [],
+			checkIns: new Map(),
+		});
+		expect(allDay).toMatchObject({ day: "2026-06-18", startTime: null, endTime: null });
+	});
+
+	it("adds the cancelled sessions from our records, in time order, with the credits given back", () => {
+		const feed = mergeFeed({
+			days: week,
+			events: [event("b", "2026-06-18T10:00:00+01:00", "2026-06-18T11:00:00+01:00")],
+			cancelled: [
+				{
+					googleEventId: "c",
+					title: "Sunset flow",
+					type: "outdoor",
+					startsAt: new Date("2026-06-17T17:00:00Z"),
+					endsAt: new Date("2026-06-17T18:00:00Z"),
+					cancelReason: "rain",
+				},
+			],
+			checkIns: new Map([["c", { live: 0, cancelled: 4 }]]),
+		});
+		expect(feed.map((s) => s.id)).toEqual(["c", "b"]);
+		expect(feed[0]).toMatchObject({
+			status: "cancelled",
+			day: "2026-06-17",
+			title: "Sunset flow",
+			checkIns: 0,
+			refunded: 4,
+			cancelReason: "rain",
+			event: null,
+		});
+	});
+
+	it("keeps only the requested days (Google also returns events overlapping the edges)", () => {
+		const feed = mergeFeed({
+			days: week,
+			events: [event("before", "2026-06-14T22:00:00+01:00", "2026-06-15T01:00:00+01:00")],
+			cancelled: [],
+			checkIns: new Map(),
+		});
+		expect(feed).toEqual([]);
+	});
+
+	it("never lists a session twice", () => {
+		const feed = mergeFeed({
+			days: week,
+			events: [event("d", "2026-06-19T10:00:00+01:00", "2026-06-19T11:00:00+01:00")],
+			cancelled: [
+				{
+					googleEventId: "d",
+					title: "Class d",
+					type: "group",
+					startsAt: new Date("2026-06-19T09:00:00Z"),
+					endsAt: new Date("2026-06-19T10:00:00Z"),
+					cancelReason: null,
+				},
+			],
+			checkIns: new Map(),
+		});
+		expect(feed).toHaveLength(1);
+		expect(feed[0].status).toBe("cancelled");
+	});
+});
+
+describe("summarize", () => {
+	const session = (status: "scheduled" | "cancelled", checkIns: number) =>
+		({ status, checkIns }) as Pick<FeedSession, "status" | "checkIns"> as FeedSession;
+
+	it("counts the sessions that happen and the clients who came, cancelled ones apart", () => {
+		expect(summarize([session("scheduled", 3), session("scheduled", 0), session("cancelled", 0)])).toEqual({
+			sessions: 2,
+			cancelled: 1,
+			checkIns: 3,
+		});
+	});
+
+	it("is all zeros for an empty day", () => {
+		expect(summarize([])).toEqual({ sessions: 0, cancelled: 0, checkIns: 0 });
+	});
+});
+
+describe("dayCountLabel", () => {
+	it("names a day's sessions the same way on Home and in the Schedule", () => {
+		expect(dayCountLabel({ sessions: 1, cancelled: 0 })).toBe("1 session");
+		expect(dayCountLabel({ sessions: 3, cancelled: 0 })).toBe("3 sessions");
+		expect(dayCountLabel({ sessions: 2, cancelled: 1 })).toBe("2 sessions, 1 cancelled");
+		expect(dayCountLabel({ sessions: 0, cancelled: 2 })).toBe("2 cancelled");
+		expect(dayCountLabel({ sessions: 0, cancelled: 0 })).toBe("No sessions");
+	});
+});

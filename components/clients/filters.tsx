@@ -11,13 +11,13 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
-import { type Category, Gender } from "@/lib/types";
+import { type Discount, Gender } from "@/lib/types";
 
 interface ClientFiltersProps {
-    categories: Category[];
+    discounts: Discount[];
 }
 
-export function ClientFilters({ categories }: ClientFiltersProps) {
+export function ClientFilters({ discounts }: ClientFiltersProps) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const [_isPending, startTransition] = useTransition();
@@ -49,24 +49,24 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 	};
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+		<div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 			<Input
 				placeholder="Search clients..."
-				className="bg-card w-full sm:w-[300px]"
+				className="w-full bg-card sm:w-64 xl:w-[300px]"
 				defaultValue={searchParams.get("query")?.toString()}
 				onChange={(e) => handleSearch(e.target.value)}
 			/>
-			<div className="flex w-full gap-4 sm:w-auto">
+			<div className="flex w-full gap-3 sm:w-auto">
 				<Select
-					onValueChange={(v) => handleFilterChange("categoryId", v)}
-					defaultValue={searchParams.get("categoryId") || "all"}
+					onValueChange={(v) => handleFilterChange("discountId", v)}
+					defaultValue={searchParams.get("discountId") || "all"}
 				>
-					<SelectTrigger className="bg-card w-full sm:w-[180px]">
-						<SelectValue placeholder="Category" />
+					<SelectTrigger className="w-full bg-card sm:w-40 xl:w-[180px]">
+						<SelectValue placeholder="Discount" />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="all">All Categories</SelectItem>
-                        {categories.map((cat) => (
+						<SelectItem value="all">Any discount</SelectItem>
+                        {discounts.map((cat) => (
                             <SelectItem key={cat.id} value={cat.id}>
                                 {cat.name}
                             </SelectItem>
@@ -77,7 +77,7 @@ export function ClientFilters({ categories }: ClientFiltersProps) {
 					onValueChange={(v) => handleFilterChange("gender", v)}
 					defaultValue={searchParams.get("gender") || Gender.ALL}
 				>
-					<SelectTrigger className="bg-card w-full sm:w-[180px]">
+					<SelectTrigger className="w-full bg-card sm:w-40 xl:w-[180px]">
 						<SelectValue placeholder="Gender" />
 					</SelectTrigger>
 					<SelectContent>

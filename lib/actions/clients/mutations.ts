@@ -4,21 +4,24 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
+import { priceAfterDiscount, saleRow } from "@/lib/domain/clients/membership-sale";
+import { logServerError } from "@/lib/errors/server";
 import { Gender, type NewHealthLog } from "@/lib/types";
-import { clientSchema } from "@/lib/validators";
+import { studioDateString } from "@/lib/utils/time";
+import { clientSchema, PAYMENT_METHODS, type PaymentMethod } from "@/lib/validators";
 import { db } from "@/services/database";
 import {
-	clientCategories,
 	clients,
 	clientWallets,
+	discounts,
 	healthLogs,
-	membershipProducts,
+	products,
 } from "@/services/database/schema";
 import {
 	syncClientToGoogleContacts,
 	updateClientInGoogleContacts,
 } from "@/services/google";
-import { getValidAccessToken } from "@/services/google";
+import { getValidAccessToken, googleErrorMessage, needsReauth } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
 import { and, eq, isNull } from "drizzle-orm";
@@ -49,8 +52,11 @@ export async function createClientAction(
 	try {
 		accessToken = await getValidAccessToken(user.id);
 	} catch (error) {
+		// Only an expired connection means signing in again; an outage just
+		// means trying again, with what she typed still in the form.
+		if (needsReauth(error)) redirect("/login?reason=google");
 		console.error("Token retrieval failed:", error);
-		redirect("/login");
+		return { error: googleErrorMessage(error, "Google Contacts") };
 	}
 
 	const intakeDataRaw: Record<string, string> = {};
@@ -70,7 +76,7 @@ export async function createClientAction(
 		address: getString(formData, "address"),
 		profession: getString(formData, "profession"),
 		birthDate: getString(formData, "birthDate"),
-		categoryId: getString(formData, "categoryId"),
+		discountId: getString(formData, "discountId"),
 		gender: getString(formData, "gender"),
 		referralSource: getString(formData, "referralSource"),
 		consultationReason: getString(formData, "consultationReason"),
@@ -93,7 +99,7 @@ export async function createClientAction(
 		address,
 		profession,
 		birthDate,
-		categoryId,
+		discountId,
 		gender,
 		referralSource,
 		consultationReason,
@@ -101,20 +107,25 @@ export async function createClientAction(
 	} = parsed.data;
 
 	const initialProductId = formData.get("initialProductId") as string | null;
+	// How she was paid for the first membership (cash unless she said otherwise).
+	const paidBy = formData.get("initialPaymentMethod");
+	const initialPaymentMethod = (PAYMENT_METHODS as readonly string[]).includes(String(paidBy))
+		? (paidBy as PaymentMethod)
+		: "cash";
 
 	try {
 		let clientWithId: { id: string }[] = [];
 
 		await db.transaction(async (tx) => {
-			let categoryName = "Uncategorized";
+			let discountName = "No discount";
 
-			if (categoryId) {
-				const categoryObj = await tx.query.clientCategories.findFirst({
-					where: eq(clientCategories.id, categoryId as string),
+			if (discountId) {
+				const discountRow = await tx.query.discounts.findFirst({
+					where: eq(discounts.id, discountId as string),
 					columns: { name: true },
 				});
-				if (categoryObj) {
-					categoryName = categoryObj.name;
+				if (discountRow) {
+					discountName = discountRow.name;
 				}
 			}
 
@@ -127,7 +138,7 @@ export async function createClientAction(
 					address: address || null,
 					profession: profession || null,
 					birthDate,
-					category: categoryName,
+					discount: discountName,
 					gender: gender,
 					referralSource: referralSource || null,
 					consultationReason: consultationReason || null,
@@ -144,7 +155,7 @@ export async function createClientAction(
 					address: address || null,
 					profession: profession || null,
 					birthDate,
-					categoryId: categoryId,
+					discountId: discountId,
 					gender: gender || Gender.MALE,
 					referralSource: referralSource ?? null,
 					consultationReason: consultationReason || null,
@@ -157,7 +168,7 @@ export async function createClientAction(
 			const newClientId = clientWithId[0].id;
 
 			const logsToInsert: NewHealthLog[] = [];
-			const nowStr = new Date().toISOString().split("T")[0];
+			const nowStr = studioDateString();
 
 			if (parsed.data.healthLogs && parsed.data.healthLogs.length > 0) {
 				parsed.data.healthLogs.forEach((log) => {
@@ -177,31 +188,41 @@ export async function createClientAction(
 				await tx.insert(healthLogs).values(logsToInsert);
 			}
 
+			// Her first membership is a sale like any other: with her
+			// discount (it used to be charged at the full price), and paid.
 			if (initialProductId) {
-				const product = await tx.query.membershipProducts.findFirst({
-					where: eq(membershipProducts.id, initialProductId),
+				const product = await tx.query.products.findFirst({
+					where: and(eq(products.id, initialProductId), eq(products.kind, "membership")),
 				});
+				const discount = discountId
+					? await tx.query.discounts.findFirst({ where: eq(discounts.id, discountId as string) })
+					: null;
 
-				if (product) {
-					await tx.insert(clientWallets).values({
-						clientId: newClientId,
-						productId: initialProductId,
-						remainingCredits: product.defaultCredits,
-						status: "active",
-						amountPaid: product.basePrice,
-						activatedAt: new Date(),
-					});
+				if (product && !product.isArchived) {
+					await tx.insert(clientWallets).values(
+						saleRow({
+							clientId: newClientId,
+							membership: product,
+							discount: discount ?? null,
+							price: priceAfterDiscount(product.price, discount ?? null).price,
+							soldOn: studioDateString(),
+							soldAt: new Date(),
+							paymentMethod: initialPaymentMethod,
+						}),
+					);
 				}
 			}
 		});
 
 		revalidatePath("/clients");
-		return { success: true };
+		return { success: true, id: clientWithId[0]?.id };
 	} catch (err: unknown) {
-		console.error("Error creating client:", err);
-		const message =
-			err instanceof Error ? err.message : "Failed to create client";
-		return { error: message };
+		// The raw message (database or Google) means nothing to the operator;
+		// the code ties her report to the logged cause.
+		return {
+			error: "Couldn't create this client",
+			ref: logServerError("Error creating client", err),
+		};
 	}
 }
 
@@ -234,7 +255,7 @@ export async function updateClientAction(
 		address: getString(formData, "address"),
 		profession: getString(formData, "profession"),
 		birthDate: getString(formData, "birthDate"),
-		categoryId: getString(formData, "categoryId"),
+		discountId: getString(formData, "discountId"),
 		gender: getString(formData, "gender"),
 		referralSource: getString(formData, "referralSource"),
 		consultationReason: getString(formData, "consultationReason"),
@@ -263,7 +284,7 @@ export async function updateClientAction(
 				.update(clients)
 				.set({
 					...clientUpdateData,
-					categoryId: parsed.data.categoryId,
+					discountId: parsed.data.discountId,
 					gender: parsed.data.gender,
 					intakeData: parsed.data.intakeData || {},
 				})
@@ -273,7 +294,7 @@ export async function updateClientAction(
 				where: eq(healthLogs.clientId, id),
 			});
 
-			const nowStr = new Date().toISOString().split("T")[0];
+			const nowStr = studioDateString();
 
 			if (submittedLogs && submittedLogs.length > 0) {
 				const submittedConditions = new Set(
@@ -347,14 +368,14 @@ export async function updateClientAction(
 			try {
 				accessToken = await getValidAccessToken(user.id);
 
-				let categoryName = "Uncategorized";
-				if (parsed.data.categoryId) {
-					const categoryObj = await db.query.clientCategories.findFirst({
-						where: eq(clientCategories.id, parsed.data.categoryId as string),
+				let discountName = "No discount";
+				if (parsed.data.discountId) {
+					const discountRow = await db.query.discounts.findFirst({
+						where: eq(discounts.id, parsed.data.discountId as string),
 						columns: { name: true },
 					});
-					if (categoryObj) {
-						categoryName = categoryObj.name;
+					if (discountRow) {
+						discountName = discountRow.name;
 					}
 				}
 
@@ -368,7 +389,7 @@ export async function updateClientAction(
 						address: parsed.data.address || null,
 						profession: parsed.data.profession || null,
 						birthDate: parsed.data.birthDate,
-						category: categoryName,
+						discount: discountName,
 						gender: parsed.data.gender,
 						referralSource: parsed.data.referralSource || null,
 						consultationReason: parsed.data.consultationReason || null,
@@ -382,8 +403,8 @@ export async function updateClientAction(
 			} catch (e: unknown) {
 				console.error("Failed to sync update to Google Contacts:", e);
 				const err = e as { message?: string; code?: number };
-				if (err.message === "REAUTH_REQUIRED") {
-					return { error: "Session expired. Please refresh the page." };
+				if (needsReauth(e)) {
+					return { error: googleErrorMessage(e, "Google Contacts") };
 				}
 				if (err.code === 404) {
 					// skip
@@ -398,8 +419,7 @@ export async function updateClientAction(
 		revalidatePath("/clients");
 		return { success: true };
 	} catch (error) {
-		console.error("Error updating client:", error);
-		return { error: "Failed to update client" };
+		return { error: "Failed to update client", ref: logServerError("Error updating client", error) };
 	}
 }
 
@@ -427,9 +447,8 @@ export async function deleteClientAction(id: string) {
 				);
 			} catch (e: unknown) {
 				console.error("Failed to sync delete to Google Contacts:", e);
-				const err = e as { message?: string };
-				if (err.message === "REAUTH_REQUIRED") {
-					return { error: "Session expired. Please refresh the page." };
+				if (needsReauth(e)) {
+					return { error: googleErrorMessage(e, "Google Contacts") };
 				}
 			}
 		}
@@ -438,8 +457,7 @@ export async function deleteClientAction(id: string) {
 		revalidatePath("/clients");
 		return { success: true };
 	} catch (error) {
-		console.error("Error deleting client:", error);
-		return { error: "Failed to delete client" };
+		return { error: "Failed to delete client", ref: logServerError("Error deleting client", error) };
 	}
 }
 
@@ -454,11 +472,12 @@ export async function getGoogleContactPhotoAction(
 
 	if (!user) return { error: "Not authenticated" };
 
+	// A missing photo is never worth signing her out: without Google, no photo.
 	let accessToken: string;
 	try {
 		accessToken = await getValidAccessToken(user.id);
 	} catch {
-		redirect("/login");
+		return { success: true, url: undefined };
 	}
 
 	let phone: string | undefined;

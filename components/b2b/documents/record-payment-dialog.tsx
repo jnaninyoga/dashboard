@@ -4,6 +4,8 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
+import { Money } from "@/components/money";
+import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -23,29 +25,37 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { recordDocumentPaymentAction } from "@/lib/actions/b2b/documents";
+import { documentName } from "@/lib/domain/billing/document-name";
 import {
 	allocatePayment,
 	outstandingOf,
 	type PaymentTarget,
 } from "@/lib/domain/billing/payments";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type DocumentWithRelations } from "@/lib/types/b2b";
-import { parseAmountInput } from "@/lib/utils/currency";
+import { CURRENCY, formatAmount, formatMoney, parseAmountInput } from "@/lib/utils/currency";
+import { studioDateString } from "@/lib/utils/time";
 import {
+	PAYMENT_METHODS,
+	type PaymentMethod,
 	type RecordPaymentFormValues,
 	recordPaymentSchema,
 } from "@/lib/validators/document";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MoneySend, TickCircle, Wallet3 } from "iconsax-reactjs";
-import { toast } from "sonner";
 
 export type PaymentQueueEntry = PaymentTarget;
 
-const formatMAD = (n: number) =>
-	n.toLocaleString("fr-FR", {
-		minimumFractionDigits: 2,
-		maximumFractionDigits: 2,
-	});
+
+// What to write down so the payment can be found on the bank statement.
+const REFERENCE_LABELS: Record<PaymentMethod, string> = {
+	transfer: "Transfer reference",
+	cheque: "Cheque number",
+	cash: "Receipt number",
+	card: "Card receipt number",
+};
+
 
 // crypto.randomUUID only exists in secure contexts; the server column is a
 // uuid, so the fallback must still produce a valid v4 UUID.
@@ -83,7 +93,12 @@ export function RecordPaymentDialog({
 
 	const form = useForm<RecordPaymentFormValues>({
 		resolver: zodResolver(recordPaymentSchema),
-		defaultValues: { amountPaid: thisInvoiceDue.toFixed(2) },
+		defaultValues: {
+			amountPaid: thisInvoiceDue.toFixed(2),
+			paymentDate: studioDateString(),
+			method: "transfer",
+			reference: "",
+		},
 	});
 
 	// Each open is a fresh payment: new idempotency key (the server dedupes
@@ -94,11 +109,18 @@ export function RecordPaymentDialog({
 		if (!open) return;
 		requestIdRef.current = newRequestId();
 		setIsSubmitting(false);
-		form.reset({ amountPaid: thisInvoiceDue.toFixed(2) });
+		// Hotels pay by transfer most of the time.
+		form.reset({
+			amountPaid: thisInvoiceDue.toFixed(2),
+			paymentDate: studioDateString(),
+			method: "transfer",
+			reference: "",
+		});
 	}, [open, thisInvoiceDue, form]);
 
 	// eslint-disable-next-line react-hooks/incompatible-library
 	const watchedAmount = form.watch("amountPaid");
+	const watchedMethod = form.watch("method");
 	const parsedAmount = parseAmountInput(watchedAmount);
 	const paidAmount = Number.isFinite(parsedAmount) ? parsedAmount : 0;
 
@@ -118,17 +140,17 @@ export function RecordPaymentDialog({
 		startTransition(async () => {
 			const res = await recordDocumentPaymentAction(
 				doc.id,
-				values.amountPaid,
+				values,
 				doc.partnerId,
 				requestIdRef.current ?? undefined,
 			);
 
 			if (res.success) {
-				toast.success(isPartial ? "Partial payment recorded" : "Payment recorded");
+				notify.success(isPartial ? "Partial payment recorded" : "Payment recorded");
 				onOpenChange(false);
 				router.refresh();
 			} else {
-				toast.error(res.error || "Failed to record payment");
+				notifyActionError(res, "Failed to record payment");
 				setIsSubmitting(false);
 			}
 		});
@@ -145,20 +167,20 @@ export function RecordPaymentDialog({
 				onOpenChange(next);
 			}}
 		>
-			<DialogContent className="zen-shadow-lg overflow-hidden rounded-3xl border-none p-0 sm:max-w-[460px]">
-				<DialogHeader className="bg-card border-b p-8 pb-6">
+			<DialogContent className="zen-shadow-lg overflow-y-auto rounded-3xl border-none p-0 sm:max-w-[460px]">
+				<DialogHeader className="border-b bg-card p-8 pb-6">
 					<div className="flex items-center gap-4">
-						<div className="flex size-12 items-center justify-center rounded-2xl border border-green-500/20 bg-green-500/10 text-green-600">
+						<div className="flex size-12 items-center justify-center rounded-2xl border border-success/20 bg-success/10 text-success">
 							<Wallet3 size={24} variant="Bulk" />
 						</div>
 						<div>
 							<DialogTitle className="text-xl font-bold tracking-tight">
-								Record Payment
+								Record payment
 							</DialogTitle>
 							<DialogDescription>
 								{isMultiInvoice
-									? `Pays ${doc.documentNumber} first, then the other open invoices from this quote`
-									: `Payment for ${doc.documentNumber}`}
+									? `Pays ${documentName(doc)} first, then the other open invoices from this quote`
+									: `Payment for ${documentName(doc)}`}
 							</DialogDescription>
 						</div>
 					</div>
@@ -172,7 +194,7 @@ export function RecordPaymentDialog({
 								name="amountPaid"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+										<FormLabel className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
 											Amount received
 										</FormLabel>
 										<FormControl>
@@ -183,8 +205,8 @@ export function RecordPaymentDialog({
 													className="h-12 rounded-xl pr-16 text-right font-mono text-lg font-black"
 													placeholder="0.00"
 												/>
-												<div className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-bold tracking-widest">
-													MAD
+												<div className="absolute top-1/2 right-4 -translate-y-1/2 text-xs font-bold tracking-widest text-muted-foreground">
+													{CURRENCY}
 												</div>
 											</div>
 										</FormControl>
@@ -193,11 +215,72 @@ export function RecordPaymentDialog({
 								)}
 							/>
 
+							<div className="grid gap-4 sm:grid-cols-2">
+								<FormField
+									control={form.control}
+									name="paymentDate"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-sm font-semibold">Received on</FormLabel>
+											<FormControl>
+												<Input {...field} type="date" max={studioDateString()} className="h-11 rounded-xl" />
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+								<FormField
+									control={form.control}
+									name="reference"
+									render={({ field }) => (
+										<FormItem>
+											<FormLabel className="text-sm font-semibold">
+												{REFERENCE_LABELS[watchedMethod ?? "transfer"]}{" "}
+												<span className="font-normal text-muted-foreground">(optional)</span>
+											</FormLabel>
+											<FormControl>
+												<Input {...field} value={field.value ?? ""} autoComplete="off" className="h-11 rounded-xl" />
+											</FormControl>
+											<FormMessage />
+										</FormItem>
+									)}
+								/>
+							</div>
+
+							<FormField
+								control={form.control}
+								name="method"
+								render={({ field }) => (
+									<FormItem>
+										<FormLabel className="text-sm font-semibold">Paid by</FormLabel>
+										<div role="radiogroup" aria-label="Paid by" className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/40 p-1">
+											{PAYMENT_METHODS.map((method) => (
+												<label
+													key={method}
+													className="flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
+												>
+													<input
+														type="radio"
+														name={field.name}
+														value={method}
+														checked={field.value === method}
+														onChange={() => field.onChange(method)}
+														className="sr-only"
+													/>
+													{PAYMENT_METHOD[method].label}
+												</label>
+											))}
+										</div>
+										<FormMessage />
+									</FormItem>
+								)}
+							/>
+
 							{/* Allocation preview — always shown so the operator can see
 							    exactly which invoices the payment will clear before
 							    confirming. Uses the same allocator as the server. */}
-							<div className="bg-muted/30 space-y-2 rounded-2xl p-4">
-								<div className="text-muted-foreground mb-2 text-[9px] font-bold tracking-widest uppercase">
+							<div className="space-y-2 rounded-2xl bg-muted/30 p-4">
+								<div className="mb-2 text-[9px] font-bold tracking-widest text-muted-foreground uppercase">
 									{isMultiInvoice ? "Where the payment goes" : "This invoice"}
 								</div>
 								{allocation.map((a) => {
@@ -211,10 +294,10 @@ export function RecordPaymentDialog({
 												<span className="font-mono text-[11px] font-bold tracking-wider">
 													{a.documentNumber}
 												</span>
-												<span className="text-muted-foreground text-[10px]">
-													{formatMAD(a.due)} MAD due
+												<span className="text-[10px] text-muted-foreground">
+													{formatMoney(a.due)} due
 													{a.applied > 0
-														? ` · ${a.becomesPaid ? "fully paid" : `${formatMAD(stillDue)} remaining`}`
+														? ` · ${a.becomesPaid ? "fully paid" : `${formatMoney(stillDue)} remaining`}`
 														: null}
 												</span>
 											</div>
@@ -222,42 +305,42 @@ export function RecordPaymentDialog({
 												className={`font-mono text-sm font-bold ${
 													a.applied > 0
 														? a.becomesPaid
-															? "text-green-600"
-															: "text-amber-600"
+															? "text-success"
+															: "text-warning"
 														: "text-muted-foreground/40"
 												}`}
 											>
-												{a.applied > 0 ? `+${formatMAD(a.applied)}` : "—"}
+												{a.applied > 0 ? `+\u00A0${formatAmount(a.applied)}` : "—"}
 											</span>
 										</div>
 									);
 								})}
 								<div className="mt-2 flex items-center justify-between border-t pt-2">
-									<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+									<span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
 										Total outstanding
 									</span>
 									<span className="font-mono text-sm font-bold">
-										{formatMAD(totalOutstanding)} MAD
+										<Money amount={totalOutstanding} />
 									</span>
 								</div>
 							</div>
 
 							{isOverpayment ? (
-								<div className="text-destructive border-destructive/20 bg-destructive/5 flex items-center gap-2 rounded-xl border p-3 text-[11px] font-medium">
+								<div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-[11px] font-medium text-destructive">
 									Payment exceeds outstanding balance by{" "}
-									{formatMAD(paidAmount - totalOutstanding)} MAD.
+									{formatMoney(paidAmount - totalOutstanding)}.
 								</div>
 							) : null}
 						</div>
 
-						<DialogFooter className="bg-muted/20 border-t p-6">
+						<DialogFooter className="border-t bg-muted/20 p-6">
 							<Button
 								type="submit"
 								disabled={submitDisabled}
 								className={`h-11 w-full gap-2 rounded-xl font-black ${
 									isPartial
-										? "bg-amber-600 hover:bg-amber-700"
-										: "bg-green-600 hover:bg-green-700"
+										? "bg-warning text-warning-foreground hover:bg-warning/90"
+										: "bg-success text-success-foreground hover:bg-success/90"
 								}`}
 							>
 								{isPending || isSubmitting ? (

@@ -5,16 +5,17 @@ import { PartnerTable } from "@/components/b2b/partners/table";
 import { PartnerViewToggle } from "@/components/b2b/partners/view-toggle";
 import { Button } from "@/components/ui/button";
 import { getPartnersAction } from "@/lib/actions/b2b/partners";
+import { type DocumentStatusFilter } from "@/lib/domain/billing/payments";
 import { View } from "@/lib/types";
-import { B2BDocumentStatus, B2BDocumentType } from "@/lib/types/b2b";
+import { B2BDocumentType } from "@/lib/types/b2b";
 
-import { AddCircle } from "iconsax-reactjs";
+import { Add } from "iconsax-reactjs";
 
 type SearchParams = Promise<{
 	view: View;
 	query?: string;
 	docType?: B2BDocumentType;
-	docStatus?: B2BDocumentStatus;
+	docStatus?: DocumentStatusFilter;
 }>;
 
 export default async function PartnersPage(props: {
@@ -39,23 +40,18 @@ export default async function PartnersPage(props: {
 	return (
 		<>
 			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<header className="space-y-1">
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
-						B2B Partners
-					</h1>
-					<p className="text-md text-muted-foreground">
-						Manage your relationships with Hotels, Riads, and companies.
-					</p>
-				</header>
+				<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">
+					Partners
+				</h1>
 				<PartnerDialog>
 					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
-						<AddCircle className="mr-2 size-4" variant="Bold" />
-						New Partner
+						<Add className="mr-2 size-4" variant="Outline" />
+						New partner
 					</Button>
 				</PartnerDialog>
 			</div>
 
-			<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+			<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 				<PartnerFilters />
 				<PartnerViewToggle />
 			</div>

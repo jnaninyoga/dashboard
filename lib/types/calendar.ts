@@ -20,12 +20,9 @@ export type JnaninEventType = "group" | "private" | "outdoor" | "b2b";
  */
 export interface ScheduleEventInput {
 	title: string;
-	dateStr: string; // "YYYY-MM-DD"
+	dateStr: string; // "YYYY-MM-DD", on the studio's clock
 	startTimeStr: string; // "HH:mm"
 	endTimeStr: string; // "HH:mm"
-	isoStart: string; // ISO 8601 string containing explicit offset
-	isoEnd: string; // ISO 8601 string containing explicit offset
-	weekday: number; // 0-6 (Sunday-Saturday)
 	type: JnaninEventType;
 	outdoorPrice?: number | null;
 	b2bPrice?: number | null;

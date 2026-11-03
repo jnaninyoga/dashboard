@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -13,7 +14,6 @@ import {
 	AlertDialogHeader,
 	AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -23,7 +23,7 @@ import {
 import { deleteClientAction } from "@/lib/actions/clients/mutations";
 import { type Client } from "@/lib/types";
 
-import { Edit2, More, Refresh, Trash } from "iconsax-reactjs";
+import { Edit2, Refresh, Sms, Trash } from "iconsax-reactjs";
 
 export function ClientActions({
 	client,
@@ -53,25 +53,30 @@ export function ClientActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button variant="ghost" className="h-8 w-8 p-0">
-						<span className="sr-only">Open menu</span>
-						<More className="h-4 w-4 rotate-90" variant="Linear" />
-					</Button>
+					<RowActionsTrigger label={`Actions for ${client.fullName}`} />
 				</DropdownMenuTrigger>
 				<DropdownMenuContent align="end">
 					{showEdit ? (
 						<DropdownMenuItem
 							onClick={() => router.push(`/clients/${client.id}/edit`)}
 						>
-							<Edit2 className="mr-2 h-4 w-4 text-current" variant="Outline" />
+							<Edit2 className="mr-2 size-4 text-current" variant="Outline" />
 							Edit
+						</DropdownMenuItem>
+					) : null}
+					{client.email ? (
+						<DropdownMenuItem asChild>
+							<a href={`mailto:${client.email}`}>
+								<Sms className="mr-2 size-4 text-current" variant="Outline" />
+								Email
+							</a>
 						</DropdownMenuItem>
 					) : null}
 					<DropdownMenuItem
 						onClick={() => setShowDeleteDialog(true)}
-						className="focus:bg-secondary text-red-600 focus:text-red-600 focus:[&_svg]:text-red-600"
+						className="text-destructive focus:bg-secondary focus:text-destructive focus:[&_svg]:text-destructive"
 					>
-						<Trash className="mr-2 h-4 w-4 text-red-600" variant="Outline" />
+						<Trash className="mr-2 size-4 text-destructive" variant="Outline" />
 						Delete
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -92,16 +97,16 @@ export function ClientActions({
 								e.preventDefault();
 								handleDelete();
 							}}
-							className="bg-red-600 hover:bg-red-700"
+							className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
 							disabled={isPending}
 						>
 							{isPending ? (
 								<Refresh
-									className="mr-2 h-4 w-4 animate-spin"
+									className="mr-2 size-4 animate-spin"
 									variant="Outline"
 								/>
 							) : (
-								<Trash className="mr-2 h-4 w-4" variant="Bulk" />
+								<Trash className="mr-2 size-4" variant="Bulk" />
 							)}
 							Delete
 						</AlertDialogAction>

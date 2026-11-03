@@ -4,7 +4,7 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils/ui"
 
-import { Switch as SwitchPrimitive } from "radix-ui"
+import { Switch as SwitchPrimitive } from "@animate-ui/react/primitives/radix-ui"
 
 function Switch({
   className,

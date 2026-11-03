@@ -1,6 +1,9 @@
 "use server";
 
+import { requireUser } from "@/lib/auth/require-user";
+import { logServerError } from "@/lib/errors/server";
 import { type Client, type ClientWithRelations, Gender } from "@/lib/types";
+import { studioDayStart, studioMonthStart } from "@/lib/utils/time";
 import { db } from "@/services/database";
 import {
 	attendanceLedger,
@@ -12,13 +15,13 @@ import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
 import { createClient } from "@/services/supabase/server";
 
-import { and, desc, eq, gte, ilike, inArray, isNull, or } from "drizzle-orm";
+import { and, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
 export async function getClientsAction(
 	page = 1,
 	pageSize = 10,
 	query = "",
-	filters: { categoryId?: string; gender?: Gender } = {},
+	filters: { discountId?: string; gender?: Gender } = {},
 ) {
 	const supabase = await createClient();
 	const {
@@ -50,8 +53,8 @@ export async function getClientsAction(
 		);
 	}
 
-	if (filters.categoryId && filters.categoryId !== "all") {
-		whereConditions.push(eq(clients.categoryId, filters.categoryId));
+	if (filters.discountId && filters.discountId !== "all") {
+		whereConditions.push(eq(clients.discountId, filters.discountId));
 	}
 
 	if (filters.gender && filters.gender !== Gender.ALL) {
@@ -68,19 +71,12 @@ export async function getClientsAction(
 			offset: offset,
 			orderBy: [desc(clients.createdAt)],
 			with: {
-				category: true,
+				discount: true,
+				// Every card sold (an expired or used-up one too, to say so on the card).
 				wallets: {
-					where: eq(clientWallets.status, "active"),
-					with: {
-						product: true,
-						// Fetch recent ledger entries to check for "Online" status
-						ledgerEntries: {
-							orderBy: desc(attendanceLedger.checkInTime),
-							limit: 1,
-						},
-					},
+					where: ne(clientWallets.status, "cancelled"),
+					with: { product: true },
 					orderBy: desc(clientWallets.activatedAt),
-					limit: 1,
 				},
 				healthLogs: {
 					where: and(
@@ -93,11 +89,34 @@ export async function getClientsAction(
 
 
         // 2. Add Live Session Info if checked in today
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
+        // The studio's day and month, not the server's (which runs on UTC).
+        const startOfToday = studioDayStart();
+        const startOfMonth = studioMonthStart();
 
         if (data.length > 0) {
             const clientIds = data.map(c => c.id);
+
+            // Visits this month and the last visit, across all of a client's cards.
+            const visits = await db
+                .select({
+                    clientId: clientWallets.clientId,
+                    // gte() converts the date the way the column expects; a bare Date in raw SQL fails.
+                    thisMonth: sql<number>`count(*) filter (where ${gte(attendanceLedger.checkInTime, startOfMonth)})`.mapWith(Number),
+                    // Mapped through the column, so the raw timestamp becomes the same Date a normal select gives.
+                    lastVisitAt: sql<Date>`max(${attendanceLedger.checkInTime})`.mapWith(attendanceLedger.checkInTime),
+                })
+                .from(attendanceLedger)
+                .innerJoin(clientWallets, eq(attendanceLedger.walletId, clientWallets.id))
+                // Check-ins of cancelled sessions aren't visits.
+                .where(and(inArray(clientWallets.clientId, clientIds), isNull(attendanceLedger.cancelledAt)))
+                .groupBy(clientWallets.clientId);
+            const visitsByClient = new Map(visits.map((v) => [v.clientId, v]));
+            for (const client of data as (Client & { visitsThisMonth?: number; lastVisitAt?: Date })[]) {
+                const v = visitsByClient.get(client.id);
+                client.visitsThisMonth = v?.thisMonth ?? 0;
+                client.lastVisitAt = v?.lastVisitAt ?? undefined;
+            }
+
             const recentLedgers = await db
                 .select({
                     clientId: clientWallets.clientId,
@@ -109,22 +128,30 @@ export async function getClientsAction(
                 .where(
                     and(
                         inArray(clientWallets.clientId, clientIds),
-                        gte(attendanceLedger.checkInTime, startOfToday)
+                        gte(attendanceLedger.checkInTime, startOfToday),
+                        isNull(attendanceLedger.cancelledAt)
                     )
                 )
                 .orderBy(desc(attendanceLedger.checkInTime));
+
+            // Checked in today is a fact in our records; Google only adds the
+            // session's name, and the badge says "Checked in" without it.
+            const clientsToday = data as (Client & { checkedInToday?: boolean; activeSessionName?: string })[];
+            for (const client of clientsToday) {
+                client.checkedInToday = recentLedgers.some((l) => l.clientId === client.id);
+            }
 
             if (recentLedgers.length > 0 && accessToken) {
                 try {
                     const todayEvents = await getTodayEvents(accessToken);
                     const eventMap = new Map(todayEvents.map(e => [e.id, e.summary]));
 
-                    (data as (Client & { activeSessionName?: string })[]).forEach((client) => {
+                    for (const client of clientsToday) {
                         const latestLedger = recentLedgers.find(l => l.clientId === client.id);
-                        if (latestLedger && latestLedger.googleEventId) {
-                            client.activeSessionName = eventMap.get(latestLedger.googleEventId) || "Unknown Session";
+                        if (latestLedger?.googleEventId) {
+                            client.activeSessionName = eventMap.get(latestLedger.googleEventId) ?? undefined;
                         }
-                    });
+                    }
                 } catch (e) {
                     console.error("Failed to fetch today events for live status", e);
                 }
@@ -133,8 +160,7 @@ export async function getClientsAction(
 
 		return { success: true, data };
 	} catch (error) {
-		console.error("Error fetching clients:", error);
-		return { error: "Failed to fetch clients" };
+		return { error: "Failed to fetch clients", ref: logServerError("Error fetching clients", error) };
 	}
 }
 
@@ -150,7 +176,7 @@ export async function getClientByIdAction(id: string) {
 		const client = (await db.query.clients.findFirst({
 			where: eq(clients.id, id),
 			with: {
-				category: true,
+				discount: true,
 				healthLogs: {
 					orderBy: desc(healthLogs.startDate),
 					where: isNull(healthLogs.endDate), // active only
@@ -158,6 +184,11 @@ export async function getClientByIdAction(id: string) {
 				wallets: {
 					with: {
 						product: true,
+						// The visits each card paid for (outdoor sessions take no credit).
+						ledgerEntries: {
+							columns: { id: true },
+							where: and(isNull(attendanceLedger.cancelledAt), ne(attendanceLedger.slotType, "outdoor")),
+						},
 					},
 					orderBy: desc(clientWallets.activatedAt),
 				},
@@ -179,8 +210,7 @@ export async function getClientByIdAction(id: string) {
 			},
 		};
 	} catch (error) {
-		console.error("Error fetching client:", error);
-		return { error: "Failed to fetch client" };
+		return { error: "Failed to fetch client", ref: logServerError("Error fetching client", error) };
 	}
 }
 
@@ -192,6 +222,7 @@ export async function getClientByIdAction(id: string) {
 export async function getClientsByEmailsAction(
 	emails: string[],
 ): Promise<{ email: string; clientId: string; fullName: string; photoUrl: string | null; phone: string | null }[]> {
+	await requireUser();
 	if (emails.length === 0) return [];
 
 	try {

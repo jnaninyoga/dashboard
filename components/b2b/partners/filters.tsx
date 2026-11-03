@@ -3,7 +3,7 @@
 import { useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
+import { DocumentStatusBadge } from "@/components/b2b/documents/status-badge";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -43,19 +43,19 @@ export function PartnerFilters() {
 	};
 
 	return (
-		<div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+		<div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 			<Input
 				placeholder="Search company, contact..."
-				className="focus-visible:ring-primary/20 bg-card w-full border font-medium transition-all sm:w-2xs"
+				className="w-full border bg-card font-medium transition-all focus-visible:ring-primary/20 sm:w-64 xl:w-2xs"
 				defaultValue={searchParams.get("query")?.toString()}
 				onChange={(e) => handleSearch(e.target.value)}
 			/>
-			<div className="flex w-full gap-4 sm:w-auto">
+			<div className="flex w-full gap-3 sm:w-auto">
 				<Select
 					onValueChange={(v) => handleFilterChange("docType", v)}
 					defaultValue={searchParams.get("docType") || "all"}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+					<SelectTrigger className="w-full border bg-card transition-all focus:ring-primary/20 sm:w-40 xl:w-48">
 						<SelectValue placeholder="Document Type" />
 					</SelectTrigger>
 					<SelectContent>
@@ -68,52 +68,37 @@ export function PartnerFilters() {
 					onValueChange={(v) => handleFilterChange("docStatus", v)}
 					defaultValue={searchParams.get("docStatus") || "all"}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+					<SelectTrigger className="w-full border bg-card transition-all focus:ring-primary/20 sm:w-40 xl:w-48">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
-					<SelectContent className="border-secondary/20 rounded-xl shadow-xl">
+					<SelectContent className="rounded-xl border-secondary/20 shadow-xl">
 						<SelectItem value="all" className="font-bold">
-							All Statuses
+							Any status
+						</SelectItem>
+						<SelectItem value="owed">Owed (any unpaid invoice)</SelectItem>
+						<SelectItem value="overdue">
+							<DocumentStatusBadge status="overdue" />
 						</SelectItem>
 						<SelectItem value="draft">
-							<Badge
-								variant="muted"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Draft
-							</Badge>
+							<DocumentStatusBadge status="draft" />
 						</SelectItem>
 						<SelectItem value="sent">
-							<Badge
-								variant="info"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Sent
-							</Badge>
+							<DocumentStatusBadge status="sent" />
 						</SelectItem>
 						<SelectItem value="accepted">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Accepted
-							</Badge>
+							<DocumentStatusBadge status="accepted" />
+						</SelectItem>
+						<SelectItem value="unpaid">
+							<DocumentStatusBadge status="unpaid" />
+						</SelectItem>
+						<SelectItem value="partially_paid">
+							<DocumentStatusBadge status="partially_paid" />
 						</SelectItem>
 						<SelectItem value="paid">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Paid
-							</Badge>
+							<DocumentStatusBadge status="paid" />
 						</SelectItem>
 						<SelectItem value="cancelled">
-							<Badge
-								variant="destructive"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Cancelled
-							</Badge>
+							<DocumentStatusBadge status="cancelled" />
 						</SelectItem>
 					</SelectContent>
 				</Select>

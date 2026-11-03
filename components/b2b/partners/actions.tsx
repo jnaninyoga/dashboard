@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/feedback/confirm";
+import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
@@ -13,41 +14,49 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deletePartnerAction } from "@/lib/actions/b2b/partners";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type PartnerWithRelations } from "@/lib/types/b2b";
 
-import { Buildings, Edit2, More, Trash } from "iconsax-reactjs";
-import { toast } from "sonner";
+import { Buildings, Edit2, Trash } from "iconsax-reactjs";
 
 import { PartnerDialog } from "./dialog";
 
 interface PartnerActionsProps {
 	partner: PartnerWithRelations;
 	triggerClassName?: string;
+	/** Where to go after a delete. On the partner's own page, refreshing
+	 *  would land on a page that no longer exists. */
+	afterDelete?: string;
 }
 
 export function PartnerActions({
 	partner,
 	triggerClassName,
+	afterDelete,
 }: PartnerActionsProps) {
 	const router = useRouter();
 	const [editOpen, setEditOpen] = useState(false);
 	const [isPending, startTransition] = useTransition();
 
-	const handleDelete = () => {
-		if (
-			!confirm(
-				`Delete ${partner.companyName}? This cannot be undone. Partners with quotes or invoices cannot be deleted — archive their documents first.`,
-			)
-		) {
-			return;
-		}
+	const confirm = useConfirm();
+
+	const handleDelete = async () => {
+		const ok = await confirm({
+			title: `Delete ${partner.companyName}?`,
+			description:
+				"This can't be undone. A partner with quotes or invoices can't be deleted.",
+			confirmLabel: "Delete",
+			destructive: true,
+		});
+		if (!ok) return;
 		startTransition(async () => {
 			const res = await deletePartnerAction(partner.id);
 			if (res.success) {
-				toast.success("Partner deleted");
-				router.refresh();
+				notify.success("Partner deleted");
+				if (afterDelete) router.push(afterDelete);
+				else router.refresh();
 			} else {
-				toast.error(res.error || "Failed to delete partner");
+				notifyActionError(res, "Failed to delete partner");
 			}
 		});
 	};
@@ -56,21 +65,15 @@ export function PartnerActions({
 		<>
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
-					<Button
-						variant="ghost"
-						size="icon"
-						className={
-							triggerClassName ??
-							"hover:bg-secondary h-9 w-9 rounded-xl transition-all"
-						}
+					<RowActionsTrigger
+						label={`Actions for ${partner.companyName}`}
+						className={triggerClassName}
 						disabled={isPending}
-					>
-						<More size={20} className="rotate-90" />
-					</Button>
+					/>
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
 					align="end"
-					className="border-secondary/20 w-48 rounded-xl shadow-xl"
+					className="w-48 rounded-xl border-secondary/20 shadow-xl"
 				>
 					<DropdownMenuItem
 						asChild
@@ -102,7 +105,7 @@ export function PartnerActions({
 							e.preventDefault();
 							handleDelete();
 						}}
-						className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive focus:[&>svg]:text-destructive flex cursor-pointer items-center gap-2 p-3 text-xs font-bold tracking-wide uppercase"
+						className="flex cursor-pointer items-center gap-2 p-3 text-xs font-bold tracking-wide text-destructive uppercase hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive focus:[&>svg]:text-destructive"
 					>
 						<Trash size={16} variant="Bulk" className="text-destructive" />
 						Delete

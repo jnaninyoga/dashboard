@@ -1,4 +1,5 @@
 import { CalendarEvent } from "@/lib/types";
+import { addDays, STUDIO_TIME_ZONE, studioDateString, studioDaysRange } from "@/lib/utils/time";
 
 import { calendar_v3 } from "googleapis";
 
@@ -49,8 +50,10 @@ export type JnaninEventType = "group" | "private" | "outdoor" | "b2b";
 
 interface CreateEventData {
 	title: string;
-	startTime: string; // ISO string
-	endTime: string; // ISO string
+	/** Wall-clock "YYYY-MM-DDTHH:mm:ss" in `timeZone`; Google works out the offset. */
+	startTime: string;
+	endTime: string;
+	timeZone: string;
 	type: JnaninEventType;
 	outdoorPrice?: number | null;
 	b2bPrice?: number | null;
@@ -104,9 +107,11 @@ export async function createStudioEvent(
 				summary: data.title,
 				start: {
 					dateTime: data.startTime,
+					timeZone: data.timeZone,
 				},
 				end: {
 					dateTime: data.endTime,
+					timeZone: data.timeZone,
 				},
 				colorId,
 				extendedProperties,
@@ -121,46 +126,12 @@ export async function createStudioEvent(
 }
 
 /**
- * Fetches today's events from the primary calendar to display on the dashboard.
+ * Every event between two instants, in one request: what the Schedule, the
+ * week strip and today's agenda read. Recurring events come as their
+ * single occurrences, in time order.
  */
-export async function getTodayEvents(accessToken: string): Promise<CalendarEvent[]> {
+export async function getEventsBetween(accessToken: string, start: Date, end: Date): Promise<CalendarEvent[]> {
 	const google = getGoogleClient(accessToken);
-
-	// Get start and end of "today" in local time
-	const todayStart = new Date();
-	todayStart.setHours(0, 0, 0, 0);
-
-	const todayEnd = new Date();
-	todayEnd.setHours(23, 59, 59, 999);
-
-	try {
-		const response = await google.calendar.events.list({
-			calendarId: "primary",
-			timeMin: todayStart.toISOString(),
-			timeMax: todayEnd.toISOString(),
-			singleEvents: true,
-			orderBy: "startTime",
-		});
-
-		return response.data.items || [];
-	} catch (error) {
-		console.error("Error fetching today's events:", error);
-		throw new Error("Failed to fetch events from Google Calendar.");
-	}
-}
-
-/**
- * Fetches upcoming events from the primary calendar.
- */
-export async function getUpcomingEvents(accessToken: string, daysForward = 7): Promise<CalendarEvent[]> {
-	const google = getGoogleClient(accessToken);
-
-	const start = new Date();
-	start.setHours(0, 0, 0, 0);
-
-	const end = new Date();
-	end.setDate(end.getDate() + daysForward);
-	end.setHours(23, 59, 59, 999);
 
 	try {
 		const response = await google.calendar.events.list({
@@ -169,18 +140,38 @@ export async function getUpcomingEvents(accessToken: string, daysForward = 7): P
 			timeMax: end.toISOString(),
 			singleEvents: true,
 			orderBy: "startTime",
+			// A week is far below this; one page means one request.
+			maxResults: 250,
+			// Times come back as the studio's wall clock, placed by Google's
+			// always-current zone rules (see wallClockOf).
+			timeZone: STUDIO_TIME_ZONE,
 		});
 
 		return response.data.items || [];
 	} catch (error) {
-		console.error("Error fetching upcoming events:", error);
+		console.error("Error fetching events:", error);
 		throw new Error("Failed to fetch events from Google Calendar.");
 	}
 }
 
+/** Today's events, today being the studio's day in Marrakech (not the server's). */
+export async function getTodayEvents(accessToken: string): Promise<CalendarEvent[]> {
+	const today = studioDateString();
+	const { start, end } = studioDaysRange(today, today);
+	return getEventsBetween(accessToken, start, end);
+}
+
+/** Events from the start of the studio's today through `daysForward` more days. */
+export async function getUpcomingEvents(accessToken: string, daysForward = 7): Promise<CalendarEvent[]> {
+	const today = studioDateString();
+	const { start, end } = studioDaysRange(today, addDays(today, daysForward));
+	return getEventsBetween(accessToken, start, end);
+}
+
 /**
- * Cancels (deletes) an event on the primary calendar. The event is removed
- * from Google Calendar; attendance records stored locally are preserved.
+ * Deletes an event from the primary calendar, freeing the slot (Google tells
+ * invited guests). An event that is already gone counts as deleted, so a
+ * cancellation that stopped halfway can simply be tried again.
  */
 export async function cancelStudioEvent(
 	accessToken: string,
@@ -194,6 +185,8 @@ export async function cancelStudioEvent(
 			eventId,
 		});
 	} catch (error) {
+		const status = (error as { response?: { status?: number } }).response?.status;
+		if (status === 404 || status === 410) return;
 		console.error("Error cancelling Studio Event:", error);
 		throw new Error("Failed to cancel event in Google Calendar.");
 	}
@@ -202,17 +195,21 @@ export async function cancelStudioEvent(
 /**
  * Fetches a specific event by its ID.
  */
-export async function getEventById(accessToken: string, eventId: string): Promise<CalendarEvent> {
+/** The event, or null when Google says it doesn't exist (or was deleted). */
+export async function getEventById(accessToken: string, eventId: string): Promise<CalendarEvent | null> {
 	const google = getGoogleClient(accessToken);
 
 	try {
 		const response = await google.calendar.events.get({
 			calendarId: "primary",
 			eventId: eventId,
+			timeZone: STUDIO_TIME_ZONE,
 		});
 
 		return response.data;
 	} catch (error) {
+		const status = (error as { response?: { status?: number } }).response?.status;
+		if (status === 404 || status === 410) return null;
 		console.error("Error fetching event by ID:", error);
 		throw new Error("Failed to fetch event from Google Calendar.");
 	}

@@ -17,17 +17,17 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { type Category } from "@/lib/types";
+import { type Discount } from "@/lib/types";
 import type { ClientFormValues } from "@/lib/validators";
 
 interface StepConsultationProps {
 	form: UseFormReturn<ClientFormValues>;
-    categories: Category[];
+    discounts: Discount[];
 }
 
-export function StepConsultation({ form, categories }: StepConsultationProps) {
+export function StepConsultation({ form, discounts }: StepConsultationProps) {
 	const values = useWatch({ control: form.control });
-    const categoryName = categories.find((c) => c.id === values.categoryId)?.name;
+    const discountName = discounts.find((c) => c.id === values.discountId)?.name;
     
 	return (
 		<div className="space-y-6">
@@ -82,7 +82,7 @@ export function StepConsultation({ form, categories }: StepConsultationProps) {
 						<strong>Email:</strong> {values.email || "—"}
 					</p>
 					<p>
-						<strong>Category:</strong> {categoryName || "—"}
+						<strong>Discount:</strong> {discountName || "—"}
 					</p>
 				</CardContent>
 			</Card>

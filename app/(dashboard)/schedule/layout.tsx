@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-	title: "Weekly Schedule — JnaninYoga",
-	description:
-		"View all upcoming yoga sessions and classes for the week ahead.",
+	title: "Schedule — JnaninYoga",
+	description: "Every session, week by week: what's coming and who came.",
 };
 
 export default function ScheduleLayout({
@@ -11,5 +10,5 @@ export default function ScheduleLayout({
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	return <main className="flex flex-1 flex-col gap-6 p-6">{children}</main>;
+	return <div className="flex flex-1 flex-col gap-6">{children}</div>;
 }

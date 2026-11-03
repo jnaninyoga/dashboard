@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useState } from "react";
+import { startTransition, useActionState, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
@@ -8,19 +8,20 @@ import { StepConsultation } from "@/components/clients/forms/consultation";
 import { StepHealthWellness } from "@/components/clients/forms/health-wellness";
 import { StepMembership } from "@/components/clients/forms/membership";
 import { StepPersonalDetails } from "@/components/clients/forms/personal-details";
+import { useConfirm } from "@/components/feedback/confirm";
 import { FormWizard, type WizardStep } from "@/components/form-wizard";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { createClientAction, updateClientAction } from "@/lib/actions/clients/mutations";
 import { HEALTH_TEMPLATE, type HealthSection } from "@/lib/config/health";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { 
-    type Category, 
+    type Discount, 
     type HealthLog 
 } from "@/lib/types";
 import { type ClientFormValues, clientSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
 
 const WIZARD_STEPS: WizardStep[] = [
 	{ id: "personal", title: "Personal Info", description: "Identity & Contact" },
@@ -49,12 +50,60 @@ interface ClientFormProps {
 		healthLogs?: HealthLog[];
 	};
 	mode: "create" | "edit";
-    categories: Category[];
+    discounts: Discount[];
 }
 
-export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
+type Draft = { values: Partial<ClientFormValues>; step: number };
+
+const noop = () => () => {};
+const draftKey = (mode: ClientFormProps["mode"], id?: string) => `client-form-progress-${mode}-${id || "new"}`;
+
+function forgetDraft(key: string) {
+	try {
+		localStorage.removeItem(key);
+	} catch {
+		// Blocked storage: there is no draft to forget.
+	}
+}
+
+function readDraft(key: string): Draft | null {
+	try {
+		const saved = JSON.parse(localStorage.getItem(key) ?? "null");
+		return saved?.values ? { values: saved.values, step: typeof saved.step === "number" ? saved.step : 0 } : null;
+	} catch {
+		// A damaged or blocked draft just means starting fresh.
+		return null;
+	}
+}
+
+/**
+ * Only a new client's intake is kept as a draft in this browser: it is long,
+ * and an edit must always start from what is saved. The draft can only be
+ * read in the browser, so the form mounts again once it can, and the server
+ * and first browser render stay identical.
+ */
+export function ClientForm(props: ClientFormProps) {
+	const inBrowser = useSyncExternalStore(noop, () => true, () => false);
+	const key = draftKey(props.mode, props.initialData?.id);
+	const draft = useMemo(
+		() => (inBrowser && props.mode === "create" ? readDraft(key) : null),
+		[inBrowser, props.mode, key],
+	);
+	return <ClientFormBody key={inBrowser ? "browser" : "server"} {...props} draft={draft} draftReady={inBrowser} />;
+}
+
+function ClientFormBody({
+	initialData,
+	mode,
+	discounts,
+	draft,
+	draftReady,
+}: ClientFormProps & { draft: Draft | null; draftReady: boolean }) {
 	const router = useRouter();
-	const STORAGE_KEY = `client-form-progress-${mode}-${initialData?.id || "new"}`;
+	const confirm = useConfirm();
+	const keepsDraft = mode === "create";
+	const STORAGE_KEY = draftKey(mode, initialData?.id);
+	const doneHref = (id?: string) => (id ? `/clients/${id}` : "/clients");
 
     const [state, formAction, isPending] = useActionState(async (_: unknown, formData: FormData) => {
         if (mode === "edit" && initialData?.id) {
@@ -64,27 +113,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
         }
     }, null);
 
-	// Load saved progress safely for initial state
-	const getSavedProgress = () => {
-		if (typeof window === "undefined") return null;
-		const saved = localStorage.getItem(STORAGE_KEY);
-		if (!saved) return null;
-		try {
-			return JSON.parse(saved);
-		} catch (e) {
-			console.error("Failed to parse saved form progress:", e);
-			return null;
-		}
-	};
-
-	const savedProgress = getSavedProgress();
-
-	const [currentStep, setCurrentStep] = useState(() => {
-		if (savedProgress && typeof savedProgress.step === "number" && mode === "create") {
-			return savedProgress.step;
-		}
-		return 0;
-	});
+	const [currentStep, setCurrentStep] = useState(draft?.step ?? 0);
 
 	const [isStepPending, setIsStepPending] = useState(false);
 
@@ -98,49 +127,66 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			address: "",
 			profession: "",
 			birthDate: "",
-			categoryId: "",
+			discountId: "",
 			consultationReason: "",
 			intakeData: {},
 			...initialData,
-			// Apply saved values if any
-			...(savedProgress?.values || {}),
 			// Ensure enums are set or undefined, not null
-			gender: initialData?.gender || savedProgress?.values?.gender || undefined,
-			referralSource:
-				initialData?.referralSource ||
-				savedProgress?.values?.referralSource ||
-				undefined,
+			gender: initialData?.gender || undefined,
+			referralSource: initialData?.referralSource || undefined,
 			// Map active product to initialProductId for Edit mode display
-			initialProductId:
-				initialData?.activeProductId ||
-				savedProgress?.values?.initialProductId ||
-				undefined,
+			initialProductId: initialData?.activeProductId || undefined,
 			// Map existing healthLogs if any (for Edit mode)
-			healthLogs: initialData?.healthLogs || savedProgress?.values?.healthLogs || [],
+			healthLogs: initialData?.healthLogs || [],
+			...draft?.values,
 		},
 	});
 
 
 	const watchedValues = useWatch({ control: form.control });
+	// Read during render: react-hook-form only tracks what render reads.
+	const { isDirty } = form.formState;
 
-	// Save progress
+	// Edits never keep a draft; drop any left from before (they hold health notes).
 	useEffect(() => {
-		localStorage.setItem(
-			STORAGE_KEY,
-			JSON.stringify({
-				values: watchedValues,
-				step: currentStep,
-			}),
-		);
-	}, [watchedValues, currentStep, STORAGE_KEY]);
+		if (!keepsDraft && draftReady) forgetDraft(STORAGE_KEY);
+	}, [keepsDraft, draftReady, STORAGE_KEY]);
+
+	// Keep the draft as she types; never before the saved one has been read.
+	useEffect(() => {
+		// Nothing typed yet: keep whatever draft there is (or none).
+		if (!keepsDraft || !draftReady || !isDirty) return;
+		try {
+			localStorage.setItem(STORAGE_KEY, JSON.stringify({ values: watchedValues, step: currentStep }));
+		} catch {
+			// Storage full or blocked: the form still works, just without a draft.
+		}
+	}, [keepsDraft, draftReady, isDirty, watchedValues, currentStep, STORAGE_KEY]);
+
+	const cancel = async () => {
+		if (
+			(isDirty || draft !== null) &&
+			!(await confirm({
+				title: mode === "create" ? "Discard this new client?" : "Discard your changes?",
+				description: "What you typed here will be lost.",
+				confirmLabel: "Discard",
+				cancelLabel: "Keep editing",
+				destructive: true,
+			}))
+		) {
+			return;
+		}
+		if (keepsDraft) forgetDraft(STORAGE_KEY);
+		router.push(mode === "create" ? "/clients" : doneHref(initialData?.id));
+	};
 
 
     // Handle server state
     useEffect(() => {
         if (state?.success) {
-            toast.success(mode === "create" ? "Client created successfully!" : "Client updated successfully!");
-            localStorage.removeItem(STORAGE_KEY);
-            router.push("/clients");
+            notify.success(mode === "create" ? "Client added" : "Changes saved");
+            if (keepsDraft) forgetDraft(STORAGE_KEY);
+            router.push(doneHref("id" in state && typeof state.id === "string" ? state.id : initialData?.id));
         } else if (state?.error) {
             if (state.issues) {
                 // Map Zod issues to form errors
@@ -154,14 +200,14 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
                     }
                 });
             }
-            toast.error(state.error);
+            notifyActionError(state, "Something went wrong");
         }
-    }, [state, mode, router, STORAGE_KEY, form]);
+    }, [state, mode, router, STORAGE_KEY, form, keepsDraft, initialData?.id]);
 
 	const getStepFields = (step: number): (keyof ClientFormValues)[] => {
 		switch (step) {
 			case 0:
-				return ["fullName", "phone", "birthDate", "categoryId", "gender"];
+				return ["fullName", "phone", "birthDate", "discountId", "gender"];
 			case 1:
 				return []; // flexible intake data
 			case 2:
@@ -180,7 +226,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			if (fieldsToValidate.length > 0) {
 				const isValid = await form.trigger(fieldsToValidate);
 				if (!isValid) {
-					toast.error("Please fix the errors in the current step before proceeding.");
+					notify.error("Please fix the errors in the current step before proceeding.");
 					return;
 				}
 			}
@@ -216,8 +262,8 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 			if (values.profession) formData.append("profession", values.profession);
 			formData.append("birthDate", values.birthDate || "");
 			formData.append(
-				"categoryId",
-				values.categoryId || "",
+				"discountId",
+				values.discountId || "",
 			);
 			if (values.gender) formData.append("gender", values.gender);
 			if (values.referralSource)
@@ -227,6 +273,7 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 
 			if (values.initialProductId) {
 				formData.append("initialProductId", values.initialProductId);
+				formData.append("initialPaymentMethod", values.initialPaymentMethod ?? "cash");
 			}
 
 			if (values.intakeData) {
@@ -248,10 +295,10 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 		<div className="mx-auto w-full max-w-5xl flex-1 space-y-4 p-4 pt-6 md:p-8">
 			<div className="flex items-center justify-between space-y-2">
 				<h2 className="text-3xl font-bold tracking-tight">
-					{mode === "create" ? "Add New Client" : "Edit Client"}
+					{mode === "create" ? "Add client" : "Edit client"}
 				</h2>
 				<div className="flex items-center space-x-2">
-					<Button variant="outline" className="bg-card" onClick={() => router.push("/clients")}>
+					<Button variant="outline" className="bg-card" onClick={cancel}>
 						Cancel
 					</Button>
 				</div>
@@ -267,18 +314,18 @@ export function ClientForm({ initialData, mode, categories }: ClientFormProps) {
 						onSubmit={form.handleSubmit(onSubmit)}
 						isSubmitting={isPending}
 						isStepPending={isStepPending}
-						submitLabel={mode === "create" ? "Create Client" : "Update Client"}
+						submitLabel={mode === "create" ? "Add client" : "Save changes"}
 						mode={mode}
 					>
-						{currentStep === 0 ? <StepPersonalDetails form={form} categories={categories} /> : null}
+						{currentStep === 0 ? <StepPersonalDetails form={form} discounts={discounts} /> : null}
 						{currentStep === 1 ? (
 							<StepHealthWellness
 								form={form}
 								sections={getHealthSectionsByStep(1)}
 							/>
 						) : null}
-						{currentStep === 2 ? <StepMembership form={form} categories={categories} mode={mode} /> : null}
-						{currentStep === 3 ? <StepConsultation form={form} categories={categories} /> : null}
+						{currentStep === 2 ? <StepMembership form={form} discounts={discounts} mode={mode} /> : null}
+						{currentStep === 3 ? <StepConsultation form={form} discounts={discounts} /> : null}
 					</FormWizard>
 				</form>
 			</Form>

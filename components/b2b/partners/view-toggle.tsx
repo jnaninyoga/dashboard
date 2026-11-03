@@ -25,19 +25,19 @@ export function PartnerViewToggle() {
 			value={view.toString()}
 			onValueChange={handleViewChange}
 			spacing={1}
-			className="bg-card inline-flex gap-1 rounded-2xl p-1 shadow-sm"
+			className="inline-flex gap-1 rounded-2xl bg-card p-1 shadow-sm"
 		>
 			<ToggleGroupItem
 				value={View.LIST.toString()}
 				aria-label="Table View"
-				className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background h-9 w-9 rounded-xl p-0"
+				className="size-9 rounded-xl p-0 data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 			>
 				<List size={18} variant={view === View.LIST ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>
 			<ToggleGroupItem
 				value={View.GRID.toString()}
 				aria-label="Grid View"
-				className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background h-9 w-9 rounded-xl p-0"
+				className="size-9 rounded-xl p-0 data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 			>
 				<Grid size={18} variant={view === View.GRID ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>

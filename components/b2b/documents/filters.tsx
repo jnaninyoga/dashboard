@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
 	Select,
@@ -15,6 +14,8 @@ import {
 import { useDebounce } from "@/lib/hooks/use-debounce";
 
 import { SearchNormal1 } from "iconsax-reactjs";
+
+import { DocumentStatusBadge } from "./status-badge";
 
 export function DocumentFilters() {
 	const router = useRouter();
@@ -35,14 +36,19 @@ export function DocumentFilters() {
 		[searchParams],
 	);
 
-	const handleSearch = useDebounce((term: string) => {
-		const newQueryString = createQueryString("query", term);
+	// What she types, sent to the URL once she pauses. (useDebounce delays a
+	// value: it used to be handed this callback, which React then called
+	// while rendering, clearing the search and breaking the box.)
+	const [term, setTerm] = useState(searchParams.get("query") ?? "");
+	const debouncedTerm = useDebounce(term, 300);
+	useEffect(() => {
+		const newQueryString = createQueryString("query", debouncedTerm.trim());
 		if (newQueryString === searchParams.toString()) return;
 
 		startTransition(() => {
 			router.replace(`${pathname}?${newQueryString}`, { scroll: false });
 		});
-	}, 300);
+	}, [debouncedTerm, createQueryString, searchParams, pathname, router]);
 
 	const handleTypeChange = (value: string) => {
 		const newQueryString = createQueryString("type", value);
@@ -72,39 +78,37 @@ export function DocumentFilters() {
 	};
 
 	return (
-		<div className="flex flex-1 flex-col gap-4 md:flex-row md:items-center">
+		<div className="flex min-w-0 flex-1 flex-col gap-3 xl:flex-row xl:items-center">
 			<div className="relative flex-1">
 				<SearchNormal1
 					size={18}
-					className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
+					className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
 				/>
 				<Input
-					placeholder="Search documents..."
-					className="focus-visible:ring-primary/20 bg-card h-10 border pl-10 font-medium transition-all"
-					defaultValue={searchParams.get("query")?.toString()}
-					onChange={(e) => handleSearch(e.target.value)}
-					disabled={isPending}
+					type="search"
+					aria-label="Search documents"
+					placeholder="Number, partner or notes…"
+					className="h-10 border bg-card pl-10 font-medium transition-all focus-visible:ring-primary/20"
+					value={term}
+					onChange={(e) => setTerm(e.target.value)}
 				/>
 			</div>
-			<div className="flex items-center gap-2">
+			{/* Three equal, shrinkable columns on phones (the row of fixed-width
+			    selects used to push the page sideways); a row from sm up. */}
+			<div className="grid grid-cols-[1fr_1fr_auto] gap-2 xl:flex xl:items-center">
 				<Select
 					defaultValue={searchParams.get("type") || "all"}
 					onValueChange={handleTypeChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+					<SelectTrigger className="w-full min-w-0 border bg-card transition-all focus:ring-primary/20 xl:w-44">
 						<SelectValue placeholder="Type" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
-						<SelectItem value="all">
-							All Types
-						</SelectItem>
-						<SelectItem value="quote">
-							Quotes
-						</SelectItem>
-						<SelectItem value="invoice">
-							Invoices
-						</SelectItem>
+						<SelectItem value="all">All types</SelectItem>
+						<SelectItem value="quote">Quotations</SelectItem>
+						<SelectItem value="invoice">Invoices</SelectItem>
+						<SelectItem value="credit_note">Credit notes</SelectItem>
 					</SelectContent>
 				</Select>
 
@@ -113,68 +117,35 @@ export function DocumentFilters() {
 					onValueChange={handleStatusChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
+					<SelectTrigger className="w-full min-w-0 border bg-card transition-all focus:ring-primary/20 xl:w-44">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
-						<SelectItem value="all">
-							All Status
+						<SelectItem value="all">Any status</SelectItem>
+						<SelectItem value="owed">Owed (any unpaid invoice)</SelectItem>
+						<SelectItem value="overdue">
+							<DocumentStatusBadge status="overdue" />
 						</SelectItem>
 						<SelectItem value="draft">
-							<Badge
-								variant="muted"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Draft
-							</Badge>
+							<DocumentStatusBadge status="draft" />
 						</SelectItem>
 						<SelectItem value="sent">
-							<Badge
-								variant="info"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Sent
-							</Badge>
+							<DocumentStatusBadge status="sent" />
 						</SelectItem>
 						<SelectItem value="accepted">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Accepted
-							</Badge>
+							<DocumentStatusBadge status="accepted" />
 						</SelectItem>
 						<SelectItem value="unpaid">
-							<Badge
-								variant="destructive"
-								className="bg-red-100 px-2 py-0.5 text-[10px] font-bold tracking-widest text-red-800 uppercase hover:bg-red-100"
-							>
-								Unpaid
-							</Badge>
+							<DocumentStatusBadge status="unpaid" />
 						</SelectItem>
 						<SelectItem value="partially_paid">
-							<Badge
-								variant="outline"
-								className="border-orange-500 px-2 py-0.5 text-[10px] font-bold tracking-widest text-orange-500 uppercase"
-							>
-								Partially Paid
-							</Badge>
+							<DocumentStatusBadge status="partially_paid" />
 						</SelectItem>
 						<SelectItem value="paid">
-							<Badge
-								variant="success"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Paid
-							</Badge>
+							<DocumentStatusBadge status="paid" />
 						</SelectItem>
 						<SelectItem value="cancelled">
-							<Badge
-								variant="destructive"
-								className="px-2 py-0.5 text-[10px] font-bold tracking-widest uppercase"
-							>
-								Cancelled
-							</Badge>
+							<DocumentStatusBadge status="cancelled" />
 						</SelectItem>
 					</SelectContent>
 				</Select>
@@ -184,21 +155,12 @@ export function DocumentFilters() {
 					onValueChange={handleBackorderChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-48">
-						<SelectValue placeholder="Backorder" />
+					<SelectTrigger className="w-full min-w-0 border bg-card transition-all focus:ring-primary/20 xl:w-44">
+						<SelectValue placeholder="Origin" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
-						<SelectItem value="all">
-							All Documents
-						</SelectItem>
-						<SelectItem value="true">
-							<Badge
-								variant="outline"
-								className="border-purple-500 px-2 py-0.5 text-[10px] font-bold tracking-widest text-purple-600 uppercase"
-							>
-								Backorders Only
-							</Badge>
-						</SelectItem>
+						<SelectItem value="all">Any origin</SelectItem>
+						<SelectItem value="true">From a quotation</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>

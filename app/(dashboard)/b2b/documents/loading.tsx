@@ -1,43 +1,37 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+	LoadingScreen,
+	SkeletonDocumentList,
+	SkeletonField,
+	SkeletonPageHeader,
+} from "@/components/skeletons";
 
+// The documents (app/(dashboard)/b2b/documents/page.tsx): the heading,
+// then the list with its search and filters. The "owed" banner only shows
+// when something is owed, so it isn't drawn here.
 export default function Loading() {
 	return (
-		<div className="flex flex-col gap-8 p-6">
-			{/* Header Skeleton */}
-			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<div className="space-y-2">
-					<Skeleton className="bg-muted-foreground/10 h-9 w-48" />
-					<Skeleton className="bg-muted-foreground/10 h-4 w-64" />
-				</div>
-			</div>
-
-			{/* Filters Skeleton */}
-			<div className="flex items-center gap-2">
-				<Skeleton className="bg-muted-foreground/10 h-10 w-full max-w-md" />
-				<Skeleton className="bg-muted-foreground/10 h-10 w-32" />
-				<Skeleton className="bg-muted-foreground/10 h-10 w-32" />
-			</div>
-
-			{/* Content Skeleton (Table Mimic) */}
-			<div className="border-secondary/10 bg-card overflow-hidden rounded-3xl border shadow-sm">
-				<div className="bg-muted-foreground/5 h-16 w-full border-b" />
-				<div className="divide-secondary/10 space-y-0 divide-y">
-					{Array.from({ length: 6 }).map((_, i) => (
-						<div key={i} className="flex items-center justify-between p-6">
-							<div className="flex items-center gap-4">
-								<Skeleton className="bg-muted-foreground/10 h-10 w-10 rounded-xl" />
-								<div className="space-y-2">
-									<Skeleton className="bg-muted-foreground/10 h-4 w-32" />
-									<Skeleton className="bg-muted-foreground/10 h-3 w-24" />
-								</div>
-							</div>
-							<Skeleton className="bg-muted-foreground/10 h-4 w-40" />
-							<Skeleton className="bg-muted-foreground/10 h-6 w-24 rounded-full" />
-							<Skeleton className="bg-muted-foreground/10 h-6 w-24" />
+		<LoadingScreen label="Loading documents">
+			<SkeletonPageHeader
+				title="w-36 md:w-44"
+				description={["w-[34rem] max-md:w-full", "w-1/2 md:hidden"]}
+				action="max-md:w-full md:w-38 rounded-full"
+			/>
+			<SkeletonDocumentList
+				who="partner"
+				toolbar={
+					// DocumentFilters: the search, then three selects (a row from xl).
+					<div className="flex min-w-0 flex-1 flex-col gap-3 xl:flex-row xl:items-center">
+						<div className="relative flex-1">
+							<SkeletonField className="h-10 bg-card pl-10" bar="w-44" />
 						</div>
-					))}
-				</div>
-			</div>
-		</div>
+						<div className="grid grid-cols-[1fr_1fr_auto] gap-2 xl:flex xl:items-center">
+							<SkeletonField className="bg-card xl:w-44" bar="w-16" select />
+							<SkeletonField className="bg-card xl:w-44" bar="w-18" select />
+							<SkeletonField className="bg-card xl:w-44" bar="w-16" select />
+						</div>
+					</div>
+				}
+			/>
+		</LoadingScreen>
 	);
 }

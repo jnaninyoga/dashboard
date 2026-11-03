@@ -1,298 +1,217 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/data-table";
+import { EmptyState } from "@/components/empty-state";
+import { creditsSummary, lastVisitLabel, shortDay } from "@/lib/domain/clients/card";
+import { formatPhone, whatsappHref } from "@/lib/utils/contact";
+import { cn } from "@/lib/utils/ui";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-} from "@/components/ui/table";
-import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
-import { 
-    type Client, 
-    type ClientCategory, 
-    type ClientWallet, 
-    type HealthLog, 
-    type MembershipProduct 
+	type Client,
+	type ClientWallet,
+	type Discount,
+	type HealthLog,
+	type Product,
 } from "@/services/database/schema";
 
-import { 
-    Call as Phone, 
-    Card, 
-    Danger, 
-    Sms as Mail, 
-    TickCircle, 
-    User, 
-	Whatsapp
-} from "iconsax-reactjs";
+import { type ColumnDef } from "@tanstack/react-table";
+import { Call, People, Whatsapp } from "iconsax-reactjs";
 
 import { ClientActions } from "./actions";
+import { ClientAvatar, ClientCard } from "./client-card";
+import { HealthAlertButton } from "./health-alert-button";
 
-type ClientWithRelations = Client & {
-    category?: ClientCategory | null;
-    wallets?: (ClientWallet & { product?: MembershipProduct | null })[];
-    healthLogs?: HealthLog[];
-    activeSessionName?: string;
+export type ClientWithRelations = Client & {
+	discount?: Discount | null;
+	wallets?: (ClientWallet & { product?: Product | null })[];
+	healthLogs?: HealthLog[];
+	/** Check-ins since the start of the studio's month, and the latest one. */
+	visitsThisMonth?: number;
+	lastVisitAt?: Date | string;
+	checkedInToday?: boolean;
+	activeSessionName?: string;
 };
 
-function ClientAvatar({ client }: { client: ClientWithRelations }) {
-	const [photoUrl, setPhotoUrl] = useState<string | null>(client.photoUrl || null);
+// The figure columns keep the card's breathing room between them.
+const figureColumn = "px-5";
 
-	useEffect(() => {
-		// Skip API call if we already have a cached photo URL
-		if (photoUrl) return;
+const contactButton =
+	"flex size-9 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95";
 
-		if (client.googleContactResourceName) {
-			getGoogleContactPhotoAction(client.googleContactResourceName, client.id).then(
-				(res) => {
-					if (res.success && res.url) {
-						setPhotoUrl(res.url);
-					}
-				},
+// The same facts as the client card, as columns: who, when they last came,
+// credits, visits, health, how to reach them.
+const columns: ColumnDef<ClientWithRelations>[] = [
+	{
+		id: "client",
+		accessorKey: "fullName",
+		header: "Client",
+		// The client column takes the spare width; the name shortens only when
+		// the table has no room left.
+		meta: { className: "w-full max-w-0" },
+		cell: ({ row }) => {
+			const client = row.original;
+			return (
+				<div className="flex min-w-52 items-center gap-3">
+					<div className="relative shrink-0">
+						<ClientAvatar client={client} className="size-10" />
+						{client.checkedInToday ? (
+							<span
+								aria-hidden
+								className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2 border-card bg-success"
+							/>
+						) : null}
+					</div>
+					{/* A real link, so the profile is reachable by keyboard too. */}
+					<Link
+						href={`/clients/${client.id}`}
+						title={client.fullName}
+						className="truncate rounded-sm font-medium text-foreground transition-colors outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
+					>
+						{client.fullName}
+					</Link>
+				</div>
 			);
-		}
-	}, [client.googleContactResourceName, client.id, photoUrl]);
-
-	return (
-		<Avatar className="h-9 w-9">
-			<AvatarImage src={photoUrl || undefined} alt={client.fullName} />
-			<AvatarFallback className="bg-primary/10 text-primary font-bold">{client.fullName.charAt(0)}</AvatarFallback>
-		</Avatar>
-	);
-}
+		},
+	},
+	{
+		id: "lastVisit",
+		meta: { className: figureColumn },
+		header: "Last visit",
+		// Here today sorts first, then the most recent visits.
+		accessorFn: (c) =>
+			c.checkedInToday ? Number.MAX_SAFE_INTEGER : c.lastVisitAt ? new Date(c.lastVisitAt).getTime() : 0,
+		sortDescFirst: true,
+		cell: ({ row }) => {
+			const c = row.original;
+			if (c.checkedInToday) {
+				return (
+					<span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-success/10 px-2.5 text-sm font-medium text-success">
+						<span aria-hidden className="size-1.5 rounded-full bg-success" />
+						{c.activeSessionName ? `Here · ${c.activeSessionName}` : "Here today"}
+					</span>
+				);
+			}
+			return (
+				<span className="text-muted-foreground">{c.lastVisitAt ? lastVisitLabel(c.lastVisitAt) : "No visits yet"}</span>
+			);
+		},
+	},
+	{
+		id: "credits",
+		meta: { className: figureColumn },
+		header: "Credits left",
+		accessorFn: (c) => creditsSummary(c.wallets).count ?? -1,
+		cell: ({ row }) => {
+			const credits = creditsSummary(row.original.wallets);
+			if (credits.count === null) return <span className="text-muted-foreground">No card</span>;
+			if (credits.tone === "expired") {
+				return <span className="font-medium text-destructive">Expired on {shortDay(credits.expiredOn!)}</span>;
+			}
+			return (
+				<span className="flex items-baseline gap-1">
+					<span
+						className={cn(
+							"font-semibold tabular-nums",
+							credits.tone === "low" && "text-warning",
+						)}
+					>
+						{credits.count}
+					</span>
+					{credits.total ? <span className="text-sm text-muted-foreground">of {credits.total}</span> : null}
+				</span>
+			);
+		},
+	},
+	{
+		id: "visits",
+		meta: { className: figureColumn },
+		header: "This month",
+		accessorFn: (c) => c.visitsThisMonth ?? 0,
+		sortDescFirst: true,
+		cell: ({ row }) => {
+			const visits = row.original.visitsThisMonth ?? 0;
+			return (
+				<span className="flex items-baseline gap-1">
+					<span className="font-semibold tabular-nums">{visits}</span>
+					<span className="text-sm text-muted-foreground">{visits === 1 ? "visit" : "visits"}</span>
+				</span>
+			);
+		},
+	},
+	{
+		id: "health",
+		header: "Health",
+		accessorFn: (c) => c.healthLogs?.length ?? 0,
+		sortDescFirst: true,
+		cell: ({ row }) => {
+			const alerts = row.original.healthLogs ?? [];
+			// Only a signal when there is something to see, as on the card.
+			return alerts.length > 0 ? (
+				<HealthAlertButton clientName={row.original.fullName} alerts={alerts} className="size-9 ring-2" />
+			) : null;
+		},
+	},
+	{
+		id: "contact",
+		header: "Contact",
+		enableSorting: false,
+		cell: ({ row }) => {
+			const c = row.original;
+			return (
+				<div className="flex items-center gap-2">
+					<a
+						href={`tel:${c.phone}`}
+						aria-label={`Call ${c.fullName}`}
+						className={cn(contactButton, "bg-primary/10 text-primary hover:bg-primary/15")}
+					>
+						<Call size={18} variant="Bulk" />
+					</a>
+					<a
+						href={whatsappHref(c.phone)}
+						target="_blank"
+						rel="noopener noreferrer"
+						aria-label={`WhatsApp ${c.fullName}`}
+						className={cn(contactButton, "bg-primary text-primary-foreground hover:bg-primary/90")}
+					>
+						<Whatsapp size={18} variant="Bold" />
+					</a>
+					<span className="ml-1 hidden text-sm text-muted-foreground tabular-nums 2xl:inline">{formatPhone(c.phone)}</span>
+				</div>
+			);
+		},
+	},
+	{
+		id: "actions",
+		header: "",
+		enableSorting: false,
+		cell: ({ row }) => (
+			<div className="flex justify-end">
+				<ClientActions client={row.original} />
+			</div>
+		),
+	},
+];
 
 export function ClientsTable({ clients }: { clients: ClientWithRelations[] }) {
 	return (
-		<div className="animate-slide-up transition-all delay-150">
-			<Table containerClassName="overflow-x-auto">
-				<TableHeader>
-					<TableRow className="border-b transition-colors hover:bg-transparent">
-						<TableHead className="px-6">Client</TableHead>
-						<TableHead>Gender</TableHead>
-						<TableHead>Category</TableHead>
-						<TableHead>Membership</TableHead>
-						<TableHead className="text-center">Health</TableHead>
-						<TableHead>Phone</TableHead>
-						<TableHead>Email</TableHead>
-						<TableHead className="pr-6 text-right"></TableHead>
-					</TableRow>
-				</TableHeader>
-				<TableBody className="divide-secondary/15 divide-y">
-					{clients.length === 0 ? (
-						<TableRow>
-							<TableCell colSpan={8} className="h-32 text-center">
-								<div className="flex flex-col items-center justify-center gap-1 opacity-40">
-									<p className="text-sm font-bold tracking-widest uppercase">No clients found</p>
-									<p className="text-xs">Adjust your filters or add a new client</p>
-								</div>
-							</TableCell>
-						</TableRow>
-					) : (
-						clients.map((client) => {
-							const activeWallet = client.wallets?.[0];
-							const alerts =
-								client.healthLogs?.filter((l) => l.isAlert) || [];
-							const hasAlerts = alerts.length > 0;
-
-							return (
-								<TableRow 
-									key={client.id}
-									className="hover:bg-primary/5 group border-none transition-colors"
-								>
-									{/* Avatar + Name Cell */}
-									<TableCell className="px-6 py-4">
-										<div className="flex items-center gap-4">
-											<Link
-												href={`/clients/${client.id}`}
-												className="group/avatar relative shrink-0"
-											>
-												<ClientAvatar client={client} />
-												{client.activeSessionName ? (
-													<span className="absolute -right-0.5 -bottom-0.5 block h-3 w-3 rounded-full border-2 border-white bg-green-500 shadow-sm" />
-												) : null}
-											</Link>
-											<div className="flex min-w-0 flex-col">
-												<div className="flex items-center gap-2">
-													<Link
-														href={`/clients/${client.id}`}
-														className="text-foreground group-hover:text-primary truncate text-sm font-bold tracking-tight transition-colors"
-													>
-														{client.fullName}
-													</Link>
-													{client.activeSessionName ? (
-														<TooltipProvider>
-															<Tooltip>
-																<TooltipTrigger asChild>
-																	<div className="flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2 py-0.5 text-green-700 shadow-sm">
-																		<span className="relative flex h-1 w-1">
-																			<span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-																			<span className="relative inline-flex h-1 w-1 rounded-full bg-green-500"></span>
-																		</span>
-																		<span className="max-w-[80px] truncate text-[8px] font-black tracking-widest uppercase">
-																			{client.activeSessionName}
-																		</span>
-																	</div>
-																</TooltipTrigger>
-																<TooltipContent>
-																	<p className="text-xs font-semibold text-green-600">
-																		Present in the club today
-																	</p>
-																</TooltipContent>
-															</Tooltip>
-														</TooltipProvider>
-													) : null}
-												</div>
-											</div>
-										</div>
-									</TableCell>
-
-									{/* Gender Cell */}
-									<TableCell className="py-4">
-										<div className="flex items-center gap-2 font-medium">
-											{client.gender === "male" ? (
-												<>
-													<User className="size-4 text-blue-500" variant="Bulk" />
-													<span className="text-foreground text-xs capitalize">Male</span>
-												</>
-											) : client.gender === "female" ? (
-												<>
-													<User className="size-4 text-pink-500" variant="Bulk" />
-													<span className="text-foreground text-xs capitalize">Female</span>
-												</>
-											) : (
-												<>
-													<User className="text-muted-foreground/40 size-4" variant="Outline" />
-													<span className="text-muted-foreground/60 text-xs">Unspecified</span>
-												</>
-											)}
-										</div>
-									</TableCell>
-
-									{/* Category Cell */}
-									<TableCell className="py-4">
-										<Badge variant="outline" className="text-primary border-primary/40 bg-primary/5 rounded-full px-2 py-0.5 text-[10px] font-black tracking-widest uppercase">
-											{client.category?.name || "None"}
-										</Badge>
-									</TableCell>
-
-									{/* Membership Cell */}
-									<TableCell className="py-4">
-										{activeWallet ? (
-											<Badge className="bg-primary/90 hover:bg-primary gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-black tracking-widest uppercase shadow-sm">
-												<Card size={10} variant="Bold" className="text-white opacity-80" />
-												{activeWallet.remainingCredits} / {activeWallet.product?.defaultCredits || 0}
-											</Badge>
-										) : (
-											<span className="text-muted-foreground/30 text-[10px] font-bold tracking-widest uppercase italic">No Pack</span>
-										)}
-									</TableCell>
-
-									{/* Health Cell */}
-									<TableCell className="py-4 text-center">
-										{hasAlerts ? (
-											<TooltipProvider>
-												<Tooltip>
-													<TooltipTrigger asChild>
-														<div className="bg-destructive/10 text-destructive mx-auto flex h-8 w-8 cursor-help items-center justify-center rounded-xl transition-all hover:scale-110 active:scale-90">
-															<Danger size={18} variant="Bulk" />
-														</div>
-													</TooltipTrigger>
-													<TooltipContent side="top" align="center" className="max-w-xs rounded-xl border bg-red-50 p-3 shadow-xl">
-														<div className="flex flex-col gap-2">
-															<p className="text-destructive border-destructive/10 flex items-center gap-1.5 border-b pb-1.5 text-[10px] font-black tracking-widest uppercase">
-																<Danger size={12} variant="Bulk" />
-																Health Alerts
-															</p>
-															<ul className="space-y-1">
-																{alerts.map((a, i) => (
-																	<li key={i} className="text-foreground flex items-center gap-2 text-[11px] font-medium">
-																		<span className="bg-destructive h-1.5 w-1.5 rounded-full" />
-																		{a.condition}
-																	</li>
-																))}
-															</ul>
-														</div>
-													</TooltipContent>
-												</Tooltip>
-											</TooltipProvider>
-										) : (
-											<div className="flex items-center justify-center">
-												<TooltipProvider>
-													<Tooltip>
-														<TooltipTrigger asChild>
-															<div className="mx-auto flex h-8 w-8 cursor-help items-center justify-center rounded-xl bg-green-100 text-green-500 transition-all hover:scale-110 active:scale-90">
-																<TickCircle size={18} variant="Bulk" />
-															</div>
-														</TooltipTrigger>
-														<TooltipContent className="rounded-lg border-0 bg-green-50 px-2 py-1 text-[11px] font-bold text-green-700">
-															No health alerts recorded
-														</TooltipContent>
-													</Tooltip>
-												</TooltipProvider>
-											</div>
-										)}
-									</TableCell>
-
-									{/* Phone Cell */}
-									<TableCell className="min-w-[140px] py-4">
-										<div className="flex items-center gap-2">
-											<Phone size={14} variant="Bold" className="text-primary" />
-											<Link
-												href={`https://wa.me/${client.phone.replace(/[^0-9]/g, "")}`}
-												target="_blank"
-												className="group/wa flex size-6 items-center justify-center rounded-xl bg-[#25D366]/10 text-[#25D366] transition-all hover:scale-105 hover:bg-[#25D366] hover:text-white active:scale-95"
-											>
-												<Whatsapp className="size-4" variant="Bold" />
-											</Link>
-											<Link
-												href={`tel:${client.phone}`}
-												className="hover:text-primary text-foreground text-xs font-medium tracking-tight transition-colors"
-											>
-												{client.phone}
-											</Link>
-										</div>
-									</TableCell>
-
-									{/* Email Cell */}
-									<TableCell className="min-w-[180px] py-4">
-										{client.email ? (
-											<div className="flex items-center gap-2">
-												<Mail size={14} variant="Bold" className="text-secondary-2" />
-												<Link
-													href={`mailto:${client.email}`}
-													className="hover:text-secondary-3 text-foreground truncate text-xs font-medium transition-colors"
-													title={client.email}
-												>
-													{client.email}
-												</Link>
-											</div>
-										) : (
-											<span className="text-muted-foreground/50 text-[10px] font-bold tracking-widest uppercase italic">No Email</span>
-										)}
-									</TableCell>
-
-									{/* Actions Cell */}
-									<TableCell className="py-4 pr-6 text-right">
-										<ClientActions client={client} />
-									</TableCell>
-								</TableRow>
-							);
-						})
-					)}
-				</TableBody>
-			</Table>
-		</div>
+		<DataTable
+			data={clients}
+			columns={columns}
+			noun={{ one: "client", many: "clients" }}
+			getRowHref={(client) => `/clients/${client.id}`}
+			initialSorting={[{ id: "lastVisit", desc: true }]}
+			empty={
+				<EmptyState
+					icon={<People size={40} variant="Bulk" />}
+					title="No clients found"
+					description="Adjust your filters, or add a new client."
+				/>
+			}
+			renderCard={(client) => <ClientCard client={client} />}
+			cardIsSelfContained
+			// The table needs about 1280px with the sidebar open; below, the cards.
+			cardsBelow="xl"
+		/>
 	);
 }

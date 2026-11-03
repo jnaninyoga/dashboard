@@ -1,8 +1,10 @@
 import React, { memo } from "react";
 import ReactMarkdown from "react-markdown";
 
+import { quantityOf } from "@/lib/domain/price-list/product";
 import type { BusinessProfile, DocumentLine, DocumentWithRelations } from "@/lib/types/b2b";
 import { formatCurrencyAmountToWords } from "@/lib/utils/currency";
+import { formatAmount } from "@/lib/utils/currency";
 
 import {
 	Document,
@@ -415,9 +417,10 @@ const S = StyleSheet.create({
 		fontSize: 10,
 		color: C.text,
 	},
-	colDesc: { flex: 4 },
+	colDesc: { flex: 3.7 },
 	colPrice: { flex: 1.5, textAlign: "center" },
-	colQty: { flex: 1, textAlign: "center" },
+	// Wide enough for "100 séances".
+	colQty: { flex: 1.3, textAlign: "center" },
 	colTotal: { flex: 1.5, textAlign: "right" },
 
 	// ── Bottom Section Layout ──
@@ -571,21 +574,16 @@ interface B2BDocumentPDFProps {
 
 export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 	const isQuote = doc.type === "quote";
-	const title = isQuote ? "Devis" : "Facture";
+	// An avoir takes back part of an invoice (a credit note).
+	const title = isQuote ? "Devis" : doc.type === "credit_note" ? "Avoir" : "Facture";
 	const issueDate = format(new Date(doc.issueDate), "dd/MM/yyyy");
 	const dueDate = doc.dueDate
 		? format(new Date(doc.dueDate), "dd/MM/yyyy")
 		: null;
 
-	// Formatting currency without symbol inside the grid, add MAD to totals
-	const formatNum = (amount: number | string) => {
-		return Number(amount)
-			.toLocaleString("fr-FR", {
-				minimumFractionDigits: 2,
-				maximumFractionDigits: 2,
-			})
-			.replace(/[\s\u202F\u00A0]/g, " ");
-	};
+	// The studio's one price format; the PDF font has no non-breaking
+	// space, so its groups are held by plain spaces here.
+	const formatNum = (amount: number | string) => formatAmount(amount).replace(/\u00A0/g, " ");
 
 	const totalAmount = Number(doc.totalAmount);
 	const subtotal = Number(doc.subtotal);
@@ -634,9 +632,12 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 						<View style={S.headerRight}>
 							<Text style={S.docTitleVibes}>{title}</Text>
 							<View style={S.docNumPill}>
-								<Text style={S.docNumText}>N° {doc.documentNumber}</Text>
+								{/* An invoice is numbered when it's issued: a draft says so. */}
+								<Text style={S.docNumText}>
+									{doc.documentNumber ? `N° ${doc.documentNumber}` : "BROUILLON"}
+								</Text>
 							</View>
-							{doc.parent && doc.type === "invoice" ? (
+							{doc.parent && doc.type !== "quote" ? (
 								<Text
 									style={{
 										fontSize: 8,
@@ -645,7 +646,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 										letterSpacing: 0.4,
 									}}
 								>
-									Reliquat du devis N° {doc.parent.documentNumber}
+									{doc.type === "credit_note" ? "Réf. facture" : "Réf. devis"} N° {doc.parent.documentNumber}
 								</Text>
 							) : null}
 						</View>
@@ -681,7 +682,10 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 							</View>
 							{dueDate ? (
 								<View style={S.dateLine}>
-									<Text style={S.dateLabel}>ÉCHÉANCE :</Text>
+									<Text style={S.dateLabel}>
+										{/* A quotation's date is how long it holds, not a due date. */}
+										{isQuote ? "VALIDITÉ :" : "ÉCHÉANCE :"}
+									</Text>
 									<Text style={S.dateValue}>{dueDate}</Text>
 								</View>
 							) : null}
@@ -704,7 +708,7 @@ export const B2BDocumentPDF = memo(({ doc, profile }: B2BDocumentPDFProps) => {
 								<Text style={[S.td, S.colPrice]}>
 									{formatNum(line.unitPrice)} MAD
 								</Text>
-								<Text style={[S.td, S.colQty]}>{Number(line.quantity)}</Text>
+								<Text style={[S.td, S.colQty]}>{quantityOf(line.quantity, line.unit, "fr").replace(/\u00A0/g, " ")}</Text>
 								<Text style={[S.td, S.colTotal]}>
 									{formatNum(line.totalPrice)} MAD
 								</Text>

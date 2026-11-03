@@ -11,7 +11,12 @@ export async function proxy(request: NextRequest) {
   const isPublicRoute =
     path === "/login" ||
     path.startsWith("/auth/") ||
-    path.startsWith("/api/auth/"); // if any
+    path.startsWith("/api/auth/") || // if any
+    // PWA files must load signed out too, or install/offline breaks on /login
+    path === "/manifest.webmanifest" ||
+    path.startsWith("/serwist/") ||
+    // Component playground, only under `next dev` (the page itself 404s elsewhere)
+    (process.env.NODE_ENV === "development" && path.startsWith("/dev/"));
 
   // If user is not signed in and the route is not public, redirect to /login
   if (!user && !isPublicRoute) {
