@@ -10,6 +10,8 @@ import {
 	clients,
 	clientWallets,
 	healthLogs,
+	products,
+	studioSessions,
 } from "@/services/database/schema";
 import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
@@ -248,4 +250,45 @@ export async function getClientsByEmailsAction(
 		console.error("Error fetching clients by emails:", error);
 		return [];
 	}
+}
+
+/** All of a client's health notes, resolved ones too (the profile's history). */
+export async function getClientHealthNotes(clientId: string) {
+	await requireUser();
+	return db.select().from(healthLogs).where(eq(healthLogs.clientId, clientId)).orderBy(desc(healthLogs.startDate));
+}
+
+export type ClientVisit = {
+	id: string;
+	checkInTime: Date;
+	slotType: "group" | "private" | "outdoor" | "b2b";
+	/** The session was cancelled: kept in history, the credit went back. */
+	cancelledAt: Date | null;
+	googleEventId: string | null;
+	/** The session's name, when the dashboard created it. */
+	sessionTitle: string | null;
+	/** The card that paid (outdoor sessions take no credit). */
+	cardName: string | null;
+};
+
+/** A client's check-ins, the latest first, with the session and the card that paid. */
+export async function getClientVisits(clientId: string, limit = 100): Promise<ClientVisit[]> {
+	await requireUser();
+	return db
+		.select({
+			id: attendanceLedger.id,
+			checkInTime: attendanceLedger.checkInTime,
+			slotType: attendanceLedger.slotType,
+			cancelledAt: attendanceLedger.cancelledAt,
+			googleEventId: attendanceLedger.googleEventId,
+			sessionTitle: studioSessions.title,
+			cardName: products.name,
+		})
+		.from(attendanceLedger)
+		.innerJoin(clientWallets, eq(attendanceLedger.walletId, clientWallets.id))
+		.leftJoin(studioSessions, eq(studioSessions.googleEventId, attendanceLedger.googleEventId))
+		.leftJoin(products, eq(products.id, clientWallets.productId))
+		.where(eq(clientWallets.clientId, clientId))
+		.orderBy(desc(attendanceLedger.checkInTime))
+		.limit(limit);
 }

@@ -1,159 +1,87 @@
-import { Metadata } from "next";
-import Link from "next/link";
+import { type Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { ClientActions } from "@/components/clients/actions";
-import { ClientProfileTabs } from "@/components/clients/profile-tabs";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { AboutSection } from "@/components/clients/profile/about";
+import { CardsSection } from "@/components/clients/profile/cards";
+import { ProfileHeader } from "@/components/clients/profile/header";
+import { HealthSection } from "@/components/clients/profile/health";
+import { VisitsSection } from "@/components/clients/profile/visits";
 import { getGoogleContactPhotoAction } from "@/lib/actions/clients/mutations";
-import { getClientByIdAction } from "@/lib/actions/clients/queries";
+import { getClientByIdAction, getClientHealthNotes, getClientVisits } from "@/lib/actions/clients/queries";
 import { getMembershipProductsAction } from "@/lib/actions/clients/wallets";
 import { getDiscounts } from "@/lib/actions/settings";
-import { creditsSummary } from "@/lib/domain/clients/card";
-import { cardForCheckIn } from "@/lib/domain/clients/membership-sale";
+import { healthPicture } from "@/lib/domain/clients/health";
 import { studioDateString } from "@/lib/utils/time";
 
-import {
-	Briefcase,
-	Card,
-	Edit2,
-	Tag,
-} from "iconsax-reactjs";
-
-// Next.js 15 params
 type Params = Promise<{ id: string }>;
 
 export async function generateMetadata(props: { params: Params }): Promise<Metadata> {
-	const params = await props.params;
-	const { client } = await getClientByIdAction(params.id);
-	
+	const { id } = await props.params;
+	const { client } = await getClientByIdAction(id);
 	return {
-		title: client ? `${client.fullName} | Client Profile` : "Client Profile",
-		robots: {
-			index: false,
-			follow: false,
-		},
+		title: client ? `${client.fullName} — JnaninYoga` : "Client — JnaninYoga",
+		robots: { index: false, follow: false },
 	};
 }
 
+/**
+ * A client's page, in the order she needs it: their cards (and the sale),
+ * their visits, their health before class, then who they are. On a wide
+ * screen the cards and visits take the main column, health and the rest
+ * the side.
+ */
 export default async function ClientProfilePage(props: { params: Params; searchParams: Promise<{ sell?: string }> }) {
-	const params = await props.params;
-	const { id } = params;
-	// From a refused check-in: straight to selling a membership.
+	const { id } = await props.params;
+	// From a refused check-in or a renewal: straight to selling a membership.
 	const { sell } = await props.searchParams;
 
-	return (
-		<div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-			<ProfileContent id={id} sell={sell === "1"} />
-		</div>
-	);
-}
-
-async function ProfileContent({ id, sell }: { id: string; sell: boolean }) {
-	// Parallel data fetching
-	const [{ client, error }, { products }, discounts] = await Promise.all([
+	const [{ client, error }, { products }, discounts, notes, visits] = await Promise.all([
 		getClientByIdAction(id),
 		getMembershipProductsAction(),
 		getDiscounts(),
+		getClientHealthNotes(id),
+		getClientVisits(id),
 	]);
+	if (error || !client) notFound();
 
-	if (error || !client) {
-		return notFound();
+	// The photo from Google Contacts, cached on the client the first time.
+	if (!client.photoUrl && client.googleContactResourceName) {
+		const photo = await getGoogleContactPhotoAction(client.googleContactResourceName, client.id);
+		if (photo.success && photo.url) client.photoUrl = photo.url;
 	}
 
-	// Fetch Google Photo (Read-Through Cache)
-	let photoUrl = client.photoUrl;
-	if (!photoUrl && client.googleContactResourceName) {
-		const photoRes = await getGoogleContactPhotoAction(
-			client.googleContactResourceName,
-			client.id, // Trigger cache update
-		);
-		if (photoRes.success && photoRes.url) {
-			photoUrl = photoRes.url;
-		}
-	}
-
-    // What they can use today: an expired card's credits don't count, and
-    // the card named is the one a check-in takes its credit from.
-    const wallets = client.wallets || [];
-    const today = studioDateString();
-    const totalCredits = creditsSummary(wallets, today).count ?? 0;
-    const activeProductName = cardForCheckIn(wallets, today)?.product?.name;
+	const today = studioDateString();
+	const lastVisit = visits.find((visit) => !visit.cancelledAt);
+	const { alerts } = healthPicture(notes);
 
 	return (
-		<>
-			{/* Header */}
-			<div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-				<div className="flex items-center gap-4">
-					<Avatar className="size-20 border-2 border-primary/10">
-						<AvatarImage src={photoUrl || undefined} alt={client.fullName} />
-						<AvatarFallback className="text-2xl">
-							{client.fullName.charAt(0)}
-						</AvatarFallback>
-					</Avatar>
-					<div>
-						<h1 className="text-3xl font-bold tracking-tight">
-							{client.fullName}
-						</h1>
-						<div className="mt-1 flex flex-wrap items-center gap-2">
-							<Badge variant="outline" className="capitalize">
-								{client.discount?.name || "No discount"}
-							</Badge>
-							{client.gender ? (
-								<Badge variant="secondary" className="capitalize">
-									{client.gender}
-								</Badge>
-							) : null}
-							{client.profession ? (
-								<span className="flex items-center gap-1 text-sm text-muted-foreground">
-									<Briefcase className="size-3" variant="Outline" />
-									{client.profession}
-								</span>
-							) : null}
-						</div>
-                        
-                        {/* Status Badges */}
-                        <div className="mt-3 flex items-center gap-2">
-                            <Badge 
-                                className={`px-3 py-1 text-sm ${totalCredits > 2 ? 'bg-success text-success-foreground hover:bg-success/90' : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'}`}
-                            >
-                                <Tag className="mr-1 size-3" variant="Bulk" />
-                                {totalCredits} Credits
-                            </Badge>
-                            
-                            {activeProductName ? (
-                                <Badge variant="outline" className="border-primary/20 bg-primary/5 px-3 py-1 text-sm text-primary">
-                                    <Card className="mr-1 size-3" variant="Outline" />
-                                    {activeProductName}
-                                </Badge>
-                            ) : null}
-                        </div>
-					</div>
+		<div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+			<ProfileHeader
+				client={client}
+				lastVisitAt={lastVisit?.checkInTime}
+				hereToday={!!lastVisit && studioDateString(new Date(lastVisit.checkInTime)) === today}
+				alerts={alerts.length}
+				critical={alerts.some((note) => note.severity === "critical")}
+			/>
+
+			<div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+				<div className="flex min-w-0 flex-col gap-8">
+					<CardsSection
+						clientId={client.id}
+						wallets={client.wallets ?? []}
+						products={products ?? []}
+						// Her discounts on offer, and the client's own even if she stopped offering it.
+						discounts={discounts.filter((d) => !d.isArchived || d.id === client.discountId)}
+						clientDiscountId={client.discountId}
+						sellOnOpen={sell === "1"}
+					/>
+					<VisitsSection visits={visits} />
 				</div>
-				<div className="flex items-center gap-2">
-					<Link href={`/clients/${client.id}/edit`}>
-						<Button variant="outline">
-							<Edit2 className="mr-2 size-4" variant="Outline" />
-							Edit Profile
-						</Button>
-					</Link>
-					<ClientActions client={client} showEdit={false} />
+				<div className="flex min-w-0 flex-col gap-8">
+					<HealthSection clientId={client.id} notes={notes} intake={(client.intakeData as Record<string, string>) ?? {}} />
+					<AboutSection client={client} discount={client.discount} />
 				</div>
 			</div>
-
-			<Separator />
-
-			{/* Tabs Layout */}
-			<ClientProfileTabs
-				client={client}
-				products={products || []}
-				// Her discounts on offer, and the client's own even if she stopped offering it.
-				discounts={discounts.filter((d) => !d.isArchived || d.id === client.discountId)}
-				sell={sell}
-			/>
-		</>
+		</div>
 	);
 }

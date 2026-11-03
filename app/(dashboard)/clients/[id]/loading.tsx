@@ -1,105 +1,99 @@
-import { LoadingScreen, SkeletonLine, SkeletonTabs } from "@/components/skeletons";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingScreen, SkeletonLine } from "@/components/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 
-/** A row of the profile tab (components/clients/tabs/profile.tsx): its icon, a label, the value. */
-function InfoRow({ value }: { value: string }) {
+/** A section's heading row (DocumentSection): the title, its action on the right. */
+function Heading({ title, action }: { title: string; action?: string }) {
 	return (
-		<div className="flex items-center gap-4 rounded-2xl border border-transparent bg-muted/30 p-3">
-			<Skeleton className="size-10 shrink-0 rounded-xl" />
-			<div className="flex min-w-0 flex-col">
-				<SkeletonLine className="w-20 text-[10px]" />
-				<SkeletonLine className={value} />
-			</div>
+		<div className="flex min-h-10 items-center justify-between gap-3">
+			<SkeletonLine className={`text-lg ${title}`} />
+			{action ? <Skeleton className={`h-10 rounded-xl ${action}`} /> : null}
 		</div>
 	);
 }
 
-/** One of the two small boxes under the personal details: referral, client since. */
-function InfoBox() {
+/** A framed list of rows, each a label line over a value line (and an action at the end). */
+function Rows({ count, label, value, action }: { count: number; label: string; value: string; action?: string }) {
 	return (
-		<div className="flex flex-col gap-1 rounded-2xl border border-transparent bg-muted/30 p-3">
-			<div className="flex items-center gap-2">
-				<Skeleton className="size-4 shrink-0 rounded-sm" />
-				<SkeletonLine className="w-16 text-[10px]" />
-			</div>
-			<SkeletonLine className="w-20 text-sm" />
+		<div className="divide-y divide-border rounded-2xl border bg-card">
+			{Array.from({ length: count }, (_, i) => (
+				<div key={i} className="flex items-center gap-3 px-5 py-3">
+					<div className="min-w-0 flex-1">
+						<SkeletonLine className={`text-sm ${label}`} />
+						<SkeletonLine className={value} />
+					</div>
+					{action ? <Skeleton className={`shrink-0 ${action}`} /> : null}
+				</div>
+			))}
 		</div>
 	);
 }
 
-/** A card's heading: its icon and name (CardTitle, text-lg). */
-function Heading({ width }: { width: string }) {
-	return (
-		<CardHeader className="pb-4">
-			<CardTitle className="flex items-center gap-2 text-lg">
-				<Skeleton className="size-5 shrink-0 rounded-md" />
-				<SkeletonLine className={width} />
-			</CardTitle>
-		</CardHeader>
-	);
-}
-
-// A client's profile (app/(dashboard)/clients/[id]/page.tsx): who they are
-// and their card, then the tabs, open on Profile.
+// The client's page as it lands (app/(dashboard)/clients/[id]/page.tsx): the
+// header (components/clients/profile/header.tsx), then Cards and Visits in
+// the main column, Health and About at the side.
 export default function Loading() {
 	return (
-		<LoadingScreen label="Loading the client" className="mx-auto w-full max-w-5xl">
-			<div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-				<div className="flex items-center gap-4">
-					<Skeleton className="size-20 shrink-0 rounded-full" />
-					<div className="min-w-0">
-						<SkeletonLine className="w-56 text-3xl" />
-						{/* Discount and gender (Badge: text-xs, 22px). */}
-						<div className="mt-1 flex flex-wrap items-center gap-2">
-							<Skeleton className="h-5.5 w-24 rounded-full" />
-							<Skeleton className="h-5.5 w-16 rounded-full" />
-						</div>
-						{/* Credits and their card (Badge: text-sm, 30px). */}
-						<div className="mt-3 flex items-center gap-2">
-							<Skeleton className="h-7.5 w-24 rounded-full" />
-							<Skeleton className="h-7.5 w-32 rounded-full" />
-						</div>
-					</div>
+		<LoadingScreen label="Loading the client" className="mx-auto w-full max-w-6xl gap-8">
+			<div className="flex flex-col gap-4">
+				<div className="flex h-10 items-center">
+					<SkeletonLine className="w-16 text-sm" />
 				</div>
-				{/* Edit Profile (outline), then the ⋮ menu's room. */}
-				<div className="flex items-center gap-2">
-					<div className="flex h-9 w-34 items-center justify-center rounded-md border bg-muted shadow-xs dark:border-input dark:bg-input/30">
-						<SkeletonLine className="w-24 text-sm" />
+				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+					<div className="flex items-center gap-4">
+						<Skeleton className="size-16 shrink-0 rounded-full md:size-20" />
+						<div className="flex flex-col gap-1.5">
+							<SkeletonLine className="w-52 font-heading text-3xl leading-tight md:text-4xl" />
+							<div className="flex h-7 items-center">
+								<SkeletonLine className="w-36 text-sm" />
+							</div>
+						</div>
 					</div>
-					<span className="size-10 md:size-9" />
+					<div className="flex items-center gap-2">
+						<Skeleton className="size-11 shrink-0 rounded-full" />
+						<Skeleton className="h-11 flex-1 rounded-full md:w-36 md:flex-none" />
+						<Skeleton className="size-9 shrink-0 rounded-full" />
+					</div>
 				</div>
 			</div>
 
-			<div className="h-px w-full shrink-0 bg-border" />
-
-			<SkeletonTabs className="grid-cols-3 lg:w-96" tabs={["w-14", "w-12", "w-12"]}>
-				<div className="mx-auto grid w-full max-w-4xl gap-6 md:grid-cols-2">
-					<Card className="border-none shadow-sm">
-						<Heading width="w-44" />
-						<CardContent className="grid gap-4">
-							<InfoRow value="w-32" />
-							<InfoRow value="w-44" />
-						</CardContent>
-					</Card>
-					<Card className="border-none shadow-sm">
-						<Heading width="w-36" />
-						<CardContent className="grid gap-4">
-							<InfoRow value="w-24" />
-							<div className="grid grid-cols-2 gap-4">
-								<InfoBox />
-								<InfoBox />
+			<div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,24rem)] xl:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+				<div className="flex min-w-0 flex-col gap-8">
+					<div className="space-y-3">
+						<Heading title="w-14" action="w-44" />
+						<div className="rounded-2xl border bg-card">
+							<div className="flex flex-wrap items-end justify-between gap-2 p-5">
+								<div>
+									<SkeletonLine className="w-24 text-sm" />
+									<SkeletonLine className="w-20 font-heading text-5xl leading-none" />
+								</div>
+								<SkeletonLine className="w-56 text-sm" />
 							</div>
-						</CardContent>
-					</Card>
-					<Card className="md:col-span-2">
-						<Heading width="w-48" />
-						<CardContent>
-							<SkeletonLine className="w-3/4" />
-						</CardContent>
-					</Card>
+							<div className="flex items-start gap-3 border-t px-5 py-4">
+								<Skeleton className="size-10 shrink-0 rounded-xl" />
+								<div className="min-w-0 flex-1">
+									<SkeletonLine className="w-40" />
+									<SkeletonLine className="w-32 text-sm" />
+									<SkeletonLine className="w-24 text-sm" />
+								</div>
+							</div>
+						</div>
+					</div>
+					<div className="space-y-3">
+						<Heading title="w-14" />
+						<Rows count={5} label="w-16" value="w-40" />
+					</div>
 				</div>
-			</SkeletonTabs>
+				<div className="flex min-w-0 flex-col gap-8">
+					<div className="space-y-3">
+						<Heading title="w-16" action="w-32" />
+						<Rows count={3} label="w-36" value="w-44" action="h-9 w-24 rounded-lg" />
+					</div>
+					<div className="space-y-3">
+						<Heading title="w-14" />
+						<Rows count={5} label="w-20" value="w-40" />
+					</div>
+				</div>
+			</div>
 		</LoadingScreen>
 	);
 }

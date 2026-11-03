@@ -5,8 +5,8 @@ import { useState } from "react";
 import { ContactDialog } from "@/components/b2b/contacts/dialog";
 import { PartnerDialog } from "@/components/b2b/partners/dialog";
 import { ClientForm } from "@/components/clients/form";
-import { HealthTab } from "@/components/clients/tabs/health";
-import { WalletTab } from "@/components/clients/tabs/wallet";
+import { CardsSection } from "@/components/clients/profile/cards";
+import { HealthSection } from "@/components/clients/profile/health";
 import { DiscountSheet } from "@/components/price-list/discount-sheet";
 import { NewProductButton } from "@/components/price-list/product-grid";
 import { ProductSheet } from "@/components/price-list/product-sheet";
@@ -15,11 +15,7 @@ import { Button } from "@/components/ui/button";
 
 // The real create/edit forms, so their sheets can be checked without signing
 // in. Saves go to whatever DATABASE_URL the dev server uses (.env.local).
-const demoClient = {
-	id: "00000000-0000-0000-0000-000000000000",
-	healthLogs: [],
-	intakeData: {},
-} as unknown as React.ComponentProps<typeof HealthTab>["client"];
+const demoClient = { id: "00000000-0000-0000-0000-000000000000" };
 
 export function FormsDemo() {
 	const [tierOpen, setTierOpen] = useState(false);
@@ -59,11 +55,11 @@ export function FormsDemo() {
 			<ProductSheet kind="partner_service" open={tierOpen} onOpenChange={setTierOpen} />
 			<DiscountSheet memberships={[]} open={categoryOpen} onOpenChange={setCategoryOpen} />
 			<NewSessionDialog open={sessionOpen} onOpenChange={setSessionOpen} />
-			<div data-testid="wallet-tab">
-				<WalletTab clientId={demoClient.id} wallets={[]} products={[]} />
+			<div data-testid="cards-section">
+				<CardsSection clientId={demoClient.id} wallets={[]} products={[]} />
 			</div>
-			<div data-testid="health-tab">
-				<HealthTab client={demoClient} />
+			<div data-testid="health-section">
+				<HealthSection clientId={demoClient.id} notes={[]} intake={{}} />
 			</div>
 		</section>
 	);
