@@ -21,6 +21,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { deleteClientAction } from "@/lib/actions/clients/mutations";
+import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { type Client } from "@/lib/types";
 
 import { Edit2, Refresh, Sms, Trash } from "iconsax-reactjs";
@@ -40,10 +41,10 @@ export function ClientActions({
 		startTransition(async () => {
 			const res = await deleteClientAction(client.id);
 			if (res.error) {
-				// toast.error(res.error); // TODO: Add toast
-				console.error(res.error);
+				notifyActionError(res, "Couldn't delete the client");
 			} else {
 				setShowDeleteDialog(false);
+				notify.success(`${client.fullName} deleted`);
 				router.push("/clients");
 			}
 		});
@@ -85,9 +86,9 @@ export function ClientActions({
 			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
-						<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+						<AlertDialogTitle>Delete {client.fullName}?</AlertDialogTitle>
 						<AlertDialogDescription>
-							This will permanently delete <strong>{client.fullName}</strong>.
+							Their cards, visits and health notes go with them, and they leave your Google Contacts. This can&apos;t be undone.
 						</AlertDialogDescription>
 					</AlertDialogHeader>
 					<AlertDialogFooter>
