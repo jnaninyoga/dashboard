@@ -60,15 +60,17 @@ export function VisitsSection({ visits }: { visits: ClientVisit[] }) {
 							const meta = TYPE_META[visit.slotType] ?? TYPE_META.group;
 							const row = (
 								<>
-									{/* The session's type, in its Schedule colours; a cancelled one is greyed. */}
+									{/* The session's own pattern in its colours, as on its card in the
+									    Schedule (Flower of Life, lotus, sun, honeycomb); greyed when cancelled.
+									    The patterns' hairline is drawn for a large card: thickened here. */}
 									<span
 										aria-hidden
 										className={cn(
-											"flex size-10 shrink-0 items-center justify-center rounded-xl",
-											cancelled ? "bg-muted text-muted-foreground" : cn(meta.badge, meta.accent),
+											"flex size-11 shrink-0 items-center justify-center rounded-2xl p-1",
+											cancelled ? "bg-muted text-muted-foreground/60" : cn(meta.badge, meta.accent),
 										)}
 									>
-										<meta.Icon size={20} variant="Bulk" />
+										<meta.Pattern className="stroke-7" />
 									</span>
 									<span className="min-w-0 flex-1">
 										<span className={cn("block truncate font-medium", cancelled ? "text-muted-foreground line-through decoration-muted-foreground/40" : "text-foreground")}>

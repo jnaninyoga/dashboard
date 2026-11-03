@@ -81,7 +81,7 @@ export default function Loading() {
 					</div>
 					<div className="space-y-3">
 						<Heading title="w-14" />
-						<Rows count={5} label="w-40" value="w-24" tile="size-10" action="h-10 w-20 rounded-md" />
+						<Rows count={5} label="w-40" value="w-24" tile="size-11 rounded-2xl" action="h-10 w-20 rounded-md" />
 					</div>
 				</div>
 				<div className="flex min-w-0 flex-col gap-8">
