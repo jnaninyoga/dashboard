@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { DocumentSection } from "@/components/b2b/documents/document-section";
+import { TYPE_META } from "@/components/schedule/events/card";
 import { typeLabel } from "@/components/schedule/events/type-labels";
 import { type ClientVisit } from "@/lib/actions/clients/queries";
 import { STUDIO_TIME_ZONE, studioDateString } from "@/lib/utils/time";
@@ -56,11 +57,18 @@ export function VisitsSection({ visits }: { visits: ClientVisit[] }) {
 						{shown.map((visit) => {
 							const at = new Date(visit.checkInTime);
 							const cancelled = !!visit.cancelledAt;
+							const meta = TYPE_META[visit.slotType] ?? TYPE_META.group;
 							const row = (
 								<>
-									<span className="w-24 shrink-0 tabular-nums">
-										<span className={cn("block font-medium", cancelled ? "text-muted-foreground" : "text-foreground")}>{visitDay(at, thisYear)}</span>
-										<span className="block text-sm text-muted-foreground">{timePart.format(at)}</span>
+									{/* The session's type, in its Schedule colours; a cancelled one is greyed. */}
+									<span
+										aria-hidden
+										className={cn(
+											"flex size-10 shrink-0 items-center justify-center rounded-xl",
+											cancelled ? "bg-muted text-muted-foreground" : cn(meta.badge, meta.accent),
+										)}
+									>
+										<meta.Icon size={20} variant="Bulk" />
 									</span>
 									<span className="min-w-0 flex-1">
 										<span className={cn("block truncate font-medium", cancelled ? "text-muted-foreground line-through decoration-muted-foreground/40" : "text-foreground")}>
@@ -73,6 +81,10 @@ export function VisitsSection({ visits }: { visits: ClientVisit[] }) {
 													? "Outdoor, no credit taken"
 													: (visit.cardName ?? "Membership card")}
 										</span>
+									</span>
+									<span className="shrink-0 text-right tabular-nums">
+										<span className={cn("block font-medium", cancelled ? "text-muted-foreground" : "text-foreground")}>{visitDay(at, thisYear)}</span>
+										<span className="block text-sm text-muted-foreground">{timePart.format(at)}</span>
 									</span>
 								</>
 							);

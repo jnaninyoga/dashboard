@@ -10,7 +10,7 @@ import { formatPhone } from "@/lib/utils/phone";
 import { formatDay, studioDateString } from "@/lib/utils/time";
 import { type Client } from "@/services/database/schema";
 
-import { Edit2 } from "iconsax-reactjs";
+import { Briefcase, Cake, CalendarTick, Call, DiscountShape, Edit2, type Icon, Location, MessageText1, People, Sms } from "iconsax-reactjs";
 
 const FOUND_US: Record<string, string> = {
 	social_media: "Social media",
@@ -29,8 +29,10 @@ const longDay = (date: string) => formatDay(date, { day: "numeric", month: "long
  */
 export function AboutSection({ client, discount }: { client: Client; discount?: Discount | null }) {
 	const today = studioDateString();
-	const rows: [string, React.ReactNode][] = [
+	// Each detail with its icon, so the list is read by shape before words.
+	const rows: [Icon, string, React.ReactNode][] = [
 		[
+			Call,
 			"Phone",
 			<a key="phone" href={`tel:${client.phone}`} className="tabular-nums hover:text-primary">
 				{formatPhone(client.phone)}
@@ -39,19 +41,20 @@ export function AboutSection({ client, discount }: { client: Client; discount?: 
 	];
 	if (client.email) {
 		rows.push([
+			Sms,
 			"Email",
 			<a key="email" href={`mailto:${client.email}`} className="break-all hover:text-primary">
 				{client.email}
 			</a>,
 		]);
 	}
-	if (client.address) rows.push(["Address", client.address]);
-	if (client.birthDate) rows.push(["Birthday", `${longDay(client.birthDate)} (${ageOn(client.birthDate, today)})`]);
-	if (client.profession) rows.push(["Work", client.profession]);
-	rows.push(["Discount", discount ? `${discount.name} ${discountTerms(discount)}` : "None"]);
-	rows.push(["Client since", longDay(studioDateString(new Date(client.createdAt)))]);
-	if (client.referralSource) rows.push(["Found us through", FOUND_US[client.referralSource] ?? client.referralSource]);
-	if (client.consultationReason) rows.push(["Why they came", client.consultationReason]);
+	if (client.address) rows.push([Location, "Address", client.address]);
+	if (client.birthDate) rows.push([Cake, "Birthday", `${longDay(client.birthDate)} (${ageOn(client.birthDate, today)})`]);
+	if (client.profession) rows.push([Briefcase, "Work", client.profession]);
+	rows.push([DiscountShape, "Discount", discount ? `${discount.name} ${discountTerms(discount)}` : "None"]);
+	rows.push([CalendarTick, "Client since", longDay(studioDateString(new Date(client.createdAt)))]);
+	if (client.referralSource) rows.push([People, "Found us through", FOUND_US[client.referralSource] ?? client.referralSource]);
+	if (client.consultationReason) rows.push([MessageText1, "Why they came", client.consultationReason]);
 
 	return (
 		<DocumentSection
@@ -68,10 +71,15 @@ export function AboutSection({ client, discount }: { client: Client; discount?: 
 			}
 		>
 			<dl className="divide-y divide-border rounded-2xl border bg-card">
-				{rows.map(([label, value]) => (
-					<div key={label} className="grid gap-0.5 px-5 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:gap-4">
-						<dt className="text-sm text-muted-foreground">{label}</dt>
-						<dd className="font-medium wrap-break-word whitespace-pre-line text-foreground">{value}</dd>
+				{rows.map(([RowIcon, label, value]) => (
+					<div key={label} className="flex items-start gap-3 px-5 py-3">
+						<span aria-hidden className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/8 text-primary">
+							<RowIcon size={18} variant="Bulk" />
+						</span>
+						<div className="grid min-w-0 flex-1 gap-0.5 pt-0.5 sm:grid-cols-[8rem_minmax(0,1fr)] sm:gap-4 sm:pt-1.5">
+							<dt className="text-sm text-muted-foreground">{label}</dt>
+							<dd className="font-medium wrap-break-word whitespace-pre-line text-foreground">{value}</dd>
+						</div>
 					</div>
 				))}
 			</dl>

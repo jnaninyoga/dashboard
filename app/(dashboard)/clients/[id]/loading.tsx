@@ -11,12 +11,13 @@ function Heading({ title, action }: { title: string; action?: string }) {
 	);
 }
 
-/** A framed list of rows, each a label line over a value line (and an action at the end). */
-function Rows({ count, label, value, action }: { count: number; label: string; value: string; action?: string }) {
+/** A framed list of rows: an icon tile, a label line over a value line, and what's at the end. */
+function Rows({ count, label, value, action, tile }: { count: number; label: string; value: string; action?: string; tile?: string }) {
 	return (
 		<div className="divide-y divide-border rounded-2xl border bg-card">
 			{Array.from({ length: count }, (_, i) => (
 				<div key={i} className="flex items-center gap-3 px-5 py-3">
+					{tile ? <Skeleton className={`shrink-0 rounded-xl ${tile}`} /> : null}
 					<div className="min-w-0 flex-1">
 						<SkeletonLine className={`text-sm ${label}`} />
 						<SkeletonLine className={value} />
@@ -80,7 +81,7 @@ export default function Loading() {
 					</div>
 					<div className="space-y-3">
 						<Heading title="w-14" />
-						<Rows count={5} label="w-16" value="w-40" />
+						<Rows count={5} label="w-40" value="w-24" tile="size-10" action="h-10 w-20 rounded-md" />
 					</div>
 				</div>
 				<div className="flex min-w-0 flex-col gap-8">
@@ -90,7 +91,7 @@ export default function Loading() {
 					</div>
 					<div className="space-y-3">
 						<Heading title="w-14" />
-						<Rows count={5} label="w-20" value="w-40" />
+						<Rows count={5} label="w-20" value="w-40" tile="size-9" />
 					</div>
 				</div>
 			</div>
