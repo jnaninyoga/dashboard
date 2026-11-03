@@ -2,84 +2,82 @@
 
 import { revalidatePath } from "next/cache";
 
+import { requireUser } from "@/lib/auth/require-user";
+import { isAlertSeverity } from "@/lib/domain/clients/health";
 import { logServerError } from "@/lib/errors/server";
-import { HealthCategory, HealthSeverity } from "@/lib/types/health";
+import { studioDateString } from "@/lib/utils/time";
+import { healthNoteSchema } from "@/lib/validators/health-note";
 import { db } from "@/services/database";
 import { healthLogs } from "@/services/database/schema";
-import { createClient } from "@/services/supabase/server";
 
 import { eq } from "drizzle-orm";
 
-export type HealthLogInput = {
-	category: HealthCategory;
-	condition: string;
-	severity: HealthSeverity;
-	startDate: string | Date; // Form usually sends string, we convert
+type Result = { success?: true; error?: string; ref?: string };
+
+const refresh = (clientId: string) => {
+	revalidatePath(`/clients/${clientId}`);
+	revalidatePath("/clients");
 };
 
-export async function addHealthLog(clientId: string, data: HealthLogInput) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return { error: "Not authenticated" };
-	}
-
+/** Adds a health note; a warning or critical one is an alert, shown at check-in. */
+export async function addHealthNote(clientId: string, input: unknown): Promise<Result> {
+	await requireUser();
 	try {
-		// Business Logic: Critical/Warning severity = Active Alert
-		const isAlert =
-			data.severity === HealthSeverity.WARNING ||
-			data.severity === HealthSeverity.CRITICAL;
-
-		// Convert startDate to Date object if string
-		const startDate = new Date(data.startDate);
-        if (isNaN(startDate.getTime())) {
-            return { error: "Invalid start date" };
-        }
+		const parsed = healthNoteSchema.safeParse(input);
+		if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the note" };
+		const note = parsed.data;
+		if (note.startDate > studioDateString()) return { error: "The day can't be in the future." };
 
 		await db.insert(healthLogs).values({
 			clientId,
-			category: data.category,
-			condition: data.condition,
-			severity: data.severity,
-			isAlert,
-			startDate: startDate.toISOString().split("T")[0], // Postgres date type expects YYYY-MM-DD
+			category: note.category,
+			severity: note.severity,
+			condition: note.condition,
+			treatment: note.treatment || null,
+			isAlert: isAlertSeverity(note.severity),
+			startDate: note.startDate,
 		});
-
-		revalidatePath(`/clients/${clientId}`);
+		refresh(clientId);
 		return { success: true };
 	} catch (error) {
-		return { error: "Failed to add health log", ref: logServerError("Error adding health log", error) };
+		return { error: "Couldn't add the note", ref: logServerError("Adding a health note", error) };
 	}
 }
 
-export async function toggleHealthAlert(logId: string, isAlert: boolean) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return { error: "Not authenticated" };
-	}
-
+/**
+ * Marks a note resolved today: it stops showing as an alert at check-in and
+ * stays in the client's history.
+ */
+export async function resolveHealthNote(noteId: string): Promise<Result> {
+	await requireUser();
 	try {
-        // We need clientId to revalidate path. 
-        // We can create a returning statement or fetch it.
-        // Drizzle insert/update 'returning' is supported.
-		const updated = await db
+		const [note] = await db
 			.update(healthLogs)
-			.set({ isAlert })
-			.where(eq(healthLogs.id, logId))
+			.set({ isAlert: false, endDate: studioDateString() })
+			.where(eq(healthLogs.id, noteId))
 			.returning({ clientId: healthLogs.clientId });
-
-        if (updated.length > 0) {
-		    revalidatePath(`/clients/${updated[0].clientId}`);
-        }
+		if (!note) return { error: "This note doesn't exist any more." };
+		refresh(note.clientId);
 		return { success: true };
 	} catch (error) {
-		return { error: "Failed to update alert status", ref: logServerError("Error toggling health alert", error) };
+		return { error: "Couldn't resolve the note", ref: logServerError("Resolving a health note", error) };
+	}
+}
+
+/** Opens a resolved note again (it came back, or was resolved by mistake). */
+export async function reopenHealthNote(noteId: string): Promise<Result> {
+	await requireUser();
+	try {
+		const [found] = await db.select({ severity: healthLogs.severity }).from(healthLogs).where(eq(healthLogs.id, noteId));
+		if (!found) return { error: "This note doesn't exist any more." };
+		const [note] = await db
+			.update(healthLogs)
+			.set({ isAlert: isAlertSeverity(found.severity), endDate: null })
+			.where(eq(healthLogs.id, noteId))
+			.returning({ clientId: healthLogs.clientId });
+		refresh(note.clientId);
+		return { success: true };
+	} catch (error) {
+		return { error: "Couldn't reopen the note", ref: logServerError("Reopening a health note", error) };
 	}
 }

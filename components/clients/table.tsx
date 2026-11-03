@@ -5,7 +5,8 @@ import Link from "next/link";
 import { DataTable } from "@/components/data-table";
 import { EmptyState } from "@/components/empty-state";
 import { creditsSummary, lastVisitLabel, shortDay } from "@/lib/domain/clients/card";
-import { formatPhone, whatsappHref } from "@/lib/utils/contact";
+import { whatsappHref } from "@/lib/utils/contact";
+import { formatPhone } from "@/lib/utils/phone";
 import { cn } from "@/lib/utils/ui";
 import {
 	type Client,

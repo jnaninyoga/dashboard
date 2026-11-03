@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { formatPhone, whatsappHref } from "./contact";
+import { whatsappHref } from "./contact";
+import { formatPhone } from "./phone";
 
 describe("formatPhone", () => {
 	it("groups an international number the way it is read aloud", () => {

@@ -2,6 +2,7 @@ export * from "./b2b";
 export * from "./client";
 export * from "./discount";
 export * from "./document";
+export * from "./health-note";
 export * from "./membership-sale";
 export * from "./product";
 export * from "./session";

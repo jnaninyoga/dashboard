@@ -1,5 +1,10 @@
 "use client";
 
+import { useState } from "react";
+
+import { DocumentSection } from "@/components/b2b/documents/document-section";
+import { CancelSaleButton } from "@/components/clients/cancel-sale-button";
+import { discountTerms, SellMembershipSheet } from "@/components/clients/sell-membership-sheet";
 import { Money } from "@/components/money";
 import { PAYMENT_METHOD } from "@/components/payment-methods";
 import { Button } from "@/components/ui/button";
@@ -12,9 +17,6 @@ import { cn } from "@/lib/utils/ui";
 import { type ClientWallet, type Product } from "@/services/database/schema";
 
 import { Bag2, Card } from "iconsax-reactjs";
-
-import { CancelSaleButton } from "../cancel-sale-button";
-import { discountTerms, SellMembershipSheet } from "../sell-membership-sheet";
 
 type WalletWithProduct = ClientWallet & { product?: Product | null; ledgerEntries?: { id: string }[] };
 
@@ -29,32 +31,31 @@ const STATE: Record<CardState, { label: string; dot: string; text: string }> = {
 // Cards she can use first, the one ending soonest on top; then the rest, latest first.
 const ORDER: CardState[] = ["active", "expired", "empty", "cancelled"];
 
-interface WalletTabProps {
+interface CardsSectionProps {
 	clientId: string;
 	wallets: WalletWithProduct[];
 	/** Her memberships on sale. */
 	products: Product[];
 	discounts?: Discount[];
 	clientDiscountId?: string | null;
-	/** The sale sheet, opened from here or from the profile's alert. */
-	selling?: boolean;
-	onSellingChange?: (open: boolean) => void;
+	/** Open on the sale (from a refused check-in or a renewal). */
+	sellOnOpen?: boolean;
 }
 
 /**
- * The client's membership cards: what they can use today, and every card
- * they were sold, with where it stands (in use until a day, expired with
- * the credits it held, used up), how it was sold, and a way to sell one.
+ * The client's membership cards, first on their page: what they can use
+ * today (or why the door would refuse them), every card they were sold
+ * with where it stands and how it was sold, and the sale a tap away.
  */
-export function WalletTab({
+export function CardsSection({
 	clientId,
 	wallets,
 	products,
 	discounts = [],
 	clientDiscountId,
-	selling = false,
-	onSellingChange = () => {},
-}: WalletTabProps) {
+	sellOnOpen = false,
+}: CardsSectionProps) {
+	const [selling, setSelling] = useState(sellOnOpen);
 	const today = studioDateString();
 	const credits = creditsSummary(wallets, today);
 	const cards = wallets
@@ -67,56 +68,63 @@ export function WalletTab({
 		});
 	const paying = cards.find((c) => c.state === "active")?.wallet;
 
+	const refused = credits.tone === "expired" || (credits.count !== null && credits.count === 0);
+
 	return (
-		<div className="mx-auto grid max-w-3xl gap-8">
-			<div className="flex flex-wrap items-end justify-between gap-4">
-				<div>
-					<p className="text-sm text-muted-foreground">Credits to use</p>
-					<p className="flex items-baseline gap-2">
-						<span
-							className={cn(
-								"font-heading text-5xl font-bold tabular-nums",
-								credits.tone === "low" || credits.tone === "expired" ? "text-destructive" : "text-foreground",
-							)}
-						>
-							{credits.count ?? 0}
-						</span>
-						{credits.total ? <span className="text-muted-foreground">of {credits.total}</span> : null}
-					</p>
-					<p className="text-sm text-muted-foreground">
-						{credits.tone === "expired"
-							? `Their card expired on ${longDay(credits.expiredOn!)}.`
-							: paying
-								? `${paying.product?.name ?? "Their card"}${paying.expiresOn ? `, until ${longDay(paying.expiresOn)}` : ", no end date"}`
-								: "No card in use."}
-					</p>
-				</div>
+		<DocumentSection
+			id="cards"
+			title="Cards"
+			aside={
 				<SellMembershipSheet
 					clientId={clientId}
 					memberships={products}
 					discounts={discounts}
 					clientDiscountId={clientDiscountId}
 					open={selling}
-					onOpenChange={onSellingChange}
+					onOpenChange={setSelling}
 					trigger={
-						<Button className="zen-glow-teal h-11 rounded-xl px-5 font-semibold">
+						<Button className="h-10 rounded-xl px-4 font-semibold">
 							<Bag2 className="mr-2 size-5" variant="Bold" />
 							Sell a membership
 						</Button>
 					}
 				/>
-			</div>
+			}
+		>
+			<div className="overflow-hidden rounded-2xl border bg-card">
+				{/* What the door sees today. */}
+				<div className={cn("flex flex-wrap items-end justify-between gap-x-6 gap-y-2 p-5", refused && "bg-destructive/5")}>
+					<div>
+						<p className="text-sm text-muted-foreground">Credits to use</p>
+						<p className="flex items-baseline gap-2">
+							<span
+								className={cn(
+									"font-heading text-5xl leading-none font-bold tabular-nums",
+									refused ? "text-destructive" : credits.tone === "low" ? "text-warning" : "text-foreground",
+								)}
+							>
+								{credits.count ?? 0}
+							</span>
+							{credits.total ? <span className="text-muted-foreground">of {credits.total}</span> : null}
+						</p>
+					</div>
+					<p className={cn("text-sm sm:text-right", refused ? "font-medium text-destructive" : "text-muted-foreground")}>
+						{credits.tone === "expired"
+							? `Card expired on ${longDay(credits.expiredOn!)}: not accepted at check-in.`
+							: paying
+								? `${paying.product?.name ?? "Their card"}${paying.expiresOn ? `, until ${longDay(paying.expiresOn)}` : ", no end date"}`
+								: cards.length
+									? "No credits left: not accepted at check-in."
+									: "No card yet."}
+					</p>
+				</div>
 
-			<section aria-labelledby="cards-title" className="grid gap-3">
-				<h3 id="cards-title" className="font-heading text-lg font-semibold">
-					Cards
-				</h3>
 				{cards.length === 0 ? (
-					<p className="rounded-2xl border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
-						No card sold yet.
+					<p className="border-t p-5 text-center text-sm text-muted-foreground">
+						Sell a membership to check them in at the door.
 					</p>
 				) : (
-					<ul className="divide-y divide-border rounded-2xl border bg-card">
+					<ul className="divide-y divide-border border-t">
 						{cards.map(({ wallet, state }) => {
 							const look = STATE[state];
 							const total = wallet.product?.credits;
@@ -131,7 +139,7 @@ export function WalletTab({
 								wallet.physicalCardRef ? `Card no. ${wallet.physicalCardRef}` : null,
 							].filter(Boolean);
 							return (
-								<li key={wallet.id} className="flex items-start gap-3 p-4">
+								<li key={wallet.id} className="flex items-start gap-3 px-5 py-4">
 									<span
 										className={cn(
 											"flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary/50",
@@ -184,7 +192,7 @@ export function WalletTab({
 						})}
 					</ul>
 				)}
-			</section>
-		</div>
+			</div>
+		</DocumentSection>
 	);
 }

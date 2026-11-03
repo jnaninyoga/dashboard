@@ -77,6 +77,7 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 - **Sections side by side** share one pattern: a sentence-case `font-heading` title on the page background, status and action on its right, then one framed container (`DocumentSection`). Never put a card around a framed editor or table.
 - **Visual language:** quiet surfaces with no decorative gradients, the ⋮ menu in the top-right corner, status next to the name, and the same structure and heights on every card.
 - **Conditional JSX** uses a ternary, not `&&`. Lint enforces this.
+- **Server components and client-only packages.** `react-phone-number-input` crashes any server component that imports it, so `formatPhone` lives in `lib/utils/phone.ts` (client components only) and `lib/utils/contact.ts` stays plain. Likewise, a server component can't read objects exported from a `"use client"` file (only components): `TYPE_META[type]` is undefined there, so plain data such as session type names lives in its own module (`components/schedule/events/type-labels.ts`).
 - **Formatting.** Indent with tabs. The repo has no Prettier, and running `npx prettier` rewrites everything to spaces. Format with `npx eslint --fix <files>`, which also sorts imports and Tailwind classes. In globs, quote `[id]` paths as `[[]id]`. `components/ui/**` is excluded from lint.
 - `tailwindcss/no-unnecessary-arbitrary-value` is off on purpose: its autofix turns `opacity-[0.12]` and `scale-[0.98]` into classes Tailwind doesn't generate.
 
