@@ -33,7 +33,7 @@ function Asset({ label, aspect }: { label: string; aspect: string }) {
 			<SkeletonLine className={cn("ml-1 text-xs leading-none", label)} />
 			<div
 				className={cn(
-					"border-secondary-2/40 bg-secondary/20 flex items-center justify-center rounded-3xl border-2 border-dashed",
+					"flex items-center justify-center rounded-3xl border-2 border-dashed border-secondary-2/40 bg-secondary/20",
 					aspect,
 				)}
 			>
@@ -90,7 +90,7 @@ export default function Loading() {
 								))}
 							</div>
 							{/* "Add Legal Identifier" */}
-							<div className="border-primary/10 bg-primary/2 flex h-12 w-full items-center justify-center rounded-2xl border border-dashed">
+							<div className="flex h-12 w-full items-center justify-center rounded-2xl border border-dashed border-primary/10 bg-primary/2">
 								<SkeletonLine className="w-40 text-sm" />
 							</div>
 						</CardContent>
@@ -120,7 +120,7 @@ export default function Loading() {
 				</CardHeader>
 				<CardContent className="space-y-6">
 					{/* Bank details on the PDFs: the switch, then the editor. */}
-					<div className="border-secondary/10 flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
+					<div className="flex flex-col justify-between gap-4 border-b border-secondary/10 pb-6 sm:flex-row sm:items-center">
 						<div className="space-y-1">
 							<div className="ml-1 flex h-4 items-center">
 								<SkeletonLine className="w-52 text-xs leading-none" />
@@ -128,15 +128,15 @@ export default function Loading() {
 							<SkeletonLine className="ml-1 w-80 text-[10px] leading-none" />
 							<SkeletonLine className="ml-1 w-32 text-[10px] leading-none sm:hidden" />
 						</div>
-						<div className="bg-secondary/50 border-secondary-2/40 flex items-center gap-3 rounded-2xl border px-4 py-2">
+						<div className="flex items-center gap-3 rounded-2xl border border-secondary-2/40 bg-secondary/50 px-4 py-2">
 							<SkeletonLine className="w-12 text-[10px] leading-none" />
 							<Skeleton className="h-[1.15rem] w-8 rounded-full" />
 						</div>
 					</div>
 					{/* MarkdownEditor: its toolbar, then the page to write on. */}
 					<div className="mt-2 p-1">
-						<div className="bg-card flex flex-col overflow-hidden rounded-2xl border shadow-sm">
-							<div className="border-secondary-2/40 bg-secondary/70 flex items-center gap-1 border-b p-2">
+						<div className="flex flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
+							<div className="flex items-center gap-1 border-b border-secondary-2/40 bg-secondary/70 p-2">
 								{Array.from({ length: 5 }, (_, i) => (
 									<div key={i} className="flex size-9 items-center justify-center">
 										<Skeleton className="size-4.5 rounded-sm" />

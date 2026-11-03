@@ -40,12 +40,12 @@ export default async function PartnersPage(props: {
 	return (
 		<>
 			<div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+				<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">
 					Partners
 				</h1>
 				<PartnerDialog>
 					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
-						<Add className="mr-2 h-4 w-4" variant="Outline" />
+						<Add className="mr-2 size-4" variant="Outline" />
 						New partner
 					</Button>
 				</PartnerDialog>

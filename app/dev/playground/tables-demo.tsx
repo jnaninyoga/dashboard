@@ -24,7 +24,7 @@ const docs = Array.from({ length: 25 }, (_, i) => {
 
 export function TablesDemo() {
 	return (
-		<section className="bg-card grid gap-6 rounded-3xl border p-6">
+		<section className="grid gap-6 rounded-3xl border bg-card p-6">
 			<h2 className="text-xl">Tables</h2>
 			<div data-testid="docs-table">
 				<DocumentDashboardTable documents={docs} />

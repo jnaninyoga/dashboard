@@ -138,7 +138,7 @@ export function NewSessionDialog({
 			description="Checked against your Google Calendar (and studio hours for classes) before it's added."
 			footer={
 				<Button type="submit" form={formId} disabled={isPending} className="h-11 rounded-xl">
-					{isPending ? <Refresh className="mr-2 h-4 w-4 animate-spin" /> : null}
+					{isPending ? <Refresh className="mr-2 size-4 animate-spin" /> : null}
 					Schedule
 				</Button>
 			}
@@ -154,7 +154,7 @@ export function NewSessionDialog({
 							)}
 						/>
 						{errors.title ? (
-							<p className="text-destructive text-sm">{errors.title.message}</p>
+							<p className="text-sm text-destructive">{errors.title.message}</p>
 						) : null}
 					</div>
 
@@ -204,7 +204,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.outdoorPrice ? (
-								<p className="text-destructive text-sm">
+								<p className="text-sm text-destructive">
 									{errors.outdoorPrice.message}
 								</p>
 							) : null}
@@ -236,7 +236,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.b2bTierId ? (
-								<p className="text-destructive text-sm">
+								<p className="text-sm text-destructive">
 									{errors.b2bTierId.message}
 								</p>
 							) : null}
@@ -253,7 +253,7 @@ export function NewSessionDialog({
 							)}
 						/>
 						{errors.dateStr ? (
-							<p className="text-destructive text-sm">{errors.dateStr.message}</p>
+							<p className="text-sm text-destructive">{errors.dateStr.message}</p>
 						) : null}
 					</div>
 
@@ -272,7 +272,7 @@ export function NewSessionDialog({
 								)}
 							/>
 							{errors.startTimeStr ? (
-								<p className="text-destructive text-sm">
+								<p className="text-sm text-destructive">
 									{errors.startTimeStr.message}
 								</p>
 							) : null}
@@ -285,7 +285,7 @@ export function NewSessionDialog({
 								render={({ field }) => <Input type="time" {...field} />}
 							/>
 							{errors.endTimeStr ? (
-								<p className="text-destructive text-sm">
+								<p className="text-sm text-destructive">
 									{errors.endTimeStr.message}
 								</p>
 							) : null}

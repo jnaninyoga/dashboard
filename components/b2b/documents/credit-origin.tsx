@@ -20,18 +20,18 @@ export function CreditOrigin({ note, invoice }: { note: DocumentWithRelations; i
 	return (
 		<Link
 			href={`/b2b/documents/${invoice.id}`}
-			className="group animate-slide-up bg-card hover:border-primary/30 focus-visible:ring-ring flex items-center gap-3 rounded-2xl border p-4 shadow-sm delay-75 outline-none focus-visible:ring-2 sm:p-5"
+			className="group flex animate-slide-up items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm delay-75 outline-none hover:border-primary/30 focus-visible:ring-2 focus-visible:ring-ring sm:p-5"
 		>
-			<span className="bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-xl">
+			<span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
 				<ReceiptText size={20} variant="Bulk" />
 			</span>
 			<span className="min-w-0 flex-1">
 				<span className="block">
 					<span className="text-muted-foreground">Takes back {formatMoney(total)} of </span>
-					<span className="text-primary font-semibold group-hover:underline">{documentName(invoice)}</span>
+					<span className="font-semibold text-primary group-hover:underline">{documentName(invoice)}</span>
 					<span className="text-muted-foreground"> ({formatMoney(Number(invoice.totalAmount))})</span>
 				</span>
-				<span className="text-muted-foreground block text-sm">
+				<span className="block text-sm text-muted-foreground">
 					{issued
 						? [
 								credited > 0 ? `${formatMoney(credited)} taken off what it owed` : null,
@@ -43,7 +43,7 @@ export function CreditOrigin({ note, invoice }: { note: DocumentWithRelations; i
 						: "Once issued, it comes off what the invoice still owes; what was already paid is given back."}
 				</span>
 			</span>
-			<ArrowRight2 size={16} aria-hidden className="text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+			<ArrowRight2 size={16} aria-hidden className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
 		</Link>
 	);
 }

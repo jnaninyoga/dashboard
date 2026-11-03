@@ -17,7 +17,7 @@ export function DocumentsTab({ partner }: DocumentsTabProps) {
 	return (
 		<TabsContent
 			value="documents"
-			className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500"
+			className="animate-in space-y-6 duration-500 fade-in slide-in-from-bottom-2"
 		>
 			<div className="flex items-center justify-between px-2">
 				<div className="flex items-center gap-2">

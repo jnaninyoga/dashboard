@@ -129,7 +129,7 @@ export function FormSheet({
 				>
 					<DrawerHeader className="flex-row items-center gap-4 text-left">
 						{icon ? (
-							<div className="border-primary/20 bg-primary/10 text-primary flex size-14 shrink-0 items-center justify-center rounded-2xl border shadow-inner">
+							<div className="flex size-14 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-inner">
 								{icon}
 							</div>
 						) : null}
@@ -153,7 +153,7 @@ export function FormSheet({
 
 					<DrawerFooter
 						className={cn(
-							"bg-card/95 flex-row justify-end border-t py-4",
+							"flex-row justify-end border-t bg-card/95 py-4",
 							"pb-[max(1rem,env(safe-area-inset-bottom))]",
 						)}
 					>

@@ -19,16 +19,16 @@ export function QuoteInvoicing({ tape }: { tape: QuoteTape }) {
 			id="invoicing"
 			title="Invoicing"
 			aside={
-				<p className="text-muted-foreground text-sm">
+				<p className="text-sm text-muted-foreground">
 					{tape.left > 0 ? `${formatMoney(tape.left)} left to invoice` : "Fully invoiced"}
 				</p>
 			}
 			className="animate-slide-up delay-100"
 		>
-			<div className="bg-card overflow-hidden rounded-2xl border shadow-sm">
+			<div className="overflow-hidden rounded-2xl border bg-card shadow-sm">
 				<div className="grid gap-4 p-5">
 					<p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-						<span className="font-heading text-foreground text-2xl font-semibold tabular-nums">
+						<span className="font-heading text-2xl font-semibold text-foreground tabular-nums">
 							{formatMoney(tape.invoiced)}
 						</span>
 						<span className="text-muted-foreground">invoiced of {formatMoney(tape.quoted)}</span>
@@ -36,15 +36,15 @@ export function QuoteInvoicing({ tape }: { tape: QuoteTape }) {
 					<BillingTape tape={tape} />
 					<TapeLegend tape={tape} />
 				</div>
-				<ol className="divide-border divide-y border-t">
+				<ol className="divide-y divide-border border-t">
 					{tape.pieces.map((piece) => (
 						<li key={piece.id}>
 							<Link
 								href={`/b2b/documents/${piece.id}`}
-								className="group hover:bg-secondary/30 focus-visible:bg-secondary/30 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-4 py-3.5 transition-colors outline-none sm:px-5"
+								className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-0.5 px-4 py-3.5 transition-colors outline-none hover:bg-secondary/30 focus-visible:bg-secondary/30 sm:px-5"
 							>
 								<PieceMark piece={piece} className="row-span-2 max-sm:w-6" />
-								<span className="group-hover:text-primary truncate font-semibold transition-colors">{piece.name}</span>
+								<span className="truncate font-semibold transition-colors group-hover:text-primary">{piece.name}</span>
 								<span className="flex items-center justify-end gap-1 font-medium tabular-nums">
 									{formatMoney(piece.total)}
 									<ArrowRight2 size={14} aria-hidden className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
@@ -52,7 +52,7 @@ export function QuoteInvoicing({ tape }: { tape: QuoteTape }) {
 								{/* Its dates and what it still asks for share a line, wrapping
 								    on a phone, so the name keeps the room it needs. */}
 								<span className="col-span-2 flex flex-wrap items-baseline justify-between gap-x-3">
-									<span className="text-muted-foreground text-sm">{pieceStory(piece)}</span>
+									<span className="text-sm text-muted-foreground">{pieceStory(piece)}</span>
 									<PieceStatus piece={piece} className="pr-[18px]" />
 								</span>
 							</Link>

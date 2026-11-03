@@ -46,7 +46,7 @@ export function RecordPaymentButton({
 		<>
 			<Button
 				onClick={() => setOpen(true)}
-				className={cn("bg-success text-success-foreground hover:bg-success/90 gap-2 rounded-xl font-bold shadow-sm", className)}
+				className={cn("gap-2 rounded-xl bg-success font-bold text-success-foreground shadow-sm hover:bg-success/90", className)}
 			>
 				<MoneySend size={18} variant="Bold" />
 				Record payment

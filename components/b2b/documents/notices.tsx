@@ -92,7 +92,7 @@ export function DocumentNotices({ notices: local = [], className }: { notices?: 
 			aria-label="Notices"
 			aria-live="polite"
 			className={cn(
-				"bg-background top-14 z-30 -mt-2 flex flex-col gap-2 pt-2 pb-1",
+				"top-14 z-30 -mt-2 flex flex-col gap-2 bg-background pt-2 pb-1",
 				blocking ? "sticky" : "sm:sticky",
 				className,
 			)}
@@ -101,7 +101,7 @@ export function DocumentNotices({ notices: local = [], className }: { notices?: 
 				<li
 					key={notice.id}
 					className={cn(
-						"text-foreground flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border px-4 py-2.5 text-sm shadow-sm",
+						"flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border px-4 py-2.5 text-sm text-foreground shadow-sm",
 						TONES[notice.tone].box,
 					)}
 				>
@@ -124,7 +124,7 @@ export function NoticeAction({ className, ...props }: React.ComponentProps<"butt
 			type="button"
 			{...props}
 			className={cn(
-				"text-primary focus-visible:ring-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-2 text-sm font-semibold outline-none hover:underline focus-visible:ring-2",
+				"inline-flex min-h-10 items-center gap-1.5 rounded-full px-2 text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring",
 				className,
 			)}
 		/>

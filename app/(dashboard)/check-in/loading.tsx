@@ -11,7 +11,7 @@ export default function Loading() {
 			</div>
 			<div aria-hidden className="flex flex-col gap-3">
 				{Array.from({ length: 2 }, (_, i) => (
-					<div key={i} className="bg-card border-border/70 flex flex-col gap-4 rounded-3xl border p-6 md:flex-row md:items-center">
+					<div key={i} className="flex flex-col gap-4 rounded-3xl border border-border/70 bg-card p-6 md:flex-row md:items-center">
 						<div className="flex flex-1 flex-col gap-3">
 							<Skeleton className="h-6 w-28 rounded-full" />
 							<Skeleton className="h-8 w-48 max-w-full" />

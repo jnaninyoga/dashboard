@@ -25,7 +25,7 @@ export default function Loading() {
 			{/* "Back to Documents" */}
 			<SkeletonLine className="w-36 text-sm" />
 
-			<div className="border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-6 shadow-sm sm:p-8 md:flex-row">
+			<div className="relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-secondary/20 bg-card p-6 shadow-sm sm:p-8 md:flex-row">
 				<div className="flex flex-col gap-6">
 					<div className="flex items-center gap-4">
 						<Skeleton className="size-14 shrink-0 rounded-2xl" />
@@ -61,7 +61,7 @@ export default function Loading() {
 
 			{/* The action ribbon: PDF, the next step, a quiet one. */}
 			<div className="flex flex-wrap items-center justify-end gap-3">
-				<div className="border-secondary-2 bg-muted dark:bg-input/30 flex h-9 w-36 items-center justify-center rounded-xl border shadow-sm">
+				<div className="flex h-9 w-36 items-center justify-center rounded-xl border border-secondary-2 bg-muted shadow-sm dark:bg-input/30">
 					<SkeletonLine className="w-24 text-sm" />
 				</div>
 				<Skeleton className="h-9 w-40 rounded-xl" />
@@ -91,7 +91,7 @@ export default function Loading() {
 									</TableHead>
 								</TableRow>
 							</TableHeader>
-							<TableBody className={cn("divide-secondary/15 divide-y", phoneLine.body)}>
+							<TableBody className={cn("divide-y divide-secondary/15", phoneLine.body)}>
 								{["w-56", "w-44", "w-64"].map((description, i) => (
 									<TableRow
 										key={i}
@@ -118,7 +118,7 @@ export default function Loading() {
 					{/* DocumentTotals */}
 					<div className="flex w-full justify-end">
 						<div className="w-full sm:max-w-xs">
-							<div className="bg-card flex w-full flex-col gap-2.5 rounded-2xl border p-4 shadow-sm">
+							<div className="flex w-full flex-col gap-2.5 rounded-2xl border bg-card p-4 shadow-sm">
 								<div className="flex items-center justify-between gap-4">
 									<SkeletonLine className="w-16 text-sm" />
 									<SkeletonLine className="w-24 text-lg" />
@@ -127,7 +127,7 @@ export default function Loading() {
 									<SkeletonLine className="w-14 text-sm" />
 									<SkeletonLine className="w-20 text-lg" />
 								</div>
-								<div className="bg-border h-px w-full shrink-0" />
+								<div className="h-px w-full shrink-0 bg-border" />
 								<div className="flex items-center justify-between gap-4">
 									<SkeletonLine className="w-10" />
 									<SkeletonLine className="w-36 text-3xl" />
@@ -140,7 +140,7 @@ export default function Loading() {
 
 			{/* Notes, as an issued document shows them: read only, no toolbar. */}
 			<Section title="w-14">
-				<div className="bg-card overflow-hidden rounded-2xl border p-8 shadow-sm">
+				<div className="overflow-hidden rounded-2xl border bg-card p-8 shadow-sm">
 					<SkeletonLine className="w-2/3 text-sm leading-relaxed" />
 					<SkeletonLine className="w-1/2 text-sm leading-relaxed" />
 				</div>

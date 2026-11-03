@@ -76,7 +76,7 @@ export const TYPE_META: Record<EventTypeKey, TypeMeta> = {
 		accent: "text-secondary-foreground",
 		badge: "bg-secondary ring-1 ring-secondary-2/60",
 		ribbon: "from-secondary-3/20",
-		cta: cn("bg-secondary-3 hover:bg-secondary-3/90 text-white", CTA_ROSE),
+		cta: cn("bg-secondary-3 text-white hover:bg-secondary-3/90", CTA_ROSE),
 		liveGlow: "shadow-[0_6px_24px_rgba(214,127,125,0.5)]",
 	},
 	b2b: {
@@ -144,12 +144,12 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 	return (
 		<Card
 			className={cn(
-				"group border-border/70 relative flex flex-col justify-between overflow-hidden rounded-3xl border transition-all duration-300 ease-out md:flex-row md:items-center",
+				"group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-border/70 transition-all duration-300 ease-out md:flex-row md:items-center",
 				isLive
-					? "bg-card zen-shadow-md hover:zen-shadow-lg ring-success/50 ring-1 hover:-translate-y-0.5"
+					? "zen-shadow-md hover:zen-shadow-lg bg-card ring-1 ring-success/50 hover:-translate-y-0.5"
 					: isPast
-						? "bg-card zen-shadow opacity-70 grayscale-40 hover:opacity-95"
-						: "bg-card zen-shadow hover:zen-shadow-md hover:-translate-y-0.5",
+						? "zen-shadow bg-card opacity-70 grayscale-40 hover:opacity-95"
+						: "zen-shadow hover:zen-shadow-md bg-card hover:-translate-y-0.5",
 			)}
 		>
 			{/* Cancel affordance — X in the top-right corner. Hidden for past events (read-only). */}
@@ -175,7 +175,7 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 				<div
 					aria-hidden
 					className={cn(
-						"pointer-events-none absolute -top-10 -right-16 h-[280px] w-[280px] transition-all duration-700 ease-out",
+						"pointer-events-none absolute -top-10 -right-16 size-[280px] transition-all duration-700 ease-out",
 						isPast
 							? "opacity-[0.1]"
 							: "opacity-[0.2] group-hover:rotate-6 group-hover:opacity-[0.32]",
@@ -196,19 +196,19 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 								meta.accent,
 							)}
 						>
-							<TypeIcon className="h-3.5 w-3.5" variant="Bulk" />
+							<TypeIcon className="size-3.5" variant="Bulk" />
 							{meta.label}
 						</span>
 					) : (
-						<span className="bg-muted text-muted-foreground inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold tracking-[0.14em] uppercase">
+						<span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
 							Session
 						</span>
 					)}
 					{isLive ? (
-						<span className="border-success/20 bg-success/10 text-success inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 shadow-sm backdrop-blur-sm">
-							<span className="relative flex h-2 w-2">
-								<span className="bg-success/70 absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"></span>
-								<span className="bg-success relative inline-flex h-2 w-2 rounded-full"></span>
+						<span className="inline-flex items-center gap-1.5 rounded-full border border-success/20 bg-success/10 px-2.5 py-1 text-success shadow-sm backdrop-blur-sm">
+							<span className="relative flex size-2">
+								<span className="absolute inline-flex size-full animate-ping rounded-full bg-success/70 opacity-75"></span>
+								<span className="relative inline-flex size-2 rounded-full bg-success"></span>
 							</span>
 							<span className="text-[10px] font-bold tracking-wider uppercase">
 								Live
@@ -217,38 +217,38 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 					) : null}
 				</div>
 				<CardTitle
-					className="font-heading text-foreground pr-2 text-2xl leading-tight font-semibold md:text-[1.7rem]"
+					className="pr-2 font-heading text-2xl leading-tight font-semibold text-foreground md:text-[1.7rem]"
 					title={event.summary ?? undefined}
 				>
 					{event.summary || "Untitled Event"}
 				</CardTitle>
-				<div className="text-muted-foreground mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm font-medium">
+				<div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm font-medium text-muted-foreground">
 					<span className="flex items-center">
-						<Clock className="mr-2 h-4 w-4" />
+						<Clock className="mr-2 size-4" />
 						{/* The studio's clock as Google placed it; our zone data only as a fallback. */}
 						{wallClockOf(startIso)?.time ?? format(toStudioTime(startTime), "HH:mm")} –{" "}
 						{wallClockOf(endIso)?.time ?? format(toStudioTime(endTime), "HH:mm")}
 					</span>
 					{checkIns ? (
-						<span className="text-foreground flex items-center">
-							<ClipboardTick className="text-primary mr-2 h-4 w-4" variant="Bulk" />
+						<span className="flex items-center text-foreground">
+							<ClipboardTick className="mr-2 size-4 text-primary" variant="Bulk" />
 							{checkIns} checked in
 						</span>
 					) : null}
 					{eventType === "outdoor" && outdoorPrice ? (
 						<span className="flex items-center">
-							<Tag className="mr-2 h-4 w-4" variant="Bulk" />
+							<Tag className="mr-2 size-4" variant="Bulk" />
 							<Money amount={outdoorPrice} />
 						</span>
 					) : null}
 					{eventType === "outdoor" && event.attendees && event.attendees.length > 0 ? (
-						<span className="border-border/50 flex items-center border-l pl-4">
+						<span className="flex items-center border-l border-border/50 pl-4">
 							<GuestAvatarStack attendees={event.attendees} />
 						</span>
 					) : null}
 					{eventType === "b2b" && (b2bPaxLabel || b2bPrice) ? (
 						<span className="flex items-center">
-							<Buildings className="mr-2 h-4 w-4" variant="Bulk" />
+							<Buildings className="mr-2 size-4" variant="Bulk" />
 							{[b2bPaxLabel, b2bPrice ? formatMoney(b2bPrice) : null]
 								.filter(Boolean)
 								.join(" · ")}
@@ -259,9 +259,9 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 							href={calendarLink}
 							target="_blank"
 							rel="noopener noreferrer"
-							className="hover:text-primary inline-flex items-center gap-1.5 underline decoration-transparent underline-offset-4 transition-colors duration-200 hover:decoration-current"
+							className="inline-flex items-center gap-1.5 underline decoration-transparent underline-offset-4 transition-colors duration-200 hover:text-primary hover:decoration-current"
 						>
-							<Calendar className="h-4 w-4" variant="Bulk" />
+							<Calendar className="size-4" variant="Bulk" />
 							<span>Open in Calendar</span>
 						</a>
 					) : null}
@@ -285,7 +285,7 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 							rel="noopener noreferrer"
 							aria-label="Open in Google Calendar"
 						>
-							<Calendar className="mr-2 h-4 w-4" variant="Bulk" />
+							<Calendar className="mr-2 size-4" variant="Bulk" />
 							Open in Calendar
 						</a>
 					</Button>
@@ -298,14 +298,14 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 							!isPast && meta?.cta,
 							isLive && meta?.liveGlow,
 							isPast &&
-								"text-muted-foreground border-muted-foreground/30 hover:text-foreground hover:border-muted-foreground/60",
+								"border-muted-foreground/30 text-muted-foreground hover:border-muted-foreground/60 hover:text-foreground",
 						)}
 					>
 						<Link href={`/check-in/${event.id}`}>
 							{isPast ? (
-								<ClipboardTick className="mr-2 h-4 w-4" variant="Bulk" />
+								<ClipboardTick className="mr-2 size-4" variant="Bulk" />
 							) : (
-								<LoginCurve className="mr-2 h-4 w-4" variant="Bulk" />
+								<LoginCurve className="mr-2 size-4" variant="Bulk" />
 							)}
 							{isPast ? "Attendance" : "Check In"}
 						</Link>

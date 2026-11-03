@@ -16,7 +16,7 @@ export function FeedbackDemo() {
 	const [crash, setCrash] = useState(false);
 
 	return (
-		<section className="bg-card flex flex-wrap items-center gap-3 rounded-3xl border p-6">
+		<section className="flex flex-wrap items-center gap-3 rounded-3xl border bg-card p-6">
 			<h2 className="w-full text-xl">Feedback</h2>
 			<Button
 				variant="outline"

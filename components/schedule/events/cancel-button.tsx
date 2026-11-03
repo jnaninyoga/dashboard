@@ -58,27 +58,27 @@ export function CancelEventButton({
                     size="icon"
                     aria-label="Cancel session"
                     title="Cancel session"
-                    className="text-muted-foreground/70 hover:text-destructive hover:bg-destructive/10 h-8 w-8 rounded-full backdrop-blur-sm transition-colors"
+                    className="size-8 rounded-full text-muted-foreground/70 backdrop-blur-sm transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
-                    <CloseCircle className="h-5 w-5" variant="Bulk" />
+                    <CloseCircle className="size-5" variant="Bulk" />
                 </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="border-destructive/20 ring-destructive/10 ring-1">
+            <AlertDialogContent className="border-destructive/20 ring-1 ring-destructive/10">
                 <div
                     aria-hidden
-                    className="from-destructive/70 to-destructive absolute top-0 left-0 h-1 w-full rounded-t-[inherit] bg-gradient-to-r"
+                    className="absolute top-0 left-0 h-1 w-full rounded-t-[inherit] bg-linear-to-r from-destructive/70 to-destructive"
                 />
                 <AlertDialogHeader>
-                    <AlertDialogTitle className="text-destructive flex items-center gap-2.5">
-                        <span className="bg-destructive/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
-                            <Danger className="text-destructive h-5 w-5" variant="Bulk" />
+                    <AlertDialogTitle className="flex items-center gap-2.5 text-destructive">
+                        <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-destructive/10">
+                            <Danger className="size-5 text-destructive" variant="Bulk" />
                         </span>
                         Cancel this session?
                     </AlertDialogTitle>
                     <AlertDialogDescription>
                         {eventTitle ? (
                             <>
-                                <span className="font-heading text-foreground text-lg">
+                                <span className="font-heading text-lg text-foreground">
                                     {eventTitle}
                                 </span>
                                 <br />
@@ -100,7 +100,7 @@ export function CancelEventButton({
                         disabled={isPending}
                     >
                         {isPending ? (
-                            <Refresh className="mr-2 h-4 w-4 animate-spin" />
+                            <Refresh className="mr-2 size-4 animate-spin" />
                         ) : null}
                         Yes, cancel it
                     </AlertDialogAction>

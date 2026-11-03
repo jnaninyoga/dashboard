@@ -114,10 +114,10 @@ export function HealthTab({ client }: HealthTabProps) {
 		<div className="mx-auto max-w-3xl space-y-8">
 			{/* Active Alerts Section */}
 			{activeAlerts.length > 0 ? (
-				<Card className="border-secondary/30 border-none shadow-sm">
+				<Card className="border-none border-secondary/30 shadow-sm">
 					<CardHeader className="pb-4">
-						<CardTitle className="text-secondary-foreground flex items-center gap-2 text-lg">
-							<Health className="h-5 w-5" variant="Bulk" />
+						<CardTitle className="flex items-center gap-2 text-lg text-secondary-foreground">
+							<Health className="size-5" variant="Bulk" />
 							Active Health Alerts
 						</CardTitle>
 					</CardHeader>
@@ -144,16 +144,16 @@ export function HealthTab({ client }: HealthTabProps) {
 										<div className="flex items-center gap-4">
 											<div
 												className={cn(
-													"flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+													"flex size-12 shrink-0 items-center justify-center rounded-xl",
 													isCritical && "bg-destructive/70 text-destructive",
 													isWarning && "bg-warning/70 text-warning",
 													isInfo && "bg-info/70 text-info",
 												)}
 											>
 												{isCritical || isWarning ? (
-													<Danger className="h-6 w-6" variant="Bold" />
+													<Danger className="size-6" variant="Bold" />
 												) : (
-													<InfoCircle className="h-6 w-6" variant="Bold" />
+													<InfoCircle className="size-6" variant="Bold" />
 												)}
 											</div>
 											<div className="flex flex-col gap-2">
@@ -168,7 +168,7 @@ export function HealthTab({ client }: HealthTabProps) {
 													>
 														{log.severity}
 													</Badge>
-													<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-40">
+													<span className="text-[10px] font-bold tracking-wider text-secondary-foreground uppercase opacity-40">
 														From {format(new Date(log.startDate), "MMMM d")}
 													</span>
 												</div>
@@ -185,7 +185,7 @@ export function HealthTab({ client }: HealthTabProps) {
 											</div>
 										</div>
 										<div className="flex items-center gap-3">
-											<span className="text-success hidden text-[10px] font-bold tracking-wider uppercase opacity-0 transition-opacity group-hover:opacity-100 sm:inline">
+											<span className="hidden text-[10px] font-bold tracking-wider text-success uppercase opacity-0 transition-opacity group-hover:opacity-100 sm:inline">
 												Resolve
 											</span>
 											<Checkbox
@@ -193,7 +193,7 @@ export function HealthTab({ client }: HealthTabProps) {
 												onCheckedChange={() =>
 													handleToggleAlert(log.id, log.isAlert)
 												}
-												className="bg-card border-success/20 hover:border-success data-[state=checked]:border-success data-[state=checked]:bg-success size-8 rounded-xl border-2 transition-all active:scale-90"
+												className="size-8 rounded-xl border-2 border-success/20 bg-card transition-all hover:border-success active:scale-90 data-[state=checked]:border-success data-[state=checked]:bg-success"
 												title="Mark as Resolved"
 											/>
 										</div>
@@ -208,8 +208,8 @@ export function HealthTab({ client }: HealthTabProps) {
 			{/* Static Health & Wellness Profile */}
 			<Card className="border-none shadow-sm">
 				<CardHeader className="pb-4">
-					<CardTitle className="text-primary flex items-center gap-2 text-lg font-bold">
-						<InfoCircle className="h-5 w-5" variant="Bulk" />
+					<CardTitle className="flex items-center gap-2 text-lg font-bold text-primary">
+						<InfoCircle className="size-5" variant="Bulk" />
 						Health & Wellness Profile
 					</CardTitle>
 				</CardHeader>
@@ -221,8 +221,8 @@ export function HealthTab({ client }: HealthTabProps) {
 						return (
 							<div key={section.category}>
 								<div className="mb-4 flex items-center gap-2">
-									<div className="bg-secondary-2 h-1 w-8 rounded-full" />
-									<h4 className="text-secondary-foreground text-xs font-bold tracking-wider uppercase opacity-40">
+									<div className="h-1 w-8 rounded-full bg-secondary-2" />
+									<h4 className="text-xs font-bold tracking-wider text-secondary-foreground uppercase opacity-40">
 										{section.label}
 									</h4>
 								</div>
@@ -232,9 +232,9 @@ export function HealthTab({ client }: HealthTabProps) {
 										return (
 											<div
 												key={field.key}
-												className="group bg-muted/30 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex flex-col gap-1 rounded-2xl border border-transparent p-3 transition-all sm:col-span-1"
+												className="group hover:zen-glow-teal flex flex-col gap-1 rounded-2xl border border-transparent bg-muted/30 p-3 transition-all hover:border-primary/10 hover:bg-card sm:col-span-1"
 											>
-												<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-60">
+												<span className="text-[10px] font-bold tracking-wider text-secondary-foreground uppercase opacity-60">
 													{field.label}
 												</span>
 												<span className="text-sm leading-tight font-semibold">
@@ -249,8 +249,8 @@ export function HealthTab({ client }: HealthTabProps) {
 					})}
 
 					{Object.keys(intakeData).length === 0 ? (
-						<div className="bg-muted/20 rounded-3xl border border-dashed py-8 text-center">
-							<p className="text-muted-foreground text-sm italic">
+						<div className="rounded-3xl border border-dashed bg-muted/20 py-8 text-center">
+							<p className="text-sm text-muted-foreground italic">
 								No foundational health data recorded yet.
 							</p>
 						</div>
@@ -266,7 +266,7 @@ export function HealthTab({ client }: HealthTabProps) {
 					dirty={isDirty}
 					trigger={
 						<Button className="zen-glow-teal h-12 rounded-2xl px-6 font-bold transition-all active:scale-95">
-							<Add className="mr-2 h-5 w-5" variant="Bold" />
+							<Add className="mr-2 size-5" variant="Bold" />
 							New Health Entry
 						</Button>
 					}
@@ -368,11 +368,11 @@ export function HealthTab({ client }: HealthTabProps) {
 
 			<Card className="border-none shadow-sm">
 				<CardHeader className="pb-4">
-					<CardTitle className="text-primary flex items-center gap-2 text-lg font-bold">
-						<Timer1 className="h-5 w-5" variant="Bulk" />
+					<CardTitle className="flex items-center gap-2 text-lg font-bold text-primary">
+						<Timer1 className="size-5" variant="Bulk" />
 						Health Timeline
 					</CardTitle>
-					<p className="text-secondary-foreground text-xs font-medium opacity-50">
+					<p className="text-xs font-medium text-secondary-foreground opacity-50">
 						Chronological record of physiological and wellness shifts.
 					</p>
 				</CardHeader>
@@ -380,7 +380,7 @@ export function HealthTab({ client }: HealthTabProps) {
 					<div className="space-y-3">
 						{healthLogs.length === 0 ? (
 							<div className="py-6 text-center">
-								<p className="text-muted-foreground text-sm italic">
+								<p className="text-sm text-muted-foreground italic">
 									No historical records on file.
 								</p>
 							</div>
@@ -388,37 +388,37 @@ export function HealthTab({ client }: HealthTabProps) {
 							healthLogs.map((log) => (
 								<div
 									key={log.id}
-									className="group bg-muted/20 hover:border-primary/10 hover:zen-glow-teal hover:bg-card flex items-start justify-between gap-4 rounded-2xl border border-transparent p-4 transition-all"
+									className="group hover:zen-glow-teal flex items-start justify-between gap-4 rounded-2xl border border-transparent bg-muted/20 p-4 transition-all hover:border-primary/10 hover:bg-card"
 								>
 									<div className="flex items-start gap-4">
 										<div className="mt-1">
 											{log.severity === "info" ? (
-												<div className="bg-info/10 text-info flex h-10 w-10 items-center justify-center rounded-xl">
-													<InfoCircle className="h-5 w-5" variant="Bold" />
+												<div className="flex size-10 items-center justify-center rounded-xl bg-info/10 text-info">
+													<InfoCircle className="size-5" variant="Bold" />
 												</div>
 											) : null}
 											{log.severity === "warning" ? (
-												<div className="bg-warning/10 text-warning flex h-10 w-10 items-center justify-center rounded-xl">
-													<Danger className="h-5 w-5" variant="Bold" />
+												<div className="flex size-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
+													<Danger className="size-5" variant="Bold" />
 												</div>
 											) : null}
 											{log.severity === "critical" ? (
-												<div className="bg-destructive/10 text-destructive flex h-10 w-10 items-center justify-center rounded-xl">
-													<CloseCircle className="h-5 w-5" variant="Bold" />
+												<div className="flex size-10 items-center justify-center rounded-xl bg-destructive/10 text-destructive">
+													<CloseCircle className="size-5" variant="Bold" />
 												</div>
 											) : null}
 										</div>
 										<div className="flex flex-col">
 											<div className="mb-0.5 flex items-center gap-2">
-												<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-60">
+												<span className="text-[10px] font-bold tracking-wider text-secondary-foreground uppercase opacity-60">
 													{log.category}
 												</span>
 												<span className="text-muted-foreground/30">•</span>
-												<span className="text-secondary-foreground text-[10px] font-bold tracking-wider uppercase opacity-40">
+												<span className="text-[10px] font-bold tracking-wider text-secondary-foreground uppercase opacity-40">
 													{format(new Date(log.startDate), "PP")}
 												</span>
 											</div>
-											<span className="text-secondary-foreground text-base leading-tight font-bold">
+											<span className="text-base leading-tight font-bold text-secondary-foreground">
 												{log.condition}
 											</span>
 										</div>
@@ -430,7 +430,7 @@ export function HealthTab({ client }: HealthTabProps) {
 											<Button
 												variant="outline"
 												size="sm"
-												className="hover:bg-secondary/40 h-8 rounded-xl text-[10px] font-bold tracking-wider uppercase"
+												className="h-8 rounded-xl text-[10px] font-bold tracking-wider uppercase hover:bg-secondary/40"
 												onClick={() => handleToggleAlert(log.id, true)}
 											>
 												Re-activate

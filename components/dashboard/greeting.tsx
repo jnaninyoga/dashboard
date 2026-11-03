@@ -34,7 +34,7 @@ export function Greeting({ firstName, now }: { firstName: string; now: string })
 		<div className="flex items-center gap-4">
 			<DayPeriodIcon period={period} />
 			<div className="space-y-1">
-				<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+				<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">
 					{greeting}
 				</h1>
 				<p className="text-md text-muted-foreground">

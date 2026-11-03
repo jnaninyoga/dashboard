@@ -72,7 +72,7 @@ export function PDFDownloadBtn({ doc, profile }: PDFDownloadBtnProps) {
 			onClick={handleDownload}
 			disabled={isGenerating}
 			variant="secondary"
-			className="border-secondary-2 hover:zen-glow-blush gap-2 rounded-xl border font-medium shadow-sm transition-all"
+			className="hover:zen-glow-blush gap-2 rounded-xl border border-secondary-2 font-medium shadow-sm transition-all"
 		>
 			<DocumentDownload size={18} />
 			{isGenerating ? "Preparing PDF..." : "Download PDF"}

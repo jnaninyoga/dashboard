@@ -13,7 +13,7 @@ import { Buildings, Document, User, Warning2 } from "iconsax-reactjs";
 import { PartnerActions } from "./actions";
 
 const Count = ({ icon, value }: { icon: React.ReactNode; value: number }) => (
-	<div className="bg-secondary/40 text-secondary-foreground/60 border-secondary-3/20 flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium shadow-xs">
+	<div className="flex w-fit items-center gap-2 rounded-full border border-secondary-3/20 bg-secondary/40 px-3 py-1 text-sm font-medium text-secondary-foreground/60 shadow-xs">
 		{icon}
 		{value}
 	</div>
@@ -28,12 +28,12 @@ const columns: ColumnDef<PartnerWithRelations>[] = [
 			const partner = row.original;
 			return (
 				<Link href={`/b2b/partners/${partner.id}`} className="group/link flex items-center gap-4">
-					<div className="bg-primary/5 text-primary group-hover/link:bg-primary shadow-primary/10 group-hover/link:text-primary-foreground flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all group-hover/link:shadow-lg">
+					<div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary shadow-primary/10 transition-all group-hover/link:bg-primary group-hover/link:text-primary-foreground group-hover/link:shadow-lg">
 						<Buildings size={22} variant="Bulk" />
 					</div>
 					<div className="flex min-w-0 flex-col">
-						<div className="text-foreground font-heading group-hover/link:text-primary font-bold transition-colors">{partner.companyName}</div>
-						<div className="text-muted-foreground/80 line-clamp-1 text-xs">{partner.address || "No address provided"}</div>
+						<div className="font-heading font-bold text-foreground transition-colors group-hover/link:text-primary">{partner.companyName}</div>
+						<div className="line-clamp-1 text-xs text-muted-foreground/80">{partner.address || "No address provided"}</div>
 					</div>
 				</Link>
 			);
@@ -47,7 +47,7 @@ const columns: ColumnDef<PartnerWithRelations>[] = [
 			row.original.taxId ? (
 				<CopyableTaxId taxId={row.original.taxId} label={false} />
 			) : (
-				<span className="text-warning flex items-center gap-1 text-sm">
+				<span className="flex items-center gap-1 text-sm text-warning">
 					<Warning2 size={14} variant="Bold" aria-hidden />
 					No ICE yet
 				</span>
@@ -99,17 +99,17 @@ export function PartnerTable({ partners }: { partners: PartnerWithRelations[] })
 				<div className="flex flex-col gap-3">
 					<div className="flex items-start justify-between gap-2">
 						<Link href={`/b2b/partners/${partner.id}`} className="flex min-w-0 items-center gap-3">
-							<div className="bg-primary/5 text-primary flex size-11 shrink-0 items-center justify-center rounded-xl">
+							<div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/5 text-primary">
 								<Buildings size={22} variant="Bulk" />
 							</div>
 							<div className="min-w-0">
-								<p className="text-foreground font-heading truncate font-bold">{partner.companyName}</p>
-								<p className="text-muted-foreground/80 truncate text-xs">{partner.address || "No address provided"}</p>
+								<p className="truncate font-heading font-bold text-foreground">{partner.companyName}</p>
+								<p className="truncate text-xs text-muted-foreground/80">{partner.address || "No address provided"}</p>
 							</div>
 						</Link>
 						<PartnerActions partner={partner} />
 					</div>
-					<div className="border-secondary/15 flex flex-wrap items-center gap-2 border-t pt-3">
+					<div className="flex flex-wrap items-center gap-2 border-t border-secondary/15 pt-3">
 						{partner.taxId ? <CopyableTaxId taxId={partner.taxId} /> : null}
 						<Count icon={<User size={14} className="text-secondary-3" variant="Bold" />} value={partner.contacts?.length || 0} />
 						<Count icon={<Document size={14} className="text-secondary-3" variant="Bold" />} value={partner.documents?.length || 0} />

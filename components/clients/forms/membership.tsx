@@ -54,7 +54,7 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 		return (
 			<div className="flex flex-col items-center justify-center space-y-2 py-16 text-center">
 				<h3 className="text-lg font-semibold">Membership is managed from the client profile</h3>
-				<p className="text-muted-foreground text-sm">
+				<p className="text-sm text-muted-foreground">
 					You can assign or change memberships directly on the client&apos;s profile page.
 				</p>
 			</div>
@@ -73,11 +73,11 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 		<div className="space-y-6">
 			<div className="mb-8 text-center">
 				<h3 className="text-lg font-medium">Select a Starting Membership</h3>
-				<p className="text-muted-foreground text-sm">
+				<p className="text-sm text-muted-foreground">
 					Optional: Choose a product to assign immediately upon registration.
 				</p>
 				{selectedDiscount ? (
-					<Badge variant="outline" className="text-primary mt-2">
+					<Badge variant="outline" className="mt-2 text-primary">
 						Discount: {selectedDiscount.name}
 						{parseFloat(selectedDiscount.discountValue) > 0 ? (
 							` (${selectedDiscount.discountType === "percentage" ? `-${selectedDiscount.discountValue}%` : `−${formatMoney(selectedDiscount.discountValue)}`})`
@@ -88,7 +88,7 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 
 			{isLoading ? (
 				<div className="flex justify-center py-12">
-					<Refresh className="text-primary h-8 w-8 animate-spin" variant="Outline" />
+					<Refresh className="size-8 animate-spin text-primary" variant="Outline" />
 				</div>
 			) : (
 				<FormField
@@ -111,7 +111,7 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 										/>
 										<label
 											htmlFor="no-product"
-											className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary flex cursor-pointer flex-col items-center justify-center rounded-md border-2 p-4"
+											className="flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary hover:bg-accent hover:text-accent-foreground"
 										>
 											<span className="font-semibold">No Membership for Now</span>
 										</label>
@@ -130,19 +130,19 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 												/>
 												<label
 													htmlFor={product.id}
-													className="border-muted bg-popover hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary flex h-full cursor-pointer flex-col justify-between rounded-md border-2 p-4"
+													className="flex h-full cursor-pointer flex-col justify-between rounded-md border-2 border-muted bg-popover p-4 peer-data-[state=checked]:border-primary peer-data-[state=checked]:text-primary hover:bg-accent hover:text-accent-foreground"
 												>
 													<div className="mb-2">
 														<div className="text-lg font-semibold">
 															{product.name}
 														</div>
-														<div className="text-muted-foreground text-sm">
+														<div className="text-sm text-muted-foreground">
 															{product.credits} Credits
 														</div>
 													</div>
 													<div className="mt-auto flex flex-col items-end">
 														{isDiscounted ? (
-															<span className="text-muted-foreground text-xs line-through">
+															<span className="text-xs text-muted-foreground line-through">
 																<Money amount={originalPrice ?? price} />
 															</span>
 														) : null}
@@ -171,11 +171,11 @@ export function StepMembership({ form, discounts, mode }: StepMembershipProps) {
 						<FormItem className="space-y-2">
 							<p className="text-sm font-semibold">Paid by</p>
 							<FormControl>
-								<div role="radiogroup" aria-label="Paid by" className="bg-secondary/40 grid grid-cols-4 gap-1 rounded-2xl p-1">
+								<div role="radiogroup" aria-label="Paid by" className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/40 p-1">
 									{PAYMENT_METHODS.map((method) => (
 										<label
 											key={method}
-											className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+											className="flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
 										>
 											<input
 												type="radio"

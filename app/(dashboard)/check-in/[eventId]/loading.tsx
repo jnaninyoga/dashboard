@@ -20,7 +20,7 @@ export default function Loading() {
 		<div aria-busy="true" className="mx-auto flex w-full max-w-6xl flex-col gap-6">
 			<span className="sr-only">Loading the session</span>
 			{/* CheckInHeader: the way back, the type and moment, the title and its time. */}
-			<div aria-hidden className="bg-card border-border/70 flex flex-col gap-3 rounded-3xl border px-5 pt-3 pb-6 sm:px-7 sm:pb-7">
+			<div aria-hidden className="flex flex-col gap-3 rounded-3xl border border-border/70 bg-card px-5 pt-3 pb-6 sm:px-7 sm:pb-7">
 				<div className="flex h-10 items-center">
 					<Skeleton className="h-4 w-20" />
 				</div>
@@ -46,7 +46,7 @@ export default function Loading() {
 							<Skeleton className="h-6 w-32" />
 							<Skeleton className="h-4 w-64 max-w-full" />
 						</div>
-						<div className="bg-card divide-border divide-y rounded-3xl border">
+						<div className="divide-y divide-border rounded-3xl border bg-card">
 							{Array.from({ length: 4 }, (_, i) => (
 								<Row key={i} />
 							))}
@@ -58,7 +58,7 @@ export default function Loading() {
 						<Skeleton className="h-6 w-16" />
 						<Skeleton className="h-4 w-28" />
 					</div>
-					<div className="bg-card divide-border divide-y rounded-3xl border">
+					<div className="divide-y divide-border rounded-3xl border bg-card">
 						{Array.from({ length: 2 }, (_, i) => (
 							<Row key={i} action="size-11 rounded-full" />
 						))}

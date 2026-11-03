@@ -21,7 +21,7 @@ const clients = [
 
 export function MenusDemo() {
 	return (
-		<section className="bg-card grid gap-6 rounded-3xl border p-6" data-testid="menus-demo">
+		<section className="grid gap-6 rounded-3xl border bg-card p-6" data-testid="menus-demo">
 			<h2 className="text-xl">Row and card menus</h2>
 			<PartnerGrid partners={partners} />
 			<PartnerTable partners={partners} />

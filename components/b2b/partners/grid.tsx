@@ -43,13 +43,13 @@ export function PartnerGrid({ partners }: { partners: PartnerWithRelations[] }) 
 								href={`/b2b/partners/${partner.id}`}
 								title={partner.companyName}
 								media={
-									<div className="bg-primary/10 text-primary flex size-14 items-center justify-center rounded-2xl">
+									<div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
 										<Buildings size={28} variant="Bulk" />
 									</div>
 								}
 							>
 								{/* Its own line, so the ICE below starts at the same edge as the name. */}
-								<span className="text-muted-foreground line-clamp-1 basis-full text-sm">
+								<span className="line-clamp-1 basis-full text-sm text-muted-foreground">
 									{partner.address || "No address yet"}
 								</span>
 								{partner.taxId ? (
@@ -71,14 +71,14 @@ export function PartnerGrid({ partners }: { partners: PartnerWithRelations[] }) 
 									<a
 										href={`tel:${mainContact.phone}`}
 										aria-label={`Call ${mainContact.fullName}`}
-										className="bg-primary/10 text-primary hover:bg-primary/15 flex size-11 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95"
+										className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:scale-95"
 									>
 										<Call size={20} variant="Bulk" />
 									</a>
 								) : null}
 								<Link
 									href={`/b2b/documents/new?partner=${partner.id}`}
-									className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-11 flex-1 items-center justify-center gap-2 rounded-full font-semibold transition-colors active:scale-[0.98]"
+									className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
 								>
 									<DocumentText size={20} variant="Bold" />
 									New quotation

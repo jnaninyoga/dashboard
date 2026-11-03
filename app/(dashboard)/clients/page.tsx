@@ -44,19 +44,19 @@ export default async function ClientsPage(props: {
 
 	return (
 		<>
-			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
-				<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+			<div className="flex animate-slide-up flex-col justify-between gap-4 md:flex-row md:items-center">
+				<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">
 					Clients
 				</h1>
 				<Link href="/clients/add">
 					<Button className="zen-glow-teal h-11 px-8 font-bold shadow-sm transition-all">
-						<Add className="mr-2 h-4 w-4" variant="Outline" />
+						<Add className="mr-2 size-4" variant="Outline" />
 						Add client
 					</Button>
 				</Link>
 			</div>
 
-			<div className="animate-slide-up flex flex-col gap-4 delay-100 md:flex-row md:items-start md:justify-between">
+			<div className="flex animate-slide-up flex-col gap-4 delay-100 md:flex-row md:items-start md:justify-between">
 				<ClientFilters discounts={discounts || []} />
 				<ClientViewToggle />
 			</div>

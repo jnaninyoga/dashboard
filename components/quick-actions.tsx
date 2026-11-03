@@ -52,12 +52,12 @@ function ActionItem({
 }) {
 	const content = (
 		<>
-			<span className="bg-primary/10 flex size-9 shrink-0 items-center justify-center rounded-full">
-				<ItemIcon size={20} variant="Bulk" className="text-primary size-5" />
+			<span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+				<ItemIcon size={20} variant="Bulk" className="size-5 text-primary" />
 			</span>
 			<span className="flex min-w-0 flex-col">
-				<span className="text-foreground font-medium">{title}</span>
-				<span className="text-muted-foreground text-xs">{hint}</span>
+				<span className="font-medium text-foreground">{title}</span>
+				<span className="text-xs text-muted-foreground">{hint}</span>
 			</span>
 		</>
 	);

@@ -58,7 +58,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 						{client.checkedInToday ? (
 							<span
 								aria-hidden
-								className="border-card bg-success absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2"
+								className="absolute -right-0.5 -bottom-0.5 size-3.5 rounded-full border-2 border-card bg-success"
 							/>
 						) : null}
 					</div>
@@ -66,7 +66,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 					<Link
 						href={`/clients/${client.id}`}
 						title={client.fullName}
-						className="text-foreground hover:text-primary focus-visible:ring-ring truncate rounded-sm font-medium transition-colors outline-none focus-visible:ring-2"
+						className="truncate rounded-sm font-medium text-foreground transition-colors outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						{client.fullName}
 					</Link>
@@ -86,8 +86,8 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 			const c = row.original;
 			if (c.checkedInToday) {
 				return (
-					<span className="bg-success/10 text-success inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium">
-						<span aria-hidden className="bg-success size-1.5 rounded-full" />
+					<span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-success/10 px-2.5 text-sm font-medium text-success">
+						<span aria-hidden className="size-1.5 rounded-full bg-success" />
 						{c.activeSessionName ? `Here · ${c.activeSessionName}` : "Here today"}
 					</span>
 				);
@@ -106,7 +106,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 			const credits = creditsSummary(row.original.wallets);
 			if (credits.count === null) return <span className="text-muted-foreground">No card</span>;
 			if (credits.tone === "expired") {
-				return <span className="text-destructive font-medium">Expired on {shortDay(credits.expiredOn!)}</span>;
+				return <span className="font-medium text-destructive">Expired on {shortDay(credits.expiredOn!)}</span>;
 			}
 			return (
 				<span className="flex items-baseline gap-1">
@@ -118,7 +118,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 					>
 						{credits.count}
 					</span>
-					{credits.total ? <span className="text-muted-foreground text-sm">of {credits.total}</span> : null}
+					{credits.total ? <span className="text-sm text-muted-foreground">of {credits.total}</span> : null}
 				</span>
 			);
 		},
@@ -134,7 +134,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 			return (
 				<span className="flex items-baseline gap-1">
 					<span className="font-semibold tabular-nums">{visits}</span>
-					<span className="text-muted-foreground text-sm">{visits === 1 ? "visit" : "visits"}</span>
+					<span className="text-sm text-muted-foreground">{visits === 1 ? "visit" : "visits"}</span>
 				</span>
 			);
 		},
@@ -176,7 +176,7 @@ const columns: ColumnDef<ClientWithRelations>[] = [
 					>
 						<Whatsapp size={18} variant="Bold" />
 					</a>
-					<span className="text-muted-foreground ml-1 hidden text-sm tabular-nums 2xl:inline">{formatPhone(c.phone)}</span>
+					<span className="ml-1 hidden text-sm text-muted-foreground tabular-nums 2xl:inline">{formatPhone(c.phone)}</span>
 				</div>
 			);
 		},

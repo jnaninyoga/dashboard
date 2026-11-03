@@ -25,21 +25,21 @@ export function ClientViewToggle() {
 			value={view.toString()}
 			onValueChange={handleViewChange}
 			spacing={1}
-			className="bg-card hidden gap-1 rounded-2xl p-1 shadow-sm md:inline-flex"
+			className="hidden gap-1 rounded-2xl bg-card p-1 shadow-sm md:inline-flex"
 		>
 			<ToggleGroupItem
 				value={View.LIST.toString()}
 				aria-label="Table View"
-				className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background rounded-xl"
+				className="rounded-xl data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 			>
-				<List className="h-4 w-4" variant={view === View.LIST ? "Bulk" : "Outline"} />
+				<List className="size-4" variant={view === View.LIST ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>
 			<ToggleGroupItem
 				value={View.GRID.toString()}
 				aria-label="Grid View"
-				className="data-[state=on]:bg-primary data-[state=on]:text-primary-foreground data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background rounded-xl"
+				className="rounded-xl data-[state=off]:text-secondary-foreground hover:data-[state=off]:bg-background data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
 			>
-				<Grid className="h-4 w-4" variant={view === View.GRID ? "Bulk" : "Outline"} />
+				<Grid className="size-4" variant={view === View.GRID ? "Bulk" : "Outline"} />
 			</ToggleGroupItem>
 		</ToggleGroup>
 	);

@@ -54,14 +54,14 @@ export default async function DashboardLayout({
 				<AppSidebar user={getUserProfile(user)} settingsOpen={settingsOpen} />
 				{/* min-w-0: wide content (tables) scrolls inside its frame instead of widening the page. */}
 				<SidebarInset className="min-w-0">
-					<header className="bg-background/80 border-border/50 sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-6">
+					<header className="sticky top-0 z-50 flex h-14 shrink-0 items-center gap-2 border-b border-border/50 bg-background/80 px-4 backdrop-blur-xl transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-6">
 						<div className="flex min-w-0 flex-1 items-center gap-2">
 							<SidebarTrigger className="-ml-1 min-h-[48px] min-w-[48px]" />
 							<PageTitle className="min-w-0" />
 						</div>
 					</header>
 					{googleUnreachable ? (
-						<p role="status" className="bg-accent/60 text-foreground border-b px-4 py-2 text-center text-sm sm:px-6">
+						<p role="status" className="border-b bg-accent/60 px-4 py-2 text-center text-sm text-foreground sm:px-6">
 							Google isn&apos;t answering right now, so your calendar and contacts may be out of date. What you save here is safe.
 						</p>
 					) : null}
@@ -69,7 +69,7 @@ export default async function DashboardLayout({
 					    data-full-bleed (the error screen's scene) takes the whole area. */}
 					<div
 						data-page-content
-						className="animate-slide-up mx-auto flex w-full max-w-screen-2xl flex-1 flex-col px-4 py-5 has-[>[data-full-bleed]]:max-w-none! has-[>[data-full-bleed]]:p-0! sm:px-6 sm:py-6 lg:px-8 lg:py-8"
+						className="mx-auto flex w-full max-w-screen-2xl flex-1 animate-slide-up flex-col px-4 py-5 has-[>[data-full-bleed]]:max-w-none! has-[>[data-full-bleed]]:p-0! sm:p-6 lg:p-8"
 					>
 						{children}
 					</div>

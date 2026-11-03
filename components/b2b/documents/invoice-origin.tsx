@@ -25,7 +25,7 @@ export function InvoiceOrigin({
 	const others = tape.pieces.filter((piece) => piece.id !== invoiceId);
 
 	return (
-		<section aria-label="Its quotation" className="animate-slide-up bg-card grid gap-3 rounded-2xl border p-4 shadow-sm delay-75 sm:p-5">
+		<section aria-label="Its quotation" className="grid animate-slide-up gap-3 rounded-2xl border bg-card p-4 shadow-sm delay-75 sm:p-5">
 			<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
 				<p>
 					<span className="text-muted-foreground">
@@ -33,12 +33,12 @@ export function InvoiceOrigin({
 					</span>
 					<Link
 						href={`/b2b/documents/${quote.id}`}
-						className="text-primary focus-visible:ring-ring rounded-sm font-semibold outline-none hover:underline focus-visible:ring-2"
+						className="rounded-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						{documentName(quote)}
 					</Link>
 				</p>
-				<p className="text-muted-foreground text-sm tabular-nums">
+				<p className="text-sm text-muted-foreground tabular-nums">
 					{formatMoney(tape.invoiced)} of {formatMoney(tape.quoted)} invoiced
 					{tape.left > 0 ? ` · ${formatMoney(tape.left)} left` : ""}
 				</p>
@@ -50,7 +50,7 @@ export function InvoiceOrigin({
 						<li key={piece.id}>
 							<Link
 								href={`/b2b/documents/${piece.id}`}
-								className="group bg-secondary/40 hover:bg-secondary/70 focus-visible:ring-ring flex min-h-10 items-center gap-2 rounded-full py-1.5 pr-3 pl-2.5 text-sm outline-none focus-visible:ring-2"
+								className="group flex min-h-10 items-center gap-2 rounded-full bg-secondary/40 py-1.5 pr-3 pl-2.5 text-sm outline-none hover:bg-secondary/70 focus-visible:ring-2 focus-visible:ring-ring"
 							>
 								<PieceMark piece={piece} className="w-6" />
 								<span className="font-semibold">{piece.name}</span>

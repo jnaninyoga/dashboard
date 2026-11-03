@@ -31,7 +31,7 @@ export default function Loading() {
 					<SkeletonLine className="w-16 text-sm" />
 				</div>
 
-				<div className="bg-card rounded-2xl border">
+				<div className="rounded-2xl border bg-card">
 					{/* The time axis, from md. */}
 					<div className="hidden px-4 pt-3 md:grid md:grid-cols-[9rem_1fr_18rem] md:gap-4">
 						<span />
@@ -43,7 +43,7 @@ export default function Loading() {
 						<span />
 					</div>
 
-					<div className="divide-border divide-y">
+					<div className="divide-y divide-border">
 						{DAYS.map(({ day, open }, i) => (
 							<div key={i} className="grid gap-3 px-4 py-3.5 md:grid-cols-[9rem_1fr_18rem] md:items-center md:gap-4">
 								<div className="flex items-center gap-3">
@@ -54,7 +54,7 @@ export default function Loading() {
 								</div>
 								{open ? (
 									<>
-										<div className="bg-muted/70 relative h-2.5 overflow-hidden rounded-full max-md:order-last" />
+										<div className="relative h-2.5 overflow-hidden rounded-full bg-muted/70 max-md:order-last" />
 										<div className="flex items-center gap-2">
 											<SkeletonField className="h-10" bar="w-12" />
 											<span className="text-muted-foreground" aria-hidden>

@@ -93,7 +93,7 @@ export function PriceListMenu({
 						if (ok) await run(remove, `${name} deleted`);
 					}}
 				>
-					<Trash className="text-destructive mr-2 size-4" variant="Outline" />
+					<Trash className="mr-2 size-4 text-destructive" variant="Outline" />
 					Delete
 				</DropdownMenuItem>
 			</DropdownMenuContent>
@@ -114,15 +114,15 @@ export function ArchivedShelf<T extends { id: string; name: string }>({
 	if (!items.length) return null;
 	return (
 		<section aria-labelledby="archived-title" className="grid gap-3">
-			<h2 id="archived-title" className="font-heading text-muted-foreground text-lg font-semibold">
+			<h2 id="archived-title" className="font-heading text-lg font-semibold text-muted-foreground">
 				Archived
 			</h2>
-			<ul className="bg-card divide-border divide-y rounded-2xl border">
+			<ul className="divide-y divide-border rounded-2xl border bg-card">
 				{items.map((item) => (
 					<li key={item.id} className="flex items-center gap-3 px-4 py-3">
 						<div className="min-w-0 flex-1">
-							<p className="text-muted-foreground truncate font-medium">{item.name}</p>
-							<p className="text-muted-foreground/80 text-sm">{describe(item)}</p>
+							<p className="truncate font-medium text-muted-foreground">{item.name}</p>
+							<p className="text-sm text-muted-foreground/80">{describe(item)}</p>
 						</div>
 						<Button
 							variant="ghost"

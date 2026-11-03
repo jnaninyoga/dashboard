@@ -16,7 +16,7 @@ export function ContactsTab({ partner }: ContactsTabProps) {
 	return (
 		<TabsContent
 			value="contacts"
-			className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-500"
+			className="animate-in space-y-6 duration-500 fade-in slide-in-from-bottom-2"
 		>
 			<div className="flex items-center justify-between px-2">
 				<div className="flex items-center gap-2">
@@ -28,7 +28,7 @@ export function ContactsTab({ partner }: ContactsTabProps) {
 						size="sm"
 						className="zen-glow-teal h-9 gap-2 rounded-xl text-xs font-bold"
 					>
-						<UserAdd className="mr-1 h-4 w-4" variant="Outline" />
+						<UserAdd className="mr-1 size-4" variant="Outline" />
 						New Contact
 					</Button>
 				</ContactDialog>

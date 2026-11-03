@@ -73,7 +73,7 @@ export function PartnerActions({
 				</DropdownMenuTrigger>
 				<DropdownMenuContent
 					align="end"
-					className="border-secondary/20 w-48 rounded-xl shadow-xl"
+					className="w-48 rounded-xl border-secondary/20 shadow-xl"
 				>
 					<DropdownMenuItem
 						asChild
@@ -105,7 +105,7 @@ export function PartnerActions({
 							e.preventDefault();
 							handleDelete();
 						}}
-						className="text-destructive hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive focus:[&>svg]:text-destructive flex cursor-pointer items-center gap-2 p-3 text-xs font-bold tracking-wide uppercase"
+						className="flex cursor-pointer items-center gap-2 p-3 text-xs font-bold tracking-wide text-destructive uppercase hover:bg-destructive/10 focus:bg-destructive/10 focus:text-destructive focus:[&>svg]:text-destructive"
 					>
 						<Trash size={16} variant="Bulk" className="text-destructive" />
 						Delete

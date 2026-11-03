@@ -25,9 +25,9 @@ export function SaveProfileButton({ className }: SaveProfileButtonProps) {
 			)}
 		>
 			{pending ? (
-				<Refresh className="mr-2 h-4 w-4 animate-spin" />
+				<Refresh className="mr-2 size-4 animate-spin" />
 			) : (
-				<TickCircle className="mr-2 h-4 w-4" variant="Bold" />
+				<TickCircle className="mr-2 size-4" variant="Bold" />
 			)}
 			{pending ? "Persisting Changes..." : "Save Business Profile"}
 		</Button>

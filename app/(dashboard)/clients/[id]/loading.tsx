@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 /** A row of the profile tab (components/clients/tabs/profile.tsx): its icon, a label, the value. */
 function InfoRow({ value }: { value: string }) {
 	return (
-		<div className="bg-muted/30 flex items-center gap-4 rounded-2xl border border-transparent p-3">
+		<div className="flex items-center gap-4 rounded-2xl border border-transparent bg-muted/30 p-3">
 			<Skeleton className="size-10 shrink-0 rounded-xl" />
 			<div className="flex min-w-0 flex-col">
 				<SkeletonLine className="w-20 text-[10px]" />
@@ -18,7 +18,7 @@ function InfoRow({ value }: { value: string }) {
 /** One of the two small boxes under the personal details: referral, client since. */
 function InfoBox() {
 	return (
-		<div className="bg-muted/30 flex flex-col gap-1 rounded-2xl border border-transparent p-3">
+		<div className="flex flex-col gap-1 rounded-2xl border border-transparent bg-muted/30 p-3">
 			<div className="flex items-center gap-2">
 				<Skeleton className="size-4 shrink-0 rounded-sm" />
 				<SkeletonLine className="w-16 text-[10px]" />
@@ -64,14 +64,14 @@ export default function Loading() {
 				</div>
 				{/* Edit Profile (outline), then the ⋮ menu's room. */}
 				<div className="flex items-center gap-2">
-					<div className="bg-muted dark:bg-input/30 dark:border-input flex h-9 w-34 items-center justify-center rounded-md border shadow-xs">
+					<div className="flex h-9 w-34 items-center justify-center rounded-md border bg-muted shadow-xs dark:border-input dark:bg-input/30">
 						<SkeletonLine className="w-24 text-sm" />
 					</div>
 					<span className="size-10 md:size-9" />
 				</div>
 			</div>
 
-			<div className="bg-border h-px w-full shrink-0" />
+			<div className="h-px w-full shrink-0 bg-border" />
 
 			<SkeletonTabs className="grid-cols-3 lg:w-96" tabs={["w-14", "w-12", "w-12"]}>
 				<div className="mx-auto grid w-full max-w-4xl gap-6 md:grid-cols-2">

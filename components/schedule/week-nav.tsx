@@ -56,12 +56,12 @@ export function WeekNav({
 				<ArrowLeft2 size={20} />
 			</Link>
 			<div className="flex min-w-0 flex-1 flex-col items-center text-center lg:w-56 lg:flex-none">
-				<span className="text-muted-foreground text-xs font-medium">{relativeWeek(monday, currentMonday)}</span>
-				<span className="font-heading text-foreground truncate text-lg font-semibold">{range}</span>
+				<span className="text-xs font-medium text-muted-foreground">{relativeWeek(monday, currentMonday)}</span>
+				<span className="truncate font-heading text-lg font-semibold text-foreground">{range}</span>
 				{isCurrent ? null : (
 					<Link
 						href={scheduleHref(currentMonday, currentMonday, type)}
-						className="text-primary focus-visible:ring-ring mt-0.5 inline-flex min-h-10 items-center rounded-full px-3 text-sm font-semibold outline-none hover:underline focus-visible:ring-2"
+						className="mt-0.5 inline-flex min-h-10 items-center rounded-full px-3 text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 					>
 						Back to this week
 					</Link>
@@ -100,8 +100,8 @@ export function TypeFilter({
 						className={cn(
 							chip,
 							active
-								? "bg-primary text-primary-foreground border-primary"
-								: "bg-card text-muted-foreground border-border/70 hover:text-foreground hover:bg-secondary/40",
+								? "border-primary bg-primary text-primary-foreground"
+								: "border-border/70 bg-card text-muted-foreground hover:bg-secondary/40 hover:text-foreground",
 						)}
 					>
 						{option.label}

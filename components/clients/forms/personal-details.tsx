@@ -109,7 +109,7 @@ export function StepPersonalDetails({
 													!field.value && "text-muted-foreground",
 												)}
 											>
-												<CalendarIcon className="h-4 w-4" variant="Outline" />
+												<CalendarIcon className="size-4" variant="Outline" />
 											</Button>
 										</PopoverTrigger>
 										<PopoverContent className="w-auto p-0" align="end">
@@ -168,9 +168,9 @@ export function StepPersonalDetails({
 									<SelectContent>
 										<SelectItem
 											value={Gender.MALE}
-											className="focus:[&_svg]:text-info focus:text-white"
+											className="focus:text-white focus:[&_svg]:text-info"
 										>
-											<User className="text-info size-3.5" variant="Bulk" />
+											<User className="size-3.5 text-info" variant="Bulk" />
 											<span className="text-foreground capitalize">Male</span>
 										</SelectItem>
 										<SelectItem
@@ -272,7 +272,7 @@ export function StepPersonalDetails({
 									<SelectContent>
 										{discounts.map((cat) => (
 											<SelectItem key={cat.id} value={cat.id}>
-												<Badge className="bg-secondary text-secondary-foreground rounded-full border-0 px-2 py-0.5 text-[10px] font-semibold tracking-wide">
+												<Badge className="rounded-full border-0 bg-secondary px-2 py-0.5 text-[10px] font-semibold tracking-wide text-secondary-foreground">
 													{cat.name}
 													{cat.discountValue &&
 													cat.discountValue !== "0" &&

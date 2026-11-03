@@ -52,7 +52,7 @@ export function PageTitle({ className }: { className?: string }) {
 		<span
 			aria-hidden
 			className={cn(
-				"font-heading truncate text-lg font-semibold transition-[opacity,translate] duration-300 motion-reduce:transition-none",
+				"truncate font-heading text-lg font-semibold transition-[opacity,translate] duration-300 motion-reduce:transition-none",
 				shown && title ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-1 opacity-0",
 				className,
 			)}

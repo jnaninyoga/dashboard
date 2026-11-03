@@ -114,7 +114,7 @@ export function DiscountSheet({
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Takes off</FormLabel>
-								<div role="radiogroup" aria-label="Takes off" className="bg-secondary/40 grid grid-cols-2 gap-1 rounded-2xl p-1">
+								<div role="radiogroup" aria-label="Takes off" className="grid grid-cols-2 gap-1 rounded-2xl bg-secondary/40 p-1">
 									{(
 										[
 											["percentage", "A share of the price"],
@@ -123,7 +123,7 @@ export function DiscountSheet({
 									).map(([option, label]) => (
 										<label
 											key={option}
-											className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+											className="flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
 										>
 											<input
 												type="radio"
@@ -158,7 +158,7 @@ export function DiscountSheet({
 											className="pr-14 tabular-nums"
 										/>
 									</FormControl>
-									<span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold">
+									<span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
 										{type === "percentage" ? "%" : CURRENCY}
 									</span>
 								</div>
@@ -169,8 +169,8 @@ export function DiscountSheet({
 
 					{/* Her cards, with the discount taken off. */}
 					{memberships.length ? (
-						<section aria-label="On your memberships" className="bg-secondary/30 grid gap-2 rounded-2xl p-4 text-sm">
-							<span className="text-muted-foreground text-xs font-medium">On your memberships</span>
+						<section aria-label="On your memberships" className="grid gap-2 rounded-2xl bg-secondary/30 p-4 text-sm">
+							<span className="text-xs font-medium text-muted-foreground">On your memberships</span>
 							{memberships.map((membership) => {
 								const { list, price } = priceAfterDiscount(membership.price, terms);
 								return (

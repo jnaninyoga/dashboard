@@ -13,13 +13,13 @@ export default async function LoginPage({
 	const { error, reason, ref } = await searchParams;
 
 	return (
-		<div className="bg-background relative flex min-h-dvh w-full items-center justify-center overflow-hidden px-5 py-10">
+		<div className="relative flex min-h-dvh w-full items-center justify-center overflow-hidden bg-background px-5 py-10">
 			<LotusPond />
 
-			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-10">
+			<div className="relative z-10 flex w-full max-w-md animate-slide-up flex-col items-center gap-10">
 				{/* Logo & Brand */}
 				<div className="flex flex-col items-center gap-4">
-					<div className="zen-shadow-lg bg-card relative size-28 overflow-hidden rounded-full p-3">
+					<div className="zen-shadow-lg relative size-28 overflow-hidden rounded-full bg-card p-3">
 						<Image
 							src="/logo.png"
 							alt="Jnanin Yoga Studio"
@@ -29,17 +29,17 @@ export default async function LoginPage({
 						/>
 					</div>
 					<div className="flex flex-col gap-1.5 text-center">
-						<h1 className="font-heading text-foreground text-4xl font-bold tracking-tight uppercase">
+						<h1 className="font-heading text-4xl font-bold tracking-tight text-foreground uppercase">
 							Jnanin Yoga
 						</h1>
-						<p className="text-muted-foreground text-base font-medium tracking-wide">
+						<p className="text-base font-medium tracking-wide text-muted-foreground">
 							Digital Command Center
 						</p>
 					</div>
 				</div>
 
 				{/* Main Card */}
-				<div className="bg-card zen-shadow-lg flex w-full flex-col gap-6 rounded-3xl p-8">
+				<div className="zen-shadow-lg flex w-full flex-col gap-6 rounded-3xl bg-card p-8">
 					{/* MVP Notice
 					<div className="rounded-2xl bg-secondary/30 p-5 flex gap-3.5">
 						<div className="flex-shrink-0 mt-0.5">
@@ -58,7 +58,7 @@ export default async function LoginPage({
 					</div> */}
 
 					{reason === "google" && !error ? (
-						<p role="status" className="bg-accent/50 text-foreground rounded-2xl p-4 text-center text-sm font-medium">
+						<p role="status" className="rounded-2xl bg-accent/50 p-4 text-center text-sm font-medium text-foreground">
 							Your Google connection expired. Sign in again to reconnect your calendar and contacts.
 						</p>
 					) : null}
@@ -66,7 +66,7 @@ export default async function LoginPage({
 					{error ? (
 						<p
 							role="alert"
-							className="bg-destructive/5 text-destructive border-destructive/20 rounded-2xl border p-4 text-center text-sm font-medium"
+							className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center text-sm font-medium text-destructive"
 						>
 							{error === "connection"
 								? `You're signed in, but your Google connection couldn't be saved. Try again in a moment${ref ? ` (code ${ref})` : ""}.`
@@ -78,7 +78,7 @@ export default async function LoginPage({
 					<form action={loginWithGoogle}>
 						<button
 							type="submit"
-							className="group bg-primary text-primary-foreground zen-glow-teal relative flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl text-base font-semibold transition-all duration-200 ease-out hover:cursor-pointer hover:brightness-105 active:scale-[0.98]"
+							className="group zen-glow-teal relative flex min-h-[56px] w-full items-center justify-center gap-3 rounded-2xl bg-primary text-base font-semibold text-primary-foreground transition-all duration-200 ease-out hover:cursor-pointer hover:brightness-105 active:scale-[0.98]"
 						>
 							<Google size={22} variant="Bold" />
 							Sign in with Google
@@ -87,7 +87,7 @@ export default async function LoginPage({
 				</div>
 
 				{/* Footer */}
-				<p className="text-muted-foreground/60 max-w-xs text-center text-xs">
+				<p className="max-w-xs text-center text-xs text-muted-foreground/60">
 					By signing in, you authorize access to Google Calendar and Contacts for studio management.
 				</p>
 			</div>

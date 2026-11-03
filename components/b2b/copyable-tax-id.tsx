@@ -41,13 +41,13 @@ export function CopyableTaxId({
 			aria-label={copied ? `ICE ${taxId} copied` : `Copy ICE ${taxId}`}
 			title="Copy ICE"
 			className={cn(
-				"group/ice text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md text-left text-sm transition-colors outline-none focus-visible:ring-2",
+				"group/ice inline-flex max-w-full min-w-0 items-center gap-1.5 rounded-md text-left text-sm text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
 				className,
 			)}
 		>
 			<span className="truncate tabular-nums">{label ? `ICE ${taxId}` : taxId}</span>
 			{copied ? (
-				<TickCircle size={14} variant="Bold" className="text-primary shrink-0" aria-hidden />
+				<TickCircle size={14} variant="Bold" className="shrink-0 text-primary" aria-hidden />
 			) : (
 				<Copy size={14} className="shrink-0 opacity-60 transition-opacity group-hover/ice:opacity-100" aria-hidden />
 			)}

@@ -23,14 +23,14 @@ export function CardAtTheDoor({ wallets }: { wallets: ClientWithRelations["walle
 	const today = studioDateString();
 	const credits = creditsSummary(wallets, today);
 	if (credits.count === null) return <span className="text-muted-foreground">No card</span>;
-	if (credits.tone === "expired") return <span className="text-destructive font-medium">Card expired {weekDay(credits.expiredOn!)}</span>;
-	if (!credits.count) return <span className="text-destructive font-medium">No credits left</span>;
+	if (credits.tone === "expired") return <span className="font-medium text-destructive">Card expired {weekDay(credits.expiredOn!)}</span>;
+	if (!credits.count) return <span className="font-medium text-destructive">No credits left</span>;
 	const ends = credits.endsOn && credits.endsOn <= addDays(today, RENEW_WITHIN_DAYS) ? credits.endsOn : null;
 	return (
-		<span className={cn("tabular-nums", credits.tone === "low" ? "text-warning font-medium" : "text-muted-foreground")}>
+		<span className={cn("tabular-nums", credits.tone === "low" ? "font-medium text-warning" : "text-muted-foreground")}>
 			{credits.count} {credits.count === 1 ? "credit" : "credits"}
 			{credits.tone === "low" ? " left" : ""}
-			{ends ? <span className="text-warning font-medium">, ends {ends === today ? "today" : weekDay(ends)}</span> : null}
+			{ends ? <span className="font-medium text-warning">, ends {ends === today ? "today" : weekDay(ends)}</span> : null}
 		</span>
 	);
 }
@@ -104,11 +104,11 @@ export function ClientSearch({
 		<div ref={containerRef} className="relative w-full">
 			<div
 				className={cn(
-					"bg-card flex min-h-14 w-full items-center gap-3 rounded-2xl border px-4 transition-shadow duration-200",
-					isFocused ? "ring-primary/25 border-primary/40 ring-4" : "border-border",
+					"flex min-h-14 w-full items-center gap-3 rounded-2xl border bg-card px-4 transition-shadow duration-200",
+					isFocused ? "border-primary/40 ring-4 ring-primary/25" : "border-border",
 				)}
 			>
-				<SearchNormal1 className="text-primary/70 size-5 shrink-0" variant="Outline" />
+				<SearchNormal1 className="size-5 shrink-0 text-primary/70" variant="Outline" />
 				<input
 					ref={inputRef}
 					type="search"
@@ -130,12 +130,12 @@ export function ClientSearch({
 						}
 						if (e.key === "Escape") setSearchQuery("");
 					}}
-					className="text-foreground placeholder:text-muted-foreground h-full min-w-0 flex-1 bg-transparent text-base outline-none [&::-webkit-search-cancel-button]:hidden"
+					className="h-full min-w-0 flex-1 bg-transparent text-base text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
 					autoComplete="off"
 					enterKeyHint="go"
 				/>
 				{waiting && typed ? (
-					<Refresh className="text-primary size-5 shrink-0 animate-spin motion-reduce:animate-none" variant="Outline" />
+					<Refresh className="size-5 shrink-0 animate-spin text-primary motion-reduce:animate-none" variant="Outline" />
 				) : searchQuery ? (
 					<button
 						type="button"
@@ -144,9 +144,9 @@ export function ClientSearch({
 							setSearchQuery("");
 							inputRef.current?.focus();
 						}}
-						className="hover:bg-muted -mr-1 flex size-9 items-center justify-center rounded-full transition-colors"
+						className="-mr-1 flex size-9 items-center justify-center rounded-full transition-colors hover:bg-muted"
 					>
-						<CloseCircle className="text-muted-foreground size-5" variant="Outline" />
+						<CloseCircle className="size-5 text-muted-foreground" variant="Outline" />
 					</button>
 				) : null}
 			</div>
@@ -154,10 +154,10 @@ export function ClientSearch({
 			{showDropdown ? (
 				<div
 					id={listId}
-					className="bg-card zen-shadow-lg animate-in fade-in-0 slide-in-from-top-1 absolute top-full right-0 left-0 z-50 mt-2 max-h-[60vh] overflow-y-auto rounded-2xl border duration-150 motion-reduce:animate-none"
+					className="zen-shadow-lg absolute inset-x-0 top-full z-50 mt-2 max-h-[60vh] animate-in overflow-y-auto rounded-2xl border bg-card duration-150 fade-in-0 slide-in-from-top-1 motion-reduce:animate-none"
 				>
 					{clients.length === 0 ? (
-						<p className="text-muted-foreground px-4 py-6 text-center text-sm">
+						<p className="px-4 py-6 text-center text-sm text-muted-foreground">
 							{waiting ? "Searching…" : `No client matches “${searchQuery.trim()}”.`}
 						</p>
 					) : (
@@ -172,24 +172,24 @@ export function ClientSearch({
 											onClick={() => pick(client)}
 											className={cn(
 												"flex min-h-14 w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
-												isHere ? "cursor-default opacity-60" : "hover:bg-muted cursor-pointer",
+												isHere ? "cursor-default opacity-60" : "cursor-pointer hover:bg-muted",
 												index === 0 && !isHere && !waiting && "bg-muted/60",
 											)}
 										>
 											<Avatar className="size-10">
 												<AvatarImage src={client.photoUrl || undefined} />
-												<AvatarFallback className="bg-primary/10 text-primary font-semibold">{client.fullName[0]}</AvatarFallback>
+												<AvatarFallback className="bg-primary/10 font-semibold text-primary">{client.fullName[0]}</AvatarFallback>
 											</Avatar>
 											<span className="flex min-w-0 flex-1 flex-col">
 												<span className="flex min-w-0 items-center gap-1.5">
-													<span className="text-foreground truncate font-semibold">{client.fullName}</span>
+													<span className="truncate font-semibold text-foreground">{client.fullName}</span>
 													{(client.healthLogs || []).some((l) => l.isAlert) ? (
-														<Danger size={16} variant="Bold" className="text-destructive shrink-0" aria-label="Health alerts" role="img" />
+														<Danger size={16} variant="Bold" className="shrink-0 text-destructive" aria-label="Health alerts" role="img" />
 													) : null}
 												</span>
 												<span className="truncate text-sm">
 													{isHere ? (
-														<span className="text-success inline-flex items-center gap-1 font-medium">
+														<span className="inline-flex items-center gap-1 font-medium text-success">
 															<TickCircle size={14} variant="Bold" />
 															Already here
 														</span>
@@ -199,7 +199,7 @@ export function ClientSearch({
 												</span>
 											</span>
 											{index === 0 && !isHere && !waiting ? (
-												<kbd className="text-muted-foreground bg-card hidden rounded-md border px-1.5 py-0.5 font-sans text-xs [@media(pointer:fine)]:inline">
+												<kbd className="hidden rounded-md border bg-card px-1.5 py-0.5 font-sans text-xs text-muted-foreground pointer-fine:inline">
 													Enter
 												</kbd>
 											) : null}

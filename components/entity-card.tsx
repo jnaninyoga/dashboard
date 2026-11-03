@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils/ui";
  */
 export function EntityCardGrid({ children }: { children: React.ReactNode }) {
 	return (
-		<div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-x-4 gap-y-4">
+		<div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,20rem),1fr))] gap-4">
 			{children}
 		</div>
 	);
@@ -28,7 +28,7 @@ export function EntityCard({
 	actions: React.ReactNode;
 }) {
 	return (
-		<article className="bg-card border-secondary/20 hover:zen-shadow-md relative row-span-3 grid grid-cols-1 grid-rows-subgrid gap-5 rounded-3xl border p-6 transition-shadow duration-300">
+		<article className="hover:zen-shadow-md relative row-span-3 grid grid-cols-1 grid-rows-subgrid gap-5 rounded-3xl border border-secondary/20 bg-card p-6 transition-shadow duration-300">
 			{menu ? <div className="absolute top-4 right-4 z-20">{menu}</div> : null}
 			<div className={cn(menu && "pr-10")}>{header}</div>
 			<div>{figures}</div>
@@ -81,7 +81,7 @@ export function EntityCardHeader({
  */
 export function EntityCardFigures({ children, aside }: { children: React.ReactNode; aside?: React.ReactNode }) {
 	return (
-		<div className="bg-muted/60 flex items-center gap-3 rounded-2xl px-4 py-3.5">
+		<div className="flex items-center gap-3 rounded-2xl bg-muted/60 px-4 py-3.5">
 			<dl className="grid min-w-0 flex-1 grid-cols-2 gap-4">{children}</dl>
 			{aside ? <div className="relative z-10 shrink-0">{aside}</div> : null}
 		</div>
@@ -102,12 +102,12 @@ export function Figure({
 }) {
 	return (
 		<div className="flex min-w-0 flex-col gap-1">
-			<dt className="text-muted-foreground text-sm">{label}</dt>
+			<dt className="text-sm text-muted-foreground">{label}</dt>
 			<dd className="flex flex-wrap items-baseline gap-x-1.5">
 				<span
 					className={cn(
 						tone === "muted"
-							? "text-muted-foreground text-base font-medium"
+							? "text-base font-medium text-muted-foreground"
 							: "text-2xl leading-none font-semibold whitespace-nowrap tabular-nums",
 						tone === "low" && "text-warning",
 						tone === "alert" && "text-destructive",
@@ -116,7 +116,7 @@ export function Figure({
 					{value}
 				</span>
 				{/* A unit moves under its figure whole, never word by word. */}
-				{unit ? <span className="text-muted-foreground text-sm whitespace-nowrap">{unit}</span> : null}
+				{unit ? <span className="text-sm whitespace-nowrap text-muted-foreground">{unit}</span> : null}
 			</dd>
 		</div>
 	);

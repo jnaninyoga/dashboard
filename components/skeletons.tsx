@@ -103,7 +103,7 @@ export function SkeletonField({
 		<div
 			aria-hidden
 			className={cn(
-				"border-input dark:bg-input/30 flex h-9 w-full min-w-0 items-center gap-2 rounded-md border px-3 shadow-xs",
+				"flex h-9 w-full min-w-0 items-center gap-2 rounded-md border border-input px-3 shadow-xs dark:bg-input/30",
 				className,
 			)}
 		>
@@ -116,7 +116,7 @@ export function SkeletonField({
 /** The grid/table toggle of the clients and partners lists, the grid chosen. */
 export function SkeletonViewToggle({ className, item = "w-10" }: { className?: string; item?: string }) {
 	return (
-		<div aria-hidden className={cn("bg-card inline-flex w-fit gap-1 rounded-2xl p-1 shadow-sm", className)}>
+		<div aria-hidden className={cn("inline-flex w-fit gap-1 rounded-2xl bg-card p-1 shadow-sm", className)}>
 			<div className={cn("flex h-9 items-center justify-center", item)}>
 				<Skeleton className="size-4 rounded-sm" />
 			</div>
@@ -145,10 +145,10 @@ export function SkeletonListFilters({
 	return (
 		<div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
 			<div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-				<SkeletonField className={cn("bg-card w-full sm:w-64", search)} bar="w-28" />
+				<SkeletonField className={cn("w-full bg-card sm:w-64", search)} bar="w-28" />
 				<div className="flex w-full gap-3 sm:w-auto">
-					<SkeletonField className={cn("bg-card w-full sm:w-40", select)} bar="w-20" select />
-					<SkeletonField className={cn("bg-card w-full sm:w-40", select)} bar="w-20" select />
+					<SkeletonField className={cn("w-full bg-card sm:w-40", select)} bar="w-20" select />
+					<SkeletonField className={cn("w-full bg-card sm:w-40", select)} bar="w-20" select />
 				</div>
 			</div>
 			<SkeletonViewToggle className={toggle} item={toggleItem} />
@@ -205,7 +205,7 @@ export function SkeletonEntityCard({
 	actions = "buttons",
 }: SkeletonEntityCardShape) {
 	return (
-		<div className="bg-card border-secondary/20 relative row-span-3 grid grid-cols-1 grid-rows-subgrid gap-5 rounded-3xl border p-6">
+		<div className="relative row-span-3 grid grid-cols-1 grid-rows-subgrid gap-5 rounded-3xl border border-secondary/20 bg-card p-6">
 			{/* EntityCardHeader */}
 			<div className="flex items-start gap-4 pr-10">
 				<Skeleton className={cn("size-14 shrink-0", media === "round" ? "rounded-full" : "rounded-2xl")} />
@@ -222,7 +222,7 @@ export function SkeletonEntityCard({
 			</div>
 
 			{/* EntityCardFigures */}
-			<div className="bg-muted/60 flex items-center gap-3 rounded-2xl px-4 py-3.5">
+			<div className="flex items-center gap-3 rounded-2xl bg-muted/60 px-4 py-3.5">
 				<div className="grid min-w-0 flex-1 grid-cols-2 gap-4">
 					<SkeletonFigure {...figures[0]} />
 					<SkeletonFigure {...figures[1]} />
@@ -292,7 +292,7 @@ export function SkeletonDataTable({
 
 			<div aria-hidden className={cn("grid grid-cols-1 gap-3", cardsBelow === "md" ? "md:hidden" : "xl:hidden")}>
 				{list.map((i) => (
-					<div key={i} className="bg-card border-secondary/20 min-w-0 rounded-3xl border p-4 shadow-sm">
+					<div key={i} className="min-w-0 rounded-3xl border border-secondary/20 bg-card p-4 shadow-sm">
 						{card}
 					</div>
 				))}
@@ -310,13 +310,13 @@ export function SkeletonDataTable({
 							))}
 						</TableRow>
 					</TableHeader>
-					<TableBody className="divide-secondary/15 divide-y">
+					<TableBody className="divide-y divide-secondary/15">
 						{list.map((i) => (
 							<TableRow key={i} className="border-none hover:bg-transparent">
 								{columns.map((column, j) => (
 									<TableCell
 										key={j}
-										className={cn("px-3 py-3 whitespace-nowrap first:pl-5 last:pr-5", column.className)}
+										className={cn("p-3 whitespace-nowrap first:pl-5 last:pr-5", column.className)}
 									>
 										{column.cell}
 									</TableCell>
@@ -369,7 +369,7 @@ function SkeletonDocumentCard() {
 					<SkeletonLine className="w-44 text-sm" />
 				</div>
 			</div>
-			<div className="border-border/60 flex items-end justify-between gap-3 border-t pt-3">
+			<div className="flex items-end justify-between gap-3 border-t border-border/60 pt-3">
 				<Skeleton className="h-7 w-24 rounded-full" />
 				<SkeletonAmount />
 			</div>
@@ -435,13 +435,13 @@ export function SkeletonTabs({
 }) {
 	return (
 		<div className="flex flex-col gap-2">
-			<div aria-hidden className={cn("bg-card mb-6 grid h-11 w-full items-center gap-2 rounded-2xl border p-1", className)}>
+			<div aria-hidden className={cn("mb-6 grid h-11 w-full items-center gap-2 rounded-2xl border bg-card p-1", className)}>
 				{tabs.map((tab, i) => (
 					<div
 						key={i}
 						className={cn(
 							"flex h-[calc(100%-1px)] items-center justify-center rounded-xl border",
-							i === 0 ? "bg-secondary border-border/30" : "bg-background",
+							i === 0 ? "border-border/30 bg-secondary" : "bg-background",
 						)}
 					>
 						<SkeletonLine className={cn("text-xs", tab)} />
@@ -456,7 +456,7 @@ export function SkeletonTabs({
 /** EventCard (components/schedule/events/card.tsx): a session still ahead, with its check-in button. */
 export function SkeletonEventCard({ title = "w-56" }: { title?: string }) {
 	return (
-		<div className="bg-card zen-shadow border-border/70 relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border py-6 md:flex-row md:items-center">
+		<div className="zen-shadow relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-border/70 bg-card py-6 md:flex-row md:items-center">
 			<div className="relative flex flex-1 flex-col justify-center p-6">
 				{/* The kind's badge (23px: 10px type on a 1.5 line, py-1). */}
 				<div className="mb-3 flex items-center gap-3">
@@ -478,7 +478,7 @@ export function SkeletonEventCard({ title = "w-56" }: { title?: string }) {
 /** SessionRow (components/schedule/week-list.tsx): a session that's over: when, what, who came. */
 export function SkeletonSessionRow({ title = "w-40" }: { title?: string }) {
 	return (
-		<div className="bg-card/70 border-border/60 flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3">
+		<div className="flex min-h-16 items-center gap-3 rounded-2xl border border-border/60 bg-card/70 px-4 py-3">
 			<div className="w-23 shrink-0 self-start pt-0.5">
 				<SkeletonLine className="w-20 text-sm" />
 			</div>

@@ -82,13 +82,13 @@ export function DocumentFilters() {
 			<div className="relative flex-1">
 				<SearchNormal1
 					size={18}
-					className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
+					className="absolute top-1/2 left-3 -translate-y-1/2 text-muted-foreground"
 				/>
 				<Input
 					type="search"
 					aria-label="Search documents"
 					placeholder="Number, partner or notes…"
-					className="focus-visible:ring-primary/20 bg-card h-10 border pl-10 font-medium transition-all"
+					className="h-10 border bg-card pl-10 font-medium transition-all focus-visible:ring-primary/20"
 					value={term}
 					onChange={(e) => setTerm(e.target.value)}
 				/>
@@ -101,7 +101,7 @@ export function DocumentFilters() {
 					onValueChange={handleTypeChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all xl:w-44">
+					<SelectTrigger className="w-full min-w-0 border bg-card transition-all focus:ring-primary/20 xl:w-44">
 						<SelectValue placeholder="Type" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
@@ -117,7 +117,7 @@ export function DocumentFilters() {
 					onValueChange={handleStatusChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all xl:w-44">
+					<SelectTrigger className="w-full min-w-0 border bg-card transition-all focus:ring-primary/20 xl:w-44">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">
@@ -155,7 +155,7 @@ export function DocumentFilters() {
 					onValueChange={handleBackorderChange}
 					disabled={isPending}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full min-w-0 border transition-all xl:w-44">
+					<SelectTrigger className="w-full min-w-0 border bg-card transition-all focus:ring-primary/20 xl:w-44">
 						<SelectValue placeholder="Origin" />
 					</SelectTrigger>
 					<SelectContent className="border shadow-xl">

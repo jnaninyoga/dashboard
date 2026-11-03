@@ -21,7 +21,7 @@ export function RowActionsTrigger({
 			size="icon"
 			aria-label={label}
 			className={cn(
-				"text-muted-foreground hover:bg-secondary/40 hover:text-foreground size-10 shrink-0 rounded-xl md:size-9",
+				"size-10 shrink-0 rounded-xl text-muted-foreground hover:bg-secondary/40 hover:text-foreground md:size-9",
 				className,
 			)}
 			{...props}

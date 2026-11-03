@@ -79,7 +79,7 @@ export function DescriptionAutocomplete({
 						// Keeps the focus in the description while the list opens.
 						onMouseDown={(event) => event.preventDefault()}
 						onClick={() => (shown ? close() : setOpen(true))}
-						className="text-muted-foreground/60 hover:bg-secondary/40 hover:text-foreground absolute top-1/2 left-1 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-md"
+						className="absolute top-1/2 left-1 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/60 hover:bg-secondary/40 hover:text-foreground"
 					>
 						<HamburgerMenu size={14} variant="Bulk" />
 					</button>
@@ -135,7 +135,7 @@ export function DescriptionAutocomplete({
 						}}
 						disabled={disabled}
 						placeholder={placeholder}
-						className={cn("bg-card h-8 border pl-9 text-sm font-medium", inputClassName)}
+						className={cn("h-8 border bg-card pl-9 text-sm font-medium", inputClassName)}
 					/>
 				</div>
 			</PopoverAnchor>
@@ -164,7 +164,7 @@ export function DescriptionAutocomplete({
 							)}
 						>
 							<span className="truncate font-medium">{option.label}</span>
-							<span className="text-muted-foreground shrink-0 tabular-nums">
+							<span className="shrink-0 text-muted-foreground tabular-nums">
 								{formatMoney(Number(option.price))}
 								{option.service.unit ? <span className="text-muted-foreground/70"> / {option.service.unit}</span> : null}
 							</span>
@@ -183,7 +183,7 @@ export function DescriptionAutocomplete({
 export function LineUnitNote({ unit, fromQuote }: { unit?: ProductUnit | null; fromQuote?: boolean }) {
 	if (!unit) return null;
 	return (
-		<p className="text-muted-foreground/80 mt-1 pl-9 text-[11px] leading-tight max-sm:pl-0">
+		<p className="mt-1 pl-9 text-[11px] leading-tight text-muted-foreground/80 max-sm:pl-0">
 			Per {unit}, {fromQuote ? "as quoted" : "from your price list"}
 		</p>
 	);

@@ -143,11 +143,11 @@ export function InvoicePortionSheet({
 			<form id={formId} onSubmit={submit} className="grid gap-6 py-2">
 				<fieldset className="grid gap-2">
 					<legend className="mb-2 text-sm font-semibold">What to invoice</legend>
-					<div role="radiogroup" className="bg-secondary/40 grid grid-cols-3 gap-1 rounded-2xl p-1">
+					<div role="radiogroup" className="grid grid-cols-3 gap-1 rounded-2xl bg-secondary/40 p-1">
 						{MODES.map((option) => (
 							<label
 								key={option.value}
-								className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-11 cursor-pointer flex-col items-center justify-center rounded-xl px-2 py-1.5 text-center text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+								className="flex min-h-11 cursor-pointer flex-col items-center justify-center rounded-xl px-2 py-1.5 text-center text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
 							>
 								<input
 									type="radio"
@@ -161,11 +161,11 @@ export function InvoicePortionSheet({
 							</label>
 						))}
 					</div>
-					<p className="text-muted-foreground text-sm">{words.hints[mode]}</p>
+					<p className="text-sm text-muted-foreground">{words.hints[mode]}</p>
 				</fieldset>
 
 				{mode === "quantities" ? (
-					<ul className="divide-border grid divide-y rounded-2xl border">
+					<ul className="grid divide-y divide-border rounded-2xl border">
 						{openLines.map((line) => {
 							const over = Number(quantities[line.lineId] || 0) > line.remaining;
 							return (
@@ -212,10 +212,10 @@ export function InvoicePortionSheet({
 								onChange={(event) => setAmount(normalizeDecimalInput(event.target.value))}
 								className="h-12 pr-14 font-mono text-lg font-bold"
 							/>
-							<span className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-sm">{CURRENCY}</span>
+							<span className="absolute top-1/2 right-4 -translate-y-1/2 text-sm text-muted-foreground">{CURRENCY}</span>
 						</div>
 						{amountTooHigh ? (
-							<p role="alert" className="text-destructive text-sm">
+							<p role="alert" className="text-sm text-destructive">
 								Only {formatMoney(balance.remaining)} is left to {words.verb}.
 							</p>
 						) : null}
@@ -241,26 +241,26 @@ export function InvoicePortionSheet({
 				) : null}
 
 				{/* What the draft will hold. */}
-				<section aria-label={sheetMode === "credit" ? "This credit note" : "This invoice"} className="bg-secondary/30 grid gap-2 rounded-2xl p-4">
+				<section aria-label={sheetMode === "credit" ? "This credit note" : "This invoice"} className="grid gap-2 rounded-2xl bg-secondary/30 p-4">
 					{lines.length ? (
 						<ul className="grid gap-1.5 text-sm">
 							{lines.map((line) => (
 								<li key={line.sourceLineId} className="flex items-baseline gap-2">
 									<span className="min-w-0 flex-1 truncate">{line.description}</span>
-									<span className="text-muted-foreground font-mono tabular-nums">
+									<span className="font-mono text-muted-foreground tabular-nums">
 										{quantityOf(line.quantity, line.unit)} × {formatMoney(Number(line.unitPrice))}
 									</span>
 								</li>
 							))}
 						</ul>
 					) : (
-						<p className="text-muted-foreground text-sm">
+						<p className="text-sm text-muted-foreground">
 							{mode === "amount" ? "Type an amount to see the lines." : "Choose at least one quantity."}
 						</p>
 					)}
-					<div className="border-secondary-2/40 mt-1 flex items-baseline justify-between border-t pt-2">
+					<div className="mt-1 flex items-baseline justify-between border-t border-secondary-2/40 pt-2">
 						<span className="text-sm font-semibold">{taxRate ? `Total with ${quantity(taxRate)}% tax` : "Total"}</span>
-						<span className="font-heading text-primary text-xl font-bold tabular-nums">{formatMoney(total)}</span>
+						<span className="font-heading text-xl font-bold text-primary tabular-nums">{formatMoney(total)}</span>
 					</div>
 				</section>
 			</form>

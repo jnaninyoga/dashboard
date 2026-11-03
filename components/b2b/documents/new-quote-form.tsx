@@ -243,7 +243,7 @@ export function NewQuoteForm({
 			action: (
 				<Link
 					href={`/b2b/partners/${partner.id}`}
-					className="text-primary inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold hover:underline"
+					className="inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold text-primary hover:underline"
 				>
 					Add it
 				</Link>
@@ -275,7 +275,7 @@ export function NewQuoteForm({
 				{/* Breadcrumb */}
 				<Link
 					href={`/b2b/partners/${partner.id}`}
-					className="group text-muted-foreground hover:text-primary flex w-fit items-center gap-2 text-sm transition-colors"
+					className="group flex w-fit items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
 				>
 					<ArrowLeft
 						size={16}
@@ -287,20 +287,20 @@ export function NewQuoteForm({
 				<DocumentNotices notices={notices} />
 
 				{/* Hero card — mirrors the detail page so create / view share one mental model */}
-				<div className="animate-slide-up border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-6 shadow-sm sm:p-8 md:flex-row">
-					<div className="text-primary absolute -top-10 right-0 p-8 opacity-5">
+				<div className="relative flex animate-slide-up flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-secondary/20 bg-card p-6 shadow-sm sm:p-8 md:flex-row">
+					<div className="absolute -top-10 right-0 p-8 text-primary opacity-5">
 						<DocumentText size={240} variant="Bulk" />
 					</div>
 
 					<div className="relative z-10 flex flex-col gap-6">
 						<div className="flex items-center gap-4">
-							<div className="border-primary/20 bg-primary/10 text-primary flex size-14 items-center justify-center rounded-2xl border shadow-inner">
+							<div className="flex size-14 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-inner">
 								<DocumentText size={28} variant="Bulk" />
 							</div>
 							<div className="min-w-0 space-y-1">
 								{/* The number never breaks at its dashes; the status goes under it when there's no room. */}
 								<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-									<h1 className="font-heading text-foreground text-2xl font-black tracking-tight whitespace-nowrap sm:text-3xl">
+									<h1 className="font-heading text-2xl font-black tracking-tight whitespace-nowrap text-foreground sm:text-3xl">
 										{previewNumber}
 									</h1>
 									<Badge
@@ -310,7 +310,7 @@ export function NewQuoteForm({
 										<Edit2 size={14} variant="Bold" /> Draft
 									</Badge>
 								</div>
-								<p className="text-muted-foreground/60 text-xs font-bold tracking-wider uppercase">
+								<p className="text-xs font-bold tracking-wider text-muted-foreground/60 uppercase">
 									New B2B Quotation
 								</p>
 							</div>
@@ -318,14 +318,14 @@ export function NewQuoteForm({
 
 						<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 							<div className="flex items-center gap-3">
-								<div className="bg-secondary/40 text-secondary-3 flex size-10 items-center justify-center rounded-xl">
+								<div className="flex size-10 items-center justify-center rounded-xl bg-secondary/40 text-secondary-3">
 									<Buildings size={20} variant="Bulk" />
 								</div>
 								<div className="flex min-w-0 flex-col">
-									<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
+									<span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase opacity-50">
 										Partner
 									</span>
-									<span className="text-foreground truncate text-sm font-bold">
+									<span className="truncate text-sm font-bold text-foreground">
 										{partner.companyName}
 									</span>
 								</div>
@@ -336,11 +336,11 @@ export function NewQuoteForm({
 								name="document.issueDate"
 								render={({ field }) => (
 									<FormItem className="flex items-center gap-3 space-y-0">
-										<div className="bg-secondary/40 text-secondary-3 flex size-10 items-center justify-center rounded-xl">
+										<div className="flex size-10 items-center justify-center rounded-xl bg-secondary/40 text-secondary-3">
 											<Calendar size={20} variant="Bulk" />
 										</div>
 										<div className="flex flex-col">
-											<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
+											<FormLabel className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase opacity-50">
 												Issue Date
 											</FormLabel>
 											<FormControl>
@@ -361,11 +361,11 @@ export function NewQuoteForm({
 								name="document.dueDate"
 								render={({ field }) => (
 									<FormItem className="flex items-center gap-3 space-y-0">
-										<div className="bg-secondary/40 text-secondary-3 flex size-10 items-center justify-center rounded-xl">
+										<div className="flex size-10 items-center justify-center rounded-xl bg-secondary/40 text-secondary-3">
 											<MoneyTime size={20} variant="Bulk" />
 										</div>
 										<div className="flex flex-col">
-											<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
+											<FormLabel className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase opacity-50">
 												Valid until
 											</FormLabel>
 											<FormControl>
@@ -388,7 +388,7 @@ export function NewQuoteForm({
 							name="document.contactId"
 							render={({ field }) => (
 								<FormItem className="space-y-1">
-									<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase opacity-50">
+									<FormLabel className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase opacity-50">
 										Recipient contact
 									</FormLabel>
 									{contacts.length > 0 ? (
@@ -398,7 +398,7 @@ export function NewQuoteForm({
 											onValueChange={(val) => field.onChange(val === "none" ? null : val)}
 										>
 											<FormControl>
-												<SelectTrigger className="bg-card w-full max-w-sm border font-semibold">
+												<SelectTrigger className="w-full max-w-sm border bg-card font-semibold">
 													<SelectValue />
 												</SelectTrigger>
 											</FormControl>
@@ -413,7 +413,7 @@ export function NewQuoteForm({
 															</span>
 														) : null}
 														{c.isPrimary ? (
-															<span className="bg-primary/10 text-primary ml-2 rounded-full px-1.5 py-0.5 text-[9px] uppercase">
+															<span className="ml-2 rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] text-primary uppercase">
 																Primary
 															</span>
 														) : null}
@@ -424,7 +424,7 @@ export function NewQuoteForm({
 										</Select>
 									) : (
 										// The notice at the top says what this means, and offers to add one.
-										<p className="text-muted-foreground text-sm">No contact</p>
+										<p className="text-sm text-muted-foreground">No contact</p>
 									)}
 									<FormMessage />
 								</FormItem>
@@ -456,7 +456,7 @@ export function NewQuoteForm({
 									<TableHead className="w-[40px] p-0" />
 								</TableRow>
 							</TableHeader>
-							<TableBody className={cn("divide-secondary/15 divide-y", phoneLine.body)}>
+							<TableBody className={cn("divide-y divide-secondary/15", phoneLine.body)}>
 								{fields.map((field, index) => {
 									const waiting = isWaiting(index);
 									return (
@@ -464,7 +464,7 @@ export function NewQuoteForm({
 										key={field.id}
 										onBlur={leaveLine(index)}
 										className={cn(
-											"hover:bg-primary/5 border-none transition-colors duration-500",
+											"border-none transition-colors duration-500 hover:bg-primary/5",
 											grownId === field.id && "bg-primary/10 hover:bg-primary/10",
 											phoneLine.row,
 										)}
@@ -517,7 +517,7 @@ export function NewQuoteForm({
 														{...cellProps(index, "quantity")}
 														{...f}
 														value={f.value ?? ""}
-														className={cn("bg-card h-8 w-full border text-center font-mono text-sm font-bold", phoneLine.input)}
+														className={cn("h-8 w-full border bg-card text-center font-mono text-sm font-bold", phoneLine.input)}
 														disabled={isPending}
 														onChange={(e) => {
 															const val = normalizeDecimalInput(e.target.value);
@@ -549,7 +549,7 @@ export function NewQuoteForm({
 															{...cellProps(index, "unitPrice")}
 															{...f}
 															value={f.value ?? ""}
-															className={cn("bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold", phoneLine.input)}
+															className={cn("h-8 w-full border bg-card pr-8 text-center font-mono text-sm font-bold", phoneLine.input)}
 															disabled={isPending}
 															onChange={(e) => {
 																const val = normalizeDecimalInput(e.target.value);
@@ -562,7 +562,7 @@ export function NewQuoteForm({
 																);
 															}}
 														/>
-														<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">{CURRENCY}</span>
+														<span className="absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold text-muted-foreground/40">{CURRENCY}</span>
 													</div>
 												)}
 											/>
@@ -570,7 +570,7 @@ export function NewQuoteForm({
 										</TableCell>
 										<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
 											{waiting ? null : (
-											<span className="text-foreground font-mono text-sm font-black tabular-nums">
+											<span className="font-mono text-sm font-black text-foreground tabular-nums">
 												<Money amount={(Number(linesWatcher[index]?.quantity) || 0) * (Number(linesWatcher[index]?.unitPrice) || 0)} />
 											</span>
 										)}
@@ -581,7 +581,7 @@ export function NewQuoteForm({
 													type="button"
 													size="icon"
 													aria-label={`Remove line ${index + 1}`}
-													className={cn("text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90", phoneLine.remove)}
+													className={cn("size-8 cursor-pointer rounded-xl bg-destructive/5 text-destructive transition-all hover:scale-105 hover:bg-destructive/10 active:scale-90", phoneLine.remove)}
 													onClick={() => removeLine(index)}
 													disabled={isPending}
 												>
@@ -596,24 +596,24 @@ export function NewQuoteForm({
 						</Table>
 					</div>
 					{form.formState.errors.lines?.root?.message ?? form.formState.errors.lines?.message ? (
-						<p role="alert" className="text-destructive mt-2 px-4 text-sm">
+						<p role="alert" className="mt-2 px-4 text-sm text-destructive">
 							{form.formState.errors.lines?.root?.message ?? form.formState.errors.lines?.message}
 						</p>
 					) : null}
 
 					{/* Totals strip */}
 					<div className="mt-6 flex flex-col gap-4 sm:flex-row sm:justify-end">
-						<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
+						<div className="flex w-full flex-col items-end gap-2.5 rounded-2xl border bg-card p-4 shadow-sm sm:max-w-xs">
 							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-muted-foreground text-sm">Subtotal</span>
-								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+								<span className="text-sm text-muted-foreground">Subtotal</span>
+								<span className="font-heading text-lg font-bold text-foreground tabular-nums">
 									<Money amount={subtotal} />
 								</span>
 							</div>
 							<div className="flex w-full items-center justify-between gap-4">
 								<div className="flex items-center gap-2.5">
-									<span className="text-muted-foreground text-sm">Tax</span>
-									<div className="bg-card flex items-center rounded-xl border px-2 py-1">
+									<span className="text-sm text-muted-foreground">Tax</span>
+									<div className="flex items-center rounded-xl border bg-card px-2 py-1">
 										<FormField
 											control={form.control}
 											name="document.taxRate"
@@ -636,19 +636,19 @@ export function NewQuoteForm({
 												/>
 											)}
 										/>
-										<span className="text-muted-foreground/60 text-[10px] font-bold">
+										<span className="text-[10px] font-bold text-muted-foreground/60">
 											%
 										</span>
 									</div>
 								</div>
-								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+								<span className="font-heading text-lg font-bold text-foreground tabular-nums">
 									<Money amount={taxAmount} />
 								</span>
 							</div>
 							<Separator className="w-full" />
 							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-foreground font-semibold">Total</span>
-								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
+								<span className="font-semibold text-foreground">Total</span>
+								<span className="zen-teal-glow font-heading text-3xl font-black text-primary tabular-nums">
 									<Money amount={totalAmount} />
 								</span>
 							</div>
@@ -682,8 +682,8 @@ export function NewQuoteForm({
 				</DocumentSection>
 
 				{/* Sticky footer */}
-				<div className="bg-card sticky bottom-[calc(var(--bottom-bar)+1rem)] z-10 flex items-center justify-between gap-3 rounded-2xl border p-4 shadow-md backdrop-blur-sm md:bottom-4">
-					<div className="text-muted-foreground hidden text-xs sm:block">
+				<div className="sticky bottom-[calc(var(--bottom-bar)+1rem)] z-10 flex items-center justify-between gap-3 rounded-2xl border bg-card p-4 shadow-md backdrop-blur-sm md:bottom-4">
+					<div className="hidden text-xs text-muted-foreground sm:block">
 						Dated {issueDate} · valid until {dueDate || "—"}
 					</div>
 					<div className="ml-auto flex items-center gap-3">

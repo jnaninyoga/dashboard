@@ -62,16 +62,16 @@ export function DocumentCell({ doc }: { doc: ListDocument }) {
 				<Link
 					href={`/b2b/documents/${doc.id}`}
 					title={documentName(doc)}
-					className="text-foreground hover:text-primary focus-visible:ring-ring truncate rounded-sm font-semibold transition-colors outline-none focus-visible:ring-2"
+					className="truncate rounded-sm font-semibold text-foreground transition-colors outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					{documentName(doc)}
 				</Link>
-				<span className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-sm">
+				<span className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
 					<span className="truncate">
 						{documentKind(doc.type)} · {issued(doc)}
 					</span>
 					{quote ? (
-						<span className="bg-secondary text-secondary-foreground shrink-0 rounded-full px-2 py-0.5 text-xs font-medium">
+						<span className="shrink-0 rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
 							{quote}
 						</span>
 					) : null}
@@ -86,13 +86,13 @@ export function AmountCell({ doc, align = "right" }: { doc: ListDocument; align?
 	const { total, due, toRefund } = documentAmounts(doc);
 	return (
 		<div className={cn("flex flex-col", align === "right" ? "items-end text-right" : "items-start")}>
-			<span className="text-foreground font-semibold tabular-nums">{formatMoney(total)}</span>
+			<span className="font-semibold text-foreground tabular-nums">{formatMoney(total)}</span>
 			{due > 0 ? (
-				<span className="text-warning text-sm font-medium tabular-nums">Due {formatMoney(due)}</span>
+				<span className="text-sm font-medium text-warning tabular-nums">Due {formatMoney(due)}</span>
 			) : toRefund > 0 ? (
-				<span className="text-warning text-sm font-medium tabular-nums">To refund {formatMoney(toRefund)}</span>
+				<span className="text-sm font-medium text-warning tabular-nums">To refund {formatMoney(toRefund)}</span>
 			) : doc.type === "invoice" && doc.status === "paid" ? (
-				<span className="text-success text-sm">Paid in full</span>
+				<span className="text-sm text-success">Paid in full</span>
 			) : null}
 		</div>
 	);
@@ -105,15 +105,15 @@ export function DocumentRowCard({ doc, subtitle }: { doc: ListDocument; subtitle
 			<div className="flex items-start gap-3">
 				<DocumentIcon type={doc.type} />
 				<div className="flex min-w-0 flex-1 flex-col">
-					<Link href={`/b2b/documents/${doc.id}`} className="text-foreground truncate font-semibold">
+					<Link href={`/b2b/documents/${doc.id}`} className="truncate font-semibold text-foreground">
 						{documentName(doc)}
 					</Link>
-					<span className="text-muted-foreground truncate text-sm">
+					<span className="truncate text-sm text-muted-foreground">
 						{subtitle} · {issued(doc)}
 					</span>
 				</div>
 			</div>
-			<div className="border-border/60 flex items-end justify-between gap-3 border-t pt-3">
+			<div className="flex items-end justify-between gap-3 border-t border-border/60 pt-3">
 				<DocumentStatusBadge status={displayStatus(doc, studioDateString())} />
 				<AmountCell doc={doc} />
 			</div>
@@ -142,12 +142,12 @@ const columns: ColumnDef<DocumentWithRelations>[] = [
 				<div className="flex max-w-56 min-w-0 flex-col">
 					<Link
 						href={`/b2b/partners/${doc.partnerId}`}
-						className="text-foreground hover:text-primary truncate font-medium transition-colors"
+						className="truncate font-medium text-foreground transition-colors hover:text-primary"
 					>
 						{doc.partner?.companyName ?? "—"}
 					</Link>
 					{doc.contact?.fullName ? (
-						<span className="text-muted-foreground truncate text-sm">{doc.contact.fullName}</span>
+						<span className="truncate text-sm text-muted-foreground">{doc.contact.fullName}</span>
 					) : null}
 				</div>
 			);

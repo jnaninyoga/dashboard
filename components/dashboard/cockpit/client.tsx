@@ -20,15 +20,15 @@ export function CockpitClient({
 		<div className="flex flex-col gap-5">
 			{bare ? (
 				!today.length && !error ? (
-					<p className="text-muted-foreground rounded-3xl border border-dashed p-8 text-center">
+					<p className="rounded-3xl border border-dashed p-8 text-center text-muted-foreground">
 						No class or private session today. They&apos;ll be here to check clients in.
 					</p>
 				) : null
 			) : (
-			<div className="bg-card zen-shadow flex items-center justify-between gap-4 rounded-3xl p-5">
+			<div className="zen-shadow flex items-center justify-between gap-4 rounded-3xl bg-card p-5">
 				<div className="flex flex-col gap-0.5">
-					<h2 className="font-heading text-foreground text-lg font-semibold tracking-tight">Today&apos;s agenda</h2>
-					<span className="text-muted-foreground text-sm">
+					<h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">Today&apos;s agenda</h2>
+					<span className="text-sm text-muted-foreground">
 						{today.length
 							? `${today.length} ${today.length === 1 ? "session" : "sessions"}`
 							: "No sessions today. Enjoy the downtime."}
@@ -39,7 +39,7 @@ export function CockpitClient({
 			)}
 
 			{error ? (
-				<p role="alert" className="bg-card zen-shadow rounded-2xl border p-5 text-sm leading-relaxed">
+				<p role="alert" className="zen-shadow rounded-2xl border bg-card p-5 text-sm leading-relaxed">
 					{error}
 				</p>
 			) : today.length === 0 ? null : (

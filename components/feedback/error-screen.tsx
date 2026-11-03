@@ -67,17 +67,17 @@ export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenPro
 			data-full-bleed
 			className={cn(
 				"relative flex w-full items-center justify-center overflow-hidden px-5 py-10",
-				fullScreen ? "bg-background fixed inset-0 z-100 min-h-dvh" : "min-h-[70vh] flex-1",
+				fullScreen ? "fixed inset-0 z-100 min-h-dvh bg-background" : "min-h-[70vh] flex-1",
 			)}
 		>
 			<LotusPond />
 
-			<div className="animate-slide-up relative z-10 flex w-full max-w-md flex-col items-center gap-6 text-center">
+			<div className="relative z-10 flex w-full max-w-md animate-slide-up flex-col items-center gap-6 text-center">
 				<div className="space-y-3">
-					<h1 className="font-heading text-foreground text-4xl font-bold sm:text-5xl">
+					<h1 className="font-heading text-4xl font-bold text-foreground sm:text-5xl">
 						Something drifted away
 					</h1>
-					<p className="text-muted-foreground leading-relaxed">
+					<p className="leading-relaxed text-muted-foreground">
 						{lostConnection
 							? "The page stopped loading halfway: the connection or the server dropped. What you saved is safe. Try again; if it keeps happening, send the report below to your developer."
 							: "This page ran into a problem. What you saved is safe. Try again, and if it keeps happening, send the report below to your developer."}
@@ -85,8 +85,8 @@ export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenPro
 				</div>
 
 				{code ? (
-					<div className="bg-card zen-shadow flex flex-col items-center rounded-2xl border px-6 py-3">
-						<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+					<div className="zen-shadow flex flex-col items-center rounded-2xl border bg-card px-6 py-3">
+						<span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
 							Error code
 						</span>
 						<span className="font-mono text-lg font-bold tracking-wider select-all">
@@ -125,16 +125,16 @@ export function ErrorScreen({ error, reset, fullScreen = false }: ErrorScreenPro
 
 				{report ? (
 					<details className="w-full text-left">
-						<summary className="text-muted-foreground cursor-pointer text-center text-xs font-medium">
+						<summary className="cursor-pointer text-center text-xs font-medium text-muted-foreground">
 							Technical details
 						</summary>
-						<pre className="bg-muted/60 mt-3 max-h-56 overflow-auto rounded-xl p-3 text-[11px] leading-relaxed whitespace-pre-wrap">
+						<pre className="mt-3 max-h-56 overflow-auto rounded-xl bg-muted/60 p-3 text-[11px] leading-relaxed whitespace-pre-wrap">
 							{formatErrorReport(report)}
 						</pre>
 					</details>
 				) : null}
 
-				<p className="font-vibes text-muted-foreground/60 max-w-sm text-xl">
+				<p className="max-w-sm font-vibes text-xl text-muted-foreground/60">
 					In the midst of movement and chaos, keep stillness inside of you.
 				</p>
 			</div>

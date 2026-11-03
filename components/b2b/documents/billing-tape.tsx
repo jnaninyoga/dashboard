@@ -30,14 +30,14 @@ export function BillingTape({ tape, currentId, className }: { tape: QuoteTape; c
 		<div
 			role="img"
 			aria-label={`${formatMoney(tape.invoiced)} invoiced of ${formatMoney(tape.quoted)}, ${formatMoney(tape.collected)} collected${tape.left > 0 ? `, ${formatMoney(tape.left)} left to invoice` : ""}.`}
-			className={cn("bg-secondary/50 flex h-4 w-full gap-[3px] rounded-full p-[3px]", className)}
+			className={cn("flex h-4 w-full gap-[3px] rounded-full bg-secondary/50 p-[3px]", className)}
 		>
 			{tape.pieces.map((piece, index) => (
 				<div
 					key={piece.id}
 					style={{ flexGrow: piece.share, flexBasis: 0, animationDelay: `${index * 90}ms` }}
 					className={cn(
-						"motion-safe:animate-tape-grow relative h-full min-w-2 origin-left overflow-hidden rounded-full transition-opacity",
+						"relative h-full min-w-2 origin-left overflow-hidden rounded-full transition-opacity motion-safe:animate-tape-grow",
 						PIECE[piece.state],
 						currentId && piece.id !== currentId && "opacity-35",
 					)}
@@ -45,7 +45,7 @@ export function BillingTape({ tape, currentId, className }: { tape: QuoteTape; c
 					{piece.state !== "paid" && piece.filled > 0 ? (
 						<div
 							style={{ width: `${piece.filled * 100}%`, animationDelay: `${index * 90 + 300}ms` }}
-							className="bg-success motion-safe:animate-tape-grow absolute inset-y-0 left-0 origin-left rounded-full"
+							className="absolute inset-y-0 left-0 origin-left rounded-full bg-success motion-safe:animate-tape-grow"
 						/>
 					) : null}
 				</div>
@@ -82,7 +82,7 @@ export function PieceMark({ piece, className }: { piece: TapePiece; className?: 
 	return (
 		<span aria-hidden className={cn("relative block h-2.5 w-9 shrink-0 overflow-hidden rounded-full", PIECE[piece.state], className)}>
 			{piece.state !== "paid" && piece.filled > 0 ? (
-				<span style={{ width: `${piece.filled * 100}%` }} className="bg-success absolute inset-y-0 left-0 rounded-full" />
+				<span style={{ width: `${piece.filled * 100}%` }} className="absolute inset-y-0 left-0 rounded-full bg-success" />
 			) : null}
 		</span>
 	);

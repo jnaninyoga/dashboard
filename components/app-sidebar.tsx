@@ -89,18 +89,18 @@ export function AppSidebar({
 				<Link
 					href="/"
 					onClick={closeOnMobile}
-					className="focus-visible:ring-sidebar-ring flex rounded-2xl outline-none focus-visible:ring-2"
+					className="flex rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
 				>
 					<div className="flex items-center gap-3 px-1 group-data-[collapsible=icon]:p-0">
 						{/* The pale lotus sits on its own tile so the pattern can't swallow it. */}
-						<span className="bg-card ring-sidebar-border/70 flex size-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:ring-0">
+						<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-card shadow-sm ring-1 ring-sidebar-border/70 group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:rounded-lg group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:shadow-none group-data-[collapsible=icon]:ring-0">
 							<Image src="/logo.png" alt="JnaninYoga" width={40} height={40} className="size-10 object-contain group-data-[collapsible=icon]:size-8" />
 						</span>
 						<div className="grid min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
-							<span className="font-heading text-sidebar-foreground truncate text-2xl font-bold tracking-tight uppercase">
+							<span className="truncate font-heading text-2xl font-bold tracking-tight text-sidebar-foreground uppercase">
 								Jnanin Yoga
 							</span>
-							<span className="font-heading text-sidebar-foreground/65 truncate text-xs font-semibold tracking-widest uppercase">
+							<span className="truncate font-heading text-xs font-semibold tracking-widest text-sidebar-foreground/65 uppercase">
 								Command Center
 							</span>
 						</div>
@@ -112,7 +112,7 @@ export function AppSidebar({
 						<QuickActionsMenu side={isMobile ? "bottom" : "right"} onChoose={closeOnMobile}>
 							<SidebarMenuButton
 								tooltip="New"
-								className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-[state=open]:bg-primary/90 data-[state=open]:text-primary-foreground zen-glow-teal h-11 justify-center gap-2 rounded-full font-semibold group-data-[collapsible=icon]:rounded-full [&>svg]:size-5"
+								className="zen-glow-teal h-11 justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground group-data-[collapsible=icon]:rounded-full hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground data-[state=open]:bg-primary/90 data-[state=open]:text-primary-foreground [&>svg]:size-5"
 							>
 								<Add className="motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover/menu-item:rotate-90" />
 								<span>New</span>
@@ -122,10 +122,10 @@ export function AppSidebar({
 				</SidebarMenu>
 			</SidebarHeader>
 
-			<SidebarContent className="gap-0 [scrollbar-color:var(--sidebar-border)_transparent] [scrollbar-width:thin]">
+			<SidebarContent className="scrollbar-thin [scrollbar-color:var(--sidebar-border)_transparent] gap-0">
 				{dashboardConfig.sections.map((section) => (
 					<SidebarGroup key={section.label} className="px-3 py-1.5 group-data-[collapsible=icon]:px-2">
-						<SidebarGroupLabel className="text-sidebar-foreground/60 px-3 text-xs">{section.label}</SidebarGroupLabel>
+						<SidebarGroupLabel className="px-3 text-xs text-sidebar-foreground/60">{section.label}</SidebarGroupLabel>
 						<SidebarGroupContent>
 							<SidebarMenu className="gap-0.5">
 								{section.items.map((item) => (
@@ -148,7 +148,7 @@ export function AppSidebar({
 							<Collapsible.Trigger asChild>
 								<button
 									type="button"
-									className="text-sidebar-foreground/60 hover:text-sidebar-foreground focus-visible:ring-sidebar-ring group/settings flex h-11 w-full items-center gap-3 rounded-full px-3 text-[15px] transition-colors outline-none focus-visible:ring-2 md:h-9 md:text-sm"
+									className="group/settings flex h-11 w-full items-center gap-3 rounded-full px-3 text-[15px] text-sidebar-foreground/60 transition-colors outline-none hover:text-sidebar-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring md:h-9 md:text-sm"
 								>
 									<Setting2 size={20} variant="Linear" className="motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover/settings:rotate-45" />
 									<span className="flex-1 text-left">Settings</span>
@@ -158,7 +158,7 @@ export function AppSidebar({
 									/>
 								</button>
 							</Collapsible.Trigger>
-							<Collapsible.Content className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden motion-reduce:animate-none">
+							<Collapsible.Content className="overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down motion-reduce:animate-none">
 								<SidebarGroupContent>
 									<SidebarMenu className="gap-0.5 pt-0.5 pl-3">{settingsItems}</SidebarMenu>
 								</SidebarGroupContent>

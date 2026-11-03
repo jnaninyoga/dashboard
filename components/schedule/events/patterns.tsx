@@ -15,7 +15,7 @@ function Shell({ children, className }: { children: React.ReactNode } & PatternP
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden
-            className={cn("h-full w-full", className)}
+            className={cn("size-full", className)}
         >
             {children}
         </svg>

@@ -28,7 +28,7 @@ export function FormsDemo() {
 	const [clientFormShown, setClientFormShown] = useState(false);
 
 	return (
-		<section className="bg-card grid gap-4 rounded-3xl border p-6">
+		<section className="grid gap-4 rounded-3xl border bg-card p-6">
 			<h2 className="text-xl">Forms</h2>
 			<div className="flex flex-wrap gap-3">
 				<PartnerDialog>

@@ -166,7 +166,7 @@ export function CheckInManager({
 			{doorOpen ? (
 				<section aria-label="Check in" className="flex min-w-0 flex-col gap-6">
 					{/* Stays in reach on a phone while she scrolls the regulars. */}
-					<div className="bg-background/85 sticky top-14 z-30 -mx-4 flex items-center gap-2 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:static lg:m-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
+					<div className="sticky top-14 z-30 -mx-4 flex items-center gap-2 bg-background/85 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:static lg:m-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none">
 						<div className="min-w-0 flex-1">
 							<ClientSearch onSelectClient={onPick} here={here} autoFocus />
 						</div>
@@ -175,10 +175,10 @@ export function CheckInManager({
 							<a
 								href="#here-title"
 								aria-label={`${present.length} checked in: see who`}
-								className="bg-card text-foreground focus-visible:ring-ring flex h-14 shrink-0 flex-col items-center justify-center rounded-2xl border px-3 leading-none outline-none focus-visible:ring-2 lg:hidden"
+								className="flex h-14 shrink-0 flex-col items-center justify-center rounded-2xl border bg-card px-3 leading-none text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
 							>
-								<span className="font-heading text-primary text-xl font-semibold tabular-nums">{present.length}</span>
-								<span className="text-muted-foreground text-xs">here</span>
+								<span className="font-heading text-xl font-semibold text-primary tabular-nums">{present.length}</span>
+								<span className="text-xs text-muted-foreground">here</span>
 							</a>
 						) : null}
 					</div>
@@ -186,12 +186,12 @@ export function CheckInManager({
 					{refusal ? (
 						<div
 							role="alert"
-							className="border-destructive/25 bg-destructive/5 animate-in fade-in-0 slide-in-from-top-1 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border p-4 duration-200 motion-reduce:animate-none md:p-5"
+							className="flex animate-in flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border border-destructive/25 bg-destructive/5 p-4 duration-200 fade-in-0 slide-in-from-top-1 motion-reduce:animate-none md:p-5"
 						>
-							<Danger className="text-destructive size-7 shrink-0" variant="Bulk" />
+							<Danger className="size-7 shrink-0 text-destructive" variant="Bulk" />
 							<div className="min-w-0 flex-1 basis-56">
-								<p className="text-foreground font-semibold">{refusal.client.fullName} isn&apos;t checked in</p>
-								<p className="text-muted-foreground text-sm">{refusal.message}</p>
+								<p className="font-semibold text-foreground">{refusal.client.fullName} isn&apos;t checked in</p>
+								<p className="text-sm text-muted-foreground">{refusal.message}</p>
 							</div>
 							<div className="flex items-center gap-2">
 								{refusal.needsCard ? (
@@ -209,20 +209,20 @@ export function CheckInManager({
 					{waiting.length ? (
 						<section aria-labelledby="usual-title" className="flex flex-col gap-3">
 							<div className="flex flex-col gap-0.5">
-								<h2 id="usual-title" className="font-heading text-foreground text-xl font-semibold">
+								<h2 id="usual-title" className="font-heading text-xl font-semibold text-foreground">
 									Usually here
 								</h2>
-								<p className="text-muted-foreground text-sm">Seen most at this class lately. Tap to check in.</p>
+								<p className="text-sm text-muted-foreground">Seen most at this class lately. Tap to check in.</p>
 							</div>
-							<ul className="bg-card divide-border divide-y rounded-3xl border">
+							<ul className="divide-y divide-border rounded-3xl border bg-card">
 								{waiting.map((client) => (
 									<li key={client.id} className="flex items-center gap-3 px-4 py-3">
 										<PersonAvatar person={{ id: client.id, fullName: client.fullName, photoUrl: client.photoUrl ?? null }} />
 										<span className="flex min-w-0 flex-1 flex-col">
 											<span className="flex min-w-0 items-center gap-1.5">
-												<span className="text-foreground truncate font-semibold">{client.fullName}</span>
+												<span className="truncate font-semibold text-foreground">{client.fullName}</span>
 												{client.healthLogs?.some((log) => log.isAlert) ? (
-													<Danger size={16} variant="Bold" className="text-destructive shrink-0" aria-label="Health alerts" role="img" />
+													<Danger size={16} variant="Bold" className="shrink-0 text-destructive" aria-label="Health alerts" role="img" />
 												) : null}
 											</span>
 											<span className="truncate text-sm">
@@ -261,10 +261,10 @@ export function CheckInManager({
 			<section aria-labelledby="here-title" className={cn("flex min-w-0 scroll-mt-36 flex-col gap-3", doorOpen && "lg:sticky lg:top-20")}>
 				<div className="flex items-end justify-between gap-3">
 					<div className="flex flex-col gap-0.5">
-						<h2 id="here-title" className="font-heading text-foreground text-xl font-semibold">
+						<h2 id="here-title" className="font-heading text-xl font-semibold text-foreground">
 							{cancelled ? "Checked in before it was cancelled" : isPast ? "Who came" : "Here"}
 						</h2>
-						<p className="text-muted-foreground text-sm">
+						<p className="text-sm text-muted-foreground">
 							{cancelled
 								? "Their credits went back."
 								: present.length
@@ -275,14 +275,14 @@ export function CheckInManager({
 						</p>
 					</div>
 					{present.length ? (
-						<span className="font-heading text-primary text-4xl leading-none font-semibold tabular-nums" aria-hidden>
+						<span className="font-heading text-4xl leading-none font-semibold text-primary tabular-nums" aria-hidden>
 							{present.length}
 						</span>
 					) : null}
 				</div>
 
 				{attendance.length === 0 ? (
-					<div className="text-muted-foreground flex flex-col items-center gap-3 rounded-3xl border border-dashed px-6 py-10 text-center">
+					<div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed px-6 py-10 text-center text-muted-foreground">
 						<Profile2User size={36} variant="Bulk" className="text-primary/40" />
 						<p className="max-w-64 text-sm">
 							{isPast
@@ -293,7 +293,7 @@ export function CheckInManager({
 						</p>
 					</div>
 				) : (
-					<ul className="bg-card divide-border divide-y rounded-3xl border">
+					<ul className="divide-y divide-border rounded-3xl border bg-card">
 						{attendance.map((record) => {
 							const alerts = sortAlerts(record.client.healthLogs ?? []);
 							const gone = !!record.cancelledAt;
@@ -302,28 +302,28 @@ export function CheckInManager({
 									key={record.id}
 									className={cn(
 										"flex flex-col gap-3 px-4 py-3 transition-colors duration-1000",
-										record.id === fresh && "bg-success/5 animate-in fade-in-0 slide-in-from-top-2 duration-300 motion-reduce:animate-none",
+										record.id === fresh && "animate-in bg-success/5 duration-300 fade-in-0 slide-in-from-top-2 motion-reduce:animate-none",
 									)}
 								>
 									<div className="flex items-center gap-3">
 										<span className="relative shrink-0">
 											<PersonAvatar person={record.client} />
-											<span className="bg-card absolute -right-1 -bottom-1 rounded-full p-0.5">
+											<span className="absolute -right-1 -bottom-1 rounded-full bg-card p-0.5">
 												{gone ? (
-													<ArrowRotateLeft className="text-muted-foreground size-4" variant="Bold" />
+													<ArrowRotateLeft className="size-4 text-muted-foreground" variant="Bold" />
 												) : (
-													<TickCircle className="text-success size-4" variant="Bold" />
+													<TickCircle className="size-4 text-success" variant="Bold" />
 												)}
 											</span>
 										</span>
 										<span className="flex min-w-0 flex-1 flex-col">
 											<Link
 												href={`/clients/${record.client.id}`}
-												className="text-foreground hover:text-primary truncate font-semibold transition-colors"
+												className="truncate font-semibold text-foreground transition-colors hover:text-primary"
 											>
 												{record.client.fullName}
 											</Link>
-											<span className="text-muted-foreground text-sm tabular-nums">
+											<span className="text-sm text-muted-foreground tabular-nums">
 												{format(toStudioTime(new Date(record.checkInTime)), "HH:mm")}
 												{gone ? ", credit given back" : ""}
 											</span>
@@ -337,7 +337,7 @@ export function CheckInManager({
 												disabled={busy !== null}
 												aria-label={`Take back ${record.client.fullName}'s check-in`}
 												title="Checked in by mistake? Take it back"
-												className="text-muted-foreground hover:text-destructive size-11 shrink-0 rounded-full"
+												className="size-11 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
 											>
 												<ArrowRotateLeft size={18} />
 											</Button>
@@ -352,11 +352,11 @@ export function CheckInManager({
 													key={log.id}
 													className={cn(
 														"rounded-2xl border-l-4 px-4 py-3",
-														log.severity === "critical" ? "bg-destructive/5 border-l-destructive" : "bg-warning/5 border-l-warning",
+														log.severity === "critical" ? "border-l-destructive bg-destructive/5" : "border-l-warning bg-warning/5",
 													)}
 												>
-													<p className="text-foreground font-medium">{log.condition}</p>
-													{log.treatment ? <p className="text-muted-foreground text-sm">{log.treatment}</p> : null}
+													<p className="font-medium text-foreground">{log.condition}</p>
+													{log.treatment ? <p className="text-sm text-muted-foreground">{log.treatment}</p> : null}
 												</li>
 											))}
 										</ul>

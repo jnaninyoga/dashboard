@@ -218,7 +218,7 @@ export function EditableDocumentLines({
 									<TableHead className="w-[40px] p-0" />
 								</TableRow>
 							</TableHeader>
-							<TableBody className={cn("divide-secondary/15 divide-y", phoneLine.body)}>
+							<TableBody className={cn("divide-y divide-secondary/15", phoneLine.body)}>
 								{fields.map((field, index) => {
 									const waiting = isWaiting(index);
 									return (
@@ -226,7 +226,7 @@ export function EditableDocumentLines({
 											key={field.id}
 											onBlur={leaveLine(index)}
 											className={cn(
-												"hover:bg-primary/5 border-none transition-colors duration-500",
+												"border-none transition-colors duration-500 hover:bg-primary/5",
 												grownId === field.id && "bg-primary/10 hover:bg-primary/10",
 												phoneLine.row,
 											)}
@@ -282,7 +282,7 @@ export function EditableDocumentLines({
 																{...cellProps(index, "quantity")}
 																{...f}
 																value={f.value ?? ""}
-																className={cn("focus-visible:ring-primary/20 bg-card h-8 w-full border text-center font-mono text-sm font-bold", phoneLine.input)}
+																className={cn("h-8 w-full border bg-card text-center font-mono text-sm font-bold focus-visible:ring-primary/20", phoneLine.input)}
 																onChange={(e) => {
 																	const val = normalizeDecimalInput(
 																		e.target.value,
@@ -317,7 +317,7 @@ export function EditableDocumentLines({
 																	{...cellProps(index, "unitPrice")}
 																	{...f}
 																	value={f.value ?? ""}
-																	className={cn("focus-visible:ring-primary/20 bg-card h-8 w-full border pr-8 text-center font-mono text-sm font-bold", phoneLine.input)}
+																	className={cn("h-8 w-full border bg-card pr-8 text-center font-mono text-sm font-bold focus-visible:ring-primary/20", phoneLine.input)}
 																	onChange={(e) => {
 																		// A French comma is the decimal mark ("450,50"), not dropped.
 																		const val = normalizeDecimalInput(
@@ -332,7 +332,7 @@ export function EditableDocumentLines({
 																		f.onChange(sanitized);
 																	}}
 																/>
-																<span className="text-muted-foreground/40 absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold">{CURRENCY}</span>
+																<span className="absolute top-1/2 right-2 -translate-y-1/2 text-[9px] font-bold text-muted-foreground/40">{CURRENCY}</span>
 															</div>
 														)}
 													/>
@@ -340,7 +340,7 @@ export function EditableDocumentLines({
 											</TableCell>
 											<TableCell className={cn("px-2 py-4 text-right align-top", phoneLine.cell)}>
 												{waiting ? null : (
-													<span className="text-foreground font-mono text-sm font-black tabular-nums">
+													<span className="font-mono text-sm font-black text-foreground tabular-nums">
 														<Money amount={(Number(linesWatcher[index]?.quantity) || 0) * (Number(linesWatcher[index]?.unitPrice) || 0)} />
 													</span>
 												)}
@@ -352,7 +352,7 @@ export function EditableDocumentLines({
 														type="button"
 														size="icon"
 														aria-label={`Remove line ${index + 1}`}
-														className={cn("text-destructive bg-destructive/5 hover:bg-destructive/10 h-8 w-8 cursor-pointer rounded-xl transition-all hover:scale-105 active:scale-90", phoneLine.remove)}
+														className={cn("size-8 cursor-pointer rounded-xl bg-destructive/5 text-destructive transition-all hover:scale-105 hover:bg-destructive/10 active:scale-90", phoneLine.remove)}
 														onClick={() => removeLine(index)}
 													>
 														<Trash size={15} variant="Bold" />
@@ -366,18 +366,18 @@ export function EditableDocumentLines({
 						</Table>
 					</div>
 
-					<div className="animate-slide-up flex flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
-						<div className="bg-card flex w-full flex-col items-end gap-2.5 rounded-2xl border p-4 shadow-sm sm:max-w-xs">
+					<div className="flex animate-slide-up flex-col gap-4 delay-100 sm:flex-row sm:justify-end">
+						<div className="flex w-full flex-col items-end gap-2.5 rounded-2xl border bg-card p-4 shadow-sm sm:max-w-xs">
 							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-muted-foreground text-sm">Subtotal</span>
-								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+								<span className="text-sm text-muted-foreground">Subtotal</span>
+								<span className="font-heading text-lg font-bold text-foreground tabular-nums">
 									<Money amount={subtotal} />
 								</span>
 							</div>
 							<div className="flex w-full items-center justify-between gap-4">
 								<div className="flex items-center gap-2.5">
-									<span className="text-muted-foreground text-sm">Tax</span>
-									<div className="bg-card flex items-center rounded-xl border px-2 py-1">
+									<span className="text-sm text-muted-foreground">Tax</span>
+									<div className="flex items-center rounded-xl border bg-card px-2 py-1">
 										<FormField
 											control={form.control}
 											name="taxRate"
@@ -403,19 +403,19 @@ export function EditableDocumentLines({
 												/>
 											)}
 										/>
-										<span className="text-muted-foreground/60 text-[10px] font-bold">
+										<span className="text-[10px] font-bold text-muted-foreground/60">
 											%
 										</span>
 									</div>
 								</div>
-								<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+								<span className="font-heading text-lg font-bold text-foreground tabular-nums">
 									<Money amount={taxAmount} />
 								</span>
 							</div>
 							<Separator className="w-full" />
 							<div className="flex w-full items-center justify-between gap-4">
-								<span className="text-foreground font-semibold">Total</span>
-								<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
+								<span className="font-semibold text-foreground">Total</span>
+								<span className="zen-teal-glow font-heading text-3xl font-black text-primary tabular-nums">
 									<Money amount={totalAmount} />
 								</span>
 							</div>

@@ -169,10 +169,10 @@ export function InvoicePayments({
 		<DocumentSection
 			id="payments"
 			title={creditNote ? "Settlement" : "Payments"}
-			aside={<p className="text-muted-foreground text-sm tabular-nums">{summary}</p>}
+			aside={<p className="text-sm text-muted-foreground tabular-nums">{summary}</p>}
 			className="animate-slide-up delay-150"
 		>
-			<ol className="bg-card rounded-2xl border p-2 shadow-sm sm:p-3">
+			<ol className="rounded-2xl border bg-card p-2 shadow-sm sm:p-3">
 				{entries.map((entry, index) => {
 					const { icon: EntryIcon, tone, title, detail, amount, amountTone } = describe(entry, creditNote, credited > 0);
 					const last = index === entries.length - 1;
@@ -183,14 +183,14 @@ export function InvoicePayments({
 						>
 							{/* The thread from one step to the next. */}
 							{last ? null : (
-								<span aria-hidden className="bg-border absolute top-[calc(50%+18px)] left-[25px] h-[calc(100%-36px)] w-0.5 rounded-full sm:left-[29px]" />
+								<span aria-hidden className="absolute top-[calc(50%+18px)] left-[25px] h-[calc(100%-36px)] w-0.5 rounded-full bg-border sm:left-[29px]" />
 							)}
 							<span className={cn("relative flex size-9 items-center justify-center rounded-full", tone)}>
 								<EntryIcon size={18} variant={entry.kind === "settled" ? "Bold" : "Bulk"} />
 							</span>
 							<div className="min-w-0">
 								<p className="truncate font-semibold">{title}</p>
-								<p className="text-muted-foreground text-sm">{detail}</p>
+								<p className="text-sm text-muted-foreground">{detail}</p>
 							</div>
 							{amount ? (
 								<span className="flex items-center gap-1">

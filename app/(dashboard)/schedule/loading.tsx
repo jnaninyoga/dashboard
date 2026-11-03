@@ -36,19 +36,19 @@ export default function Loading() {
 			<div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 				{/* WeekNav: the arrows either side of the week's dates. */}
 				<div className="flex w-full items-center gap-3 lg:w-auto">
-					<div className="bg-card border-border/70 size-11 shrink-0 rounded-full border" />
+					<div className="size-11 shrink-0 rounded-full border border-border/70 bg-card" />
 					<div className="flex min-w-0 flex-1 flex-col items-center lg:w-56 lg:flex-none">
 						<SkeletonLine className="w-16 text-xs" />
 						<SkeletonLine className="w-40 text-lg" />
 					</div>
-					<div className="bg-card border-border/70 size-11 shrink-0 rounded-full border" />
+					<div className="size-11 shrink-0 rounded-full border border-border/70 bg-card" />
 				</div>
 				{/* TypeFilter */}
 				<div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 sm:mx-0 sm:gap-2 sm:px-0">
 					{TYPES.map((word) => (
 						<div
 							key={word}
-							className="bg-card border-border/70 flex h-10 shrink-0 items-center rounded-full border px-3 sm:px-4"
+							className="flex h-10 shrink-0 items-center rounded-full border border-border/70 bg-card px-3 sm:px-4"
 						>
 							<SkeletonLine className={`${word} text-sm`} />
 						</div>

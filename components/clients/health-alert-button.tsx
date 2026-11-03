@@ -28,7 +28,7 @@ export function HealthAlertButton({
 			title={alertChipLabel(alerts)}
 			aria-label={`Health alerts for ${clientName}: ${alertsSummary(alerts)}`}
 			className={cn(
-				"bg-destructive/15 text-destructive ring-destructive/8 hover:bg-destructive/25 relative flex size-11 shrink-0 items-center justify-center rounded-full ring-4 transition-colors active:scale-95",
+				"relative flex size-11 shrink-0 items-center justify-center rounded-full bg-destructive/15 text-destructive ring-4 ring-destructive/8 transition-colors hover:bg-destructive/25 active:scale-95",
 				className,
 			)}
 		>
@@ -36,7 +36,7 @@ export function HealthAlertButton({
 			{alerts.length > 1 ? (
 				<span
 					aria-hidden
-					className="ring-card bg-destructive text-destructive-foreground absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full text-xs font-bold ring-2"
+					className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-destructive-foreground ring-2 ring-card"
 				>
 					{alerts.length}
 				</span>

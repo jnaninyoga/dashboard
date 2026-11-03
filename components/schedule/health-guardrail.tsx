@@ -42,7 +42,7 @@ export function HealthGuardrailDialog({
 		<Dialog open={isOpen} onOpenChange={(open) => !open && !isPending && onCancel()}>
 			<DialogContent className="rounded-3xl sm:max-w-md">
 				<DialogHeader>
-					<span className="bg-destructive/10 text-destructive mb-1 flex size-11 items-center justify-center rounded-full max-sm:mx-auto">
+					<span className="mb-1 flex size-11 items-center justify-center rounded-full bg-destructive/10 text-destructive max-sm:mx-auto">
 						<Danger size={24} variant="Bulk" />
 					</span>
 					<DialogTitle className="font-heading text-xl">{first} has health alerts</DialogTitle>
@@ -55,15 +55,15 @@ export function HealthGuardrailDialog({
 							key={log.id}
 							className={cn(
 								"rounded-2xl border-l-4 px-4 py-3",
-								log.severity === "critical" ? "bg-destructive/5 border-l-destructive" : "bg-warning/5 border-l-warning",
+								log.severity === "critical" ? "border-l-destructive bg-destructive/5" : "border-l-warning bg-warning/5",
 							)}
 						>
-							<p className="text-muted-foreground text-xs font-medium">
+							<p className="text-xs font-medium text-muted-foreground">
 								{AREA[log.category] ?? "Health"}
 								{log.severity === "critical" ? <span className="text-destructive">, critical</span> : null}
 							</p>
-							<p className="text-foreground font-semibold">{log.condition}</p>
-							{log.treatment ? <p className="text-muted-foreground mt-0.5 text-sm">{log.treatment}</p> : null}
+							<p className="font-semibold text-foreground">{log.condition}</p>
+							{log.treatment ? <p className="mt-0.5 text-sm text-muted-foreground">{log.treatment}</p> : null}
 						</li>
 					))}
 				</ul>

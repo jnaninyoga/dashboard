@@ -60,23 +60,23 @@ export function ClientActions({
 						<DropdownMenuItem
 							onClick={() => router.push(`/clients/${client.id}/edit`)}
 						>
-							<Edit2 className="mr-2 h-4 w-4 text-current" variant="Outline" />
+							<Edit2 className="mr-2 size-4 text-current" variant="Outline" />
 							Edit
 						</DropdownMenuItem>
 					) : null}
 					{client.email ? (
 						<DropdownMenuItem asChild>
 							<a href={`mailto:${client.email}`}>
-								<Sms className="mr-2 h-4 w-4 text-current" variant="Outline" />
+								<Sms className="mr-2 size-4 text-current" variant="Outline" />
 								Email
 							</a>
 						</DropdownMenuItem>
 					) : null}
 					<DropdownMenuItem
 						onClick={() => setShowDeleteDialog(true)}
-						className="focus:bg-secondary text-destructive focus:text-destructive focus:[&_svg]:text-destructive"
+						className="text-destructive focus:bg-secondary focus:text-destructive focus:[&_svg]:text-destructive"
 					>
-						<Trash className="text-destructive mr-2 h-4 w-4" variant="Outline" />
+						<Trash className="mr-2 size-4 text-destructive" variant="Outline" />
 						Delete
 					</DropdownMenuItem>
 				</DropdownMenuContent>
@@ -102,11 +102,11 @@ export function ClientActions({
 						>
 							{isPending ? (
 								<Refresh
-									className="mr-2 h-4 w-4 animate-spin"
+									className="mr-2 size-4 animate-spin"
 									variant="Outline"
 								/>
 							) : (
-								<Trash className="mr-2 h-4 w-4" variant="Bulk" />
+								<Trash className="mr-2 size-4" variant="Bulk" />
 							)}
 							Delete
 						</AlertDialogAction>

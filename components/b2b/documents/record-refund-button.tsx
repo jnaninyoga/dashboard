@@ -110,10 +110,10 @@ export function RecordRefundButton({
 									onChange={(e) => setAmount(normalizeDecimalInput(e.target.value))}
 									className="h-12 rounded-xl pr-14 text-right font-mono text-lg font-bold"
 								/>
-								<span className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-sm">{CURRENCY}</span>
+								<span className="absolute top-1/2 right-4 -translate-y-1/2 text-sm text-muted-foreground">{CURRENCY}</span>
 							</span>
 							{tooMuch ? (
-								<span role="alert" className="text-destructive font-normal">
+								<span role="alert" className="font-normal text-destructive">
 									Only {formatMoney(toRefund)} is left to refund.
 								</span>
 							) : null}
@@ -125,18 +125,18 @@ export function RecordRefundButton({
 							</label>
 							<label className="grid gap-1.5 text-sm font-semibold">
 								<span>
-									{REFERENCE[method]} <span className="text-muted-foreground font-normal">(optional)</span>
+									{REFERENCE[method]} <span className="font-normal text-muted-foreground">(optional)</span>
 								</span>
 								<Input value={reference} onChange={(e) => setReference(e.target.value)} maxLength={80} autoComplete="off" className="h-11 rounded-xl" />
 							</label>
 						</div>
 						<fieldset className="grid gap-2">
 							<legend className="mb-2 text-sm font-semibold">Given back by</legend>
-							<div className="bg-secondary/40 grid grid-cols-4 gap-1 rounded-2xl p-1">
+							<div className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/40 p-1">
 								{PAYMENT_METHODS.map((option) => (
 									<label
 										key={option}
-										className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+										className="flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
 									>
 										<input
 											type="radio"

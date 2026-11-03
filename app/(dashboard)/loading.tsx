@@ -18,7 +18,7 @@ export default function Loading() {
 
 			{/* CockpitClient: the agenda bar, then today's sessions. */}
 			<div className="flex flex-col gap-5">
-				<div className="bg-card zen-shadow flex items-center justify-between gap-4 rounded-3xl p-5">
+				<div className="zen-shadow flex items-center justify-between gap-4 rounded-3xl bg-card p-5">
 					<div className="flex min-w-0 flex-col gap-0.5">
 						<SkeletonLine className="w-32 text-lg" />
 						<SkeletonLine className="w-20 text-sm" />
@@ -32,12 +32,12 @@ export default function Loading() {
 			</div>
 
 			{/* Renewals: each client, why, WhatsApp and Sell. */}
-			<div className="bg-card border-secondary/20 flex flex-col gap-4 rounded-3xl border p-5 sm:p-6">
+			<div className="flex flex-col gap-4 rounded-3xl border border-secondary/20 bg-card p-5 sm:p-6">
 				<div className="flex flex-col gap-1">
 					<SkeletonLine className="w-36 text-xl" />
 					<SkeletonLine className="w-52 text-sm" />
 				</div>
-				<div className="divide-border -mx-2 flex flex-col divide-y">
+				<div className="-mx-2 flex flex-col divide-y divide-border">
 					{["w-32", "w-40", "w-28"].map((name) => (
 						<div key={name} className="flex items-center gap-3 px-2 py-3">
 							<div className="flex min-w-0 flex-1 items-center gap-3">
@@ -55,7 +55,7 @@ export default function Loading() {
 			</div>
 
 			{/* WeekStrip: the seven days, then the chosen day's sessions. */}
-			<div className="bg-card border-secondary/20 flex flex-col gap-5 rounded-3xl border p-5 sm:p-6">
+			<div className="flex flex-col gap-5 rounded-3xl border border-secondary/20 bg-card p-5 sm:p-6">
 				<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
 					<div className="flex flex-col gap-1">
 						<SkeletonLine className="w-28 text-xl" />
@@ -68,7 +68,7 @@ export default function Loading() {
 				</div>
 
 				<div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
-					<div className="grid grid-cols-7 gap-1.5 lg:w-[30rem] lg:shrink-0">
+					<div className="grid grid-cols-7 gap-1.5 lg:w-120 lg:shrink-0">
 						{Array.from({ length: 7 }, (_, i) => (
 							<div key={i} className="flex min-h-20 flex-col items-center justify-center gap-1">
 								<SkeletonLine className="w-6 text-xs" />

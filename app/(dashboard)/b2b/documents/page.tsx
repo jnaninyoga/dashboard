@@ -42,9 +42,9 @@ export default async function DocumentsPage(props: {
 
 	return (
 		<>
-			<div className="animate-slide-up flex flex-col justify-between gap-4 md:flex-row md:items-center">
+			<div className="flex animate-slide-up flex-col justify-between gap-4 md:flex-row md:items-center">
 				<header className="space-y-1">
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">
+					<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">
 						Documents
 					</h1>
 					<p className="text-md text-muted-foreground">
@@ -60,21 +60,21 @@ export default async function DocumentsPage(props: {
 			</div>
 
 			{due.amount > 0 && status !== OWED_FILTER ? (
-				<div className="bg-card zen-shadow flex flex-wrap items-center gap-3 rounded-2xl border px-4 py-3">
-					<MoneyTime size={22} variant="Bulk" className="text-primary shrink-0" />
+				<div className="zen-shadow flex flex-wrap items-center gap-3 rounded-2xl border bg-card px-4 py-3">
+					<MoneyTime size={22} variant="Bulk" className="shrink-0 text-primary" />
 					<Link
 						href={`/b2b/documents?status=${OWED_FILTER}`}
-						className="group focus-visible:ring-ring min-w-0 flex-1 rounded-lg outline-none focus-visible:ring-2"
+						className="group min-w-0 flex-1 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
 					>
-						<span className="text-foreground group-hover:text-primary block font-semibold">{formatMoney(due.amount)} owed</span>
-						<span className="text-muted-foreground text-sm">
+						<span className="block font-semibold text-foreground group-hover:text-primary">{formatMoney(due.amount)} owed</span>
+						<span className="text-sm text-muted-foreground">
 							on {due.count} {due.count === 1 ? "invoice" : "invoices"} waiting for payment
 						</span>
 					</Link>
 					{overdue.count > 0 && status !== OVERDUE_FILTER ? (
 						<Link
 							href={`/b2b/documents?status=${OVERDUE_FILTER}`}
-							className="bg-destructive/10 text-destructive hover:bg-destructive/15 focus-visible:ring-ring inline-flex min-h-10 items-center gap-1.5 rounded-full px-3 text-sm font-semibold outline-none focus-visible:ring-2"
+							className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-destructive/10 px-3 text-sm font-semibold text-destructive outline-none hover:bg-destructive/15 focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							<Danger size={16} variant="Bold" aria-hidden />
 							{overdue.count} overdue · {formatMoney(overdue.amount)}

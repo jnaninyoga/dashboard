@@ -71,7 +71,7 @@ export function WalletTab({
 		<div className="mx-auto grid max-w-3xl gap-8">
 			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div>
-					<p className="text-muted-foreground text-sm">Credits to use</p>
+					<p className="text-sm text-muted-foreground">Credits to use</p>
 					<p className="flex items-baseline gap-2">
 						<span
 							className={cn(
@@ -83,7 +83,7 @@ export function WalletTab({
 						</span>
 						{credits.total ? <span className="text-muted-foreground">of {credits.total}</span> : null}
 					</p>
-					<p className="text-muted-foreground text-sm">
+					<p className="text-sm text-muted-foreground">
 						{credits.tone === "expired"
 							? `Their card expired on ${longDay(credits.expiredOn!)}.`
 							: paying
@@ -112,11 +112,11 @@ export function WalletTab({
 					Cards
 				</h3>
 				{cards.length === 0 ? (
-					<p className="text-muted-foreground bg-card rounded-2xl border border-dashed p-6 text-center text-sm">
+					<p className="rounded-2xl border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
 						No card sold yet.
 					</p>
 				) : (
-					<ul className="bg-card divide-border divide-y rounded-2xl border">
+					<ul className="divide-y divide-border rounded-2xl border bg-card">
 						{cards.map(({ wallet, state }) => {
 							const look = STATE[state];
 							const total = wallet.product?.credits;
@@ -134,7 +134,7 @@ export function WalletTab({
 								<li key={wallet.id} className="flex items-start gap-3 p-4">
 									<span
 										className={cn(
-											"bg-secondary/50 flex size-10 shrink-0 items-center justify-center rounded-xl",
+											"flex size-10 shrink-0 items-center justify-center rounded-xl bg-secondary/50",
 											state === "active" && "bg-success/10 text-success",
 											state === "expired" && "bg-destructive/10 text-destructive",
 										)}
@@ -158,17 +158,17 @@ export function WalletTab({
 													? `${state === "active" ? "Until" : "Ran until"} ${longDay(wallet.expiresOn)}`
 													: "No end date"}
 										</p>
-										{sale.length ? <p className="text-muted-foreground text-sm">{sale.join(" · ")}</p> : null}
+										{sale.length ? <p className="text-sm text-muted-foreground">{sale.join(" · ")}</p> : null}
 									</div>
 									<div className="shrink-0 text-right">
 										<p className="tabular-nums">
 											<span className={cn("text-xl font-semibold", state !== "active" && "text-muted-foreground", undone && "line-through")}>
 												{wallet.remainingCredits}
 											</span>
-											{total ? <span className="text-muted-foreground text-sm"> of {total}</span> : null}
+											{total ? <span className="text-sm text-muted-foreground"> of {total}</span> : null}
 										</p>
 										{wallet.amountPaid ? (
-											<Money amount={wallet.amountPaid} className={cn("text-muted-foreground text-sm", undone && "line-through")} />
+											<Money amount={wallet.amountPaid} className={cn("text-sm text-muted-foreground", undone && "line-through")} />
 										) : null}
 									</div>
 									{undone ? null : (

@@ -168,9 +168,9 @@ export function RecordPaymentDialog({
 			}}
 		>
 			<DialogContent className="zen-shadow-lg overflow-y-auto rounded-3xl border-none p-0 sm:max-w-[460px]">
-				<DialogHeader className="bg-card border-b p-8 pb-6">
+				<DialogHeader className="border-b bg-card p-8 pb-6">
 					<div className="flex items-center gap-4">
-						<div className="border-success/20 bg-success/10 text-success flex size-12 items-center justify-center rounded-2xl border">
+						<div className="flex size-12 items-center justify-center rounded-2xl border border-success/20 bg-success/10 text-success">
 							<Wallet3 size={24} variant="Bulk" />
 						</div>
 						<div>
@@ -194,7 +194,7 @@ export function RecordPaymentDialog({
 								name="amountPaid"
 								render={({ field }) => (
 									<FormItem>
-										<FormLabel className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+										<FormLabel className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
 											Amount received
 										</FormLabel>
 										<FormControl>
@@ -205,7 +205,7 @@ export function RecordPaymentDialog({
 													className="h-12 rounded-xl pr-16 text-right font-mono text-lg font-black"
 													placeholder="0.00"
 												/>
-												<div className="text-muted-foreground absolute top-1/2 right-4 -translate-y-1/2 text-xs font-bold tracking-widest">
+												<div className="absolute top-1/2 right-4 -translate-y-1/2 text-xs font-bold tracking-widest text-muted-foreground">
 													{CURRENCY}
 												</div>
 											</div>
@@ -236,7 +236,7 @@ export function RecordPaymentDialog({
 										<FormItem>
 											<FormLabel className="text-sm font-semibold">
 												{REFERENCE_LABELS[watchedMethod ?? "transfer"]}{" "}
-												<span className="text-muted-foreground font-normal">(optional)</span>
+												<span className="font-normal text-muted-foreground">(optional)</span>
 											</FormLabel>
 											<FormControl>
 												<Input {...field} value={field.value ?? ""} autoComplete="off" className="h-11 rounded-xl" />
@@ -253,11 +253,11 @@ export function RecordPaymentDialog({
 								render={({ field }) => (
 									<FormItem>
 										<FormLabel className="text-sm font-semibold">Paid by</FormLabel>
-										<div role="radiogroup" aria-label="Paid by" className="bg-secondary/40 grid grid-cols-4 gap-1 rounded-2xl p-1">
+										<div role="radiogroup" aria-label="Paid by" className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/40 p-1">
 											{PAYMENT_METHODS.map((method) => (
 												<label
 													key={method}
-													className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+													className="flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
 												>
 													<input
 														type="radio"
@@ -279,8 +279,8 @@ export function RecordPaymentDialog({
 							{/* Allocation preview — always shown so the operator can see
 							    exactly which invoices the payment will clear before
 							    confirming. Uses the same allocator as the server. */}
-							<div className="bg-muted/30 space-y-2 rounded-2xl p-4">
-								<div className="text-muted-foreground mb-2 text-[9px] font-bold tracking-widest uppercase">
+							<div className="space-y-2 rounded-2xl bg-muted/30 p-4">
+								<div className="mb-2 text-[9px] font-bold tracking-widest text-muted-foreground uppercase">
 									{isMultiInvoice ? "Where the payment goes" : "This invoice"}
 								</div>
 								{allocation.map((a) => {
@@ -294,7 +294,7 @@ export function RecordPaymentDialog({
 												<span className="font-mono text-[11px] font-bold tracking-wider">
 													{a.documentNumber}
 												</span>
-												<span className="text-muted-foreground text-[10px]">
+												<span className="text-[10px] text-muted-foreground">
 													{formatMoney(a.due)} due
 													{a.applied > 0
 														? ` · ${a.becomesPaid ? "fully paid" : `${formatMoney(stillDue)} remaining`}`
@@ -316,7 +316,7 @@ export function RecordPaymentDialog({
 									);
 								})}
 								<div className="mt-2 flex items-center justify-between border-t pt-2">
-									<span className="text-muted-foreground text-[10px] font-bold tracking-widest uppercase">
+									<span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
 										Total outstanding
 									</span>
 									<span className="font-mono text-sm font-bold">
@@ -326,14 +326,14 @@ export function RecordPaymentDialog({
 							</div>
 
 							{isOverpayment ? (
-								<div className="text-destructive border-destructive/20 bg-destructive/5 flex items-center gap-2 rounded-xl border p-3 text-[11px] font-medium">
+								<div className="flex items-center gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-[11px] font-medium text-destructive">
 									Payment exceeds outstanding balance by{" "}
 									{formatMoney(paidAmount - totalOutstanding)}.
 								</div>
 							) : null}
 						</div>
 
-						<DialogFooter className="bg-muted/20 border-t p-6">
+						<DialogFooter className="border-t bg-muted/20 p-6">
 							<Button
 								type="submit"
 								disabled={submitDisabled}

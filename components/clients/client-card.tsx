@@ -80,19 +80,19 @@ export function ClientCard({ client }: { client: Client }) {
 							{client.checkedInToday ? (
 								<span
 									aria-hidden
-									className="border-card bg-success absolute -right-0.5 -bottom-0.5 size-4 rounded-full border-2"
+									className="absolute -right-0.5 -bottom-0.5 size-4 rounded-full border-2 border-card bg-success"
 								/>
 							) : null}
 						</>
 					}
 				>
 					{client.checkedInToday ? (
-						<span className="bg-success/10 text-success inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-sm font-medium">
-							<span aria-hidden className="bg-success size-1.5 rounded-full" />
+						<span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-success/10 px-2.5 text-sm font-medium text-success">
+							<span aria-hidden className="size-1.5 rounded-full bg-success" />
 							{client.activeSessionName ? `Here · ${client.activeSessionName}` : "Here today"}
 						</span>
 					) : (
-						<span className="text-muted-foreground text-sm">
+						<span className="text-sm text-muted-foreground">
 							{client.lastVisitAt ? `Last visit ${lastVisitLabel(client.lastVisitAt)}` : "No visits yet"}
 						</span>
 					)}
@@ -131,7 +131,7 @@ export function ClientCard({ client }: { client: Client }) {
 					<a
 						href={`tel:${client.phone}`}
 						aria-label={`Call ${client.fullName}`}
-						className="bg-primary/10 text-primary hover:bg-primary/15 flex size-11 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95"
+						className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:scale-95"
 					>
 						<Call size={20} variant="Bulk" />
 					</a>
@@ -139,7 +139,7 @@ export function ClientCard({ client }: { client: Client }) {
 						href={whatsappHref(client.phone)}
 						target="_blank"
 						rel="noopener noreferrer"
-						className="bg-primary text-primary-foreground hover:bg-primary/90 flex h-11 flex-1 items-center justify-center gap-2 rounded-full font-semibold transition-colors active:scale-[0.98]"
+						className="flex h-11 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-semibold text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
 					>
 						<Whatsapp size={20} variant="Bold" />
 						WhatsApp

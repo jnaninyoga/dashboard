@@ -10,7 +10,7 @@ export default function Loading() {
 			{/* "Back to Partners" */}
 			<SkeletonLine className="w-32 text-sm" />
 
-			<div className="border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-8 shadow-sm md:flex-row">
+			<div className="relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-secondary/20 bg-card p-8 shadow-sm md:flex-row">
 				<div className="flex flex-col gap-4">
 					{/* pr-12: clear of the ⋮ menu. */}
 					<div className="flex items-center gap-4 pr-12">
@@ -32,12 +32,12 @@ export default function Loading() {
 
 				{/* Contacts and documents, counted. */}
 				<div className="flex shrink-0 flex-col justify-center gap-3">
-					<div className="border-secondary-3/20 bg-secondary/70 flex items-center gap-4 rounded-2xl border px-6 py-4 shadow-xs">
+					<div className="flex items-center gap-4 rounded-2xl border border-secondary-3/20 bg-secondary/70 px-6 py-4 shadow-xs">
 						<div className="flex flex-col items-center">
 							<SkeletonLine className="w-6 text-2xl" />
 							<SkeletonLine className="w-18 text-xs" />
 						</div>
-						<div className="bg-secondary-3/20 mx-2 h-8 w-px" />
+						<div className="mx-2 h-8 w-px bg-secondary-3/20" />
 						<div className="flex flex-col items-center">
 							<SkeletonLine className="w-6 text-2xl" />
 							<SkeletonLine className="w-10 text-xs" />

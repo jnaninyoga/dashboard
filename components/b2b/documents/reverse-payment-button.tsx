@@ -65,7 +65,7 @@ export function ReversePaymentButton({ paymentId, summary, isCheque }: { payment
 				aria-label={`Undo ${summary}`}
 				title="Undo this payment"
 				onClick={() => setOpen(true)}
-				className="text-muted-foreground hover:text-destructive size-8 rounded-lg"
+				className="size-8 rounded-lg text-muted-foreground hover:text-destructive"
 			>
 				<ArrowRotateLeft size={16} />
 			</Button>
@@ -83,7 +83,7 @@ export function ReversePaymentButton({ paymentId, summary, isCheque }: { payment
 							{reasons.map((option) => (
 								<label
 									key={option.value}
-									className="has-[:checked]:border-destructive/40 has-[:checked]:bg-destructive/5 has-[:focus-visible]:ring-ring flex cursor-pointer items-start gap-3 rounded-xl border p-3 has-[:focus-visible]:ring-2"
+									className="flex cursor-pointer items-start gap-3 rounded-xl border p-3 has-checked:border-destructive/40 has-checked:bg-destructive/5 has-focus-visible:ring-2 has-focus-visible:ring-ring"
 								>
 									<input
 										type="radio"
@@ -91,11 +91,11 @@ export function ReversePaymentButton({ paymentId, summary, isCheque }: { payment
 										value={option.value}
 										checked={reason === option.value}
 										onChange={() => setReason(option.value)}
-										className="accent-destructive mt-1"
+										className="mt-1 accent-destructive"
 									/>
 									<span>
 										<span className="block font-medium">{option.label}</span>
-										<span className="text-muted-foreground block text-sm">{option.hint}</span>
+										<span className="block text-sm text-muted-foreground">{option.hint}</span>
 									</span>
 								</label>
 							))}
@@ -107,7 +107,7 @@ export function ReversePaymentButton({ paymentId, summary, isCheque }: { payment
 							</label>
 							<label className="grid gap-1.5 text-sm font-semibold">
 								<span>
-									Note <span className="text-muted-foreground font-normal">(optional)</span>
+									Note <span className="font-normal text-muted-foreground">(optional)</span>
 								</span>
 								<Input value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} className="h-11 rounded-xl" />
 							</label>

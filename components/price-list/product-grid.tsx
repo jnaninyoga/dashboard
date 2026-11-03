@@ -103,13 +103,13 @@ export function ProductGrid({
 											)
 										}
 									>
-										<span className="text-muted-foreground text-sm">
+										<span className="text-sm text-muted-foreground">
 											{kind === "membership"
 												? membershipTerms(product)
 												: `${groupSize(product) ?? "Any group"} · per session`}
 										</span>
 										{twice.has(fold(productLabel(product))) ? (
-											<span className="text-warning basis-full text-sm font-medium">Listed twice: archive one</span>
+											<span className="basis-full text-sm font-medium text-warning">Listed twice: archive one</span>
 										) : null}
 									</EntityCardHeader>
 								}
@@ -127,13 +127,13 @@ export function ProductGrid({
 									kind === "partner_service" && used?.lastDocument ? (
 										<Link
 											href={`/b2b/documents/${used.lastDocument.id}`}
-											className="text-muted-foreground hover:text-primary inline-flex items-center gap-2 text-sm transition-colors"
+											className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
 										>
 											<DocumentText size={18} variant="Bulk" />
 											Last on {used.lastDocument.documentNumber ?? "a draft"}, {shortDay(used.lastDocument.issueDate, today)}
 										</Link>
 									) : (
-										<p className="text-muted-foreground text-sm">
+										<p className="text-sm text-muted-foreground">
 											{kind === "membership"
 												? used?.lastSoldAt
 													? `Last sold ${shortDay(studioDateString(new Date(used.lastSoldAt)), today)}`

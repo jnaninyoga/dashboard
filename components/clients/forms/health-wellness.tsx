@@ -49,7 +49,7 @@ export function StepHealthWellness({
 	return (
 		<div className="space-y-6">
 			{sections.some((s) => s.category === "physical") ? (
-				<Card className="border-l-primary mb-6 border-l-4">
+				<Card className="mb-6 border-l-4 border-l-primary">
 					<CardHeader>
 						<CardTitle className="flex items-center gap-2 text-lg">
 							Active Health Conditions & Care
@@ -63,7 +63,7 @@ export function StepHealthWellness({
 						{fields.map((field, index) => (
 							<div
 								key={field.id}
-								className="bg-muted/20 grid grid-cols-1 items-start gap-4 rounded-lg border p-4 md:grid-cols-12"
+								className="grid grid-cols-1 items-start gap-4 rounded-lg border bg-muted/20 p-4 md:grid-cols-12"
 							>
 								<div className="grid grid-cols-1 gap-4 md:col-span-12 md:grid-cols-2">
 									<FormField
@@ -150,7 +150,7 @@ export function StepHealthWellness({
 																Info
 															</FormLabel>
 														</FormItem>
-														<FormItem className="text-warning flex items-center space-y-0 space-x-1">
+														<FormItem className="flex items-center space-y-0 space-x-1 text-warning">
 															<FormControl>
 																<RadioGroupItem
 																	value={HealthSeverity.WARNING}
@@ -161,7 +161,7 @@ export function StepHealthWellness({
 																Warning
 															</FormLabel>
 														</FormItem>
-														<FormItem className="text-destructive flex items-center space-y-0 space-x-1">
+														<FormItem className="flex items-center space-y-0 space-x-1 text-destructive">
 															<FormControl>
 																<RadioGroupItem
 																	value={HealthSeverity.CRITICAL}
@@ -186,7 +186,7 @@ export function StepHealthWellness({
 										onClick={() => remove(index)}
 										className="text-muted-foreground hover:text-destructive"
 									>
-										<Trash className="h-4 w-4" variant="Outline" />
+										<Trash className="size-4" variant="Outline" />
 									</Button>
 								</div>
 							</div>
@@ -208,7 +208,7 @@ export function StepHealthWellness({
 								})
 							}
 						>
-							<Add className="mr-2 h-4 w-4" variant="Outline" /> Add Condition
+							<Add className="mr-2 size-4" variant="Outline" /> Add Condition
 						</Button>
 					</CardContent>
 				</Card>

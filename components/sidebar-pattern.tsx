@@ -49,8 +49,8 @@ export function PatternLattice({
  */
 export function SidebarPattern() {
 	return (
-		<div aria-hidden className="text-sidebar-primary pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-			<PatternLattice id="lattice-sidebar" className="[mask-image:linear-gradient(to_bottom,black,rgb(0_0_0/0.3)_32%,rgb(0_0_0/0.3)_68%,black)] opacity-[0.11]" />
+		<div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden text-sidebar-primary">
+			<PatternLattice id="lattice-sidebar" className="mask-[linear-gradient(to_bottom,black,rgb(0_0_0/0.3)_32%,rgb(0_0_0/0.3)_68%,black)] opacity-[0.11]" />
 			{/* Past the wordmark and her name, so no line runs through what she reads. */}
 			<MandalaPattern className="absolute -top-36 -right-32 size-80 opacity-25 group-data-[collapsible=icon]:hidden" />
 			<LotusPattern className="absolute -right-24 -bottom-36 size-72 opacity-20 group-data-[collapsible=icon]:hidden" />

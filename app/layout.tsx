@@ -72,7 +72,7 @@ export default function RootLayout({
 	return (
 		<html lang="en">
 			<body
-				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} selection:bg-primary/20 font-sans antialiased`}
+				className={`${plusJakarta.variable} ${philosopher.variable} ${greatVibes.variable} font-sans antialiased selection:bg-primary/20`}
 			>
 				<ConfirmProvider>{children}</ConfirmProvider>
 				<SerwistRegistration />

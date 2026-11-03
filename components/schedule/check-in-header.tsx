@@ -44,7 +44,7 @@ export function CheckInHeader({
 	const { Icon, Pattern } = meta;
 
 	return (
-		<header className="bg-card border-border/70 relative overflow-hidden rounded-3xl border px-5 pt-3 pb-6 sm:px-7 sm:pb-7">
+		<header className="relative overflow-hidden rounded-3xl border border-border/70 bg-card px-5 pt-3 pb-6 sm:px-7 sm:pb-7">
 			<div aria-hidden className={cn("pointer-events-none absolute inset-y-0 left-0 w-40 bg-linear-to-r to-transparent", meta.ribbon)} />
 			<div
 				aria-hidden
@@ -60,7 +60,7 @@ export function CheckInHeader({
 			<div className="relative flex flex-col gap-3">
 				<Link
 					href={backHref}
-					className="text-muted-foreground hover:text-foreground focus-visible:ring-ring -ml-2 inline-flex min-h-10 items-center gap-1 self-start rounded-full px-2 text-sm font-medium outline-none focus-visible:ring-2"
+					className="-ml-2 inline-flex min-h-10 items-center gap-1 self-start rounded-full px-2 text-sm font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					<ArrowLeft2 size={16} />
 					Schedule
@@ -72,30 +72,30 @@ export function CheckInHeader({
 						{KIND[type] ?? "Session"}
 					</span>
 					{moment === "live" ? (
-						<span className="bg-success/10 text-success inline-flex h-7 items-center gap-2 rounded-full px-2.5 text-sm font-medium">
+						<span className="inline-flex h-7 items-center gap-2 rounded-full bg-success/10 px-2.5 text-sm font-medium text-success">
 							<span className="relative flex size-2">
-								<span className="bg-success/60 absolute inline-flex size-full animate-ping rounded-full motion-reduce:animate-none" />
-								<span className="bg-success relative inline-flex size-2 rounded-full" />
+								<span className="absolute inline-flex size-full animate-ping rounded-full bg-success/60 motion-reduce:animate-none" />
+								<span className="relative inline-flex size-2 rounded-full bg-success" />
 							</span>
 							Live now
 						</span>
 					) : moment === "upcoming" ? (
-						<span className="bg-muted text-muted-foreground inline-flex h-7 items-center rounded-full px-2.5 text-sm font-medium">
+						<span className="inline-flex h-7 items-center rounded-full bg-muted px-2.5 text-sm font-medium text-muted-foreground">
 							Starts at {startsAt}
 						</span>
 					) : moment === "cancelled" ? (
-						<span className="bg-destructive/10 text-destructive inline-flex h-7 items-center rounded-full px-2.5 text-sm font-medium">
+						<span className="inline-flex h-7 items-center rounded-full bg-destructive/10 px-2.5 text-sm font-medium text-destructive">
 							Cancelled
 						</span>
 					) : (
-						<span className="bg-muted text-muted-foreground inline-flex h-7 items-center rounded-full px-2.5 text-sm font-medium">
+						<span className="inline-flex h-7 items-center rounded-full bg-muted px-2.5 text-sm font-medium text-muted-foreground">
 							Ended
 						</span>
 					)}
 				</div>
 
 				<div className="flex flex-col gap-1">
-					<h1 className="font-heading text-foreground pr-16 text-3xl leading-tight font-semibold tracking-tight md:text-4xl">{title}</h1>
+					<h1 className="pr-16 font-heading text-3xl leading-tight font-semibold tracking-tight text-foreground md:text-4xl">{title}</h1>
 					<p className="text-muted-foreground tabular-nums">{when}</p>
 				</div>
 			</div>

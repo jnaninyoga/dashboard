@@ -82,7 +82,7 @@ function Sun() {
 				className="fill-warning/20 motion-safe:animate-breathe"
 			/>
 			<g
-				className="stroke-warning origin-center transform-view motion-safe:animate-[spin_40s_linear_infinite]"
+				className="origin-center stroke-warning transform-view motion-safe:animate-[spin_40s_linear_infinite]"
 				{...ray}
 			>
 				<line x1="37" y1="24" x2="41" y2="24" />

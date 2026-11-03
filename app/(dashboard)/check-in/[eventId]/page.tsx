@@ -34,10 +34,10 @@ export default async function CheckInPage({ params }: PageProps) {
     if (event.error) {
         return (
             <div className="mx-auto flex w-full max-w-xl flex-col gap-4 px-5 py-10">
-                <p role="alert" className="bg-card zen-shadow rounded-2xl border p-5 text-sm leading-relaxed">
+                <p role="alert" className="zen-shadow rounded-2xl border bg-card p-5 text-sm leading-relaxed">
                     {event.error}
                 </p>
-                <Link href="/check-in" className="text-primary min-h-[44px] font-semibold">
+                <Link href="/check-in" className="min-h-[44px] font-semibold text-primary">
                     Back to today&apos;s sessions
                 </Link>
             </div>

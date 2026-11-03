@@ -21,25 +21,25 @@ const row =
 /** A session that has ended (or an all-day event): when, what, who came; opens its history. */
 export function SessionRow({ session, ended }: { session: FeedSession; ended: boolean }) {
 	return (
-		<Link href={`/check-in/${session.id}`} className={cn(row, "bg-card/70 border-border/60 hover:bg-card")}>
-			<span className="text-muted-foreground w-[5.75rem] shrink-0 self-start pt-0.5 text-sm tabular-nums">
+		<Link href={`/check-in/${session.id}`} className={cn(row, "border-border/60 bg-card/70 hover:bg-card")}>
+			<span className="w-23 shrink-0 self-start pt-0.5 text-sm text-muted-foreground tabular-nums">
 				{timeRange(session)}
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
-				<span className="text-foreground truncate font-medium">{session.title}</span>
-				<span className="text-muted-foreground text-sm">
+				<span className="truncate font-medium text-foreground">{session.title}</span>
+				<span className="text-sm text-muted-foreground">
 					{session.external ? "Calendar event" : typeLabel(session.type)}
 					{session.checkIns ? (
 						<>
 							{" · "}
-							<span className="text-foreground font-semibold tabular-nums">{session.checkIns}</span> came
+							<span className="font-semibold text-foreground tabular-nums">{session.checkIns}</span> came
 						</>
 					) : ended ? (
 						" · No one came"
 					) : null}
 				</span>
 			</span>
-			<ArrowRight2 size={16} className="text-muted-foreground shrink-0 transition-transform group-hover:translate-x-0.5" />
+			<ArrowRight2 size={16} className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
 		</Link>
 	);
 }
@@ -49,15 +49,15 @@ export function CancelledSessionRow({ session }: { session: FeedSession }) {
 	return (
 		<Link
 			href={`/check-in/${session.id}`}
-			className={cn(row, "bg-card/50 border-border/70 hover:bg-card border-dashed")}
+			className={cn(row, "border-dashed border-border/70 bg-card/50 hover:bg-card")}
 		>
-			<span className="text-muted-foreground w-[5.75rem] shrink-0 self-start pt-0.5 text-sm tabular-nums line-through decoration-1">
+			<span className="w-23 shrink-0 self-start pt-0.5 text-sm text-muted-foreground tabular-nums line-through decoration-1">
 				{timeRange(session)}
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-1">
-				<span className="text-muted-foreground truncate font-medium">{session.title}</span>
-				<span className="text-muted-foreground flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
-					<span className="bg-destructive/10 text-destructive rounded-full px-2 py-0.5 text-xs font-semibold">
+				<span className="truncate font-medium text-muted-foreground">{session.title}</span>
+				<span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+					<span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-semibold text-destructive">
 						Cancelled
 					</span>
 					{/* One run of text, so a wrapped line never starts with its separator. */}
@@ -75,7 +75,7 @@ export function CancelledSessionRow({ session }: { session: FeedSession }) {
 					) : null}
 				</span>
 			</span>
-			<ArrowRight2 size={16} className="text-muted-foreground shrink-0" />
+			<ArrowRight2 size={16} className="shrink-0 text-muted-foreground" />
 		</Link>
 	);
 }
@@ -137,11 +137,11 @@ export function WeekList({
 							>
 								{formatDay(day, { weekday: "long" })}
 							</span>
-							<span className="text-muted-foreground text-sm">{formatDay(day, { day: "numeric", month: "long" })}</span>
+							<span className="text-sm text-muted-foreground">{formatDay(day, { day: "numeric", month: "long" })}</span>
 							{isToday ? (
-								<span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 text-xs font-semibold">Today</span>
+								<span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">Today</span>
 							) : null}
-							<span className="text-muted-foreground ml-auto text-sm tabular-nums">
+							<span className="ml-auto text-sm text-muted-foreground tabular-nums">
 								{dayCountLabel(summarize(list))}
 							</span>
 						</h2>

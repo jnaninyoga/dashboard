@@ -24,7 +24,7 @@ export function NavUser({ user }: { user: UserProfile }) {
 	const { isMobile } = useSidebar();
 
 	const avatar = (
-		<Avatar className="h-8 w-8 rounded-lg">
+		<Avatar className="size-8 rounded-lg">
 			{user.avatarUrl ? (
 				<AvatarImage src={user.avatarUrl} alt={user.fullName} />
 			) : null}
@@ -65,7 +65,7 @@ export function NavUser({ user }: { user: UserProfile }) {
 							</div>
 						</DropdownMenuLabel>
 						<DropdownMenuSeparator />
-						<DropdownMenuItem onClick={() => signOut()} className="text-destructive bg-destructive/5 hover:bg-destructive/10 focus:bg-destructive/10 cursor-pointer transition-colors">
+						<DropdownMenuItem onClick={() => signOut()} className="cursor-pointer bg-destructive/5 text-destructive transition-colors hover:bg-destructive/10 focus:bg-destructive/10">
 							<Logout variant="Outline" className="text-destructive" />
 							Log out
 						</DropdownMenuItem>

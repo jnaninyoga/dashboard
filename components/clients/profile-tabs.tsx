@@ -47,11 +47,11 @@ export function ClientProfileTabs({ client, products, discounts = [], sell = fal
 	return (
 		<div className="grid gap-6">
 			{expired ? (
-				<div role="alert" className="border-destructive/25 bg-destructive/5 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border p-4 md:p-5">
-					<Danger className="text-destructive size-7 shrink-0" variant="Bulk" />
+				<div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-3xl border border-destructive/25 bg-destructive/5 p-4 md:p-5">
+					<Danger className="size-7 shrink-0 text-destructive" variant="Bulk" />
 					<div className="min-w-0 flex-1 basis-60">
 						<p className="font-semibold">Card expired: not accepted at check-in</p>
-						<p className="text-muted-foreground text-sm">
+						<p className="text-sm text-muted-foreground">
 							{expired.product?.name ?? "Their membership"} ended on{" "}
 							{formatDay(expired.expiresOn!, { day: "numeric", month: "long", year: "numeric" })} with {expired.remainingCredits}{" "}
 							{expired.remainingCredits === 1 ? "credit" : "credits"} left. Sell a new membership to check them in.
@@ -64,7 +64,7 @@ export function ClientProfileTabs({ client, products, discounts = [], sell = fal
 			) : null}
 
 			<Tabs value={tab} onValueChange={setTab} className="w-full">
-				<TabsList className="bg-card mb-6 grid w-full grid-cols-3 gap-2 rounded-2xl border p-1 lg:w-96">
+				<TabsList className="mb-6 grid w-full grid-cols-3 gap-2 rounded-2xl border bg-card p-1 lg:w-96">
 					<TabsTrigger value="profile" className={tabClass}>
 						Profile
 					</TabsTrigger>
@@ -75,13 +75,13 @@ export function ClientProfileTabs({ client, products, discounts = [], sell = fal
 						Wallet
 					</TabsTrigger>
 				</TabsList>
-				<TabsContent value="profile" className="animate-in fade-in-50 duration-300">
+				<TabsContent value="profile" className="animate-in duration-300 fade-in-50">
 					<ProfileTab client={client} />
 				</TabsContent>
-				<TabsContent value="health" className="animate-in fade-in-50 duration-300">
+				<TabsContent value="health" className="animate-in duration-300 fade-in-50">
 					<HealthTab client={client} />
 				</TabsContent>
-				<TabsContent value="wallet" className="animate-in fade-in-50 duration-300">
+				<TabsContent value="wallet" className="animate-in duration-300 fade-in-50">
 					<WalletTab
 						clientId={client.id}
 						wallets={wallets}

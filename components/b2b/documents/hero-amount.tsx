@@ -50,7 +50,7 @@ export function HeroAmount({ doc }: { doc: DocumentWithRelations }) {
 			<div className={cn("font-heading text-4xl font-black tabular-nums", view.tone, view.tone === "text-primary" && "zen-teal-glow")}>
 				<Money amount={view.amount} />
 			</div>
-			{view.note ? <span className="text-muted-foreground text-sm">{view.note}</span> : null}
+			{view.note ? <span className="text-sm text-muted-foreground">{view.note}</span> : null}
 		</div>
 	);
 }

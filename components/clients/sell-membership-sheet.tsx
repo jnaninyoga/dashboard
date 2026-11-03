@@ -152,7 +152,7 @@ export function SellMembershipSheet({
 										{memberships.map((m) => (
 											<label
 												key={m.id}
-												className="has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:focus-visible]:ring-ring hover:bg-secondary/30 flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 transition-colors has-[:focus-visible]:ring-2"
+												className="flex cursor-pointer items-center gap-3 rounded-2xl border p-3.5 transition-colors hover:bg-secondary/30 has-checked:border-primary has-checked:bg-primary/5 has-focus-visible:ring-2 has-focus-visible:ring-ring"
 											>
 												<input
 													type="radio"
@@ -164,7 +164,7 @@ export function SellMembershipSheet({
 												/>
 												<span className="min-w-0 flex-1">
 													<span className="block truncate font-semibold">{m.name}</span>
-													<span className="text-muted-foreground text-sm">
+													<span className="text-sm text-muted-foreground">
 														{m.credits} {m.credits === 1 ? "visit" : "visits"}
 														{m.durationMonths ? ` · ${m.durationMonths} ${m.durationMonths === 1 ? "month" : "months"}` : " · no end"}
 													</span>
@@ -174,7 +174,7 @@ export function SellMembershipSheet({
 										))}
 									</div>
 								) : (
-									<p className="text-muted-foreground rounded-2xl border border-dashed p-4 text-sm">
+									<p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">
 										No membership on sale. Add one to your price list first.
 									</p>
 								)}
@@ -211,22 +211,22 @@ export function SellMembershipSheet({
 
 					{/* The receipt: her price, the discount, what's paid, what it gives. */}
 					{membership && computed ? (
-						<section aria-label="This sale" className="bg-secondary/30 grid gap-2 rounded-2xl p-4 text-sm">
+						<section aria-label="This sale" className="grid gap-2 rounded-2xl bg-secondary/30 p-4 text-sm">
 							<div className="flex items-baseline justify-between gap-3">
 								<span>{membership.name}</span>
 								<Money amount={computed.list} />
 							</div>
 							{discount && computed.off > 0 ? (
-								<div className="text-muted-foreground flex items-baseline justify-between gap-3">
+								<div className="flex items-baseline justify-between gap-3 text-muted-foreground">
 									<span>
 										{discount.name} {discountTerms(discount)}
 									</span>
 									<Money amount={computed.off} sign="−" />
 								</div>
 							) : null}
-							<div className="border-secondary-2/40 mt-1 flex items-baseline justify-between gap-3 border-t pt-2">
+							<div className="mt-1 flex items-baseline justify-between gap-3 border-t border-secondary-2/40 pt-2">
 								<span className="font-semibold">{agreed ? "Agreed price" : "To pay"}</span>
-								<span className="font-heading text-primary text-xl font-bold">
+								<span className="font-heading text-xl font-bold text-primary">
 									<Money amount={Number.isFinite(paid) ? paid : computed.price} />
 								</span>
 							</div>
@@ -257,7 +257,7 @@ export function SellMembershipSheet({
 												className="pr-14 tabular-nums"
 											/>
 										</FormControl>
-										<span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold">
+										<span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
 											{CURRENCY}
 										</span>
 									</div>
@@ -286,11 +286,11 @@ export function SellMembershipSheet({
 						render={({ field }) => (
 							<FormItem>
 								<FormLabel>Paid by</FormLabel>
-								<div role="radiogroup" aria-label="Paid by" className="bg-secondary/40 grid grid-cols-4 gap-1 rounded-2xl p-1">
+								<div role="radiogroup" aria-label="Paid by" className="grid grid-cols-4 gap-1 rounded-2xl bg-secondary/40 p-1">
 									{PAYMENT_METHODS.map((m) => (
 										<label
 											key={m}
-											className="text-muted-foreground hover:text-foreground has-[:checked]:bg-card has-[:checked]:text-foreground has-[:focus-visible]:ring-ring flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold transition-colors has-[:checked]:shadow-sm has-[:focus-visible]:ring-2"
+											className="flex min-h-10 cursor-pointer items-center justify-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground has-checked:bg-card has-checked:text-foreground has-checked:shadow-sm has-focus-visible:ring-2 has-focus-visible:ring-ring"
 										>
 											<input
 												type="radio"

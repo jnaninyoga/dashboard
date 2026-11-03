@@ -92,7 +92,7 @@ function NumberField({
 							/>
 						</FormControl>
 						{suffix ? (
-							<span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold">
+							<span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-xs font-semibold text-muted-foreground">
 								{suffix}
 							</span>
 						) : null}
@@ -203,7 +203,7 @@ export function ProductSheet({
 								<NumberField name="durationMonths" label="Lasts" suffix="months" whole />
 							</div>
 							{editing ? (
-								<p className="text-muted-foreground text-sm">Cards already sold keep their credits and their end date.</p>
+								<p className="text-sm text-muted-foreground">Cards already sold keep their credits and their end date.</p>
 							) : null}
 						</>
 					) : (
@@ -214,15 +214,15 @@ export function ProductSheet({
 									<NumberField name="groupMin" label="From" suffix="pax" whole placeholder="1" />
 									<NumberField name="groupMax" label="To" suffix="pax" whole placeholder="no limit" />
 								</div>
-								<p className="text-muted-foreground text-sm">
+								<p className="text-sm text-muted-foreground">
 									Empty for any group. “From 10” with no end reads 10+ pax.
 								</p>
 							</fieldset>
 							<NumberField name="price" label="Price per session" suffix={CURRENCY} placeholder="450" />
 
 							{/* How it will read when she picks it on a quotation. */}
-							<div className="bg-secondary/30 grid gap-1 rounded-2xl p-4">
-								<span className="text-muted-foreground text-xs font-medium">On a quotation</span>
+							<div className="grid gap-1 rounded-2xl bg-secondary/30 p-4">
+								<span className="text-xs font-medium text-muted-foreground">On a quotation</span>
 								<div className="flex items-baseline justify-between gap-3">
 									<span className="truncate font-semibold">{preview}</span>
 									<span className="shrink-0 text-sm">

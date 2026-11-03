@@ -70,10 +70,10 @@ export function Playground() {
 
 	return (
 		<TooltipProvider>
-			<main className="bg-background mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 p-4 sm:p-8">
+			<main className="mx-auto grid max-w-3xl grid-cols-[minmax(0,1fr)] gap-6 bg-background p-4 sm:p-8">
 				<h1 className="text-3xl">UI playground</h1>
 
-				<section className="bg-card grid gap-3 rounded-3xl border p-6">
+				<section className="grid gap-3 rounded-3xl border bg-card p-6">
 					<h2 className="text-xl">Form sheet</h2>
 					<FormSheet
 						open={sheetOpen}
@@ -119,16 +119,16 @@ export function Playground() {
 				</section>
 
 				<FeedbackDemo />
-				<section className="bg-card grid gap-3 rounded-3xl border p-6">
+				<section className="grid gap-3 rounded-3xl border bg-card p-6">
 					<h2 className="text-xl">Check-in search</h2>
-					<p className="text-muted-foreground text-sm">Real clients when signed in, with their card as the door sees it.</p>
+					<p className="text-sm text-muted-foreground">Real clients when signed in, with their card as the door sees it.</p>
 					<ClientSearch onSelectClient={(client) => notify.success(client.fullName)} />
 				</section>
 				<FormsDemo />
 				<MenusDemo />
 				<TablesDemo />
 
-				<section className="bg-card flex flex-wrap items-center gap-3 rounded-3xl border p-6">
+				<section className="flex flex-wrap items-center gap-3 rounded-3xl border bg-card p-6">
 					<Dialog>
 						<DialogTrigger asChild>
 							<Button variant="outline">Dialog</Button>
@@ -201,7 +201,7 @@ export function Playground() {
 					</div>
 				</section>
 
-				<section className="bg-card grid gap-4 rounded-3xl border p-6">
+				<section className="grid gap-4 rounded-3xl border bg-card p-6">
 					<Tabs defaultValue="a">
 						<TabsList>
 							<TabsTrigger value="a">Profile</TabsTrigger>

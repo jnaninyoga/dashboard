@@ -96,7 +96,7 @@ export function DiscountGrid({
 										title={discount.name}
 										media={<PriceListTile tone="blush" icon={<DiscountShape size={28} variant="Bulk" />} />}
 									>
-										<span className="text-muted-foreground text-sm">Off every membership</span>
+										<span className="text-sm text-muted-foreground">Off every membership</span>
 									</EntityCardHeader>
 								}
 								figures={
@@ -107,14 +107,14 @@ export function DiscountGrid({
 								}
 								actions={
 									example && cheapest ? (
-										<p className="text-muted-foreground flex flex-wrap items-baseline gap-x-1.5 text-sm">
+										<p className="flex flex-wrap items-baseline gap-x-1.5 text-sm text-muted-foreground">
 											<span className="truncate">{cheapest.name}:</span>
 											<s>{formatAmount(example.list)}</s>
 											<span aria-hidden>→</span>
-											<Money amount={example.price} className="text-foreground font-semibold" />
+											<Money amount={example.price} className="font-semibold text-foreground" />
 										</p>
 									) : (
-										<p className="text-muted-foreground text-sm">No membership on sale to apply it to.</p>
+										<p className="text-sm text-muted-foreground">No membership on sale to apply it to.</p>
 									)
 								}
 							/>

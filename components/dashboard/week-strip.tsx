@@ -39,13 +39,13 @@ export function WeekStrip({
 	const chosen = byDay.get(selected) ?? [];
 
 	return (
-		<section aria-labelledby="this-week" className="bg-card border-secondary/20 flex flex-col gap-5 rounded-3xl border p-5 sm:p-6">
+		<section aria-labelledby="this-week" className="flex flex-col gap-5 rounded-3xl border border-secondary/20 bg-card p-5 sm:p-6">
 			<div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
 				<div className="flex flex-col gap-1">
-					<h2 id="this-week" className="font-heading text-foreground text-xl font-semibold">
+					<h2 id="this-week" className="font-heading text-xl font-semibold text-foreground">
 						This week
 					</h2>
-					<p className="text-muted-foreground text-sm">
+					<p className="text-sm text-muted-foreground">
 						{week.sessions
 							? `${week.sessions} ${week.sessions === 1 ? "session" : "sessions"} this week, ${week.checkIns} ${week.checkIns === 1 ? "check-in" : "check-ins"} so far`
 							: "No sessions this week"}
@@ -54,7 +54,7 @@ export function WeekStrip({
 				</div>
 				<Link
 					href="/schedule"
-					className="text-primary focus-visible:ring-ring -mr-2 inline-flex min-h-10 items-center gap-1 rounded-full px-2 text-sm font-semibold outline-none hover:underline focus-visible:ring-2"
+					className="-mr-2 inline-flex min-h-10 items-center gap-1 rounded-full px-2 text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					Open the full schedule
 					<ArrowRight2 size={16} />
@@ -62,7 +62,7 @@ export function WeekStrip({
 			</div>
 
 			<div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:gap-8">
-			<div role="group" aria-label="Days of this week" className="grid grid-cols-7 gap-1.5 lg:w-[30rem] lg:shrink-0">
+			<div role="group" aria-label="Days of this week" className="grid grid-cols-7 gap-1.5 lg:w-120 lg:shrink-0">
 				{days.map((day) => {
 					const { sessions: count, cancelled } = summarize(byDay.get(day) ?? []);
 					const isSelected = day === selected;
@@ -75,7 +75,7 @@ export function WeekStrip({
 							aria-pressed={isSelected}
 							aria-label={`${formatDay(day, { weekday: "long", day: "numeric", month: "long" })}: ${dayCountLabel({ sessions: count, cancelled })}`}
 							className={cn(
-								"focus-visible:ring-ring flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl transition-colors outline-none focus-visible:ring-2 active:scale-95 motion-reduce:transition-none",
+								"flex min-h-20 flex-col items-center justify-center gap-1 rounded-2xl transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-95 motion-reduce:transition-none",
 								isSelected
 									? "bg-primary text-primary-foreground"
 									: isToday
@@ -106,10 +106,10 @@ export function WeekStrip({
 
 			<div className="flex min-w-0 flex-1 flex-col gap-3">
 				<p className="flex items-baseline justify-between gap-3">
-					<span className="font-heading text-foreground text-lg font-semibold">
+					<span className="font-heading text-lg font-semibold text-foreground">
 						{selected === today ? "Today" : formatDay(selected, { weekday: "long", day: "numeric", month: "long" })}
 					</span>
-					<span className="text-muted-foreground text-sm">{dayCountLabel(summarize(chosen))}</span>
+					<span className="text-sm text-muted-foreground">{dayCountLabel(summarize(chosen))}</span>
 				</p>
 				{/* An empty day says so in its heading ("No sessions"); nothing more to add. */}
 				{chosen.length ? (

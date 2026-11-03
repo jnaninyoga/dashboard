@@ -148,7 +148,7 @@ export function DataTable<TData, TValue>({
 	) : null;
 
 	return (
-		<div className="animate-slide-up flex flex-col gap-4">
+		<div className="flex animate-slide-up flex-col gap-4">
 			{toolbar || toggle ? (
 				<div className="flex flex-col gap-3 md:flex-row md:items-center">
 					{toolbar}
@@ -178,8 +178,8 @@ export function DataTable<TData, TValue>({
 									key={row.id}
 									onClick={open(row.original)}
 									className={cn(
-										"bg-card border-secondary/20 min-w-0 rounded-3xl border p-4 shadow-sm transition-all",
-										getRowHref && "active:bg-primary/5 cursor-pointer",
+										"min-w-0 rounded-3xl border border-secondary/20 bg-card p-4 shadow-sm transition-all",
+										getRowHref && "cursor-pointer active:bg-primary/5",
 									)}
 								>
 									{renderCard(row.original)}
@@ -211,7 +211,7 @@ export function DataTable<TData, TValue>({
 														<button
 															type="button"
 															onClick={header.column.getToggleSortingHandler()}
-															className="hover:text-foreground -mx-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors"
+															className="-mx-1 inline-flex items-center gap-1.5 rounded-md px-1 py-0.5 transition-colors hover:text-foreground"
 														>
 															{flexRender(header.column.columnDef.header, header.getContext())}
 															{sorted === "asc" ? (
@@ -229,21 +229,21 @@ export function DataTable<TData, TValue>({
 									</TableRow>
 								))}
 							</TableHeader>
-							<TableBody className="divide-secondary/15 divide-y">
+							<TableBody className="divide-y divide-secondary/15">
 								{rows.map((row) => (
 									<TableRow
 										key={row.id}
 										onClick={open(row.original)}
 										className={cn(
 											"group border-none transition-colors",
-											getRowHref ? "hover:bg-primary/5 cursor-pointer" : "hover:bg-transparent",
+											getRowHref ? "cursor-pointer hover:bg-primary/5" : "hover:bg-transparent",
 										)}
 									>
 										{row.getVisibleCells().map((cell) => (
 											<TableCell
 												key={cell.id}
 												className={cn(
-													"px-3 py-3 whitespace-nowrap first:pl-5 last:pr-5",
+													"p-3 whitespace-nowrap first:pl-5 last:pr-5",
 													cell.column.columnDef.meta?.className,
 												)}
 											>
@@ -257,7 +257,7 @@ export function DataTable<TData, TValue>({
 					</div>
 
 					<div className="flex items-center justify-between gap-3 px-1">
-						<p className="text-muted-foreground text-sm font-medium">
+						<p className="text-sm font-medium text-muted-foreground">
 							{table.getPageCount() > 1
 								? `${first}–${last} of ${total} ${noun.many}`
 								: `${total} ${total === 1 ? noun.one : noun.many}`}

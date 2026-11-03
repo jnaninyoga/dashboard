@@ -61,19 +61,19 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 			<div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
 				<h2 id="week-title" className="font-heading text-lg font-semibold">
 					Open {open.length} {open.length === 1 ? "day" : "days"}, {hoursLabel(total)} a week
-					{closed.length ? <span className="text-muted-foreground font-sans text-sm font-normal"> · closed {closed.join(", ")}</span> : null}
+					{closed.length ? <span className="font-sans text-sm font-normal text-muted-foreground"> · closed {closed.join(", ")}</span> : null}
 				</h2>
 				<div className="flex items-center gap-2">
-					{state.kind === "error" ? <span className="text-destructive text-sm">{state.message}</span> : null}
+					{state.kind === "error" ? <span className="text-sm text-destructive">{state.message}</span> : null}
 					<SaveStatus state={state} />
 				</div>
 			</div>
 
-			<div className="bg-card rounded-2xl border">
+			<div className="rounded-2xl border bg-card">
 				{/* The time axis, above the bars (wide screens only: on a phone each day reads its times). */}
 				<div className="hidden px-4 pt-3 md:grid md:grid-cols-[9rem_1fr_18rem] md:gap-4">
 					<span />
-					<div className="text-muted-foreground relative h-4 text-xs tabular-nums">
+					<div className="relative h-4 text-xs text-muted-foreground tabular-nums">
 						{ticks.map((hour, i) => (
 							<span
 								key={hour}
@@ -88,7 +88,7 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 					<span />
 				</div>
 
-				<ul className="divide-border divide-y">
+				<ul className="divide-y divide-border">
 					{DAYS.map(({ key, label }) => {
 						const day = week[key];
 						const problem = problems.get(key);
@@ -98,7 +98,7 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 								<label className="flex cursor-pointer items-center gap-3">
 									<Switch checked={day.isOpen} onCheckedChange={(isOpen) => update(key, { isOpen })} aria-label={`${label} open`} />
 									<span className={cn("font-medium", !day.isOpen && "text-muted-foreground")}>{label}</span>
-									<span className="text-muted-foreground ml-auto text-sm tabular-nums md:hidden">
+									<span className="ml-auto text-sm text-muted-foreground tabular-nums md:hidden">
 										{day.isOpen ? (valid ? hoursLabel(hoursOf(day)) : "") : "Closed"}
 									</span>
 								</label>
@@ -110,7 +110,7 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 								>
 									{valid ? (
 										<span
-											className="bg-primary absolute inset-y-0 rounded-full transition-[left,width] duration-300"
+											className="absolute inset-y-0 rounded-full bg-primary transition-[left,width] duration-300"
 											style={{ left: at(day.start), width: `calc(${at(day.end)} - ${at(day.start)})` }}
 										/>
 									) : null}
@@ -138,10 +138,10 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 												className="h-10 tabular-nums"
 											/>
 										</div>
-										{problem ? <p className="text-destructive text-sm">{problem}</p> : null}
+										{problem ? <p className="text-sm text-destructive">{problem}</p> : null}
 									</div>
 								) : (
-									<p className="text-muted-foreground text-sm max-md:hidden">Closed</p>
+									<p className="text-sm text-muted-foreground max-md:hidden">Closed</p>
 								)}
 							</li>
 						);

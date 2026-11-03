@@ -125,7 +125,7 @@ export function DocumentActionRibbon({
 					action: (
 						<Link
 							href={`/b2b/partners/${doc.partnerId}`}
-							className="text-primary inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold hover:underline"
+							className="inline-flex min-h-10 items-center rounded-full px-2 text-sm font-semibold text-primary hover:underline"
 						>
 							Add it
 						</Link>
@@ -160,14 +160,14 @@ export function DocumentActionRibbon({
 	return (
 		// The document's actions, as a row of buttons on the right (its
 		// quotation and payments have their own places on the page).
-		<div className="animate-slide-up flex flex-wrap items-center justify-end gap-3 delay-100">
+		<div className="flex animate-slide-up flex-wrap items-center justify-end gap-3 delay-100">
 			<div className="flex flex-wrap items-center justify-end gap-3">
 				<PDFDownloadBtn doc={doc} profile={profile} />
 
 				{doc.archivedAt ? (
 					<Badge
 						variant="outline"
-						className="border-warning/30 bg-warning/10 text-warning gap-1.5 rounded-xl px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase"
+						className="gap-1.5 rounded-xl border-warning/30 bg-warning/10 px-3 py-1.5 text-[10px] font-bold tracking-widest text-warning uppercase"
 					>
 						<Archive size={12} variant="Bold" />
 						Archived
@@ -211,7 +211,7 @@ export function DocumentActionRibbon({
 					<Button
 						onClick={() => handleStatusUpdate("accepted")}
 						disabled={isPending}
-						className="bg-success text-success-foreground hover:bg-success/90 gap-2 rounded-xl font-bold shadow-sm"
+						className="gap-2 rounded-xl bg-success font-bold text-success-foreground shadow-sm hover:bg-success/90"
 					>
 						<TickCircle size={18} variant="Bold" />
 						Accept Quote
@@ -277,7 +277,7 @@ export function DocumentActionRibbon({
 						onClick={handleDeleteDraft}
 						disabled={isPending}
 						variant="ghost"
-						className="text-muted-foreground hover:bg-destructive/5 hover:text-destructive gap-2 rounded-xl font-medium"
+						className="gap-2 rounded-xl font-medium text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
 					>
 						<Trash size={18} />
 						Delete Draft
@@ -291,7 +291,7 @@ export function DocumentActionRibbon({
 							onClick={() => setIsArchiveOpen(true)}
 							disabled={isPending}
 							variant="ghost"
-							className="text-muted-foreground hover:bg-warning/10 hover:text-warning gap-2 rounded-xl font-medium"
+							className="gap-2 rounded-xl font-medium text-muted-foreground hover:bg-warning/10 hover:text-warning"
 						>
 							<Archive size={18} />
 							Archive

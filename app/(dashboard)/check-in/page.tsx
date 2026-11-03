@@ -14,7 +14,7 @@ export default async function CheckInIndexPage() {
     return (
         <>
             <header className="flex flex-col space-y-1">
-                <h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Check-in</h1>
+                <h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">Check-in</h1>
                 <p className="text-muted-foreground">Today&apos;s classes and private sessions. Open one to check clients in.</p>
             </header>
 

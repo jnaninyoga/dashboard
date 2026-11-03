@@ -50,7 +50,7 @@ export default async function LoadingReview({ searchParams }: { searchParams: Pr
 		<ul className="flex flex-wrap gap-2">
 			{[...Object.keys(SCREENS), "error"].map((name) => (
 				<li key={name}>
-					<Link href={`?screen=${name}`} className="bg-card rounded-full border px-3 py-1.5 text-sm">
+					<Link href={`?screen=${name}`} className="rounded-full border bg-card px-3 py-1.5 text-sm">
 						{name}
 					</Link>
 				</li>

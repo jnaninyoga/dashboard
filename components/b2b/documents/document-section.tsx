@@ -28,7 +28,7 @@ export function DocumentSection({
 			<div className="flex min-h-10 flex-wrap items-center justify-between gap-x-3 gap-y-2">
 				<h2
 					id={`${id}-title`}
-					className="font-heading text-foreground text-lg font-semibold"
+					className="font-heading text-lg font-semibold text-foreground"
 				>
 					{title}
 				</h2>

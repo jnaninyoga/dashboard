@@ -110,7 +110,7 @@ export function ContactDialog({
 						placeholder="ex: Jean Dupont"
 						defaultValue={contact?.fullName ?? ""}
 						required
-						className="bg-secondary/5 focus-visible:ring-primary/20 border"
+						className="border bg-secondary/5 focus-visible:ring-primary/20"
 					/>
 				</div>
 				<div className="grid gap-2">
@@ -122,7 +122,7 @@ export function ContactDialog({
 						name="role"
 						placeholder="ex: Manager, Front Desk"
 						defaultValue={contact?.role ?? ""}
-						className="bg-secondary/5 focus-visible:ring-primary/20 border"
+						className="border bg-secondary/5 focus-visible:ring-primary/20"
 					/>
 				</div>
 				<div className="grid gap-2">
@@ -135,7 +135,7 @@ export function ContactDialog({
 						type="email"
 						placeholder="email@exemple.com"
 						defaultValue={contact?.email ?? ""}
-						className="bg-secondary/5 focus-visible:ring-primary/20 border"
+						className="border bg-secondary/5 focus-visible:ring-primary/20"
 					/>
 				</div>
 				<div className="grid gap-2">
@@ -151,7 +151,7 @@ export function ContactDialog({
 						className="h-10"
 					/>
 				</div>
-				<div className="border-primary/40 bg-primary/5 hover:bg-primary/10 flex items-center space-x-3 rounded-2xl border p-4 shadow-xs transition-colors">
+				<div className="flex items-center space-x-3 rounded-2xl border border-primary/40 bg-primary/5 p-4 shadow-xs transition-colors hover:bg-primary/10">
 					<Checkbox
 						id={`${formId}-isPrimary`}
 						name="isPrimary"
@@ -159,17 +159,17 @@ export function ContactDialog({
 						className="border-primary/80 data-[state=checked]:border-primary data-[state=checked]:bg-primary"
 					/>
 					<div className="grid gap-1 leading-none">
-						<Label htmlFor={`${formId}-isPrimary`} className="text-primary cursor-pointer text-sm font-bold">
+						<Label htmlFor={`${formId}-isPrimary`} className="cursor-pointer text-sm font-bold text-primary">
 							Primary Contact
 						</Label>
-						<p className="text-secondary-foreground text-[11px] leading-tight font-medium">
+						<p className="text-[11px] leading-tight font-medium text-secondary-foreground">
 							The default recipient for documents. Only one per partner.
 						</p>
 					</div>
 				</div>
 
 				{submitted && state?.error && !state.ref ? (
-					<div className="border-destructive/20 bg-destructive/5 text-destructive space-y-1 rounded-xl border p-3 text-sm font-medium">
+					<div className="space-y-1 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive">
 						<p className="font-bold">{state.error}</p>
 						{state.issues ? Object.values(state.issues).flat().map((issue, i) => (
 							<p key={i} className="text-xs opacity-80">• {issue}</p>

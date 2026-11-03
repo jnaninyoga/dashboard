@@ -42,25 +42,25 @@ export function Renewals({ due, error, today, signature }: { due: RenewalDue[]; 
 	const shown = all ? due : due.slice(0, FIRST);
 
 	return (
-		<section aria-labelledby="renewals" className="bg-card border-secondary/20 flex flex-col gap-4 rounded-3xl border p-5 sm:p-6">
+		<section aria-labelledby="renewals" className="flex flex-col gap-4 rounded-3xl border border-secondary/20 bg-card p-5 sm:p-6">
 			<div className="flex flex-col gap-1">
-				<h2 id="renewals" className="font-heading text-foreground text-xl font-semibold">
+				<h2 id="renewals" className="font-heading text-xl font-semibold text-foreground">
 					Cards to renew
 				</h2>
-				<p className="text-muted-foreground text-sm">{error ?? summary(due)}</p>
+				<p className="text-sm text-muted-foreground">{error ?? summary(due)}</p>
 			</div>
 
 			{due.length ? (
-				<ul className="divide-border -mx-2 flex flex-col divide-y">
+				<ul className="-mx-2 flex flex-col divide-y divide-border">
 					{shown.map(({ client, renewal }) => (
 						<li key={client.id} className="flex items-center gap-3 px-2 py-3">
 							<Link
 								href={`/clients/${client.id}`}
-								className="focus-visible:ring-ring flex min-w-0 flex-1 items-center gap-3 rounded-2xl outline-none focus-visible:ring-2"
+								className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							>
 								<ClientAvatar client={client} className="size-10 sm:size-11" />
 								<span className="flex min-w-0 flex-col">
-									<span className="text-foreground truncate font-semibold">{client.fullName}</span>
+									<span className="truncate font-semibold text-foreground">{client.fullName}</span>
 									<span className={cn("text-sm", canComeIn(renewal) ? "text-warning" : "text-destructive")}>
 										{renewalLine(renewal, today, (day) => formatDay(day, { weekday: "short", day: "numeric", month: "short" }))}
 									</span>
@@ -72,7 +72,7 @@ export function Renewals({ due, error, today, signature }: { due: RenewalDue[]; 
 								rel="noopener noreferrer"
 								aria-label={`Ask ${client.fullName} on WhatsApp`}
 								title="Ask on WhatsApp, with the message written"
-								className="bg-primary/10 text-primary hover:bg-primary/15 flex size-11 shrink-0 items-center justify-center rounded-full transition-colors active:scale-95"
+								className="flex size-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/15 active:scale-95"
 							>
 								<Whatsapp size={20} variant="Bold" />
 							</a>
@@ -93,7 +93,7 @@ export function Renewals({ due, error, today, signature }: { due: RenewalDue[]; 
 					type="button"
 					onClick={() => setAll(!all)}
 					aria-expanded={all}
-					className="text-primary focus-visible:ring-ring -ml-2 inline-flex min-h-10 items-center gap-1 self-start rounded-full px-2 text-sm font-semibold outline-none hover:underline focus-visible:ring-2"
+					className="-ml-2 inline-flex min-h-10 items-center gap-1 self-start rounded-full px-2 text-sm font-semibold text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
 				>
 					{all ? "Show fewer" : `Show all ${due.length}`}
 					<ArrowDown2 size={16} className={cn("transition-transform motion-reduce:transition-none", all && "rotate-180")} />

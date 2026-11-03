@@ -140,7 +140,7 @@ export function CompanyProfileForm({
 					<Card className="overflow-hidden">
 						<CardHeader>
 							<div className="flex items-center gap-4">
-								<div className="bg-primary/10 text-primary rounded-2xl p-2.5">
+								<div className="rounded-2xl bg-primary/10 p-2.5 text-primary">
 									<Personalcard size={24} variant="Bulk" />
 								</div>
 								<div>
@@ -182,7 +182,7 @@ export function CompanyProfileForm({
 									icon={<Message size={18} variant="Bulk" />}
 								/>
 								<div className="space-y-2.5">
-									<Label className="text-muted-foreground/60 ml-1 text-[10px] font-black tracking-widest uppercase">
+									<Label className="ml-1 text-[10px] font-black tracking-widest text-muted-foreground/60 uppercase">
 										Phone Number
 									</Label>
 									<PhoneInput
@@ -200,11 +200,11 @@ export function CompanyProfileForm({
 									/>
 								</div>
 								<div className="space-y-2.5 md:col-span-2">
-									<Label className="text-muted-foreground/60 ml-1 text-[10px] font-black tracking-widest uppercase">
+									<Label className="ml-1 text-[10px] font-black tracking-widest text-muted-foreground/60 uppercase">
 										Studio Address
 									</Label>
 									<div className="group relative">
-										<div className="text-primary/40 group-focus-within:text-primary absolute top-5 left-4 -translate-y-1/2 transition-colors">
+										<div className="absolute top-5 left-4 -translate-y-1/2 text-primary/40 transition-colors group-focus-within:text-primary">
 											<Location size={18} variant="Bulk" />
 										</div>
 										<Textarea
@@ -223,7 +223,7 @@ export function CompanyProfileForm({
 					<Card className="overflow-hidden" style={{ animationDelay: "200ms" }}>
 						<CardHeader>
 							<div className="flex items-center gap-4">
-								<div className="bg-primary/10 text-primary rounded-2xl p-2.5">
+								<div className="rounded-2xl bg-primary/10 p-2.5 text-primary">
 									<Briefcase size={24} variant="Bulk" />
 								</div>
 								<div>
@@ -241,7 +241,7 @@ export function CompanyProfileForm({
 								{legalDetails.map((detail, idx) => (
 									<div
 										key={idx}
-										className="group animate-slide-up relative flex items-center gap-4"
+										className="group relative flex animate-slide-up items-center gap-4"
 										style={{ animationDelay: `${250 + idx * 50}ms` }}
 									>
 										<div className="flex-1">
@@ -272,7 +272,7 @@ export function CompanyProfileForm({
 											type="button"
 											variant="ghost"
 											size="icon"
-											className="bg-destructive/5 text-destructive/80 hover:text-destructive hover:bg-destructive/10 opacity-0 transition-all group-focus-within:opacity-100 group-hover:opacity-100"
+											className="bg-destructive/5 text-destructive/80 opacity-0 transition-all group-focus-within:opacity-100 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive"
 											onClick={() => {
 												setLegalDetails(
 													legalDetails.filter((_, i) => i !== idx),
@@ -288,7 +288,7 @@ export function CompanyProfileForm({
 							<Button
 								type="button"
 								variant="outline"
-								className="border-primary/10 bg-primary/2 hover:bg-primary/5 hover:border-primary/20 text-primary h-12 w-full rounded-2xl border-dashed transition-all"
+								className="h-12 w-full rounded-2xl border-dashed border-primary/10 bg-primary/2 text-primary transition-all hover:border-primary/20 hover:bg-primary/5"
 								onClick={() =>
 									setLegalDetails([...legalDetails, { label: "", value: "" }])
 								}
@@ -320,19 +320,19 @@ export function CompanyProfileForm({
 									<InfoCircle
 										size={20}
 										variant="Bulk"
-										className="text-primary cursor-help opacity-60 transition-opacity hover:opacity-100"
+										className="cursor-help text-primary opacity-60 transition-opacity hover:opacity-100"
 									/>
 								</TooltipTrigger>
-								<TooltipContent className="bg-card border-secondary/20 max-w-xs space-y-2 rounded-2xl p-4 shadow-xl">
+								<TooltipContent className="max-w-xs space-y-2 rounded-2xl border-secondary/20 bg-card p-4 shadow-xl">
 									<div className="flex items-center gap-2">
-										<div className="bg-primary/10 text-primary flex w-fit items-center gap-2 rounded-full p-2">
+										<div className="flex w-fit items-center gap-2 rounded-full bg-primary/10 p-2 text-primary">
 											<Global size={18} variant="Bulk" />
 										</div>
-										<h3 className="font-heading text-primary text-sm font-bold">
+										<h3 className="font-heading text-sm font-bold text-primary">
 											Zen Compliance
 										</h3>
 									</div>
-									<p className="text-muted-foreground text-xs leading-relaxed">
+									<p className="text-xs leading-relaxed text-muted-foreground">
 										Assets uploaded here will be used to automatically brand
 										your Quotes and Invoices with the Zen aesthetic.
 									</p>
@@ -342,7 +342,7 @@ export function CompanyProfileForm({
 						<CardContent className="space-y-6">
 							{/* Logo Upload */}
 							<div className="space-y-3">
-								<Label className="text-muted-foreground ml-1 text-xs font-bold tracking-widest uppercase">
+								<Label className="ml-1 text-xs font-bold tracking-widest text-muted-foreground uppercase">
 									Studio Logo
 								</Label>
 								<AssetUploader
@@ -357,7 +357,7 @@ export function CompanyProfileForm({
 
 							{/* Signature Upload */}
 							<div className="space-y-3">
-								<Label className="text-muted-foreground ml-1 text-xs font-bold tracking-widest uppercase">
+								<Label className="ml-1 text-xs font-bold tracking-widest text-muted-foreground uppercase">
 									Official Stamp/Signature
 								</Label>
 								<AssetUploader
@@ -380,7 +380,7 @@ export function CompanyProfileForm({
 				<Card className="overflow-hidden">
 					<CardHeader className="flex flex-row items-center justify-between">
 						<div className="flex items-center gap-4">
-							<div className="bg-primary/10 text-primary rounded-2xl p-2.5">
+							<div className="rounded-2xl bg-primary/10 p-2.5 text-primary">
 								<DocumentText1 size={24} variant="Bulk" />
 							</div>
 							<div>
@@ -394,9 +394,9 @@ export function CompanyProfileForm({
 						</div>
 					</CardHeader>
 					<CardContent className="space-y-6">
-						<div className="border-secondary/10 flex flex-col justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
+						<div className="flex flex-col justify-between gap-4 border-b border-secondary/10 pb-6 sm:flex-row sm:items-center">
 							<div className="space-y-1">
-								<Label className="text-muted-foreground ml-1 flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
+								<Label className="ml-1 flex items-center gap-2 text-xs font-bold tracking-widest text-muted-foreground uppercase">
 									<SecuritySafe
 										size={16}
 										variant="Bulk"
@@ -404,11 +404,11 @@ export function CompanyProfileForm({
 									/>
 									Bank Account Information
 								</Label>
-								<p className="text-muted-foreground/60 ml-1 text-[10px] leading-none font-black tracking-widest uppercase">
+								<p className="ml-1 text-[10px] leading-none font-black tracking-widest text-muted-foreground/60 uppercase">
 									Toggle to include banking details on quotes and invoices
 								</p>
 							</div>
-							<div className="bg-secondary/50 border-secondary-2/40 hover:bg-secondary/80 hover:text-secondary-foreground group flex items-center gap-3 rounded-2xl border px-4 py-2 transition-all">
+							<div className="group flex items-center gap-3 rounded-2xl border border-secondary-2/40 bg-secondary/50 px-4 py-2 transition-all hover:bg-secondary/80 hover:text-secondary-foreground">
 								<Label
 									htmlFor="showBankDetails"
 									className="cursor-pointer text-[10px] font-black tracking-widest uppercase opacity-60 transition-opacity group-hover:opacity-100"
@@ -436,7 +436,7 @@ export function CompanyProfileForm({
 							<MarkdownEditor
 								id="bankDetails"
 								name="bankDetails"
-								className="border-secondary/10 rounded-3xl shadow-sm"
+								className="rounded-3xl border-secondary/10 shadow-sm"
 								defaultValue={initialData?.bankDetails || ""}
 								placeholder={`**Bank:** CREDIT DU MAROC\n**Agency:** MARRAKECH GUELIZ\n**Account:** 021.450.0000.03.700.13.95366.50`}
 							/>
@@ -458,13 +458,13 @@ function FormInput({ label, icon, ...props }: FormInputProps) {
 		<div className="space-y-2.5">
 			<Label
 				htmlFor={props.id}
-				className="text-muted-foreground/60 ml-1 text-[10px] font-black tracking-widest uppercase"
+				className="ml-1 text-[10px] font-black tracking-widest text-muted-foreground/60 uppercase"
 			>
 				{label}
 			</Label>
 			<div className="group relative">
 				{icon ? (
-					<div className="text-primary/40 group-focus-within:text-primary absolute top-1/2 left-4 -translate-y-1/2 transition-colors">
+					<div className="absolute top-1/2 left-4 -translate-y-1/2 text-primary/40 transition-colors group-focus-within:text-primary">
 						{icon}
 					</div>
 				) : null}
@@ -474,7 +474,7 @@ function FormInput({ label, icon, ...props }: FormInputProps) {
 	) : (
 		<div className="group relative">
 			{icon ? (
-				<div className="text-primary/40 group-focus-within:text-primary absolute top-1/2 left-4 -translate-y-1/2 transition-colors">
+				<div className="absolute top-1/2 left-4 -translate-y-1/2 text-primary/40 transition-colors group-focus-within:text-primary">
 					{icon}
 				</div>
 			) : null}
@@ -502,12 +502,12 @@ function AssetUploader({
 	return (
 		<div
 			className={cn(
-				"group border-secondary-2/40 bg-secondary/20 hover:bg-secondary/40 hover:border-secondary-2/60 relative flex items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed transition-all",
+				"group relative flex items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-secondary-2/40 bg-secondary/20 transition-all hover:border-secondary-2/60 hover:bg-secondary/40",
 				aspect === "square" ? "aspect-square" : "aspect-video",
 			)}
 		>
 			{preview ? (
-				<div className="relative flex h-full w-full items-center justify-center p-4">
+				<div className="relative flex size-full items-center justify-center p-4">
 					<Image
 						src={preview}
 						alt="Preview"
@@ -536,7 +536,7 @@ function AssetUploader({
 							type="button"
 							variant="destructive"
 							size="icon"
-							className="h-10 w-10 rounded-xl"
+							className="size-10 rounded-xl"
 							onClick={onClear}
 						>
 							<Trash size={18} />
@@ -545,14 +545,14 @@ function AssetUploader({
 				</div>
 			) : (
 				<div className="relative flex cursor-pointer flex-col items-center gap-3 p-6 text-center">
-					<div className="bg-secondary text-secondary-foreground rounded-2xl p-4 transition-transform group-hover:scale-110">
+					<div className="rounded-2xl bg-secondary p-4 text-secondary-foreground transition-transform group-hover:scale-110">
 						<ImageIcon size={32} variant="Bulk" />
 					</div>
 					<div>
-						<p className="text-secondary-foreground mb-1 text-[10px] font-black tracking-widest uppercase">
+						<p className="mb-1 text-[10px] font-black tracking-widest text-secondary-foreground uppercase">
 							Upload {label}
 						</p>
-						<p className="text-muted-foreground text-[9px] leading-tight font-medium">
+						<p className="text-[9px] leading-tight font-medium text-muted-foreground">
 							Click or drag & drop PNG/JPG
 						</p>
 					</div>
@@ -619,7 +619,7 @@ function LegalLabelAutocomplete({
 											onChange(lbl);
 											setOpen(false);
 										}}
-										className="hover:bg-primary/5 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary flex cursor-pointer items-center justify-between px-3 py-2 font-bold transition-colors"
+										className="flex cursor-pointer items-center justify-between px-3 py-2 font-bold transition-colors hover:bg-primary/5 data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary"
 									>
 										<span className="text-xs">{lbl}</span>
 									</CommandItem>

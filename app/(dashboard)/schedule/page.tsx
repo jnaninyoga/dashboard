@@ -26,7 +26,7 @@ export default async function SchedulePage({
 		<>
 			<header className="flex flex-wrap items-end justify-between gap-4">
 				<div className="flex flex-col gap-1">
-					<h1 className="font-heading text-foreground text-3xl font-medium tracking-tight md:text-4xl">Schedule</h1>
+					<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">Schedule</h1>
 					<p className="text-muted-foreground">Every session, week by week: what&apos;s coming and who came.</p>
 				</div>
 				<NewSessionButton />
@@ -38,7 +38,7 @@ export default async function SchedulePage({
 			</div>
 
 			{feed.error !== undefined ? (
-				<p role="alert" className="bg-card zen-shadow rounded-2xl border p-5 text-sm leading-relaxed">
+				<p role="alert" className="zen-shadow rounded-2xl border bg-card p-5 text-sm leading-relaxed">
 					{feed.error}
 				</p>
 			) : (

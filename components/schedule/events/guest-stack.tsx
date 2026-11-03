@@ -172,7 +172,7 @@ export function GuestAvatarStack({ attendees }: GuestAvatarStackProps) {
 							</div>
 
 							{overflow > 0 ? (
-								<span className="bg-muted text-muted-foreground ring-card -ml-1 flex size-6 items-center justify-center rounded-full text-[9px] font-bold ring-[1.5px]">
+								<span className="-ml-1 flex size-6 items-center justify-center rounded-full bg-muted text-[9px] font-bold text-muted-foreground ring-[1.5px] ring-card">
 									+{overflow}
 								</span>
 							) : null}
@@ -181,7 +181,7 @@ export function GuestAvatarStack({ attendees }: GuestAvatarStackProps) {
 					<TooltipContent
 						sideOffset={8}
 						side="bottom"
-						className="zen-shadow-md bg-card z-50 w-64 rounded-2xl border-0 p-4"
+						className="zen-shadow-md z-50 w-64 rounded-2xl border-0 bg-card p-4"
 					>
 						<AnalyticsBar guests={enrichedGuests} />
 					</TooltipContent>
@@ -257,20 +257,20 @@ function ParticipantsDialog({
 				className="flex max-h-[85vh] flex-col gap-0 overflow-hidden rounded-3xl p-0 sm:max-w-md"
 			>
 				{/* ── Header ── */}
-				<DialogHeader className="border-border/50 space-y-4 border-b px-6 pt-6 pb-5">
+				<DialogHeader className="space-y-4 border-b border-border/50 px-6 pt-6 pb-5">
 					<div className="flex items-center gap-4">
-						<DialogTitle className="font-heading text-foreground text-2xl font-bold">
+						<DialogTitle className="font-heading text-2xl font-bold text-foreground">
 							<div className="flex items-center gap-2.5">
-								<div className="bg-primary/10 rounded-xl p-2">
+								<div className="rounded-xl bg-primary/10 p-2">
 									<Profile2User
-										className="text-primary h-5 w-5"
+										className="size-5 text-primary"
 										variant="Bulk"
 									/>
 								</div>
 								Participants
 							</div>
 						</DialogTitle>
-						<span className="bg-secondary text-secondary-foreground rounded-full px-2.5 py-1 text-sm font-bold tabular-nums">
+						<span className="rounded-full bg-secondary px-2.5 py-1 text-sm font-bold text-secondary-foreground tabular-nums">
 							{guests.length}
 						</span>
 					</div>
@@ -278,7 +278,7 @@ function ParticipantsDialog({
 					{/* ── Search ── */}
 					<div className="relative flex items-center">
 						<SearchNormal1
-							className="text-primary/60 absolute left-3.5 size-4.5 shrink-0"
+							className="absolute left-3.5 size-4.5 shrink-0 text-primary/60"
 							variant="Outline"
 						/>
 						<Input
@@ -294,7 +294,7 @@ function ParticipantsDialog({
 								variant="ghost"
 								size="icon-sm"
 								onClick={() => setSearch("")}
-								className="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-1 size-7 rounded-full"
+								className="absolute right-1 size-7 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
 							>
 								<CloseCircle className="size-4" variant="Outline" />
 							</Button>
@@ -313,7 +313,7 @@ function ParticipantsDialog({
 								className={cn(
 									"rounded-full px-4 text-xs font-semibold tracking-wide",
 									filter !== f.key &&
-										"text-muted-foreground bg-muted hover:bg-muted/80",
+										"bg-muted text-muted-foreground hover:bg-muted/80",
 								)}
 							>
 								{f.label}
@@ -323,7 +323,7 @@ function ParticipantsDialog({
 				</DialogHeader>
 
 				{/* ── Analytics Bar ── */}
-				<div className="border-border/50 border-b px-6 py-4">
+				<div className="border-b border-border/50 px-6 py-4">
 					<AnalyticsBar guests={guests} />
 				</div>
 
@@ -334,18 +334,18 @@ function ParticipantsDialog({
 							<div className="flex flex-col gap-3 py-6">
 								{Array.from({ length: 4 }).map((_, i) => (
 									<div key={i} className="flex items-center gap-3 px-3">
-										<div className="bg-muted size-10 animate-pulse rounded-full" />
+										<div className="size-10 animate-pulse rounded-full bg-muted" />
 										<div className="flex flex-1 flex-col gap-1.5">
-											<div className="bg-muted h-3.5 w-28 animate-pulse rounded-md" />
-											<div className="bg-muted h-3 w-40 animate-pulse rounded-md" />
+											<div className="h-3.5 w-28 animate-pulse rounded-md bg-muted" />
+											<div className="h-3 w-40 animate-pulse rounded-md bg-muted" />
 										</div>
 									</div>
 								))}
 							</div>
 						) : filtered.length === 0 ? (
-							<div className="text-muted-foreground flex flex-col items-center justify-center py-12 text-center">
+							<div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
 								<UserSquare
-									className="mb-3 h-10 w-10 opacity-20"
+									className="mb-3 size-10 opacity-20"
 									variant="Outline"
 								/>
 								<p className="text-sm font-medium">No participants found</p>
@@ -357,7 +357,7 @@ function ParticipantsDialog({
 							filtered.map((guest, i) => (
 								<div
 									key={guest.email}
-									className="animate-slide-up hover:bg-muted/50 flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors"
+									className="flex animate-slide-up items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-muted/50"
 									style={{
 										animationFillMode: "both",
 										animationDelay: `${i * 30}ms`,
@@ -387,9 +387,9 @@ function ParticipantsDialog({
 											</AvatarFallback>
 										</Avatar>
 										{guest.isClient ? (
-											<div className="bg-card absolute -right-0.5 -bottom-0.5 rounded-full p-px">
+											<div className="absolute -right-0.5 -bottom-0.5 rounded-full bg-card p-px">
 												<TickCircle
-													className="text-primary h-3.5 w-3.5"
+													className="size-3.5 text-primary"
 													variant="Bulk"
 												/>
 											</div>
@@ -398,10 +398,10 @@ function ParticipantsDialog({
 
 									{/* Name + Email */}
 									<div className="flex min-w-0 flex-1 flex-col">
-										<span className="text-foreground truncate text-sm font-semibold">
+										<span className="truncate text-sm font-semibold text-foreground">
 											{guest.displayName}
 										</span>
-										<span className="text-muted-foreground truncate text-xs">
+										<span className="truncate text-xs text-muted-foreground">
 											{guest.email}
 										</span>
 									</div>
@@ -415,7 +415,7 @@ function ParticipantsDialog({
 														<TooltipTrigger asChild>
 															<Link
 																href={`mailto:${guest.email}`}
-																className="bg-secondary text-secondary-3/80 hover:bg-secondary-2 flex size-7 items-center justify-center rounded-xl transition-all hover:scale-105 hover:text-white active:scale-95"
+																className="flex size-7 items-center justify-center rounded-xl bg-secondary text-secondary-3/80 transition-all hover:scale-105 hover:bg-secondary-2 hover:text-white active:scale-95"
 															>
 																<Sms className="size-4" variant="Bold" />
 															</Link>
@@ -443,7 +443,7 @@ function ParticipantsDialog({
 															</TooltipTrigger>
 															<TooltipContent
 																sideOffset={6}
-																className="zen-shadow-sm bg-success/10 text-success z-50 rounded-lg border-0 px-2 py-1 text-[11px] font-bold"
+																className="zen-shadow-sm z-50 rounded-lg border-0 bg-success/10 px-2 py-1 text-[11px] font-bold text-success"
 															>
 																WhatsApp: {guest.phone}
 															</TooltipContent>
@@ -453,7 +453,7 @@ function ParticipantsDialog({
 															<TooltipTrigger asChild>
 																<Link
 																	href={`tel:${guest.phone}`}
-																	className="bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground flex size-7 items-center justify-center rounded-xl transition-all hover:scale-105 active:scale-95"
+																	className="flex size-7 items-center justify-center rounded-xl bg-primary/10 text-primary transition-all hover:scale-105 hover:bg-primary hover:text-primary-foreground active:scale-95"
 																>
 																	<Call className="size-4" variant="Bold" />
 																</Link>
@@ -508,20 +508,20 @@ export function AnalyticsBar({ guests }: { guests: EnrichedGuest[] }) {
 	return (
 		<div className="w-full">
 			<div className="flex items-center justify-between text-xs font-medium">
-				<span className="text-primary flex items-center gap-1.5">
-					<span className="bg-primary inline-block size-2 rounded-full" />
+				<span className="flex items-center gap-1.5 text-primary">
+					<span className="inline-block size-2 rounded-full bg-primary" />
 					Clients · {clientCount}{" "}
 					<span className="text-muted-foreground">({clientPct}%)</span>
 				</span>
-				<span className="text-muted-foreground flex items-center gap-1.5">
-					<span className="bg-secondary-2 inline-block size-2 rounded-full" />
+				<span className="flex items-center gap-1.5 text-muted-foreground">
+					<span className="inline-block size-2 rounded-full bg-secondary-2" />
 					Guests · {guestCount}{" "}
 					<span className="text-muted-foreground">({100 - clientPct}%)</span>
 				</span>
 			</div>
-			<div className="bg-muted mt-2.5 h-2 w-full overflow-hidden rounded-full">
+			<div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-muted">
 				<div
-					className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
+					className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
 					style={{ width: `${clientPct}%` }}
 				/>
 			</div>

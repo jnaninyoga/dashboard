@@ -22,7 +22,7 @@ export default function Loading() {
 					// DocumentFilters: the search, then three selects (a row from xl).
 					<div className="flex min-w-0 flex-1 flex-col gap-3 xl:flex-row xl:items-center">
 						<div className="relative flex-1">
-							<SkeletonField className="bg-card h-10 pl-10" bar="w-44" />
+							<SkeletonField className="h-10 bg-card pl-10" bar="w-44" />
 						</div>
 						<div className="grid grid-cols-[1fr_1fr_auto] gap-2 xl:flex xl:items-center">
 							<SkeletonField className="bg-card xl:w-44" bar="w-16" select />

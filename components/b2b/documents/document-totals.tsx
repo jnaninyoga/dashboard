@@ -12,23 +12,23 @@ export function DocumentTotals({ document }: { document: DocumentWithRelations }
 	const total = parseFloat(document.totalAmount);
 
 	return (
-		<div className="bg-card flex w-full flex-col gap-2.5 rounded-2xl border p-4 shadow-sm">
+		<div className="flex w-full flex-col gap-2.5 rounded-2xl border bg-card p-4 shadow-sm">
 			<div className="flex items-center justify-between gap-4">
-				<span className="text-muted-foreground text-sm">Subtotal</span>
-				<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+				<span className="text-sm text-muted-foreground">Subtotal</span>
+				<span className="font-heading text-lg font-bold text-foreground tabular-nums">
 					<Money amount={subtotal} />
 				</span>
 			</div>
 			<div className="flex items-center justify-between gap-4">
-				<span className="text-muted-foreground text-sm">Tax {taxRate}%</span>
-				<span className="font-heading text-foreground text-lg font-bold tabular-nums">
+				<span className="text-sm text-muted-foreground">Tax {taxRate}%</span>
+				<span className="font-heading text-lg font-bold text-foreground tabular-nums">
 					<Money amount={total - subtotal} />
 				</span>
 			</div>
 			<Separator />
 			<div className="flex items-center justify-between gap-4">
-				<span className="text-foreground font-semibold">Total</span>
-				<span className="font-heading text-primary zen-teal-glow text-3xl font-black tabular-nums">
+				<span className="font-semibold text-foreground">Total</span>
+				<span className="zen-teal-glow font-heading text-3xl font-black text-primary tabular-nums">
 					<Money amount={total} />
 				</span>
 			</div>

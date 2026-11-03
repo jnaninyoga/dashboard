@@ -46,7 +46,7 @@ export function PartnerFilters() {
 		<div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
 			<Input
 				placeholder="Search company, contact..."
-				className="focus-visible:ring-primary/20 bg-card w-full border font-medium transition-all sm:w-64 xl:w-2xs"
+				className="w-full border bg-card font-medium transition-all focus-visible:ring-primary/20 sm:w-64 xl:w-2xs"
 				defaultValue={searchParams.get("query")?.toString()}
 				onChange={(e) => handleSearch(e.target.value)}
 			/>
@@ -55,7 +55,7 @@ export function PartnerFilters() {
 					onValueChange={(v) => handleFilterChange("docType", v)}
 					defaultValue={searchParams.get("docType") || "all"}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-40 xl:w-48">
+					<SelectTrigger className="w-full border bg-card transition-all focus:ring-primary/20 sm:w-40 xl:w-48">
 						<SelectValue placeholder="Document Type" />
 					</SelectTrigger>
 					<SelectContent>
@@ -68,10 +68,10 @@ export function PartnerFilters() {
 					onValueChange={(v) => handleFilterChange("docStatus", v)}
 					defaultValue={searchParams.get("docStatus") || "all"}
 				>
-					<SelectTrigger className="focus:ring-primary/20 bg-card w-full border transition-all sm:w-40 xl:w-48">
+					<SelectTrigger className="w-full border bg-card transition-all focus:ring-primary/20 sm:w-40 xl:w-48">
 						<SelectValue placeholder="Status" />
 					</SelectTrigger>
-					<SelectContent className="border-secondary/20 rounded-xl shadow-xl">
+					<SelectContent className="rounded-xl border-secondary/20 shadow-xl">
 						<SelectItem value="all" className="font-bold">
 							Any status
 						</SelectItem>

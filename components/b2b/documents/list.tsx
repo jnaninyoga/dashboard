@@ -35,7 +35,7 @@ const columns: ColumnDef<DocumentWithContact>[] = [
 		meta: { className: "px-5" },
 		cell: ({ row }) =>
 			row.original.contact?.fullName ? (
-				<span className="text-foreground block max-w-48 truncate">{row.original.contact.fullName}</span>
+				<span className="block max-w-48 truncate text-foreground">{row.original.contact.fullName}</span>
 			) : (
 				<span className="text-muted-foreground">No contact</span>
 			),

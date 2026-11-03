@@ -32,7 +32,7 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 			{/* Breadcrumb & Navigation */}
 			<Link
 				href="/b2b/partners"
-				className="group text-muted-foreground hover:text-primary flex items-center gap-2 text-sm transition-colors"
+				className="group flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
 			>
 				<ArrowLeft
 					size={16}
@@ -42,8 +42,8 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 			</Link>
 
 			{/* Header Section */}
-			<div className="animate-slide-up border-secondary/20 bg-card relative flex flex-col justify-between gap-6 overflow-hidden rounded-3xl border p-8 shadow-sm md:flex-row">
-				<div className="text-primary absolute -top-10 right-0 p-8 opacity-10  ">
+			<div className="relative flex animate-slide-up flex-col justify-between gap-6 overflow-hidden rounded-3xl border border-secondary/20 bg-card p-8 shadow-sm md:flex-row">
+				<div className="absolute -top-10 right-0 p-8 text-primary opacity-10  ">
 					<Buildings size={230} variant="Bulk" />
 				</div>
 				<div className="absolute top-4 right-4 z-20">
@@ -51,11 +51,11 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 				</div>
 				<div className="relative z-10 flex flex-col gap-4">
 					<div className="flex items-center gap-4 pr-12">
-						<div className="border-primary/20 bg-primary/10 text-primary flex size-16 min-h-16 min-w-16 items-center justify-center rounded-2xl border shadow-inner">
+						<div className="flex size-16 min-h-16 min-w-16 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-inner">
 							<Buildings size={32} variant="Bulk" />
 						</div>
 						<div className="space-y-1">
-							<h1 className="font-heading text-foreground text-4xl font-bold tracking-tight">
+							<h1 className="font-heading text-4xl font-bold tracking-tight text-foreground">
 								{partner.companyName}
 							</h1>
 							<div className="flex flex-wrap items-center gap-3">
@@ -64,13 +64,13 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 						</div>
 					</div>
 
-					<div className="text-muted-foreground/90 mt-2 flex flex-col gap-4 sm:flex-row">
+					<div className="mt-2 flex flex-col gap-4 text-muted-foreground/90 sm:flex-row">
 						{partner.address ? (
 							<div className="flex max-w-sm items-start gap-2">
 								<Location
 									size={18}
 									variant="Bulk"
-									className="text-primary/60 shrink-0"
+									className="shrink-0 text-primary/60"
 								/>
 								<span className="text-sm leading-relaxed font-medium">
 									{partner.address}
@@ -81,21 +81,21 @@ export default async function PartnerDetailPage(props: { params: Params }) {
 				</div>
 
 				<div className="relative z-10 flex shrink-0 flex-col justify-center gap-3">
-					<div className="border-secondary-3/20 bg-secondary/70 flex items-center gap-4 rounded-2xl border px-6 py-4 shadow-xs backdrop-blur-sm">
+					<div className="flex items-center gap-4 rounded-2xl border border-secondary-3/20 bg-secondary/70 px-6 py-4 shadow-xs backdrop-blur-sm">
 						<div className="text-center">
-							<div className="text-secondary-3 text-2xl font-bold">
+							<div className="text-2xl font-bold text-secondary-3">
 								{partner.contacts?.length || 0}
 							</div>
-							<div className="text-secondary-foreground/80 text-xs font-bold tracking-widest uppercase">
+							<div className="text-xs font-bold tracking-widest text-secondary-foreground/80 uppercase">
 								Contacts
 							</div>
 						</div>
-						<Separator orientation="vertical" className="bg-secondary-3/20 mx-2 h-8" />
+						<Separator orientation="vertical" className="mx-2 h-8 bg-secondary-3/20" />
 						<div className="text-center">
-							<div className="text-secondary-3 text-2xl font-bold">
+							<div className="text-2xl font-bold text-secondary-3">
 								{partner.documents?.length || 0}
 							</div>
-							<div className="text-secondary-foreground/80 text-xs font-bold tracking-widest uppercase">
+							<div className="text-xs font-bold tracking-widest text-secondary-foreground/80 uppercase">
 								Docs
 							</div>
 						</div>

@@ -114,7 +114,7 @@ export function PartnerDialog({
 						placeholder="ex: Hotel Villa Taj"
 						defaultValue={partner?.companyName ?? ""}
 						required
-						className="bg-secondary/5 focus-visible:ring-primary/20 border"
+						className="border bg-secondary/5 focus-visible:ring-primary/20"
 					/>
 				</div>
 				<div className="grid gap-2">
@@ -126,7 +126,7 @@ export function PartnerDialog({
 						name="taxId"
 						placeholder="ex: 001524300000089"
 						defaultValue={partner?.taxId ?? ""}
-						className="bg-secondary/5 focus-visible:ring-primary/20 border font-mono"
+						className="border bg-secondary/5 font-mono focus-visible:ring-primary/20"
 					/>
 				</div>
 				<div className="grid gap-2">
@@ -138,11 +138,11 @@ export function PartnerDialog({
 						name="address"
 						placeholder="Marrakech, Morocco"
 						defaultValue={partner?.address ?? ""}
-						className="bg-secondary/5 focus-visible:ring-primary/20 border"
+						className="border bg-secondary/5 focus-visible:ring-primary/20"
 					/>
 				</div>
 				{submitted && state?.error && !state.ref ? (
-					<div className="border-destructive/20 bg-destructive/5 text-destructive space-y-1 rounded-xl border p-3 text-sm font-medium">
+					<div className="space-y-1 rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-sm font-medium text-destructive">
 						<p className="font-bold">{state.error}</p>
 						{state.issues
 							? Object.values(state.issues)
