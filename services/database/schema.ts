@@ -492,7 +492,7 @@ export const b2bPayments = pgTable(
 		check("b2b_payments_amount_positive", sql`${t.amount} > 0`),
 		index("b2b_payments_document_date_idx").on(
 			t.documentId,
-			t.paymentDate.desc(),
+			t.paymentDate.desc().nullsFirst(),
 		),
 	],
 );
