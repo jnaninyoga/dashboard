@@ -420,17 +420,6 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 	}),
 }));
 
-// Replaced by `accounts`, and nothing reads it now. Dropped in its own
-// migration once the deploy that stopped reading it is live.
-export const userTokens = pgTable("user_tokens", {
-	id: uuid("id").defaultRandom().primaryKey(),
-	userId: uuid("user_id").notNull().unique(), // Supabase auth user ID
-	accessToken: text("access_token").notNull(),
-	refreshToken: text("refresh_token").notNull(),
-	expiresAt: timestamp("expires_at").notNull(),
-	updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 export const b2bPartners = pgTable("b2b_partners", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	companyName: text("company_name").notNull(),
