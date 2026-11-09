@@ -1,7 +1,7 @@
 import { db } from "@/services/database";
-import { userTokens } from "@/services/database/schema";
+import { accounts } from "@/services/database/schema";
 
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import {
 	classifyRefreshFailure,
@@ -18,47 +18,20 @@ interface TokenResponse {
 	expires_in: number;
 }
 
-export async function storeUserTokens(
-	userId: string,
-	accessToken: string,
-	refreshToken: string,
-	expiresIn: number,
-) {
-	const expiresAt = new Date(Date.now() + expiresIn * 1000);
-
-	await db
-		.insert(userTokens)
-		.values({
-			userId,
-			accessToken,
-			refreshToken,
-			expiresAt,
-		})
-		.onConflictDoUpdate({
-			target: userTokens.userId,
-			set: {
-				accessToken,
-				refreshToken,
-				expiresAt,
-				updatedAt: new Date(),
-			},
-		});
-}
-
 export async function getValidAccessToken(userId: string): Promise<string> {
 	// A database failure here is ours, not Google's: let it surface as one.
-	const storedToken = await db.query.userTokens.findFirst({
-		where: eq(userTokens.userId, userId),
+	const account = await db.query.accounts.findFirst({
+		where: and(eq(accounts.userId, userId), eq(accounts.providerId, "google")),
 	});
 
-	if (!storedToken) {
-		console.error("No stored tokens found in database for user:", userId);
+	if (!account?.accessToken || !account.refreshToken) {
+		console.error("No stored Google tokens for user:", userId);
 		throw new Error(REAUTH_REQUIRED);
 	}
 
 	// Check if access token is still valid (with 5 minute buffer)
-	if (storedToken.expiresAt > new Date(Date.now() + 5 * 60 * 1000)) {
-		return storedToken.accessToken;
+	if (account.accessTokenExpiresAt && account.accessTokenExpiresAt > new Date(Date.now() + 5 * 60 * 1000)) {
+		return account.accessToken;
 	}
 
 	// Refresh the token
@@ -72,7 +45,7 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 			body: new URLSearchParams({
 				client_id: process.env.GOOGLE_CLIENT_ID!,
 				client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-				refresh_token: storedToken.refreshToken,
+				refresh_token: account.refreshToken,
 				grant_type: "refresh_token",
 			}),
 		});
@@ -90,12 +63,14 @@ export async function getValidAccessToken(userId: string): Promise<string> {
 	const data: TokenResponse = await response.json();
 
 	// A failed write only means refreshing again next time; the token is good.
-	await storeUserTokens(
-		userId,
-		data.access_token,
-		storedToken.refreshToken, // Reuse existing refresh token
-		data.expires_in,
-	).catch((error) => console.error("Couldn't store the refreshed Google token:", error));
+	await db
+		.update(accounts)
+		.set({
+			accessToken: data.access_token,
+			accessTokenExpiresAt: new Date(Date.now() + data.expires_in * 1000),
+		})
+		.where(eq(accounts.id, account.id))
+		.catch((error) => console.error("Couldn't store the refreshed Google token:", error));
 
 	return data.access_token;
 }

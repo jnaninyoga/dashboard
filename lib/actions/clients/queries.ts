@@ -15,7 +15,6 @@ import {
 } from "@/services/database/schema";
 import { getTodayEvents } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
 
 import { and, desc, eq, gte, ilike, inArray, isNull, ne, or, sql } from "drizzle-orm";
 
@@ -25,12 +24,7 @@ export async function getClientsAction(
 	query = "",
 	filters: { discountId?: string; gender?: Gender } = {},
 ) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) return { error: "Not authenticated" };
+	const user = await requireUser();
 
 	let accessToken: string | null = null;
 	try {
@@ -167,12 +161,7 @@ export async function getClientsAction(
 }
 
 export async function getClientByIdAction(id: string) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) return { error: "Not authenticated" };
+	await requireUser();
 
 	try {
 		const client = (await db.query.clients.findFirst({
