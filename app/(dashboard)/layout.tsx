@@ -10,24 +10,17 @@ import {
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { requireUser } from "@/lib/auth/require-user";
 import { SETTINGS_COOKIE } from "@/lib/config/dashboard";
 import { getUserProfile } from "@/lib/utils/user";
 import { getValidAccessToken, isGoogleAccessError, needsReauth } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
 
 export default async function DashboardLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
 }>) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		redirect("/login");
-	}
+	const user = await requireUser();
 
 	// Only a missing or refused Google token means signing in again. When
 	// Google is merely unreachable, the dashboard stays open with a notice.

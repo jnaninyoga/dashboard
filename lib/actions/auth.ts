@@ -1,40 +1,26 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { getSiteUrl } from "@/lib/utils/site-url";
-import { createClient } from "@/services/supabase/server";
+import { auth } from "@/lib/auth/auth";
+import { logServerError } from "@/lib/errors/server";
 
 export async function loginWithGoogle() {
-	const supabase = await createClient();
-	const siteUrl = await getSiteUrl();
-	const redirectUrl = `${siteUrl}/auth/callback`;
-
-	const { data, error } = await supabase.auth.signInWithOAuth({
-		provider: "google",
-		options: {
-			redirectTo: redirectUrl,
-			scopes:
-				"https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/contacts",
-			queryParams: {
-				access_type: "offline",
-				prompt: "consent",
-			},
-		},
-	});
-
-	if (error) {
-		console.error(error);
-		redirect("/login?error=auth");
+	let url: string | undefined;
+	try {
+		const result = await auth.api.signInSocial({
+			body: { provider: "google", callbackURL: "/", errorCallbackURL: "/login" },
+		});
+		url = result.url;
+	} catch (error) {
+		redirect(`/login?error=auth&ref=${logServerError("Couldn't start Google sign-in", error)}`);
 	}
 
-	if (data.url) {
-		redirect(data.url);
-	}
+	redirect(url ?? "/login?error=auth");
 }
 
 export async function signOut() {
-	const supabase = await createClient();
-	await supabase.auth.signOut();
+	await auth.api.signOut({ headers: await headers() });
 	redirect("/login");
 }

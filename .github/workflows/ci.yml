@@ -15,9 +15,8 @@ jobs:
     env:
       # Placeholders: the build and drizzle-kit read these but never connect.
       DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
-      NEXT_PUBLIC_SUPABASE_URL: https://ci-placeholder.supabase.co
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ci-placeholder
-      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder
+      BETTER_AUTH_SECRET: ci-placeholder-at-least-32-characters-long
+      AUTH_ALLOWED_EMAILS: ci@example.com
       GOOGLE_CLIENT_ID: ci-placeholder
       GOOGLE_CLIENT_SECRET: ci-placeholder
       NEXT_PUBLIC_SITE_URL: http://localhost:3000

@@ -10,7 +10,6 @@ import { fromStudioTime, studioDateString } from "@/lib/utils/time";
 import { cancelSaleSchema, sellMembershipSchema } from "@/lib/validators/membership-sale";
 import { db } from "@/services/database";
 import { clients, clientWallets, discounts, products } from "@/services/database/schema";
-import { createClient } from "@/services/supabase/server";
 
 import { and, eq, ne } from "drizzle-orm";
 
@@ -104,14 +103,7 @@ export async function cancelCardSaleAction(
 }
 
 export async function getMembershipProductsAction() {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) {
-		return { error: "Not authenticated" };
-	}
+	await requireUser();
 
 	try {
         // Fetch all active products

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 
 import { CheckInManager } from "@/components/schedule/check-in";
 import { CheckInHeader, type SessionMoment } from "@/components/schedule/check-in-header";
@@ -7,9 +7,9 @@ import { getProducts } from "@/lib/actions/price-list";
 import { getEventAttendanceAction, getUsualAttendees } from "@/lib/actions/schedule/attendance";
 import { getStudioSession } from "@/lib/actions/schedule/feed";
 import { getDiscounts } from "@/lib/actions/settings";
+import { requireUser } from "@/lib/auth/require-user";
 import { formatDay, studioDateString, toStudioTime, wallClockOf, weekStart } from "@/lib/utils/time";
 import { getEventById, type JnaninEventType, withGoogle } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
 
 import { format } from "date-fns";
 
@@ -18,12 +18,7 @@ interface PageProps {
 }
 
 export default async function CheckInPage({ params }: PageProps) {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-        redirect("/login");
-    }
+    const user = await requireUser();
 
     const { eventId } = await params;
 

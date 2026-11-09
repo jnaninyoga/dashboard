@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { requireUser } from "@/lib/auth/require-user";
 import { HEALTH_TEMPLATE } from "@/lib/config/health";
 import { priceAfterDiscount, saleRow } from "@/lib/domain/clients/membership-sale";
 import { logServerError } from "@/lib/errors/server";
@@ -22,7 +23,6 @@ import {
 	updateClientInGoogleContacts,
 } from "@/services/google";
 import { getValidAccessToken, googleErrorMessage, needsReauth } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
 
 import { and, eq, isNull } from "drizzle-orm";
 
@@ -38,15 +38,7 @@ export async function createClientAction(
 	_prevState: unknown,
 	formData: FormData,
 ) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-		error: userError,
-	} = await supabase.auth.getUser();
-
-	if (userError || !user) {
-		return { error: "Not authenticated" };
-	}
+	const user = await requireUser();
 
 	let accessToken: string;
 	try {
@@ -231,12 +223,7 @@ export async function updateClientAction(
 	_prevState: unknown,
 	formData: FormData,
 ) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) return { error: "Not authenticated" };
+	const user = await requireUser();
 
 	const intakeDataRaw: Record<string, string> = {};
 	HEALTH_TEMPLATE.forEach((section) => {
@@ -424,12 +411,7 @@ export async function updateClientAction(
 }
 
 export async function deleteClientAction(id: string) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) return { error: "Not authenticated" };
+	const user = await requireUser();
 
 	try {
 		const client = await db.query.clients.findFirst({
@@ -465,12 +447,7 @@ export async function getGoogleContactPhotoAction(
 	resourceName: string,
 	clientId?: string,
 ) {
-	const supabase = await createClient();
-	const {
-		data: { user },
-	} = await supabase.auth.getUser();
-
-	if (!user) return { error: "Not authenticated" };
+	const user = await requireUser();
 
 	// A missing photo is never worth signing her out: without Google, no photo.
 	let accessToken: string;

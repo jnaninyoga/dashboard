@@ -1,14 +1,12 @@
-import type { User } from "@supabase/supabase-js";
 import { describe, expect, it } from "vitest";
 
 import { getUserProfile } from "./user";
 
-const user = (meta: Record<string, string>, email = "someone@example.com") =>
-	({ user_metadata: meta, email }) as unknown as User;
+const user = (name: string, image: string | null = null, email = "someone@example.com") => ({ name, image, email });
 
 describe("getUserProfile", () => {
 	it("greets by the first word of the Google name", () => {
-		expect(getUserProfile(user({ full_name: "Demo Whybe", avatar_url: "https://a/p.png" }))).toMatchObject({
+		expect(getUserProfile(user("Demo Whybe", "https://a/p.png"))).toMatchObject({
 			fullName: "Demo Whybe",
 			firstName: "Demo",
 			initials: "DW",
@@ -16,14 +14,14 @@ describe("getUserProfile", () => {
 		});
 	});
 
-	it("falls back to 'name' and 'picture', and tolerates extra spaces", () => {
-		const profile = getUserProfile(user({ name: "  Salma   Bennani ", picture: "https://g/pic" }));
+	it("tolerates extra spaces in the name", () => {
+		const profile = getUserProfile(user("  Salma   Bennani "));
 		expect(profile.firstName).toBe("Salma");
-		expect(profile.avatarUrl).toBe("https://g/pic");
+		expect(profile.initials).toBe("SB");
 	});
 
 	it("uses the email's local part when the profile has no name", () => {
-		const profile = getUserProfile(user({}, "studio.owner@gmail.com"));
+		const profile = getUserProfile(user("", null, "studio.owner@gmail.com"));
 		expect(profile.firstName).toBe("studio.owner");
 		expect(profile.avatarUrl).toBeNull();
 		expect(profile.initials).toBe("S");

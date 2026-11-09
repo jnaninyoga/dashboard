@@ -12,7 +12,6 @@ import { db } from "@/services/database";
 import { b2bContacts, b2bDocuments, b2bPartners } from "@/services/database/schema";
 import { syncPartnerContactToGoogle, updatePartnerContactInGoogle } from "@/services/google";
 import { getValidAccessToken } from "@/services/google";
-import { createClient } from "@/services/supabase/server";
 
 import { and, count, eq, exists, ilike, inArray, isNull, lt, ne, or } from "drizzle-orm";
 
@@ -60,6 +59,8 @@ export async function createContactAction(
 	prevState: ActionState | null,
 	formData: FormData
 ): Promise<ActionState> {
+	const user = await requireUser();
+
 	const rawData = {
 		partnerId: formData.get("partnerId"),
 		fullName: formData.get("fullName"),
@@ -76,13 +77,6 @@ export async function createContactAction(
 			error: "Validation failed",
 			issues: validated.error.flatten().fieldErrors,
 		};
-	}
-
-	const supabase = await createClient();
-	const { data: { user } } = await supabase.auth.getUser();
-	
-	if (!user) {
-		return { error: "Not authenticated" };
 	}
 
 	try {
@@ -152,6 +146,8 @@ export async function updateContactAction(
 	prevState: ActionState | null,
 	formData: FormData,
 ): Promise<ActionState> {
+	const user = await requireUser();
+
 	const validated = contactSchema.safeParse({
 		partnerId: formData.get("partnerId"),
 		fullName: formData.get("fullName"),
@@ -165,12 +161,6 @@ export async function updateContactAction(
 			error: "Validation failed",
 			issues: validated.error.flatten().fieldErrors,
 		};
-	}
-
-	const supabase = await createClient();
-	const { data: { user } } = await supabase.auth.getUser();
-	if (!user) {
-		return { error: "Not authenticated" };
 	}
 
 	try {

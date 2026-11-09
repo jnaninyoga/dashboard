@@ -28,7 +28,7 @@ This is the command center for one person: Ouarda, who runs the JnaninYoga studi
 - Tailwind v4 and shadcn components in `components/ui/`.
 - Primitives come from `radix-ui`. Accordion, Checkbox, Drawer, Popover, RadioGroup, Select, Switch, Tabs, Toggle and Tooltip use `@animate-ui/react` with `motion`.
 - Dialog, AlertDialog, DropdownMenu and Sheet stay on plain Radix. Animate-ui's DropdownMenu mismatches ids on hydration, and the owner found its Dialog motion jerky.
-- Drizzle ORM on postgres.js, with the database on Supabase Postgres. Supabase Auth with Google as the only provider.
+- Drizzle ORM on postgres.js, with the database on Supabase Postgres. Better Auth runs inside the app (`lib/auth/`, tables in the same database) with Google as the only provider.
 - Google Calendar is the source of truth for sessions. Google Contacts holds the address book. Both are reached through `googleapis` (`services/google/`).
 - `@react-pdf/renderer` for quotes and invoices, Serwist for the PWA, Vitest for tests, sileo for toasts.
 - Hosted on Vercel. Cloudflare Workers was measured and rejected in Oct 2026: signed-in pages use 48–75 ms of CPU against the free plan's 10 ms limit.
@@ -101,7 +101,7 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 
 ## Signing in
 
-The Google OAuth app is in Testing mode, and only two accounts (the developer's and Ouarda's) can sign in. Refresh tokens expire after 7 days, so she has to sign in again about once a week. An automated browser can't sign in, so check UI on `/dev/playground` under `next dev`. Signed-out requests to any other page redirect to `/login`.
+Who may sign in is the list of Google emails in `AUTH_ALLOWED_EMAILS` (`lib/auth/allowlist.ts`): it's checked when an account would be created and on every request, and an empty list lets nobody in. A production build fails if this or `BETTER_AUTH_SECRET` is missing, so the last good deploy stays live. When teammates arrive, their permissions go in a Data Access Layer built on `requireUser()`. The Google OAuth app is in Testing mode, and only two accounts (the developer's and Ouarda's) can get past Google. Refresh tokens expire after 7 days, so she has to sign in again about once a week. An automated browser can't sign in, so check UI on `/dev/playground` under `next dev`. Signed-out requests to any other page redirect to `/login`.
 
 ## Verifying a change
 

@@ -1,5 +1,3 @@
-import type { User } from "@supabase/supabase-js";
-
 export type UserProfile = {
 	fullName: string;
 	firstName: string;
@@ -8,14 +6,15 @@ export type UserProfile = {
 	avatarUrl: string | null;
 };
 
-// Google sign-in stores the profile in user_metadata (full_name / name,
-// avatar_url / picture). The email's local part is the last resort so the
-// app never greets anyone with a placeholder.
-export function getUserProfile(user: User): UserProfile {
-	const meta = user.user_metadata ?? {};
-	const email = user.email ?? "";
-	const fullName =
-		String(meta.full_name || meta.name || "").trim() || email.split("@")[0];
+// The name and photo come from Google at sign-in. The email's local part is
+// the last resort so the app never greets anyone with a placeholder.
+export function getUserProfile(user: {
+	name: string;
+	email: string;
+	image?: string | null;
+}): UserProfile {
+	const email = user.email;
+	const fullName = user.name.trim() || email.split("@")[0];
 	const words = fullName.split(/\s+/).filter(Boolean);
 
 	return {
@@ -26,6 +25,6 @@ export function getUserProfile(user: User): UserProfile {
 			.map((w) => w[0]?.toUpperCase())
 			.join(""),
 		email,
-		avatarUrl: meta.avatar_url || meta.picture || null,
+		avatarUrl: user.image || null,
 	};
 }

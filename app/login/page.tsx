@@ -2,6 +2,7 @@ import Image from "next/image";
 
 import { LotusPond } from "@/components/ui/lotus-pond";
 import { loginWithGoogle } from "@/lib/actions/auth";
+import { NOT_ALLOWED } from "@/lib/auth/allowlist";
 
 import { Google } from "iconsax-reactjs";
 
@@ -68,9 +69,9 @@ export default async function LoginPage({
 							role="alert"
 							className="rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-center text-sm font-medium text-destructive"
 						>
-							{error === "connection"
-								? `You're signed in, but your Google connection couldn't be saved. Try again in a moment${ref ? ` (code ${ref})` : ""}.`
-								: "Sign-in didn't complete. Please try again."}
+							{error === NOT_ALLOWED
+								? "This Google account doesn't have access. Sign in with another one."
+								: `Sign-in didn't complete. Please try again${ref ? ` (code ${ref})` : ""}.`}
 						</p>
 					) : null}
 

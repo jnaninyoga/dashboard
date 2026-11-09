@@ -2,6 +2,14 @@ import type { NextConfig } from "next";
 
 import { withSerwist } from "@serwist/turbopack";
 
+// Without these a build still passes, then nobody can sign in. Failing here
+// keeps the last good deploy live instead.
+if (process.env.NODE_ENV === "production") {
+  for (const name of ["BETTER_AUTH_SECRET", "AUTH_ALLOWED_EMAILS"]) {
+    if (!process.env[name]) throw new Error(`${name} is required for a production build`);
+  }
+}
+
 const nextConfig: NextConfig = {
   env: {
     // Which deploy an error report came from (Vercel sets the commit SHA).
