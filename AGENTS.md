@@ -94,8 +94,9 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 ## Database
 
 - Schema: `services/database/schema.ts`. Every schema change needs a generated migration (`pnpm db:generate`), and CI's `pnpm db:check` fails without one.
-- The database in `.env` holds test data only; no real production exists yet. Don't migrate or write to it unless the owner asks.
-- Work against the local container instead: `jnanin-pg-dev` (postgres:16, port 54329, user `postgres`, password `dev`, database `jnanin`). `.env.local` points `DATABASE_URL` at it and takes precedence over `.env` for `next dev`, `next start` and `pnpm build`. Apply migrations with `pnpm db:migrate`. The container doesn't restart on its own; if the app suddenly blames Google, check that it's still running.
+- Migrations were squashed into `0000_baseline` on 2026-11-09, when production was emptied and rebuilt from it. New migrations build on that one.
+- The database in `.env` is production. Don't migrate or write to it unless the owner asks. Deploys don't run migrations, so a new migration has to reach production before the code that needs it ships. When code got ahead of the database in Nov 2026, `/clients` crashed and document pages returned 404.
+- Work against the local container instead: `jnanin-pg-dev` (postgres:16, port 54329, user `postgres`, password `dev`, database `jnanin`). `.env.local` points `DATABASE_URL` at it and takes precedence over `.env` for `next dev`, `next start` and `pnpm build`. `pnpm db:migrate` only reads `.env`, so it goes to production unless the shell sets `DATABASE_URL`. To migrate the container, run `DATABASE_URL=postgres://postgres:dev@localhost:54329/jnanin pnpm db:migrate`. The container doesn't restart on its own; if the app suddenly blames Google, check that it's still running.
 - To run a server action outside Next, use a tsconfig that extends the repo's one. Map `@/*` to the repo and `next/cache` to a stub with no-op `revalidatePath`/`revalidateTag`, then run `npx tsx --tsconfig <it> script.ts` on a CommonJS `.ts` file with an `async function main()`. Warm the connection pool before testing concurrency; otherwise postgres.js pipelines everything on one connection and races never show up.
 
 ## Signing in

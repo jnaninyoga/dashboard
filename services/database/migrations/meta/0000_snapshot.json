@@ -1,5 +1,5 @@
 {
-  "id": "d6761804-de5a-4d85-8969-2a1cd0f54957",
+  "id": "39897188-313c-4f6b-bf9c-da6684b9925c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -71,6 +71,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -95,8 +101,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.client_categories": {
-      "name": "client_categories",
+    "public.b2b_contacts": {
+      "name": "b2b_contacts",
       "schema": "",
       "columns": {
         "id": {
@@ -106,33 +112,777 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "name": {
-          "name": "name",
+        "partner_id": {
+          "name": "partner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "full_name": {
+          "name": "full_name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "discount_type": {
-          "name": "discount_type",
-          "type": "discount_type",
-          "typeSchema": "public",
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_primary": {
+          "name": "is_primary",
+          "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": "'percentage'"
+          "default": false
         },
-        "discount_value": {
-          "name": "discount_value",
+        "google_contact_resource_name": {
+          "name": "google_contact_resource_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "google_etag": {
+          "name": "google_etag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "b2b_contacts_partner_id_b2b_partners_id_fk": {
+          "name": "b2b_contacts_partner_id_b2b_partners_id_fk",
+          "tableFrom": "b2b_contacts",
+          "tableTo": "b2b_partners",
+          "columnsFrom": [
+            "partner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.b2b_document_lines": {
+      "name": "b2b_document_lines",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'1'"
+        },
+        "unit_price": {
+          "name": "unit_price",
           "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true,
           "default": "'0'"
         },
-        "is_archived": {
-          "name": "is_archived",
+        "total_price": {
+          "name": "total_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "source_line_id": {
+          "name": "source_line_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit": {
+          "name": "unit",
+          "type": "product_unit",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "b2b_document_lines_document_id_b2b_documents_id_fk": {
+          "name": "b2b_document_lines_document_id_b2b_documents_id_fk",
+          "tableFrom": "b2b_document_lines",
+          "tableTo": "b2b_documents",
+          "columnsFrom": [
+            "document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "b2b_document_lines_source_line_id_b2b_document_lines_id_fk": {
+          "name": "b2b_document_lines_source_line_id_b2b_document_lines_id_fk",
+          "tableFrom": "b2b_document_lines",
+          "tableTo": "b2b_document_lines",
+          "columnsFrom": [
+            "source_line_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "b2b_document_lines_product_id_products_id_fk": {
+          "name": "b2b_document_lines_product_id_products_id_fk",
+          "tableFrom": "b2b_document_lines",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.b2b_document_sequences": {
+      "name": "b2b_document_sequences",
+      "schema": "",
+      "columns": {
+        "type": {
+          "name": "type",
+          "type": "b2b_document_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "year": {
+          "name": "year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "next_value": {
+          "name": "next_value",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "b2b_document_sequences_type_year_pk": {
+          "name": "b2b_document_sequences_type_year_pk",
+          "columns": [
+            "type",
+            "year"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.b2b_documents": {
+      "name": "b2b_documents",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_id": {
+          "name": "contact_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "b2b_document_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "b2b_document_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "document_number": {
+          "name": "document_number",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "issue_date": {
+          "name": "issue_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "due_date": {
+          "name": "due_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subtotal": {
+          "name": "subtotal",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "tax_rate": {
+          "name": "tax_rate",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "parent_document_id": {
+          "name": "parent_document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_reason": {
+          "name": "archived_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "b2b_documents_archived_at_idx": {
+          "name": "b2b_documents_archived_at_idx",
+          "columns": [
+            {
+              "expression": "archived_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"b2b_documents\".\"archived_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "b2b_documents_partner_id_b2b_partners_id_fk": {
+          "name": "b2b_documents_partner_id_b2b_partners_id_fk",
+          "tableFrom": "b2b_documents",
+          "tableTo": "b2b_partners",
+          "columnsFrom": [
+            "partner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "b2b_documents_contact_id_b2b_contacts_id_fk": {
+          "name": "b2b_documents_contact_id_b2b_contacts_id_fk",
+          "tableFrom": "b2b_documents",
+          "tableTo": "b2b_contacts",
+          "columnsFrom": [
+            "contact_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "b2b_documents_parent_document_id_b2b_documents_id_fk": {
+          "name": "b2b_documents_parent_document_id_b2b_documents_id_fk",
+          "tableFrom": "b2b_documents",
+          "tableTo": "b2b_documents",
+          "columnsFrom": [
+            "parent_document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "b2b_documents_document_number_unique": {
+          "name": "b2b_documents_document_number_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "document_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.b2b_partners": {
+      "name": "b2b_partners",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "company_name": {
+          "name": "company_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tax_id": {
+          "name": "tax_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.b2b_payments": {
+      "name": "b2b_payments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "document_id": {
+          "name": "document_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "amount": {
+          "name": "amount",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payment_date": {
+          "name": "payment_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "method": {
+          "name": "method",
+          "type": "payment_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reference": {
+          "name": "reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "b2b_payment_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'payment'"
+        },
+        "receipt_id": {
+          "name": "receipt_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reverses_payment_id": {
+          "name": "reverses_payment_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "counterpart_id": {
+          "name": "counterpart_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "b2b_payments_document_date_idx": {
+          "name": "b2b_payments_document_date_idx",
+          "columns": [
+            {
+              "expression": "document_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "payment_date",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "first"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "b2b_payments_document_id_b2b_documents_id_fk": {
+          "name": "b2b_payments_document_id_b2b_documents_id_fk",
+          "tableFrom": "b2b_payments",
+          "tableTo": "b2b_documents",
+          "columnsFrom": [
+            "document_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "b2b_payments_reverses_payment_id_b2b_payments_id_fk": {
+          "name": "b2b_payments_reverses_payment_id_b2b_payments_id_fk",
+          "tableFrom": "b2b_payments",
+          "tableTo": "b2b_payments",
+          "columnsFrom": [
+            "reverses_payment_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "b2b_payments_counterpart_id_b2b_documents_id_fk": {
+          "name": "b2b_payments_counterpart_id_b2b_documents_id_fk",
+          "tableFrom": "b2b_payments",
+          "tableTo": "b2b_documents",
+          "columnsFrom": [
+            "counterpart_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "b2b_payments_reverses_payment_id_unique": {
+          "name": "b2b_payments_reverses_payment_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "reverses_payment_id"
+          ]
+        },
+        "b2b_payments_request_id_unique": {
+          "name": "b2b_payments_request_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "request_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "b2b_payments_amount_positive": {
+          "name": "b2b_payments_amount_positive",
+          "value": "\"b2b_payments\".\"amount\" > 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.business_profiles": {
+      "name": "business_profiles",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "company_name": {
+          "name": "company_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address": {
+          "name": "address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bank_details": {
+          "name": "bank_details",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "show_bank_details": {
+          "name": "show_bank_details",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,
-          "default": false
+          "default": true
+        },
+        "legal_details": {
+          "name": "legal_details",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo_base64": {
+          "name": "logo_base64",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signature_base64": {
+          "name": "signature_base64",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "operator": {
+          "name": "operator",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
@@ -192,6 +942,50 @@
           "primaryKey": false,
           "notNull": false
         },
+        "list_price": {
+          "name": "list_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discount_name": {
+          "name": "discount_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discount_type": {
+          "name": "discount_type",
+          "type": "discount_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "discount_value": {
+          "name": "discount_value",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_method": {
+          "name": "payment_method",
+          "type": "payment_method",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_reference": {
+          "name": "payment_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expires_on": {
+          "name": "expires_on",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "activated_at": {
           "name": "activated_at",
           "type": "timestamp",
@@ -202,6 +996,18 @@
         "last_used_at": {
           "name": "last_used_at",
           "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancel_reason": {
+          "name": "cancel_reason",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         }
@@ -221,10 +1027,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "client_wallets_product_id_membership_products_id_fk": {
-          "name": "client_wallets_product_id_membership_products_id_fk",
+        "client_wallets_product_id_products_id_fk": {
+          "name": "client_wallets_product_id_products_id_fk",
           "tableFrom": "client_wallets",
-          "tableTo": "membership_products",
+          "tableTo": "products",
           "columnsFrom": [
             "product_id"
           ],
@@ -314,8 +1120,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "category_id": {
-          "name": "category_id",
+        "discount_id": {
+          "name": "discount_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -342,12 +1148,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "clients_category_id_client_categories_id_fk": {
-          "name": "clients_category_id_client_categories_id_fk",
+        "clients_discount_id_discounts_id_fk": {
+          "name": "clients_discount_id_discounts_id_fk",
           "tableFrom": "clients",
-          "tableTo": "client_categories",
+          "tableTo": "discounts",
           "columnsFrom": [
-            "category_id"
+            "discount_id"
           ],
           "columnsTo": [
             "id"
@@ -356,6 +1162,54 @@
           "onUpdate": "no action"
         }
       },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.discounts": {
+      "name": "discounts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "discount_type": {
+          "name": "discount_type",
+          "type": "discount_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'percentage'"
+        },
+        "discount_value": {
+          "name": "discount_value",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'0'"
+        },
+        "is_archived": {
+          "name": "is_archived",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
@@ -449,8 +1303,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.membership_products": {
-      "name": "membership_products",
+    "public.products": {
+      "name": "products",
       "schema": "",
       "columns": {
         "id": {
@@ -460,17 +1314,30 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "kind": {
+          "name": "kind",
+          "type": "product_kind",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
         "name": {
           "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "default_credits": {
-          "name": "default_credits",
-          "type": "integer",
+        "price": {
+          "name": "price",
+          "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
+        },
+        "credits": {
+          "name": "credits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "duration_months": {
           "name": "duration_months",
@@ -478,11 +1345,24 @@
           "primaryKey": false,
           "notNull": false
         },
-        "base_price": {
-          "name": "base_price",
-          "type": "numeric(10, 2)",
+        "unit": {
+          "name": "unit",
+          "type": "product_unit",
+          "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "group_min": {
+          "name": "group_min",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "group_max": {
+          "name": "group_max",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
         },
         "is_archived": {
           "name": "is_archived",
@@ -490,12 +1370,134 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
         }
       },
       "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "products_price_not_negative": {
+          "name": "products_price_not_negative",
+          "value": "\"products\".\"price\" >= 0"
+        },
+        "products_membership_has_credits": {
+          "name": "products_membership_has_credits",
+          "value": "\"products\".\"kind\" <> 'membership' OR \"products\".\"credits\" IS NOT NULL"
+        },
+        "products_group_in_order": {
+          "name": "products_group_in_order",
+          "value": "\"products\".\"group_min\" IS NULL OR \"products\".\"group_max\" IS NULL OR \"products\".\"group_min\" <= \"products\".\"group_max\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.studio_sessions": {
+      "name": "studio_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "google_event_id": {
+          "name": "google_event_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "slot_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "starts_at": {
+          "name": "starts_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ends_at": {
+          "name": "ends_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "session_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'scheduled'"
+        },
+        "cancelled_at": {
+          "name": "cancelled_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cancel_reason": {
+          "name": "cancel_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "studio_sessions_starts_at_idx": {
+          "name": "studio_sessions_starts_at_idx",
+          "columns": [
+            {
+              "expression": "starts_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "studio_sessions_google_event_id_unique": {
+          "name": "studio_sessions_google_event_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "google_event_id"
+          ]
+        }
+      },
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
@@ -561,6 +1563,38 @@
     }
   },
   "enums": {
+    "public.b2b_document_status": {
+      "name": "b2b_document_status",
+      "schema": "public",
+      "values": [
+        "draft",
+        "sent",
+        "accepted",
+        "unpaid",
+        "partially_paid",
+        "paid",
+        "cancelled"
+      ]
+    },
+    "public.b2b_document_type": {
+      "name": "b2b_document_type",
+      "schema": "public",
+      "values": [
+        "quote",
+        "invoice",
+        "credit_note"
+      ]
+    },
+    "public.b2b_payment_kind": {
+      "name": "b2b_payment_kind",
+      "schema": "public",
+      "values": [
+        "payment",
+        "reversal",
+        "credit",
+        "refund"
+      ]
+    },
     "public.category": {
       "name": "category",
       "schema": "public",
@@ -604,6 +1638,31 @@
         "critical"
       ]
     },
+    "public.payment_method": {
+      "name": "payment_method",
+      "schema": "public",
+      "values": [
+        "transfer",
+        "cheque",
+        "cash",
+        "card"
+      ]
+    },
+    "public.product_kind": {
+      "name": "product_kind",
+      "schema": "public",
+      "values": [
+        "membership",
+        "partner_service"
+      ]
+    },
+    "public.product_unit": {
+      "name": "product_unit",
+      "schema": "public",
+      "values": [
+        "session"
+      ]
+    },
     "public.referral_source": {
       "name": "referral_source",
       "schema": "public",
@@ -615,13 +1674,22 @@
         "other"
       ]
     },
+    "public.session_status": {
+      "name": "session_status",
+      "schema": "public",
+      "values": [
+        "scheduled",
+        "cancelled"
+      ]
+    },
     "public.slot_type": {
       "name": "slot_type",
       "schema": "public",
       "values": [
         "group",
         "private",
-        "outdoor"
+        "outdoor",
+        "b2b"
       ]
     },
     "public.wallet_status": {
