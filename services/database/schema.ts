@@ -96,6 +96,23 @@ export const paymentMethodEnum = pgEnum("payment_method", [
 	"card",
 ]);
 
+// What a visitor asked for on the website: a card, one of the class times,
+// or "not sure yet, let's talk".
+export const bookingRequestKindEnum = pgEnum("booking_request_kind", [
+	"card",
+	"class",
+	"other",
+]);
+
+export const bookingRequestStatusEnum = pgEnum("booking_request_status", [
+	"new",
+	"confirmed",
+	"declined",
+]);
+
+// The website's two languages: a visitor is answered in the one they used.
+export const siteLangEnum = pgEnum("site_lang", ["fr", "en"]);
+
 export const clients = pgTable("clients", {
 	id: uuid("id").defaultRandom().primaryKey(),
 	googleContactResourceName: text("google_contact_resource_name"),
@@ -275,6 +292,68 @@ export const studioSessions = pgTable(
 export type StudioSession = typeof studioSessions.$inferSelect;
 export type NewStudioSession = typeof studioSessions.$inferInsert;
 export type NewAttendanceLedger = typeof attendanceLedger.$inferInsert;
+
+/**
+ * A booking sent from the website. Saved before she is told about it, so a
+ * failed email or notification never loses one. Never deleted: when someone
+ * asks for their data to go, their name, phone and message are blanked
+ * (`erasedAt`) and the request stays in her counts.
+ */
+export const bookingRequests = pgTable(
+	"booking_requests",
+	{
+		id: uuid("id").defaultRandom().primaryKey(),
+		// The code the visitor sees ("WEB-1A2B3C4D"); reservations she adds by
+		// hand (later) have none.
+		ref: text("ref").unique(),
+		kind: bookingRequestKindEnum("kind").notNull(),
+		// What they picked, as the website names it ("start-to-align", "8h30"),
+		// and as they read it ("Start To Align (1 500 Dh)").
+		choiceKey: text("choice_key"),
+		choiceLabel: text("choice_label").notNull(),
+		name: text("name").notNull(),
+		phone: text("phone").notNull(),
+		message: text("message"),
+		lang: siteLangEnum("lang").notNull().default("fr"),
+		status: bookingRequestStatusEnum("status").notNull().default("new"),
+		statusChangedAt: timestamp("status_changed_at"),
+		// The client it's from, when the phone matched one as it arrived.
+		clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
+		// A keyed hash of the sender's IP, only to slow down floods.
+		ipHash: text("ip_hash"),
+		erasedAt: timestamp("erased_at"),
+		createdAt: timestamp("created_at").defaultNow().notNull(),
+	},
+	(t) => [
+		// The Requests list and the count read new ones, newest first.
+		index("booking_requests_status_created_idx").on(t.status, t.createdAt),
+		index("booking_requests_ip_created_idx").on(t.ipHash, t.createdAt),
+	],
+);
+export type BookingRequest = typeof bookingRequests.$inferSelect;
+export type NewBookingRequest = typeof bookingRequests.$inferInsert;
+
+/** The phones (and browsers) she turned notifications on for. */
+export const pushSubscriptions = pgTable("push_subscriptions", {
+	id: uuid("id").defaultRandom().primaryKey(),
+	userId: text("user_id")
+		.notNull()
+		.references((): AnyPgColumn => users.id, { onDelete: "cascade" }),
+	endpoint: text("endpoint").notNull().unique(),
+	p256dh: text("p256dh").notNull(),
+	auth: text("auth").notNull(),
+	createdAt: timestamp("created_at").defaultNow().notNull(),
+	// The last time a notification reached it.
+	lastOkAt: timestamp("last_ok_at"),
+});
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+
+export const bookingRequestsRelations = relations(bookingRequests, ({ one }) => ({
+	client: one(clients, {
+		fields: [bookingRequests.clientId],
+		references: [clients.id],
+	}),
+}));
 
 export const clientsRelations = relations(clients, ({ many, one }) => ({
 	healthLogs: many(healthLogs),
