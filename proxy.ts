@@ -7,6 +7,9 @@ function isPublicRoute(path: string) {
 	return (
 		path === "/login" ||
 		path.startsWith("/api/auth/") ||
+		// The website's booking form (jnaninyoga.com) posts here signed out; the
+		// route checks the origin, Turnstile and a rate limit itself.
+		path.startsWith("/api/public/") ||
 		// PWA files must load signed out too, or install/offline breaks on /login
 		path === "/manifest.webmanifest" ||
 		path.startsWith("/serwist/") ||

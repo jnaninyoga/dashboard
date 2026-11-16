@@ -6,12 +6,12 @@ import { corsHeaders, websiteOrigins } from "./origins";
 describe("websiteOrigins", () => {
 	it("lists the origins", () => {
 		expect(
-			websiteOrigins({ WEBSITE_ORIGINS: " https://jnaninyoga.com, https://jnaninyoga.pages.dev ,," } as NodeJS.ProcessEnv),
+			websiteOrigins({ WEBSITE_ORIGINS: " https://jnaninyoga.com, https://jnaninyoga.pages.dev ,," } as unknown as NodeJS.ProcessEnv),
 		).toEqual(["https://jnaninyoga.com", "https://jnaninyoga.pages.dev"]);
 	});
 
 	it("lists none when unset", () => {
-		expect(websiteOrigins({} as NodeJS.ProcessEnv)).toEqual([]);
+		expect(websiteOrigins({} as unknown as NodeJS.ProcessEnv)).toEqual([]);
 	});
 });
 
