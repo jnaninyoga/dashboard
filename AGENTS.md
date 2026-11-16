@@ -128,7 +128,6 @@ Who may sign in is the list of Google emails in `AUTH_ALLOWED_EMAILS` (`lib/auth
 - The dev machine runs out of memory when the dev server, `tsc`, a full lint and a headless browser run together. Run heavy tools one at a time, and stop the dev server before `pnpm build`.
 - Check UI changes in a real browser at phone and desktop widths. Before reporting, rate the result honestly against professional standards (hierarchy, alignment, density, motion, accessibility, fit to her day) and iterate until it's a 9 or 10. Compare against patterns users already know, not against your previous version.
 - In dev only, the sidebar shows a Radix id hydration warning after file edits. Ignore it unless it also appears in a production build.
-- The service worker (`app/sw.ts`, installing on a phone, booking notifications) only runs in production. In development a worker from an earlier run served stale code and the page reloaded forever (Nov 2026), so dev unregisters it and clears its caches; set `NEXT_PUBLIC_SERVICE_WORKER_IN_DEV=1` to test notifications locally.
 
 ## Git and releases
 
