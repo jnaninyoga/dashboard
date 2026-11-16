@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { addPeriod, inOrder, restsOf, setLength, setRest, setStart, showLength } from "./day-chain";
+import { addPeriod, inOrder, restsOf, showLength } from "./day-chain";
 
 // Monday on the website before it came from the dashboard: six periods, a long rest at lunch.
 const day = [
@@ -16,47 +16,6 @@ const starts = (times: { start: string }[]) => times.map((t) => t.start);
 describe("restsOf", () => {
 	it("reads her day as periods and rests: half an hour, and the long break at lunch", () => {
 		expect(restsOf(day)).toEqual([30, 30, 90, 30, 30]);
-	});
-});
-
-describe("setRest", () => {
-	it("moves the classes after the rest, and keeps the other rests", () => {
-		const longer = setRest(day, 0, 45);
-		expect(starts(longer)).toEqual(["08:30", "10:45", "12:45", "15:45", "17:45", "19:45"]);
-		expect(restsOf(longer)).toEqual([45, 30, 90, 30, 30]);
-	});
-
-	it("never goes below no rest at all", () => {
-		expect(restsOf(setRest(day, 1, -30))).toEqual([30, 0, 90, 30, 30]);
-	});
-});
-
-describe("setLength", () => {
-	it("changes one period and moves the ones after it, rests kept", () => {
-		const shorter = setLength(day, 2, 60);
-		expect(shorter[2]).toEqual({ start: "12:30", end: "13:30" });
-		expect(starts(shorter).slice(3)).toEqual(["15:00", "17:00", "19:00"]);
-		expect(restsOf(shorter)).toEqual([30, 30, 90, 30, 30]);
-	});
-
-	it("keeps a period at least a quarter of an hour", () => {
-		expect(setLength(day, 0, 0)[0]).toEqual({ start: "08:30", end: "08:45" });
-	});
-});
-
-describe("setStart", () => {
-	it("moves the whole day from its first period", () => {
-		expect(starts(setStart(day, 0, "09:00"))).toEqual(["09:00", "11:00", "13:00", "16:00", "18:00", "20:00"]);
-	});
-
-	it("changes only the rest before a later period", () => {
-		const earlier = setStart(day, 3, "15:00");
-		expect(restsOf(earlier)).toEqual([30, 30, 60, 30, 30]);
-		expect(earlier.at(-1)).toEqual({ start: "19:00", end: "20:30" });
-	});
-
-	it("ignores a half-typed time", () => {
-		expect(setStart(day, 0, "")).toEqual(day);
 	});
 });
 

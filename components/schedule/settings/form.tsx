@@ -1,42 +1,36 @@
 "use client";
 
-import { Fragment, useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { setWorkingHours } from "@/lib/actions/settings";
 import { DAYS } from "@/lib/config/schedule";
-import { addPeriod, inOrder, lengthOf, restsOf, setLength, setRest, setStart, showLength, showTime, toMinutes } from "@/lib/domain/schedule/day-chain";
+import { addPeriod, inOrder, lengthOf, showLength, showTime, toMinutes } from "@/lib/domain/schedule/day-chain";
 import { type DayHours, type Period, weekProblems, type WorkingHoursConfig } from "@/lib/domain/schedule/hours";
 import { siteHours } from "@/lib/domain/website/timetable";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { notifyWebsite } from "@/lib/feedback/website";
 import { cn } from "@/lib/utils/ui";
 
-import { Add, ArrowDown2, CloseCircle, Global, Refresh, TickCircle } from "iconsax-reactjs";
+import { Add, CloseCircle, Copy, Global, Refresh, TickCircle } from "iconsax-reactjs";
 
-import { STEP, Stepper } from "./stepper";
-
-const SHORT = { "1": "Mon", "2": "Tue", "3": "Wed", "4": "Thu", "5": "Fri", "6": "Sat", "0": "Sun" } as Record<string, string>;
+/** A day opened for the first time starts with the usual working day. */
+const NEW_DAY: Period[] = [{ start: "09:00", end: "18:00" }];
 
 const sameHours = (a: DayHours, b: DayHours) => a.isOpen && b.isOpen && JSON.stringify(inOrder(a.periods)) === JSON.stringify(inOrder(b.periods));
-const summary = (day: DayHours) => {
-	if (!day.isOpen) return "Closed";
-	if (!day.periods.length) return "No periods yet";
-	const n = day.periods.length;
-	return `${showTime(day.periods[0].start)}–${showTime(day.periods.at(-1)!.end)} · ${n} ${n === 1 ? "period" : "periods"}`;
-};
 
 /**
- * Studio hours: each day closed, or the periods she works with the rests
- * between them. Saving is one tap that does both jobs: sessions are scheduled
- * inside these hours from then on, and the website rebuilds to show them.
+ * Studio hours, the way opening hours are set everywhere: each day open or
+ * closed, its hours as "08:30 – 10:00" pairs, more pairs for a split day (the
+ * rests are the gaps between them), and copying a day to others. One button
+ * saves them for scheduling and rebuilds the website to show them.
  */
 export function ScheduleForm({ initial }: { initial: WorkingHoursConfig }) {
 	const [saved, setSaved] = useState(() => JSON.stringify(initial));
 	const [week, setWeek] = useState<WorkingHoursConfig>(initial);
-	const [editing, setEditing] = useState<string | null>(null);
 	const [pending, startTransition] = useTransition();
 
 	const dirty = JSON.stringify(week) !== saved;
@@ -52,9 +46,9 @@ export function ScheduleForm({ initial }: { initial: WorkingHoursConfig }) {
 		return () => window.removeEventListener("beforeunload", warn);
 	}, [dirty]);
 
-	const setDay = (key: string, day: DayHours) => setWeek((w) => ({ ...w, [key]: { ...day, periods: inOrder(day.periods) } }));
-	const editPeriods = (key: string, edit: (periods: Period[]) => Period[]) =>
-		setWeek((w) => ({ ...w, [key]: { ...w[key], periods: inOrder(edit(w[key].periods)) } }));
+	const setDay = (key: string, day: DayHours) => setWeek((w) => ({ ...w, [key]: day }));
+	// Pairs keep the order she sees while she types; they're sorted when checked and saved.
+	const setPeriods = (key: string, periods: Period[]) => setDay(key, periods.length ? { isOpen: true, periods } : { isOpen: false, periods: [] });
 
 	const save = () =>
 		startTransition(async () => {
@@ -65,10 +59,12 @@ export function ScheduleForm({ initial }: { initial: WorkingHoursConfig }) {
 			notifyWebsite(result.website);
 		});
 
-	// The axis spans the open hours, at least 6:00 to 22:00, marked every 4 hours.
+	// One time axis for every day's bar: the open hours, at least 6:00 to 22:00.
 	const open = DAYS.map((d) => week[d.key]).filter((d) => d.isOpen && d.periods.length);
-	const from = Math.min(6, ...open.map((d) => Math.floor(toMinutes(d.periods[0].start) / 240) * 4));
-	const to = Math.max(22, ...open.map((d) => Math.ceil(toMinutes(d.periods.at(-1)!.end) / 240) * 4));
+	const starts = open.flatMap((d) => d.periods.map((p) => toMinutes(p.start)));
+	const ends = open.flatMap((d) => d.periods.map((p) => toMinutes(p.end)));
+	const from = Math.min(6, ...starts.map((m) => Math.floor(m / 240) * 4));
+	const to = Math.max(22, ...ends.map((m) => Math.ceil(m / 240) * 4));
 	const span = (to - from) * 60;
 	const ticks = Array.from({ length: (to - from) / 4 + 1 }, (_, i) => from + i * 4);
 	const at = (time: string) => `${((toMinutes(time) - from * 60) / span) * 100}%`;
@@ -82,8 +78,8 @@ export function ScheduleForm({ initial }: { initial: WorkingHoursConfig }) {
 				</h2>
 
 				<div className="@container/week rounded-2xl border bg-card">
-					{/* The time axis, above the bars (wide screens only: on a phone each day says its hours). */}
-					<div className="hidden px-4 pt-3 @xl/week:grid @xl/week:grid-cols-[10rem_1fr_12.5rem] @xl/week:gap-4">
+					{/* The time axis, over the bars (wide only: on a phone each day lists its hours). */}
+					<div className="hidden px-4 pt-3 @2xl/week:grid @2xl/week:grid-cols-[9rem_1fr] @2xl/week:gap-x-6">
 						<span />
 						<div className="@container relative h-4 text-xs text-muted-foreground tabular-nums">
 							{ticks.map((hour, i) => (
@@ -97,80 +93,86 @@ export function ScheduleForm({ initial }: { initial: WorkingHoursConfig }) {
 								</span>
 							))}
 						</div>
-						<span />
 					</div>
 
 					<ul className="divide-y divide-border">
 						{DAYS.map(({ key, label }) => {
 							const day = week[key];
 							const problem = problems[key];
-							const isEditing = editing === key && day.isOpen;
-							const panel = `hours-${key}-periods`;
 							return (
-								<li key={key} className="grid gap-3 px-4 py-3">
-									<div className="grid grid-cols-[auto_1fr_auto] items-center gap-x-3 gap-y-2 @xl/week:grid-cols-[10rem_1fr_12.5rem] @xl/week:gap-x-4">
-										<div className="flex items-center gap-3">
-											<Switch
-												checked={day.isOpen}
-												onCheckedChange={(isOpen) => {
-													setDay(key, { isOpen, periods: isOpen && !day.periods.length ? [{ start: "09:00", end: "10:30" }] : day.periods });
-													if (isOpen) setEditing(key);
-												}}
-												aria-label={`${label} open`}
-											/>
-											<span className={cn("font-medium", !day.isOpen && "text-muted-foreground")}>{label}</span>
-										</div>
-
-										{/* The day on the week's axis: the periods, and the rests between them. */}
-										<div
-											aria-hidden
-											className={cn(
-												"relative order-last col-span-3 h-2.5 rounded-full @xl/week:order-0 @xl/week:col-span-1",
-												day.isOpen ? "bg-muted/70" : "hidden @xl/week:block",
-											)}
-										>
-											{day.isOpen
-												? day.periods
-														.filter((p) => lengthOf(p) > 0)
-														.map((p) => (
-															<span
-																key={p.start}
-																className="absolute inset-y-0 rounded-full bg-primary transition-[left,width] duration-300"
-																style={{ left: at(p.start), width: `calc(${at(p.end)} - ${at(p.start)} - 2px)` }}
-															/>
-														))
-												: null}
-										</div>
-
-										{day.isOpen ? (
-											<button
-												type="button"
-												aria-expanded={isEditing}
-												aria-controls={panel}
-												onClick={() => setEditing(isEditing ? null : key)}
-												className="col-start-3 row-start-1 flex min-h-11 min-w-0 items-center justify-end gap-1.5 rounded-full px-2 text-right text-sm text-muted-foreground tabular-nums hover:text-foreground @xl/week:col-start-auto @xl/week:row-start-auto"
-											>
-												<span className={cn("min-w-0 @xl/week:whitespace-nowrap", problem && "text-destructive")}>{summary(day)}</span>
-												<ArrowDown2 size={16} className={cn("shrink-0 transition-transform", isEditing && "rotate-180")} />
-											</button>
-										) : (
-											<span className="col-start-3 row-start-1 text-right text-sm text-muted-foreground @xl/week:col-start-auto @xl/week:row-start-auto">Closed</span>
-										)}
+								<li key={key} className="grid gap-3 px-4 py-3.5 @2xl/week:grid-cols-[9rem_1fr] @2xl/week:gap-x-6">
+									<div className="flex h-10 items-center gap-3">
+										<Switch
+											checked={day.isOpen}
+											onCheckedChange={(isOpen) => setDay(key, isOpen ? { isOpen, periods: day.periods.length ? day.periods : NEW_DAY } : { ...day, isOpen })}
+											aria-label={`${label} open`}
+										/>
+										<span className={cn("font-medium", !day.isOpen && "text-muted-foreground")}>{label}</span>
+										{day.isOpen ? null : <span className="ml-auto text-sm text-muted-foreground @2xl/week:hidden">Closed</span>}
 									</div>
 
-									{problem ? <p className="text-sm text-destructive">{problem}</p> : null}
+									{day.isOpen ? (
+										<div className="grid min-w-0 gap-2.5">
+											{/* The day on the week's axis: its hours, the rests as gaps. */}
+											<div aria-hidden className="relative mt-1 h-2.5 rounded-full bg-muted/70">
+												{day.periods
+													.filter((p) => lengthOf(p) > 0)
+													.map((p, i) => (
+														<span
+															key={i}
+															className="absolute inset-y-0 rounded-full bg-primary transition-[left,width] duration-300"
+															style={{ left: at(p.start), width: `calc(${at(p.end)} - ${at(p.start)} - 2px)` }}
+														/>
+													))}
+											</div>
 
-									{isEditing ? (
-										<DayPeriods
-											id={panel}
-											dayKey={key}
-											label={label}
-											day={day}
-											week={week}
-											onPeriods={(edit) => editPeriods(key, edit)}
-											onCopy={(target) => setDay(target, { isOpen: true, periods: day.periods.map((p) => ({ ...p })) })}
-										/>
-									) : null}
+											<ul className="grid grid-cols-[repeat(auto-fill,minmax(15.5rem,1fr))] gap-2">
+												{day.periods.map((period, index) => (
+													<li key={index} className="flex min-w-0 items-center gap-1.5">
+														<Input
+															type="time"
+															aria-label={`${label}, opens`}
+															value={period.start}
+															onChange={(e) => setPeriods(key, day.periods.map((p, i) => (i === index ? { ...p, start: e.target.value || p.start } : p)))}
+															className="h-10 w-0 min-w-0 flex-1 px-2 text-sm tabular-nums [&::-webkit-calendar-picker-indicator]:hidden"
+														/>
+														<span aria-hidden className="text-muted-foreground">
+															–
+														</span>
+														<Input
+															type="time"
+															aria-label={`${label}, closes`}
+															value={period.end}
+															onChange={(e) => setPeriods(key, day.periods.map((p, i) => (i === index ? { ...p, end: e.target.value || p.end } : p)))}
+															className="h-10 w-0 min-w-0 flex-1 px-2 text-sm tabular-nums [&::-webkit-calendar-picker-indicator]:hidden"
+														/>
+														<Button
+															type="button"
+															variant="ghost"
+															size="icon"
+															aria-label={`Remove ${label} ${showTime(period.start)}–${showTime(period.end)}`}
+															onClick={() => setPeriods(key, day.periods.filter((_, i) => i !== index))}
+															className="size-10 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
+														>
+															<CloseCircle size={18} />
+														</Button>
+													</li>
+												))}
+											</ul>
+
+											{problem ? <p className="text-sm text-destructive">{problem}</p> : null}
+
+											<div className="flex flex-wrap items-center gap-1">
+												<Button type="button" variant="ghost" size="sm" onClick={() => setPeriods(key, addPeriod(inOrder(day.periods)))} className="h-10 rounded-full text-primary">
+													<Add size={18} />
+													Add hours
+												</Button>
+												<CopyTo dayKey={key} label={label} week={week} onCopy={(target) => setDay(target, { isOpen: true, periods: day.periods.map((p) => ({ ...p })) })} />
+											</div>
+										</div>
+									) : (
+										<p className="hidden h-10 items-center text-sm text-muted-foreground @2xl/week:flex">Closed</p>
+									)}
 								</li>
 							);
 						})}
@@ -220,118 +222,28 @@ export function ScheduleForm({ initial }: { initial: WorkingHoursConfig }) {
 	);
 }
 
-/** One day's periods and the rests between them, and copying them to other days. */
-function DayPeriods({
-	id,
-	dayKey,
-	label,
-	day,
-	week,
-	onPeriods,
-	onCopy,
-}: {
-	id: string;
-	dayKey: string;
-	label: string;
-	day: DayHours;
-	week: WorkingHoursConfig;
-	onPeriods: (edit: (periods: Period[]) => Period[]) => void;
-	onCopy: (target: string) => void;
-}) {
-	const periods = day.periods;
-	const rests = restsOf(periods);
-	const nextRest = Math.max(0, rests.at(-1) ?? 30);
+/** "Copy to…": the same hours on another day, which opens it. Days that already match are ticked. */
+function CopyTo({ dayKey, label, week, onCopy }: { dayKey: string; label: string; week: WorkingHoursConfig; onCopy: (target: string) => void }) {
 	return (
-		<div id={id} className="@container grid gap-3 rounded-2xl bg-muted/40 p-3">
-			<ol className="grid">
-				{periods.map((period, index) => {
-					const rest = rests[index];
-					const length = lengthOf(period);
+		<DropdownMenu>
+			<DropdownMenuTrigger asChild>
+				<Button type="button" variant="ghost" size="sm" className="h-10 rounded-full text-muted-foreground">
+					<Copy size={16} />
+					Copy to…
+				</Button>
+			</DropdownMenuTrigger>
+			<DropdownMenuContent align="start" className="min-w-48">
+				<DropdownMenuLabel className="text-xs font-normal text-muted-foreground">{label}&apos;s hours on</DropdownMenuLabel>
+				{DAYS.filter((d) => d.key !== dayKey).map((d) => {
+					const same = sameHours(week[dayKey], week[d.key]);
 					return (
-						<Fragment key={index}>
-							<li className="grid grid-cols-[1fr_auto] items-center gap-1.5 py-1.5 @xs:flex">
-								<Input
-									type="time"
-									aria-label={`${label}, period ${index + 1} starts`}
-									value={period.start}
-									onChange={(e) => onPeriods((p) => setStart(p, index, e.target.value))}
-									className="h-11 w-full bg-background px-2.5 tabular-nums @xs:w-32"
-								/>
-								<div className="row-start-2 @xs:row-start-auto">
-									<Stepper
-										label={`${label}, period ${index + 1} length`}
-										value={showLength(Math.max(0, length))}
-										note={`to ${showTime(period.end)}`}
-										onLess={() => onPeriods((p) => setLength(p, index, length - STEP))}
-										onMore={() => onPeriods((p) => setLength(p, index, length + STEP))}
-										lessDisabled={length <= STEP}
-									/>
-								</div>
-								<Button
-									type="button"
-									variant="ghost"
-									size="icon"
-									aria-label={`Remove the ${showTime(period.start)} period`}
-									onClick={() => onPeriods((p) => p.filter((_, i) => i !== index))}
-									className="col-start-2 row-start-1 ml-auto size-11 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
-								>
-									<CloseCircle size={20} />
-								</Button>
-							</li>
-							{rest === undefined ? null : (
-								<li className="flex items-center gap-1.5 py-1">
-									{/* Under the start time: the thread from one period to the next. */}
-									<span aria-hidden className="flex w-6 justify-center @xs:w-32">
-										<span className="h-9 border-l-2 border-dashed border-border" />
-									</span>
-									<Stepper
-										quiet
-										label={`${label}, rest after period ${index + 1}`}
-										value={rest < 0 ? "—" : showLength(rest)}
-										onLess={() => onPeriods((p) => setRest(p, index, rest - STEP))}
-										onMore={() => onPeriods((p) => setRest(p, index, Math.max(0, rest) + STEP))}
-										lessDisabled={rest <= 0}
-									/>
-									<span className={cn("text-sm", rest < 0 ? "font-medium text-destructive" : "text-muted-foreground")}>
-										{rest < 0 ? "overlaps" : rest === 0 ? "no rest" : "rest"}
-									</span>
-								</li>
-							)}
-						</Fragment>
+						<DropdownMenuItem key={d.key} disabled={same} onSelect={() => onCopy(d.key)} className="justify-between">
+							{d.label}
+							{same ? <TickCircle size={16} variant="Bold" className="text-primary" /> : null}
+						</DropdownMenuItem>
 					);
 				})}
-			</ol>
-			<Button type="button" variant="ghost" onClick={() => onPeriods(addPeriod)} className="h-11 w-full rounded-2xl text-primary">
-				<Add size={20} />
-				{periods.length ? `Add a period after a ${showLength(nextRest)} rest` : "Add a period"}
-			</Button>
-
-			{periods.length ? (
-				<div className="grid gap-2">
-					<span className="text-sm font-medium">Same hours on</span>
-					<div className="flex flex-wrap gap-2">
-						{DAYS.filter((d) => d.key !== dayKey).map(({ key, label: other }) => {
-							const same = sameHours(day, week[key]);
-							return (
-								<button
-									key={key}
-									type="button"
-									aria-pressed={same}
-									aria-label={same ? `${other} has the same hours` : `Give ${other} the same hours`}
-									onClick={() => (same ? undefined : onCopy(key))}
-									className={cn(
-										"inline-flex h-10 min-w-14 items-center justify-center gap-1 rounded-full px-3 text-sm font-semibold transition-colors active:scale-95",
-										same ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:text-foreground",
-									)}
-								>
-									{same ? <TickCircle size={16} variant="Bold" /> : null}
-									{SHORT[key]}
-								</button>
-							);
-						})}
-					</div>
-				</div>
-			) : null}
-		</div>
+			</DropdownMenuContent>
+		</DropdownMenu>
 	);
 }

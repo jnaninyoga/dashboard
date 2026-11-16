@@ -1,6 +1,5 @@
-// Her working day as she thinks of it: a period, a rest, a period, a rest…
-// Changing a rest or a period's length moves the periods after it, so the
-// other rests stay as they were.
+// Small helpers for a day's periods: times as minutes, order, lengths, the
+// rests between them, and the next period she adds.
 
 import { type Period } from "./hours";
 
@@ -24,35 +23,6 @@ export const lengthOf = (p: Period) => toMinutes(p.end) - toMinutes(p.start);
 
 /** The rest after each period but the last, in minutes (negative when two overlap). */
 export const restsOf = (periods: readonly Period[]) => periods.slice(1).map((p, i) => toMinutes(p.start) - toMinutes(periods[i].end));
-
-/** Moves period `index` and every period after it by `delta` minutes. */
-export function shiftFrom(periods: readonly Period[], index: number, delta: number): Period[] {
-	return periods.map((p, i) =>
-		i < index ? p : { start: toTime(toMinutes(p.start) + delta), end: toTime(toMinutes(p.end) + delta) },
-	);
-}
-
-/** A new start for one period: it and the periods after it move together, so only the rest before it changes. */
-export function setStart(periods: readonly Period[], index: number, start: string): Period[] {
-	if (!/^\d{2}:\d{2}$/.test(start) || !periods[index]) return [...periods];
-	return shiftFrom(periods, index, toMinutes(start) - toMinutes(periods[index].start));
-}
-
-/** A new length for one period (at least 15 minutes); the periods after it keep their rests. */
-export function setLength(periods: readonly Period[], index: number, length: number): Period[] {
-	const p = periods[index];
-	if (!p) return [...periods];
-	const next = Math.max(15, length);
-	const resized = periods.map((x, i) => (i === index ? { start: x.start, end: toTime(toMinutes(x.start) + next) } : x));
-	return shiftFrom(resized, index + 1, next - lengthOf(p));
-}
-
-/** A new rest after period `index` (never below zero); the periods after it move. */
-export function setRest(periods: readonly Period[], index: number, rest: number): Period[] {
-	if (index < 0 || index >= periods.length - 1) return [...periods];
-	const current = toMinutes(periods[index + 1].start) - toMinutes(periods[index].end);
-	return shiftFrom(periods, index + 1, Math.max(0, rest) - current);
-}
 
 /** One more period after the last, with the same rest and length as the one before (30 min and 1h30 to begin with). */
 export function addPeriod(periods: readonly Period[]): Period[] {
