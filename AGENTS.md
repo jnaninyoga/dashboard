@@ -37,7 +37,8 @@ This is the command center for one person: Ouarda, who runs the JnaninYoga studi
 
 | Path | What |
 | --- | --- |
-| `app/(dashboard)/` | Signed-in pages: home, schedule, check-in, clients, b2b, price-list, settings |
+| `app/(dashboard)/` | Signed-in pages: home, requests, schedule, check-in, clients, b2b, price-list, settings |
+| `app/api/public/v1/` | The only signed-out API: what the website (jnaninyoga.com) calls (see Public API) |
 | `app/dev/playground/` | Dev-only page rendering the primitives and real forms without sign-in |
 | `lib/domain/` | Business rules as pure, unit-tested functions (billing, clients, price-list, schedule) |
 | `lib/actions/` | Server actions: load, check, write; they call into `lib/domain/` |
@@ -64,6 +65,8 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 - Mistakes are undone with reversal rows (with a reason), never deletes.
 - Refunds only go through a credit note (AV-YYYY-NNNN, numbered at issue). Credited quantities do not return to the quote's "left to invoice". An issued credit note can't be archived.
 
+**Requests.** Every booking sent from the website lands in Requests. It is saved before anyone is notified (phone notification, email to contact@, the count on Requests and Today), so a failed notification never loses one. A request is never deleted; when someone asks, "Erase personal details" blanks their name, phone and message and keeps the row in her counts. A phone matches a client however either was written (`phoneKey`). Times shown for a request are made on the server: a browser's time-zone data can still put Marrakech on UTC+1.
+
 **Money.** Currency is MAD (the ISO code, not "DH"). Show prices only through `<Money>` (`components/money.tsx`) or `formatMoney`. Parse typed amounts with `parseAmountInput`: Ouarda types French decimals, and `500,50` once became `50050`. PDFs stay in French.
 
 **Time.** Studio time is `Africa/Casablanca`, handled through `lib/utils/time.ts`. Never hard-code the offset: Morocco moved from UTC+1 to UTC+0 on 2026-09-20, and older Node builds (for example 24.12) still carry the old rule. Tests must use dates that every version of the time-zone data agrees on, such as June 2026 (UTC+1) or Ramadan (UTC+0).
@@ -80,6 +83,16 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 - **Server components and client-only packages.** `react-phone-number-input` crashes any server component that imports it, so `formatPhone` lives in `lib/utils/phone.ts` (client components only) and `lib/utils/contact.ts` stays plain. Likewise, a server component can't read objects exported from a `"use client"` file (only components): `TYPE_META[type]` is undefined there, so plain data such as session type names lives in its own module (`components/schedule/events/type-labels.ts`).
 - **Formatting.** Indent with tabs. The repo has no Prettier, and running `npx prettier` rewrites everything to spaces. Format with `npx eslint --fix <files>`, which also sorts imports and Tailwind classes. In globs, quote `[id]` paths as `[[]id]`. `components/ui/**` is excluded from lint.
 - `tailwindcss/no-unnecessary-arbitrary-value` is off on purpose: its autofix turns `opacity-[0.12]` and `scale-[0.98]` into classes Tailwind doesn't generate.
+
+## Public API
+
+`app/api/public/v1/` is the dashboard's only signed-out surface, called by the website (repo `jnaninyoga/jnaninyoga`, a static site on Cloudflare Pages). The spec is [docs/specs/website-from-the-command-center.md](docs/specs/website-from-the-command-center.md).
+
+- `proxy.ts` lets `/api/public/` through; the route guards itself. `POST /requests` checks, in order: the `WEBSITE_ORIGINS` allowlist (CORS), the honeypot and fill time, the form's fields, Turnstile (`TURNSTILE_SECRET`, action `booking`, the website's hostnames), and a rate limit per hashed IP. Bots are told it worked.
+- Its helpers live in plain modules (`lib/requests/`, `lib/website/`, `lib/notifications/`), never in `"use server"` files: every export of a `"use server"` file is an endpoint anyone can call.
+- Never return or log what a visitor sent: a repeated booking answers without the first one's ref, and failures are logged through `withoutVisitorData` (`lib/errors/redact.ts`).
+- Phone subscriptions only accept the browsers' push services (`isPushServiceEndpoint`), because the server posts to them.
+- Locally the website's dev server takes port 3000, so the dashboard runs on 3001; set `WEBSITE_ORIGINS=http://localhost:3000` and Cloudflare's always-pass test secret `1x0000000000000000000000000000000AA` (accepted only outside production) in `.env.local`.
 
 ## Dependencies
 
