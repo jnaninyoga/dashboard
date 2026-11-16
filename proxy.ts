@@ -10,6 +10,8 @@ function isPublicRoute(path: string) {
 		// The website's booking form (jnaninyoga.com) posts here signed out; the
 		// route checks the origin, Turnstile and a rate limit itself.
 		path.startsWith("/api/public/") ||
+		// Vercel's daily cron; the route checks CRON_SECRET itself.
+		path.startsWith("/api/cron/") ||
 		// PWA files must load signed out too, or install/offline breaks on /login
 		path === "/manifest.webmanifest" ||
 		path.startsWith("/serwist/") ||
