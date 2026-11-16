@@ -15,7 +15,8 @@ export async function OPTIONS(request: Request) {
 }
 
 export async function GET(request: Request) {
-	const cors = corsHeaders(request.headers.get("origin")) ?? {};
+	// Cached per origin: a copy made without the website's CORS headers must never be served to the website.
+	const cors = corsHeaders(request.headers.get("origin")) ?? { Vary: "Origin" };
 	const slugs = (new URL(request.url).searchParams.get("slugs") ?? "")
 		.split(",")
 		.map((s) => s.trim())
