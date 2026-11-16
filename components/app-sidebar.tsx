@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { NavUser } from "@/components/nav-user";
 import { QuickActionsMenu } from "@/components/quick-actions";
+import { newRequestsLabel, useNewRequests } from "@/components/requests/new-requests-count";
 import { SidebarPattern } from "@/components/sidebar-pattern";
 import {
 	Sidebar,
@@ -16,6 +17,7 @@ import {
 	SidebarGroupLabel,
 	SidebarHeader,
 	SidebarMenu,
+	SidebarMenuBadge,
 	SidebarMenuButton,
 	SidebarMenuItem,
 	SidebarRail,
@@ -40,7 +42,7 @@ const navButton =
 const navIcon =
 	"transition-[rotate,scale,translate] duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)] motion-safe:group-hover/menu-item:-translate-y-px motion-safe:group-hover/menu-item:-rotate-8 motion-safe:group-hover/menu-item:scale-110 motion-safe:group-active/menu-item:scale-90";
 
-function NavLink({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
+function NavLink({ item, onNavigate, badge = 0 }: { item: NavItem; onNavigate: () => void; badge?: number }) {
 	const pathname = usePathname();
 	const current = isCurrent(pathname, item.url);
 	return (
@@ -55,6 +57,14 @@ function NavLink({ item, onNavigate }: { item: NavItem; onNavigate: () => void }
 					<span>{item.title}</span>
 				</Link>
 			</SidebarMenuButton>
+			{badge > 0 ? (
+				<SidebarMenuBadge
+					aria-label={newRequestsLabel(badge)}
+					className="top-1/2 right-2 -translate-y-1/2 rounded-full bg-primary px-1.5 text-primary-foreground peer-hover/menu-button:text-primary-foreground peer-data-[active=true]/menu-button:text-primary-foreground"
+				>
+					{badge}
+				</SidebarMenuBadge>
+			) : null}
 		</SidebarMenuItem>
 	);
 }
@@ -65,6 +75,7 @@ export function AppSidebar({
 	...props
 }: React.ComponentProps<typeof Sidebar> & { user: UserProfile; settingsOpen?: boolean }) {
 	const pathname = usePathname();
+	const newRequests = useNewRequests();
 	const { isMobile, setOpenMobile, state } = useSidebar();
 	const onSettingsPage = dashboardConfig.settings.some((item) => isCurrent(pathname, item.url));
 	const [settingsOpen, setSettingsOpen] = React.useState(settingsOpenAtLoad || onSettingsPage);
@@ -129,7 +140,12 @@ export function AppSidebar({
 						<SidebarGroupContent>
 							<SidebarMenu className="gap-0.5">
 								{section.items.map((item) => (
-									<NavLink key={item.url} item={item} onNavigate={closeOnMobile} />
+									<NavLink
+										key={item.url}
+										item={item}
+										onNavigate={closeOnMobile}
+										badge={item.url === "/bookings" ? newRequests : 0}
+									/>
 								))}
 							</SidebarMenu>
 						</SidebarGroupContent>

@@ -1,4 +1,1 @@
-export type WorkingHoursConfig = Record<
-	string,
-	{ isOpen: boolean; start: string; end: string }
->;
+export type { DayHours, Period, WorkingHoursConfig } from "@/lib/domain/schedule/hours";

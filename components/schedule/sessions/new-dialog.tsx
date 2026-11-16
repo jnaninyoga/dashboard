@@ -78,8 +78,15 @@ export function NewSessionDialog({
 
 	useEffect(() => {
 		if (state?.success) {
-			notify.success("Session scheduled");
 			onOpenChange(false);
+			// An outdoor session is also an event on the website: its page takes the text and photo next.
+			const created = "event" in state ? state.event : null;
+			if (created?.id && created.extendedProperties?.private?.jnaninEventType === "outdoor") {
+				notify.success("Outdoor session scheduled", "Add its description and place for the website.");
+				router.push(`/schedule/outdoor/${created.id}`);
+				return;
+			}
+			notify.success("Session scheduled");
 			router.refresh();
 		} else if (state?.error) {
 			notifyActionError(state, "Something went wrong");

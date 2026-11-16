@@ -21,6 +21,16 @@ describe("isCurrent", () => {
 });
 
 describe("navigation", () => {
+	it("has no separate Website group: Studio hours feed the website", () => {
+		expect(dashboardConfig.sections.map((s) => s.label)).not.toContain("Website");
+		expect(dashboardConfig.settings.map((item) => item.url)).toContain("/settings/schedule");
+	});
+
+	it("puts website bookings with today's work", () => {
+		const today = dashboardConfig.sections.find((s) => s.label === "Today")!;
+		expect(today.items.map((item) => item.url)).toEqual(["/", "/check-in", "/bookings"]);
+	});
+
 	it("is grouped in her words, with no admin group names", () => {
 		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing", "Price list"]);
 	});
@@ -28,7 +38,8 @@ describe("navigation", () => {
 	it("keeps what she sells in her price list, and only the studio in Settings", () => {
 		const priceList = dashboardConfig.sections.find((s) => s.label === "Price list")!;
 		expect(priceList.items.map((item) => item.title)).toEqual(["Memberships", "Partner rates", "Discounts"]);
-		expect(dashboardConfig.settings.map((item) => item.title)).toEqual(["Studio profile", "Studio hours"]);
+		expect(dashboardConfig.settings.map((item) => item.title)).toEqual(["Studio profile", "Studio hours", "Notifications"]);
+		expect(dashboardConfig.settings.map((item) => item.url)).toContain("/settings/notifications");
 	});
 });
 

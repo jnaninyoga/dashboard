@@ -126,6 +126,38 @@ export async function createStudioEvent(
 }
 
 /**
+ * Moves or renames a session the dashboard created (an outdoor session whose
+ * day, times, title or price changed). Times are wall-clock in `timeZone`,
+ * as at creation.
+ */
+export async function updateStudioEvent(
+	accessToken: string,
+	eventId: string,
+	/** Times only when they changed, as she typed them: never re-derived from a stored instant. */
+	data: { title: string; timeZone: string; startTime?: string; endTime?: string; outdoorPrice?: number | null },
+): Promise<calendar_v3.Schema$Event> {
+	const google = getGoogleClient(accessToken);
+	try {
+		const result = await google.calendar.events.patch({
+			calendarId: "primary",
+			eventId,
+			requestBody: {
+				summary: data.title,
+				...(data.startTime ? { start: { dateTime: data.startTime, timeZone: data.timeZone } } : {}),
+				...(data.endTime ? { end: { dateTime: data.endTime, timeZone: data.timeZone } } : {}),
+				...(data.outdoorPrice != null
+					? { extendedProperties: { private: { jnaninEventType: "outdoor", outdoorPrice: data.outdoorPrice.toString() } } }
+					: {}),
+			},
+		});
+		return result.data;
+	} catch (error) {
+		console.error("Error updating Studio Event:", error);
+		throw new Error("Failed to update event in Google Calendar.");
+	}
+}
+
+/**
  * Every event between two instants, in one request: what the Schedule, the
  * week strip and today's agenda read. Recurring events come as their
  * single occurrences, in time order.

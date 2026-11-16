@@ -1,3 +1,5 @@
+import { cardLines, isSiteKey, MAX_CARD_LINE_LENGTH, MAX_CARD_LINES } from "@/lib/domain/website/cards";
+
 import { z } from "zod";
 
 import { numberFromInput } from "./shared";
@@ -22,14 +24,43 @@ const optionalCount = (message: string) =>
 		})
 		.pipe(z.number().min(1, message).nullable());
 
-/** A card she sells to clients: credits for their visits, for a number of months. */
-export const membershipProductSchema = z.object({
-	kind: z.literal("membership"),
-	name,
-	price,
-	credits: numberFromInput(z.number().int("Credits are whole visits").min(1, "At least 1 credit")),
-	durationMonths: numberFromInput(z.number().int("Whole months").min(1, "At least 1 month")),
-});
+/** The lines on a card, typed one per row in a text box (or already a list); read as a list. */
+const cardLinesText = z
+	.union([z.string(), z.array(z.string())])
+	.default("")
+	.transform((value) => (Array.isArray(value) ? value.join("\n") : value))
+	.superRefine((text, ctx) => {
+		const lines = cardLines(text);
+		if (lines.length > MAX_CARD_LINES) ctx.addIssue({ code: "custom", message: `At most ${MAX_CARD_LINES} lines, so the cards keep the same height` });
+		const long = lines.find((line) => line.length > MAX_CARD_LINE_LENGTH);
+		if (long) ctx.addIssue({ code: "custom", message: `Keep each line under ${MAX_CARD_LINE_LENGTH} characters: “${long.slice(0, 24)}…”` });
+	})
+	.transform(cardLines);
+
+/**
+ * A card she sells to clients: credits for their visits, for a number of
+ * months, and how it shows on the website (shown or not, its key in the
+ * site's links, its place in the row, the Popular badge, its lines in French
+ * and English).
+ */
+export const membershipProductSchema = z
+	.object({
+		kind: z.literal("membership"),
+		name,
+		price,
+		credits: numberFromInput(z.number().int("Credits are whole visits").min(1, "At least 1 credit")),
+		durationMonths: numberFromInput(z.number().int("Whole months").min(1, "At least 1 month")),
+		onSite: z.boolean().default(false),
+		siteKey: z.string().trim().toLowerCase().default(""),
+		sitePosition: numberFromInput(z.number().int("A whole number").min(0, "0 or more")).default(0),
+		popular: z.boolean().default(false),
+		sitePointsFr: cardLinesText,
+		sitePointsEn: cardLinesText,
+	})
+	.refine((v) => !v.onSite || isSiteKey(v.siteKey), {
+		message: "Give it a key for the website: lowercase words joined by dashes, like start-to-align",
+		path: ["siteKey"],
+	});
 
 /** A service she sells to partners: one session for a group of a given size. */
 export const partnerServiceSchema = z

@@ -2,11 +2,13 @@ import {
 	Buildings,
 	Calendar,
 	Card,
+	DirectInbox,
 	DiscountShape,
 	DocumentText,
 	Home2,
 	type Icon,
 	MenuBoard,
+	Notification,
 	People,
 	ReceiptText,
 	Shop,
@@ -35,6 +37,8 @@ export const dashboardConfig = {
 			items: [
 				{ title: "Dashboard", url: "/", icon: Home2 },
 				{ title: "Check-in", url: "/check-in", icon: TickCircle },
+				// Bookings from the website, answered between classes.
+				{ title: "Bookings", url: "/bookings", icon: DirectInbox },
 			],
 		},
 		{
@@ -63,6 +67,7 @@ export const dashboardConfig = {
 	settings: [
 		{ title: "Studio profile", url: "/settings/company", icon: Shop },
 		{ title: "Studio hours", url: "/settings/schedule", icon: Timer1 },
+		{ title: "Notifications", url: "/settings/notifications", icon: Notification },
 	] satisfies NavItem[],
 };
 

@@ -59,10 +59,13 @@ import { notify } from "@/lib/feedback/notify";
 
 import { Buildings } from "iconsax-reactjs";
 
+import { EventsDemo } from "./events-demo";
 import { FeedbackDemo } from "./feedback-demo";
 import { FormsDemo } from "./forms-demo";
 import { MenusDemo } from "./menus-demo";
+import { RequestsDemo } from "./requests-demo";
 import { TablesDemo } from "./tables-demo";
+import { WebsiteDemo } from "./website-demo";
 
 export function Playground() {
 	const [sheetOpen, setSheetOpen] = useState(false);
@@ -126,6 +129,9 @@ export function Playground() {
 				</section>
 				<FormsDemo />
 				<MenusDemo />
+				<EventsDemo />
+				<WebsiteDemo />
+				<RequestsDemo />
 				<TablesDemo />
 
 				<section className="flex flex-wrap items-center gap-3 rounded-3xl border bg-card p-6">

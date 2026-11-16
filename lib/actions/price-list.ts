@@ -8,12 +8,13 @@ import { type ProductKind, productLabel } from "@/lib/domain/price-list/product"
 import { logServerError } from "@/lib/errors/server";
 import { studioDateString } from "@/lib/utils/time";
 import { type ProductFormValues, productSchema } from "@/lib/validators";
+import { type RebuildOutcome, requestSiteRebuild } from "@/lib/website/rebuild";
 import { db } from "@/services/database";
 import { b2bDocumentLines, b2bDocuments, clientWallets, type NewProduct, products } from "@/services/database/schema";
 
 import { and, asc, countDistinct, desc, eq, gte, isNull, max, ne, or, sql } from "drizzle-orm";
 
-export type PriceListState = { success?: boolean; error?: string; ref?: string; id?: string };
+export type PriceListState = { success?: boolean; error?: string; ref?: string; id?: string; website?: RebuildOutcome };
 
 const PAGE: Record<ProductKind, string> = {
 	membership: "/price-list/memberships",
@@ -105,8 +106,34 @@ export async function getProductUsage(kind: ProductKind): Promise<Record<string,
 function rowOf(values: ProductFormValues): Omit<NewProduct, "id" | "createdAt" | "isArchived"> {
 	const common = { kind: values.kind, name: values.name, price: values.price.toFixed(2) };
 	return values.kind === "membership"
-		? { ...common, credits: values.credits, durationMonths: values.durationMonths, unit: null, groupMin: null, groupMax: null }
-		: { ...common, credits: null, durationMonths: null, unit: "session", groupMin: values.groupMin, groupMax: values.groupMax };
+		? {
+				...common,
+				credits: values.credits,
+				durationMonths: values.durationMonths,
+				unit: null,
+				groupMin: null,
+				groupMax: null,
+				siteKey: values.siteKey || null,
+				onSite: values.onSite,
+				sitePosition: values.sitePosition,
+				popular: values.popular,
+				sitePointsFr: values.sitePointsFr,
+				sitePointsEn: values.sitePointsEn,
+			}
+		: {
+				...common,
+				credits: null,
+				durationMonths: null,
+				unit: "session",
+				groupMin: values.groupMin,
+				groupMax: values.groupMax,
+				siteKey: null,
+				onSite: false,
+				sitePosition: 0,
+				popular: false,
+				sitePointsFr: null,
+				sitePointsEn: null,
+			};
 }
 
 /**
@@ -129,6 +156,16 @@ export async function saveProductAction(id: string | null, data: unknown): Promi
 		if (sameKind.some((other) => fold(productLabel(other)) === fold(label))) {
 			return { error: `${label} is already on your price list.` };
 		}
+		if (row.siteKey) {
+			const [taken] = await db
+				.select({ name: products.name })
+				.from(products)
+				.where(and(eq(products.siteKey, row.siteKey), id ? ne(products.id, id) : undefined));
+			if (taken) return { error: `${taken.name} already uses the website key “${row.siteKey}”.` };
+		}
+		// Whether the website shows it now, or did before this change.
+		const [before] = id ? await db.select({ onSite: products.onSite }).from(products).where(eq(products.id, id)) : [];
+		const onWebsite = !!row.onSite || !!before?.onSite;
 
 		if (id) {
 			// A membership stays a membership: its kind isn't the form's to change.
@@ -143,7 +180,7 @@ export async function saveProductAction(id: string | null, data: unknown): Promi
 			id = created.id;
 		}
 		revalidatePath(PAGE[row.kind]);
-		return { success: true, id };
+		return { success: true, id, website: onWebsite ? await requestSiteRebuild("a card") : undefined };
 	} catch (error) {
 		return { error: "Couldn't save it", ref: logServerError("Saving a product", error) };
 	}
@@ -167,7 +204,7 @@ export async function setProductArchivedAction(id: string, archived: boolean): P
 		}
 		await db.update(products).set({ isArchived: archived }).where(eq(products.id, id));
 		revalidatePath(PAGE[product.kind]);
-		return { success: true };
+		return { success: true, website: product.onSite ? await requestSiteRebuild("a card") : undefined };
 	} catch (error) {
 		return { error: "Couldn't change it", ref: logServerError("Archiving a product", error) };
 	}

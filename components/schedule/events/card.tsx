@@ -13,17 +13,7 @@ import { cn } from "@/lib/utils/ui";
 
 import { format, isWithinInterval, parseISO, subMinutes } from "date-fns";
 import type { Icon } from "iconsax-reactjs";
-import {
-	Buildings,
-	Calendar,
-	ClipboardTick,
-	Clock,
-	LoginCurve,
-	Profile2User,
-	Sun1,
-	Tag,
-	User,
-} from "iconsax-reactjs";
+import { Buildings, Calendar, ClipboardTick, Clock, Global, LoginCurve, Profile2User, Sun1, Tag, User } from "iconsax-reactjs";
 
 import { CancelEventButton } from "./cancel-button";
 import { GuestAvatarStack } from "./guest-stack";
@@ -270,7 +260,21 @@ export function EventCard({ event, checkIns }: { event: CalendarEvent; checkIns?
 			</div>
 
 			<div className="relative mt-auto p-5 md:mt-0 md:bg-transparent md:p-6 md:pl-0">
-				{isOffsite ? (
+				{eventType === "outdoor" ? (
+					// An outdoor session is also its event on the website: who's coming, its text and photo.
+					<Button
+						asChild
+						className={cn(
+							"min-h-[48px] w-full rounded-2xl px-8 font-semibold transition-all md:min-h-[44px] md:w-auto",
+							meta?.cta,
+						)}
+					>
+						<Link href={`/schedule/outdoor/${event.id}`}>
+							<Global className="mr-2 size-4" variant="Bulk" />
+							Bookings & website
+						</Link>
+					</Button>
+				) : isOffsite ? (
 					<Button
 						asChild
 						disabled={!calendarLink}

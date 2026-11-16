@@ -1,8 +1,10 @@
 import { CockpitClient } from "@/components/dashboard/cockpit/client";
 import { Greeting } from "@/components/dashboard/greeting";
+import { NewRequests } from "@/components/dashboard/new-requests";
 import { Renewals } from "@/components/dashboard/renewals";
 import { WeekStrip } from "@/components/dashboard/week-strip";
 import { getRenewalsDue } from "@/lib/actions/clients/renewals";
+import { getNewRequestCount, getRequests } from "@/lib/actions/requests/queries";
 import { getSessionFeed } from "@/lib/actions/schedule/feed";
 import { requireUser } from "@/lib/auth/require-user";
 import { studioDateString, weekDays, weekStart } from "@/lib/utils/time";
@@ -16,7 +18,12 @@ export default async function Home() {
 	const now = new Date();
 	const today = studioDateString(now);
 	const days = weekDays(weekStart(today));
-	const [week, renewals] = await Promise.all([getSessionFeed(days[0], days[6]), getRenewalsDue()]);
+	const [week, renewals, waiting, newRequests] = await Promise.all([
+		getSessionFeed(days[0], days[6]),
+		getRenewalsDue(),
+		getRequests({ status: "new", limit: 3 }),
+		getNewRequestCount(),
+	]);
 	const sessions = week.data ?? [];
 
 	return (
@@ -24,6 +31,9 @@ export default async function Home() {
 			<header className="flex flex-col items-start justify-between space-y-2 sm:flex-row sm:items-center sm:space-y-0">
 				<Greeting firstName={firstName} now={now.toISOString()} />
 			</header>
+
+			{/* Website bookings come first while any wait: someone is waiting for her answer. */}
+			<NewRequests requests={waiting.data ?? []} count={newRequests} />
 
 			<CockpitClient sessions={sessions.filter((session) => session.day === today)} error={week.error ?? null} />
 

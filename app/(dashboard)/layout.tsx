@@ -5,11 +5,13 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { BottomBar } from "@/components/bottom-bar";
 import { PageTitle } from "@/components/page-title";
 import { QuickActionsProvider } from "@/components/quick-actions";
+import { NewRequestsProvider } from "@/components/requests/new-requests-count";
 import {
 	SidebarInset,
 	SidebarProvider,
 	SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { getNewRequestCount } from "@/lib/actions/requests/queries";
 import { requireUser } from "@/lib/auth/require-user";
 import { SETTINGS_COOKIE } from "@/lib/config/dashboard";
 import { getUserProfile } from "@/lib/utils/user";
@@ -36,6 +38,9 @@ export default async function DashboardLayout({
 		googleUnreachable = true;
 	}
 
+	// Website bookings waiting for her answer: a badge on Bookings and on Today.
+	const newRequests = await getNewRequestCount();
+
 	// The sidebar opens as she left it, without a flash on load.
 	const cookieStore = await cookies();
 	const sidebarOpen = cookieStore.get("sidebar_state")?.value !== "false";
@@ -43,6 +48,7 @@ export default async function DashboardLayout({
 
 	return (
 		<SidebarProvider defaultOpen={sidebarOpen}>
+			<NewRequestsProvider initial={newRequests}>
 			<QuickActionsProvider>
 				<AppSidebar user={getUserProfile(user)} settingsOpen={settingsOpen} />
 				{/* min-w-0: wide content (tables) scrolls inside its frame instead of widening the page. */}
@@ -71,6 +77,7 @@ export default async function DashboardLayout({
 				</SidebarInset>
 				<BottomBar />
 			</QuickActionsProvider>
+			</NewRequestsProvider>
 		</SidebarProvider>
 	);
 }
