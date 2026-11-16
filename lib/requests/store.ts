@@ -20,13 +20,15 @@ export async function countRecentFromIp(ipHash: string, since: Date): Promise<nu
 /** The bookings received since `since`, to recognise one sent twice. */
 export async function recentRequests(
 	since: Date,
-): Promise<Pick<BookingRequest, "id" | "ref" | "phone" | "choiceLabel" | "createdAt">[]> {
+): Promise<Pick<BookingRequest, "id" | "ref" | "phone" | "name" | "choiceLabel" | "message" | "createdAt">[]> {
 	return db
 		.select({
 			id: bookingRequests.id,
 			ref: bookingRequests.ref,
 			phone: bookingRequests.phone,
+			name: bookingRequests.name,
 			choiceLabel: bookingRequests.choiceLabel,
+			message: bookingRequests.message,
 			createdAt: bookingRequests.createdAt,
 		})
 		.from(bookingRequests)

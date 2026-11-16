@@ -89,10 +89,21 @@ export function newRequestRef(): string {
 	return `WEB-${crypto.randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`;
 }
 
-/** The earlier request this one repeats: the same phone and choice, sent within the window. */
-export function findDuplicate<T extends { phone: string; choiceLabel: string; createdAt: Date }>(
+/** Spacing and case don't make a resend a different booking. */
+const same = (a: string | null, b: string | null) =>
+	(a ?? "").trim().replace(/\s+/g, " ").toLowerCase() === (b ?? "").trim().replace(/\s+/g, " ").toLowerCase();
+
+/**
+ * The earlier request this one repeats: the same booking sent again (a
+ * double tap, a retry after a lost answer) within the window. Only an
+ * identical resend counts: a second question, or a booking for someone else
+ * from the same phone, is a new request and must reach her.
+ */
+export function findDuplicate<
+	T extends { phone: string; name: string; choiceLabel: string; message: string | null; createdAt: Date },
+>(
 	recent: T[],
-	submission: { phone: string; choiceLabel: string },
+	submission: { phone: string; name: string; choiceLabel: string; message: string | null },
 	now: Date,
 ): T | null {
 	const key = phoneKey(submission.phone);
@@ -103,6 +114,8 @@ export function findDuplicate<T extends { phone: string; choiceLabel: string; cr
 			(request) =>
 				request.createdAt.getTime() >= since &&
 				request.choiceLabel === submission.choiceLabel &&
+				same(request.name, submission.name) &&
+				same(request.message, submission.message) &&
 				phoneKey(request.phone) === key,
 		) ?? null
 	);

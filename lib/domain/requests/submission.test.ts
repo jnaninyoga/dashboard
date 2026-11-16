@@ -98,20 +98,35 @@ describe("findDuplicate", () => {
 	const now = new Date("2026-06-10T10:00:00Z");
 	const first = {
 		phone: "+212661286464",
+		name: "Salma B.",
 		choiceLabel: "Start To Align (1 500 Dh)",
+		message: "first time",
 		createdAt: new Date("2026-06-10T09:55:00Z"),
 	};
+	const again = { phone: "06 61 28 64 64", name: "Salma B.", choiceLabel: first.choiceLabel, message: "first time" };
 
 	it("finds the same booking sent again within 10 minutes", () => {
-		expect(findDuplicate([first], { phone: "06 61 28 64 64", choiceLabel: first.choiceLabel }, now)).toBe(first);
+		expect(findDuplicate([first], again, now)).toBe(first);
+	});
+
+	it("ignores spacing and case when comparing a resend", () => {
+		expect(findDuplicate([first], { ...again, name: " salma  b. ", message: "First  time " }, now)).toBe(first);
 	});
 
 	it("lets the same booking through after 10 minutes", () => {
 		const older = { ...first, createdAt: new Date("2026-06-10T09:49:00Z") };
-		expect(findDuplicate([older], { phone: "0661286464", choiceLabel: first.choiceLabel }, now)).toBeNull();
+		expect(findDuplicate([older], again, now)).toBeNull();
 	});
 
 	it("lets another choice through", () => {
-		expect(findDuplicate([first], { phone: "0661286464", choiceLabel: "Graceful Reset (2 600 Dh)" }, now)).toBeNull();
+		expect(findDuplicate([first], { ...again, choiceLabel: "Graceful Reset (2 600 Dh)" }, now)).toBeNull();
+	});
+
+	it("lets a second question from the same phone through", () => {
+		expect(findDuplicate([first], { ...again, message: "Also, is there parking?" }, now)).toBeNull();
+	});
+
+	it("lets a booking for someone else from the same phone through", () => {
+		expect(findDuplicate([first], { ...again, name: "Yasmine B." }, now)).toBeNull();
 	});
 });
