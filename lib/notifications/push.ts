@@ -2,6 +2,7 @@
 // when a booking arrives, through the dashboard installed as an app.
 
 import { requestPushPayload } from "@/lib/domain/requests/notice";
+import { isPushServiceEndpoint } from "@/lib/utils/push";
 import { db } from "@/services/database";
 import { type BookingRequest, pushSubscriptions } from "@/services/database/schema";
 
@@ -18,7 +19,8 @@ export async function sendRequestPush(request: BookingRequest): Promise<void> {
 	const privateKey = process.env.VAPID_PRIVATE_KEY;
 	if (!publicKey || !privateKey) throw new Error("Push not configured");
 
-	const subscriptions = await db.select().from(pushSubscriptions);
+	// Only the browsers' push services are posted to, whatever got stored.
+	const subscriptions = (await db.select().from(pushSubscriptions)).filter((s) => isPushServiceEndpoint(s.endpoint));
 	if (!subscriptions.length) return;
 
 	const payload = JSON.stringify(requestPushPayload(request));

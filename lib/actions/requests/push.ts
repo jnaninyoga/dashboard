@@ -2,6 +2,7 @@
 
 import { requireUser } from "@/lib/auth/require-user";
 import { logServerError } from "@/lib/errors/server";
+import { isPushServiceEndpoint } from "@/lib/utils/push";
 import { db } from "@/services/database";
 import { pushSubscriptions } from "@/services/database/schema";
 
@@ -9,7 +10,8 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 
 const subscriptionSchema = z.object({
-	endpoint: z.url(),
+	// The server posts to it, so only the browsers' push services are accepted.
+	endpoint: z.url().refine(isPushServiceEndpoint),
 	keys: z.object({ p256dh: z.string().min(1), auth: z.string().min(1) }),
 });
 
