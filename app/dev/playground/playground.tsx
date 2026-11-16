@@ -59,6 +59,7 @@ import { notify } from "@/lib/feedback/notify";
 
 import { Buildings } from "iconsax-reactjs";
 
+import { EventsDemo } from "./events-demo";
 import { FeedbackDemo } from "./feedback-demo";
 import { FormsDemo } from "./forms-demo";
 import { MenusDemo } from "./menus-demo";
@@ -128,6 +129,7 @@ export function Playground() {
 				</section>
 				<FormsDemo />
 				<MenusDemo />
+				<EventsDemo />
 				<WebsiteDemo />
 				<RequestsDemo />
 				<TablesDemo />

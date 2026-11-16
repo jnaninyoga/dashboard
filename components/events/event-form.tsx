@@ -112,18 +112,20 @@ export function EventForm({ id, initial, status }: { id: string | null; initial:
 					<TextField name="titleEn" label="Title" placeholder="Sunrise in the Palmeraie" />
 					<LongField name="descriptionEn" label="Description" placeholder="What you'll do, what to bring, how to get there…" />
 					{missing.title || missing.description ? (
-						<div className="flex flex-wrap items-start gap-x-3 gap-y-2 rounded-2xl bg-warning/10 p-4 text-sm text-foreground" role="status">
-							<Warning2 size={18} variant="Bold" className="mt-0.5 shrink-0 text-warning" />
-							<p className="min-w-0 flex-1">
-								{missing.title && missing.description ? "The English is empty" : missing.title ? "The English title is empty" : "The English description is empty"}: English
-								visitors will see the French.
+						<div className="grid gap-2 rounded-2xl bg-warning/10 p-4 text-sm text-foreground" role="status">
+							<p className="flex gap-2">
+								<Warning2 size={18} variant="Bold" className="mt-0.5 shrink-0 text-warning" />
+								<span>
+									{missing.title && missing.description ? "The English is empty" : missing.title ? "The English title is empty" : "The English description is empty"}: English
+									visitors will see the French.
+								</span>
 							</p>
 							{french ? (
 								<a
 									href={googleTranslateUrl(french)}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="inline-flex min-h-10 items-center gap-1.5 font-semibold text-primary hover:underline"
+									className="ml-6 inline-flex min-h-10 w-fit items-center gap-1.5 font-semibold text-primary hover:underline"
 								>
 									<Translate size={16} />
 									Translate with Google
@@ -191,14 +193,15 @@ export function EventForm({ id, initial, status }: { id: string | null; initial:
 					) : null}
 				</Part>
 
-				<div className={cn("sticky bottom-[calc(var(--bottom-bar,0px)+0.75rem)] z-10 flex flex-wrap gap-3 rounded-3xl border border-secondary/20 bg-background/90 p-3 backdrop-blur md:bottom-4")}>
+				<div className={cn("sticky bottom-[calc(var(--bottom-bar,0px)+0.75rem)] z-10 flex gap-3 rounded-3xl border border-secondary/20 bg-background/90 p-3 backdrop-blur md:bottom-4")}>
 					{status === "draft" || status === null ? (
 						<>
 							<Button type="button" disabled={pending} onClick={() => submit(true)} className="h-12 flex-1 rounded-2xl text-base font-semibold">
 								{pending ? <Refresh className="mr-2 size-4 animate-spin" /> : null}
-								Publish on the website
+								<span className="sm:hidden">Publish</span>
+								<span className="hidden sm:inline">Publish on the website</span>
 							</Button>
-							<Button type="button" variant="outline" disabled={pending} onClick={() => submit(false)} className="h-12 rounded-2xl">
+							<Button type="button" variant="outline" disabled={pending} onClick={() => submit(false)} className="h-12 shrink-0 rounded-2xl">
 								Save draft
 							</Button>
 						</>
