@@ -2,9 +2,11 @@
 // rules are the ones the website's own booking function used, so a visitor
 // sees the same behaviour now that the dashboard receives the form.
 
+import { MAX_PARTY } from "@/lib/domain/events/rules";
+
 import { phoneKey } from "./phone";
 
-export type RequestKind = "card" | "class" | "other";
+export type RequestKind = "card" | "class" | "event" | "other";
 export type SiteLang = "fr" | "en";
 
 export type Submission = {
@@ -18,6 +20,8 @@ export type Submission = {
 	message: string | null;
 	lang: SiteLang;
 	token: string;
+	/** How many people an event booking is for (1 otherwise). */
+	partySize: number;
 };
 
 export type SubmissionResult =
@@ -38,13 +42,14 @@ export const RATE_LIMIT = { max: 5, windowMinutes: 10 } as const;
 
 const clip = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
 
-/** "plan:start-to-align" is a card, "slot:8h30" a class time; anything else is open. */
+/** "plan:start-to-align" is a card, "slot:8h30" a class time, "event:<slug>" an outdoor event; anything else is open. */
 function readChoice(value: unknown): { kind: RequestKind; choiceKey: string | null } {
 	const raw = clip(value, 160);
 	const [prefix, ...rest] = raw.split(":");
 	const key = rest.join(":").trim();
 	if (key && prefix === "plan") return { kind: "card", choiceKey: key };
 	if (key && prefix === "slot") return { kind: "class", choiceKey: key };
+	if (key && prefix === "event") return { kind: "event", choiceKey: key };
 	return { kind: "other", choiceKey: null };
 }
 
@@ -70,16 +75,21 @@ export function parseSubmission(body: unknown): SubmissionResult {
 	const message = clip(data.message, 2000);
 	const token = typeof data.token === "string" && data.token.length <= MAX_TOKEN ? data.token : "";
 
+	const choice = readChoice(data.choiceKey);
+	const asked = Math.floor(Number(data.partySize));
+	const partySize = choice.kind === "event" && Number.isFinite(asked) && asked >= 1 ? Math.min(asked, MAX_PARTY) : 1;
+
 	return {
 		outcome: "ok",
 		submission: {
 			name,
 			phone,
-			...readChoice(data.choiceKey),
+			...choice,
 			choiceLabel: clip(data.choice, 160) || "—",
 			message: message || null,
 			lang: clip(data.lang, 5) === "en" ? "en" : "fr",
 			token,
+			partySize,
 		},
 	};
 }

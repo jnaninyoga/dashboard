@@ -3,7 +3,7 @@ import { splitChoice } from "@/lib/domain/requests/choice";
 import { cn } from "@/lib/utils/ui";
 import { type BookingRequest } from "@/services/database/schema";
 
-import { Card, Clock, type Icon, MessageQuestion } from "iconsax-reactjs";
+import { Card, Clock, type Icon, MessageQuestion, Tree } from "iconsax-reactjs";
 
 type Choice = Pick<BookingRequest, "kind" | "choiceLabel">;
 
@@ -11,6 +11,7 @@ const KINDS: Record<BookingRequest["kind"], { label: string; icon: Icon }> = {
 	card: { label: "Card", icon: Card },
 	class: { label: "Class time", icon: Clock },
 	other: { label: "Not sure yet", icon: MessageQuestion },
+	event: { label: "Outdoor event", icon: Tree },
 };
 
 /**

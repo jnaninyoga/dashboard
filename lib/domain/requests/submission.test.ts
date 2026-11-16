@@ -27,6 +27,7 @@ describe("parseSubmission", () => {
 				message: "first time",
 				lang: "en",
 				token: "t",
+				partySize: 1,
 			},
 		});
 	});
@@ -35,6 +36,19 @@ describe("parseSubmission", () => {
 		expect(parseSubmission({ ...good, choiceKey: "slot:8h30" })).toMatchObject({
 			submission: { kind: "class", choiceKey: "8h30" },
 		});
+	});
+
+	it("reads an event booking with how many people", () => {
+		expect(parseSubmission({ ...good, choiceKey: "event:lever-de-soleil", partySize: 3 })).toMatchObject({
+			submission: { kind: "event", choiceKey: "lever-de-soleil", partySize: 3 },
+		});
+	});
+
+	it("books one person when the number is missing or odd, ten at most", () => {
+		expect(parseSubmission({ ...good, choiceKey: "event:a" })).toMatchObject({ submission: { partySize: 1 } });
+		expect(parseSubmission({ ...good, choiceKey: "event:a", partySize: "abc" })).toMatchObject({ submission: { partySize: 1 } });
+		expect(parseSubmission({ ...good, choiceKey: "event:a", partySize: 40 })).toMatchObject({ submission: { partySize: 10 } });
+		expect(parseSubmission({ ...good, partySize: 4 })).toMatchObject({ submission: { kind: "card", partySize: 1 } });
 	});
 
 	it("reads no choice as other", () => {
