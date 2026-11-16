@@ -16,16 +16,18 @@ import {
 	FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { saveProductAction } from "@/lib/actions/price-list";
 import { productLabel } from "@/lib/domain/price-list/product";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
+import { notifyWebsite } from "@/lib/feedback/website";
 import { type Product, type ProductKind } from "@/lib/types";
 import { CURRENCY, parseAmountInput } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils/ui";
 import { type ProductFormInput, type ProductFormValues, productSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, Edit2, Refresh as Loader2, Tag2 } from "iconsax-reactjs";
+import { Card, Edit2, Global, Refresh as Loader2, Tag2 } from "iconsax-reactjs";
 
 const WORDS: Record<ProductKind, { noun: string; icon: React.ReactNode; intro: string; placeholder: string }> = {
 	membership: {
@@ -49,7 +51,17 @@ function defaultsFor(kind: ProductKind, product?: Product): ProductFormInput {
 	const amount = Number(product?.price);
 	const price = product ? (Number.isInteger(amount) ? String(amount) : amount.toFixed(2)) : "";
 	return kind === "membership"
-		? { kind, name: product?.name ?? "", price, credits: blank(product?.credits ?? 10), durationMonths: blank(product?.durationMonths ?? 1) }
+		? {
+				kind,
+				name: product?.name ?? "",
+				price,
+				credits: blank(product?.credits ?? 10),
+				durationMonths: blank(product?.durationMonths ?? 1),
+				onSite: product?.onSite ?? false,
+				siteKey: product?.siteKey ?? "",
+				sitePosition: blank(product?.sitePosition ?? 0),
+				popular: product?.popular ?? false,
+			}
 		: { kind, name: product?.name ?? "", price, groupMin: blank(product?.groupMin), groupMax: blank(product?.groupMax) };
 }
 
@@ -99,6 +111,26 @@ function NumberField({
 					</div>
 					{description ? <FormDescription>{description}</FormDescription> : null}
 					<FormMessage />
+				</FormItem>
+			)}
+		/>
+	);
+}
+
+/** A yes/no on the card: a switch with its label and a line of help. */
+function SwitchField({ name, label, description }: { name: FieldPath<ProductFormInput>; label: string; description?: string }) {
+	return (
+		<FormField
+			name={name}
+			render={({ field }) => (
+				<FormItem className="flex items-center justify-between gap-4">
+					<div className="grid gap-1">
+						<FormLabel>{label}</FormLabel>
+						{description ? <FormDescription>{description}</FormDescription> : null}
+					</div>
+					<FormControl>
+						<Switch checked={field.value === true} onCheckedChange={field.onChange} />
+					</FormControl>
 				</FormItem>
 			)}
 		/>
@@ -156,6 +188,7 @@ export function ProductSheet({
 			const result = await saveProductAction(product?.id ?? null, values);
 			if (result.success) {
 				notify.success(editing ? "Saved" : `Added to your price list`);
+				notifyWebsite(result.website);
 				onOpenChange(false);
 			} else {
 				notifyActionError(result, "Couldn't save it");
@@ -205,6 +238,41 @@ export function ProductSheet({
 							{editing ? (
 								<p className="text-sm text-muted-foreground">Cards already sold keep their credits and their end date.</p>
 							) : null}
+
+							{/* How the card shows on jnaninyoga.com. */}
+							<fieldset className="grid gap-4 rounded-2xl border border-secondary/30 p-4">
+								<legend className="flex items-center gap-2 px-1 text-sm font-medium">
+									<Global size={18} variant="Bulk" className="text-primary" />
+									On the website
+								</legend>
+								<SwitchField name="onSite" label="Show on jnaninyoga.com" description="With its price, in the cards on the site." />
+								{watched.kind === "membership" && watched.onSite ? (
+									<>
+										<FormField
+											name="siteKey"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Key</FormLabel>
+													<FormControl>
+														<Input
+															placeholder="start-to-align"
+															autoCapitalize="none"
+															autoComplete="off"
+															spellCheck={false}
+															{...field}
+															value={String(field.value ?? "")}
+														/>
+													</FormControl>
+													<FormDescription>The card’s name in the site’s links and texts. Keep it once it’s live.</FormDescription>
+													<FormMessage />
+												</FormItem>
+											)}
+										/>
+										<NumberField name="sitePosition" label="Place in the row" whole placeholder="1" description="1 shows first." />
+										<SwitchField name="popular" label="Popular badge" description="Shown on one card at a time looks best." />
+									</>
+								) : null}
+							</fieldset>
 						</>
 					) : (
 						<>

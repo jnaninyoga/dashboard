@@ -15,7 +15,7 @@ import { type Product, type ProductKind } from "@/lib/types";
 import { formatMoney } from "@/lib/utils/currency";
 import { studioDateString } from "@/lib/utils/time";
 
-import { AddCircle, Card, DocumentText, Tag2 } from "iconsax-reactjs";
+import { AddCircle, Card, DocumentText, Global, Tag2 } from "iconsax-reactjs";
 
 import { ArchivedShelf, PriceListMenu, PriceListTile } from "./price-list-card";
 import { ProductSheet } from "./product-sheet";
@@ -108,6 +108,12 @@ export function ProductGrid({
 												? membershipTerms(product)
 												: `${groupSize(product) ?? "Any group"} · per session`}
 										</span>
+										{kind === "membership" && product.onSite ? (
+											<span className="inline-flex h-6 items-center gap-1 rounded-full bg-primary/10 px-2 text-xs font-medium text-primary">
+												<Global size={14} variant="Bulk" />
+												On the website{product.popular ? " · Popular" : ""}
+											</span>
+										) : null}
 										{twice.has(fold(productLabel(product))) ? (
 											<span className="basis-full text-sm font-medium text-warning">Listed twice: archive one</span>
 										) : null}
