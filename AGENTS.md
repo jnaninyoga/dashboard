@@ -98,7 +98,7 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 - `GET /events/places?slugs=` (live places, CORS, `Vary: Origin`) and `GET /events/[slug]/photo` serve outdoor sessions the website shows (or showed, once cancelled) only. `POST /requests` takes `choiceKey: "event:<slug>"` with `partySize` (1–10) for an outdoor session on the website whose bookings are still open (they close `BOOKING_CLOSES_HOURS`, 3, before it starts, even for a page built earlier); one that came in when the event was full is kept and marked.
 - `GET /site` is what the website builds from (`lib/website/site-data.ts`): Studio hours (open days grouped by the same periods) with their words, the cards on the site, published events. Nothing private goes in it. `GET /api/cron/rebuild-website` needs `Authorization: Bearer $CRON_SECRET`; the proxy lets `/api/cron/` through for it.
 - Phone subscriptions only accept the browsers' push services (`isPushServiceEndpoint`), because the server posts to them.
-- Locally the website's dev server takes port 3000, so the dashboard runs on 3001; set `WEBSITE_ORIGINS=http://localhost:3000` and Cloudflare's always-pass test secret `1x0000000000000000000000000000000AA` (accepted only outside production) in `.env.local`.
+- Locally the website's dev server takes port 3000, so the dashboard runs on 3001 (`pnpm dev` and `pnpm start` use it); set `WEBSITE_ORIGINS=http://localhost:3000` and Cloudflare's always-pass test secret `1x0000000000000000000000000000000AA` (accepted only outside production) in `.env.local`.
 
 ## Dependencies
 
