@@ -15,8 +15,9 @@ export type RequestClient = { id: string; fullName: string; credits: ReturnType<
 /**
  * A request with the client it's from (the one it was matched to, or, until
  * then, one with the same phone) and when it arrived in words. The words are
- * made on the server: a browser's time-zone data can still put Marrakech on
- * UTC+1 and show the wrong hour.
+ * made once, on the server, with the studio time helpers: worked out again in
+ * the browser, a phone whose time-zone data differs from the server's would
+ * show another hour and break hydration.
  */
 export type RequestView = BookingRequest & { client: RequestClient | null; received: string };
 
