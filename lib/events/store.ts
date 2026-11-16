@@ -5,7 +5,7 @@ import { type Places,places } from "@/lib/domain/events/rules";
 import { db } from "@/services/database";
 import { bookingRequests, eventPhotos, events } from "@/services/database/schema";
 
-import { and, eq, inArray, isNotNull, or, sql, sum } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, or, sum } from "drizzle-orm";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -83,7 +83,8 @@ export async function eventsWithPhotoFlag() {
 			capacity: events.capacity,
 			status: events.status,
 			publishedAt: events.publishedAt,
-			hasPhoto: sql<boolean>`exists (select 1 from ${eventPhotos} where ${eventPhotos.eventId} = ${events.id})`,
+			photoUpdatedAt: eventPhotos.updatedAt,
 		})
-		.from(events);
+		.from(events)
+		.leftJoin(eventPhotos, eq(eventPhotos.eventId, events.id));
 }

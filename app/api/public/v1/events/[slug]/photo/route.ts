@@ -13,7 +13,9 @@ export async function GET(_request: Request, ctx: { params: Promise<{ slug: stri
 		return new Response(new Uint8Array(photo.data), {
 			headers: {
 				"Content-Type": photo.mime,
-				"Cache-Control": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800",
+				// The site asks for it with ?v=<when it changed>: each version can be cached for good.
+				"Cache-Control": "public, max-age=31536000, immutable",
+				"X-Content-Type-Options": "nosniff",
 				"Last-Modified": photo.updatedAt.toUTCString(),
 			},
 		});

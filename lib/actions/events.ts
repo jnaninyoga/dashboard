@@ -25,7 +25,7 @@ import { and, desc, eq, ne, sql } from "drizzle-orm";
 
 type Result = { success?: true; error?: string; ref?: string; id?: string; website?: RebuildOutcome; calendar?: CalendarOutcome };
 
-export type EventListItem = Event & { places: Places; reservations: number; hasPhoto: boolean };
+export type EventListItem = Event & { places: Places; reservations: number; hasPhoto: boolean; photoVersion: number | null };
 export type EventDetail = Event & { places: Places; hasPhoto: boolean; photoVersion: number | null; reservations: BookingRequest[] };
 
 function refresh(id?: string) {
@@ -42,17 +42,19 @@ export async function getEvents(): Promise<{ data?: EventListItem[]; error?: str
 			.select({
 				event: events,
 				reservations: sql<number>`(select count(*)::int from ${bookingRequests} where ${bookingRequests.eventId} = ${events.id} and ${bookingRequests.status} <> 'declined')`,
-				hasPhoto: sql<boolean>`exists (select 1 from ${eventPhotos} where ${eventPhotos.eventId} = ${events.id})`,
+				photoUpdatedAt: eventPhotos.updatedAt,
 			})
 			.from(events)
+			.leftJoin(eventPhotos, eq(eventPhotos.eventId, events.id))
 			.orderBy(desc(events.startsAt));
 		const people = await confirmedPeopleByEvent(rows.map((r) => r.event.id));
 		return {
-			data: rows.map(({ event, reservations, hasPhoto }) => ({
+			data: rows.map(({ event, reservations, photoUpdatedAt }) => ({
 				...event,
 				places: places(event.capacity, people.get(event.id) ?? 0),
 				reservations,
-				hasPhoto,
+				hasPhoto: photoUpdatedAt !== null,
+				photoVersion: photoUpdatedAt ? photoUpdatedAt.getTime() : null,
 			})),
 		};
 	} catch (error) {

@@ -141,8 +141,12 @@ describe("siteEvents", () => {
 		capacity: 12,
 		status: "published" as const,
 		publishedAt: new Date("2026-06-01T00:00:00Z"),
-		hasPhoto: false,
+		photoUpdatedAt: null as Date | null,
 	};
+
+	it("has no photo version without a photo", () => {
+		expect(siteEvents([base])[0]).toMatchObject({ photo: false, photoVersion: null });
+	});
 
 	it("shows published and cancelled events, never drafts, soonest first", () => {
 		const list = siteEvents([
@@ -155,7 +159,7 @@ describe("siteEvents", () => {
 	});
 
 	it("gives the site what it needs, in both languages, with numbers", () => {
-		const [event] = siteEvents([{ ...base, titleEn: "Sunrise", hasPhoto: true }]);
+		const [event] = siteEvents([{ ...base, titleEn: "Sunrise", photoUpdatedAt: new Date("2026-06-02T10:00:00Z") }]);
 		expect(event).toEqual({
 			slug: "a",
 			title: { fr: "A", en: "Sunrise" },
@@ -168,6 +172,8 @@ describe("siteEvents", () => {
 			capacity: 12,
 			status: "published",
 			photo: true,
+			// A new photo gets a new address, so caches never keep the old one.
+			photoVersion: Date.parse("2026-06-02T10:00:00Z"),
 		});
 	});
 });

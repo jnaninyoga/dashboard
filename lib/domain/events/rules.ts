@@ -104,6 +104,8 @@ export type SiteEvent = {
 	capacity: number | null;
 	status: "published" | "cancelled";
 	photo: boolean;
+	/** When the photo last changed (ms): part of its address, so a new photo is never served from an old cache. */
+	photoVersion: number | null;
 };
 
 type EventRow = {
@@ -120,7 +122,7 @@ type EventRow = {
 	capacity: number | null;
 	status: "draft" | "published" | "cancelled";
 	publishedAt: Date | null;
-	hasPhoto: boolean;
+	photoUpdatedAt: Date | null;
 };
 
 const orNull = (text: string | null) => (text?.trim() ? text.trim() : null);
@@ -141,6 +143,7 @@ export function siteEvents(rows: EventRow[]): SiteEvent[] {
 			price: Number(e.price),
 			capacity: e.capacity,
 			status: e.status as "published" | "cancelled",
-			photo: e.hasPhoto,
+			photo: e.photoUpdatedAt !== null,
+			photoVersion: e.photoUpdatedAt ? e.photoUpdatedAt.getTime() : null,
 		}));
 }

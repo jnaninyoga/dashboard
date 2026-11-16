@@ -84,6 +84,7 @@ describe("sitePayload with events", () => {
 			capacity: 12,
 			status: "published" as const,
 			photo: false,
+			photoVersion: null,
 		};
 		expect(sitePayload({ classTimes: DEFAULT_CLASS_TIMES, products: [], events: [event], now: new Date("2026-06-10T10:00:00Z") }).events).toEqual([event]);
 	});

@@ -56,7 +56,7 @@ export default async function EventsPage() {
 									media={
 										event.hasPhoto ? (
 											// eslint-disable-next-line @next/next/no-img-element -- her photo, from the dashboard
-											<img src={`/website/events/${event.id}/photo`} alt="" className="size-14 rounded-2xl object-cover" />
+											<img src={`/website/events/${event.id}/photo?v=${event.photoVersion}`} alt="" className="size-14 rounded-2xl object-cover" />
 										) : (
 											<div className="flex size-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
 												<Tree size={28} variant="Bulk" />
