@@ -20,6 +20,17 @@ describe("a membership on the website", () => {
 		expect(productSchema.parse({ ...card, onSite: true, siteKey: "  Start-To-Align " })).toMatchObject({ siteKey: "start-to-align" });
 	});
 
+	it("reads the lines on its card one per row, French and English", () => {
+		const parsed = productSchema.parse({ ...card, onSite: true, siteKey: "start-to-align", sitePointsFr: "Suivi de progression\n\n Flexibilité de planning ", sitePointsEn: "" });
+		expect(parsed).toMatchObject({ sitePointsFr: ["Suivi de progression", "Flexibilité de planning"], sitePointsEn: [] });
+	});
+
+	it("keeps a card's lines short enough for the cards to line up", () => {
+		const five = productSchema.safeParse({ ...card, sitePointsFr: "a\nb\nc\nd\ne" });
+		expect(five.error?.issues[0]?.path).toEqual(["sitePointsFr"]);
+		expect(productSchema.safeParse({ ...card, sitePointsEn: "x".repeat(61) }).success).toBe(false);
+	});
+
 	it("reads its place in the row as a whole number", () => {
 		expect(productSchema.parse({ ...card, onSite: true, siteKey: "start-to-align", sitePosition: "2" })).toMatchObject({ sitePosition: 2 });
 	});

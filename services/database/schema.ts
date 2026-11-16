@@ -191,6 +191,10 @@ export const products = pgTable(
 		onSite: boolean("on_site").default(false).notNull(),
 		sitePosition: integer("site_position").default(0).notNull(),
 		popular: boolean("popular").default(false).notNull(),
+		// The lines on its card on the site, French and (optional) English.
+		// Null until she writes them: the site keeps the lines it had for its key.
+		sitePointsFr: text("site_points_fr").array(),
+		sitePointsEn: text("site_points_en").array(),
 		isArchived: boolean("is_archived").default(false).notNull(),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},

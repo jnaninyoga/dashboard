@@ -5,8 +5,50 @@ import { type WorkingHoursConfig } from "@/lib/domain/schedule/hours";
 
 import { type SiteHours, siteHours } from "./timetable";
 
-/** A card on the website: its key in the site's links and copy, and its numbers. */
-export type SiteCard = { key: string; name: string; credits: number; months: number | null; price: number; popular: boolean };
+/** The lines on a card, in French and English (null: the English site shows the French ones). */
+export type CardLines = { fr: string[]; en: string[] | null };
+
+/** A card on the website: its key in the site's links, its numbers, and the lines under its lotus. */
+export type SiteCard = { key: string; name: string; credits: number; months: number | null; price: number; popular: boolean; lines: CardLines };
+
+/**
+ * The lines the site showed under each card before they came from here, by
+ * key. A card she hasn't written lines for keeps them, so nothing disappears
+ * when the site starts reading the dashboard.
+ */
+export const SITE_LINES_BEFORE: Record<string, CardLines> = {
+	seance: {
+		fr: ["Travailler l’ensemble du corps", "La respiration", "Explication sur le plan anatomique"],
+		en: ["Working the whole body", "Breathing", "Anatomical explanations"],
+	},
+	"start-to-align": { fr: ["Suivi de progression", "Flexibilité de planning"], en: ["Progress tracking", "Flexible schedule"] },
+	"graceful-reset": { fr: ["Plan adapté à vos progrès", "Suivi régulier"], en: ["A plan that follows your progress", "Regular follow-up"] },
+	"flow-and-flourish": {
+		fr: ["Accompagnement sur 9 mois", "Flexibilité des horaires", "Ateliers mensuels possibles"],
+		en: ["Nine months of guidance", "Flexible times", "Monthly workshops possible"],
+	},
+	"elevate-and-evolve": {
+		fr: ["Yoga personnalisé sur 12 mois", "Suivi et conseils sur mesure", "Ateliers mensuels (méditation, etc.)"],
+		en: ["Personal yoga over 12 months", "Tailored follow-up and advice", "Monthly workshops (meditation and more)"],
+	},
+};
+
+/** At most this many lines on a card, each this long: the card keeps its height in the row. */
+export const MAX_CARD_LINES = 4;
+export const MAX_CARD_LINE_LENGTH = 60;
+
+/** Lines typed one per row: trimmed, empty rows dropped. */
+export const cardLines = (text: string) =>
+	text
+		.split(/\r?\n/)
+		.map((line) => line.trim())
+		.filter(Boolean);
+
+/** What a card says on the site: her lines once she has written any, else the ones its key always had. */
+export function linesOf(p: { siteKey: string | null; sitePointsFr: string[] | null; sitePointsEn: string[] | null }): CardLines {
+	if (p.sitePointsFr === null) return (p.siteKey ? SITE_LINES_BEFORE[p.siteKey] : undefined) ?? { fr: [], en: null };
+	return { fr: p.sitePointsFr, en: p.sitePointsEn?.length ? p.sitePointsEn : null };
+}
 
 type CardProduct = {
 	kind: "membership" | "partner_service";
@@ -18,6 +60,8 @@ type CardProduct = {
 	onSite: boolean;
 	sitePosition: number;
 	popular: boolean;
+	sitePointsFr: string[] | null;
+	sitePointsEn: string[] | null;
 	isArchived: boolean;
 };
 
@@ -38,6 +82,7 @@ export function siteCards(products: CardProduct[]): SiteCard[] {
 			months: p.durationMonths,
 			price: Number(p.price),
 			popular: p.popular,
+			lines: linesOf(p),
 		}));
 }
 

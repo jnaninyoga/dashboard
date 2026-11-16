@@ -117,6 +117,8 @@ function rowOf(values: ProductFormValues): Omit<NewProduct, "id" | "createdAt" |
 				onSite: values.onSite,
 				sitePosition: values.sitePosition,
 				popular: values.popular,
+				sitePointsFr: values.sitePointsFr,
+				sitePointsEn: values.sitePointsEn,
 			}
 		: {
 				...common,
@@ -129,6 +131,8 @@ function rowOf(values: ProductFormValues): Omit<NewProduct, "id" | "createdAt" |
 				onSite: false,
 				sitePosition: 0,
 				popular: false,
+				sitePointsFr: null,
+				sitePointsEn: null,
 			};
 }
 

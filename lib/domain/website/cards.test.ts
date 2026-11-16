@@ -2,7 +2,7 @@ import { DEFAULT_HOURS } from "@/lib/config/schedule";
 
 import { describe, expect, it } from "vitest";
 
-import { isSiteKey, siteCards, sitePayload } from "./cards";
+import { cardLines, isSiteKey, linesOf, SITE_LINES_BEFORE, siteCards, sitePayload } from "./cards";
 
 const product = (over: Partial<Parameters<typeof siteCards>[0][number]> = {}) => ({
 	kind: "membership" as const,
@@ -14,6 +14,8 @@ const product = (over: Partial<Parameters<typeof siteCards>[0][number]> = {}) =>
 	onSite: true,
 	sitePosition: 2,
 	popular: false,
+	sitePointsFr: null as string[] | null,
+	sitePointsEn: null as string[] | null,
 	isArchived: false,
 	...over,
 });
@@ -25,8 +27,8 @@ describe("siteCards", () => {
 			product({ name: "One session", price: "200.00", credits: 1, durationMonths: 1, siteKey: "seance", sitePosition: 1, popular: true }),
 		]);
 		expect(cards).toEqual([
-			{ key: "seance", name: "One session", credits: 1, months: 1, price: 200, popular: true },
-			{ key: "start-to-align", name: "Start To Align", credits: 10, months: 3, price: 1500, popular: false },
+			{ key: "seance", name: "One session", credits: 1, months: 1, price: 200, popular: true, lines: SITE_LINES_BEFORE.seance },
+			{ key: "start-to-align", name: "Start To Align", credits: 10, months: 3, price: 1500, popular: false, lines: SITE_LINES_BEFORE["start-to-align"] },
 		]);
 	});
 
@@ -44,6 +46,26 @@ describe("siteCards", () => {
 				product({ kind: "partner_service" as never }),
 			]),
 		).toEqual([]);
+	});
+});
+
+describe("card lines", () => {
+	it("keep what the site said for its key until she writes her own", () => {
+		expect(linesOf({ siteKey: "graceful-reset", sitePointsFr: null, sitePointsEn: null }).fr).toEqual(["Plan adapté à vos progrès", "Suivi régulier"]);
+		expect(linesOf({ siteKey: "new-card", sitePointsFr: null, sitePointsEn: null })).toEqual({ fr: [], en: null });
+	});
+
+	it("are hers once written, even none at all", () => {
+		expect(linesOf({ siteKey: "seance", sitePointsFr: ["Le souffle"], sitePointsEn: ["Breath"] })).toEqual({ fr: ["Le souffle"], en: ["Breath"] });
+		expect(linesOf({ siteKey: "seance", sitePointsFr: [], sitePointsEn: [] })).toEqual({ fr: [], en: null });
+	});
+
+	it("show the French lines in English until she writes English ones", () => {
+		expect(linesOf({ siteKey: "seance", sitePointsFr: ["Le souffle"], sitePointsEn: [] }).en).toBeNull();
+	});
+
+	it("are read one per row, without the empty ones", () => {
+		expect(cardLines("  Suivi régulier \r\n\n Plan adapté  \n")).toEqual(["Suivi régulier", "Plan adapté"]);
 	});
 });
 

@@ -17,8 +17,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { saveProductAction } from "@/lib/actions/price-list";
+import { googleTranslateUrl } from "@/lib/domain/events/rules";
 import { productLabel } from "@/lib/domain/price-list/product";
+import { linesOf, MAX_CARD_LINES } from "@/lib/domain/website/cards";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { notifyWebsite } from "@/lib/feedback/website";
 import { type Product, type ProductKind } from "@/lib/types";
@@ -27,7 +30,7 @@ import { cn } from "@/lib/utils/ui";
 import { type ProductFormInput, type ProductFormValues, productSchema } from "@/lib/validators";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Card, Edit2, Global, Refresh as Loader2, Tag2 } from "iconsax-reactjs";
+import { Card, Edit2, Global, Refresh as Loader2, Tag2, Translate, Warning2 } from "iconsax-reactjs";
 
 const WORDS: Record<ProductKind, { noun: string; icon: React.ReactNode; intro: string; placeholder: string }> = {
 	membership: {
@@ -61,8 +64,30 @@ function defaultsFor(kind: ProductKind, product?: Product): ProductFormInput {
 				siteKey: product?.siteKey ?? "",
 				sitePosition: blank(product?.sitePosition ?? 0),
 				popular: product?.popular ?? false,
+				// What the card says on the site now: her lines, or the ones its key always had.
+				sitePointsFr: product ? linesOf(product).fr.join("\n") : "",
+				sitePointsEn: product ? (linesOf(product).en ?? []).join("\n") : "",
 			}
 		: { kind, name: product?.name ?? "", price, groupMin: blank(product?.groupMin), groupMax: blank(product?.groupMax) };
+}
+
+/** A card's lines: a text box, one line per row. */
+function LinesField({ name, label, placeholder, description }: { name: "sitePointsFr" | "sitePointsEn"; label: string; placeholder: string; description: string }) {
+	return (
+		<FormField
+			name={name}
+			render={({ field }) => (
+				<FormItem>
+					<FormLabel>{label}</FormLabel>
+					<FormControl>
+						<Textarea rows={3} placeholder={placeholder} {...field} value={String(field.value ?? "")} className="min-h-24 resize-y" />
+					</FormControl>
+					<FormDescription>{description}</FormDescription>
+					<FormMessage />
+				</FormItem>
+			)}
+		/>
+	);
 }
 
 /** A field that holds what she types: decimals with a French comma, or whole numbers. */
@@ -270,6 +295,25 @@ export function ProductSheet({
 										/>
 										<NumberField name="sitePosition" label="Place in the row" whole placeholder="1" description="1 shows first." />
 										<SwitchField name="popular" label="Popular badge" description="Shown on one card at a time looks best." />
+										<LinesField name="sitePointsFr" label="Lines on the card" placeholder={"Suivi de progression\nFlexibilité de planning"} description={`In French, one per row, up to ${MAX_CARD_LINES}. They show under the lotus, above the price.`} />
+										<LinesField name="sitePointsEn" label="In English" placeholder={"Progress tracking\nFlexible schedule"} description="Optional. One per row, in the same order." />
+										{String(watched.sitePointsFr ?? "").trim() && !String(watched.sitePointsEn ?? "").trim() ? (
+											<div className="grid gap-2 rounded-2xl bg-warning/10 p-4 text-sm text-foreground" role="status">
+												<p className="flex gap-2">
+													<Warning2 size={18} variant="Bold" className="mt-0.5 shrink-0 text-warning" />
+													<span>The English is empty: English visitors will see the French lines.</span>
+												</p>
+												<a
+													href={googleTranslateUrl(String(watched.sitePointsFr))}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="ml-6 inline-flex min-h-10 w-fit items-center gap-1.5 font-semibold text-primary hover:underline"
+												>
+													<Translate size={16} />
+													Translate with Google
+												</a>
+											</div>
+										) : null}
 									</>
 								) : null}
 							</fieldset>
