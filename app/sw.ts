@@ -3,6 +3,8 @@ import { defaultCache } from "@serwist/turbopack/worker";
 import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { Serwist } from "serwist";
 
+import { openFromNotification } from "../lib/utils/notification-click";
+
 declare global {
   interface WorkerGlobalScope extends SerwistGlobalConfig {
     __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
@@ -40,20 +42,14 @@ self.addEventListener("push", (event) => {
   );
 });
 
-// Tapping it opens that request, in the dashboard window she already has when there is one.
+// Tapping it opens that booking, in the dashboard window she already has when there is one.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = new URL((event.notification.data as { url?: string } | null)?.url || "/bookings", self.location.origin).href;
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      const open = windows.find((client) => new URL(client.url).origin === self.location.origin);
-      if (open) {
-        await open.focus();
-        await open.navigate(url);
-        return;
-      }
-      await self.clients.openWindow(url);
+      await openFromNotification(windows, url, self.location.origin, (target) => self.clients.openWindow(target));
     })(),
   );
 });
