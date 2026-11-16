@@ -3,6 +3,7 @@
 import { requireUser } from "@/lib/auth/require-user";
 import { creditsSummary } from "@/lib/domain/clients/card";
 import { phoneKey } from "@/lib/domain/requests/phone";
+import { receivedLabel } from "@/lib/domain/requests/received";
 import { logServerError } from "@/lib/errors/server";
 import { db } from "@/services/database";
 import { type BookingRequest, bookingRequests, clients, clientWallets } from "@/services/database/schema";
@@ -11,8 +12,13 @@ import { count, desc, eq, inArray, ne, sql } from "drizzle-orm";
 
 export type RequestClient = { id: string; fullName: string; credits: ReturnType<typeof creditsSummary> };
 
-/** A request with the client it's from: the one it was matched to, or, until then, one with the same phone. */
-export type RequestView = BookingRequest & { client: RequestClient | null };
+/**
+ * A request with the client it's from (the one it was matched to, or, until
+ * then, one with the same phone) and when it arrived in words. The words are
+ * made on the server: a browser's time-zone data can still put Marrakech on
+ * UTC+1 and show the wrong hour.
+ */
+export type RequestView = BookingRequest & { client: RequestClient | null; received: string };
 
 /**
  * Finds each request's client. A client added after the request arrived is
@@ -20,6 +26,7 @@ export type RequestView = BookingRequest & { client: RequestClient | null };
  */
 async function withClients(rows: BookingRequest[]): Promise<RequestView[]> {
 	if (!rows.length) return [];
+	const now = new Date();
 	const everyone = await db.select({ id: clients.id, phone: clients.phone }).from(clients);
 	const byPhone = new Map<string, string>();
 	for (const client of everyone) {
@@ -51,7 +58,7 @@ async function withClients(rows: BookingRequest[]): Promise<RequestView[]> {
 
 	return rows.map((row) => {
 		const id = clientIdOf(row);
-		return { ...row, client: id ? (byId.get(id) ?? null) : null };
+		return { ...row, client: id ? (byId.get(id) ?? null) : null, received: receivedLabel(row.createdAt, now) };
 	});
 }
 

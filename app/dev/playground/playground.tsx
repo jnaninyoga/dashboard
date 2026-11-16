@@ -62,6 +62,7 @@ import { Buildings } from "iconsax-reactjs";
 import { FeedbackDemo } from "./feedback-demo";
 import { FormsDemo } from "./forms-demo";
 import { MenusDemo } from "./menus-demo";
+import { RequestsDemo } from "./requests-demo";
 import { TablesDemo } from "./tables-demo";
 
 export function Playground() {
@@ -126,6 +127,7 @@ export function Playground() {
 				</section>
 				<FormsDemo />
 				<MenusDemo />
+				<RequestsDemo />
 				<TablesDemo />
 
 				<section className="flex flex-wrap items-center gap-3 rounded-3xl border bg-card p-6">
