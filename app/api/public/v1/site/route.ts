@@ -10,9 +10,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
 	try {
-		return Response.json(await loadSitePayload(), {
-			headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300" },
-		});
+		// Only builds read this, right after a save: a cached copy would build the site without it.
+		return Response.json(await loadSitePayload(), { headers: { "Cache-Control": "no-store" } });
 	} catch (error) {
 		return Response.json({ error: "unavailable", ref: logServerError("Reading the website's data", error) }, { status: 500 });
 	}
