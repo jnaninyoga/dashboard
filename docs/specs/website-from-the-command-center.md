@@ -138,7 +138,7 @@ The routes live under `app/api/public/v1/`. Add `path.startsWith("/api/public/")
 - **`GET /api/public/v1/site`.** Everything the site builds from:
   - `classTimes: { days, times }`.
   - `cards`: `{ key, name, credits, months, price, popular }`, only memberships that are `on_site`, not archived and have a `site_key`, in `site_position` order.
-  - `events`: the published events and the cancelled ones that were published, with `{ slug, title: { fr, en }, description: { fr, en }, startsAt, endsAt, place, mapsUrl, price, capacity, photoUrl, status }`. An empty English field is sent as `null`.
+  - `events`: the published events and the cancelled ones that were published, with `{ slug, title: { fr, en }, description: { fr, en }, startsAt, endsAt, bookingClosesAt, place, mapsUrl, price, capacity, photo, photoVersion, status }`. The dashboard works out `bookingClosesAt`, so the site never repeats the rule. An empty English field is sent as `null`.
   - `generatedAt`.
   - No drafts, nothing archived, no personal data.
   - Cached briefly at Vercel's edge (`s-maxage=60`).
@@ -147,7 +147,7 @@ The routes live under `app/api/public/v1/`. Add `path.startsWith("/api/public/")
   - It carries over every check in the site's `functions/api/contact.ts`: the Origin allowlist, the honeypot, fill-time limits, the name and phone rules and the length limits, and Turnstile with action `booking` and the hostname in the allowlist. A filled honeypot or an impossible fill time answers `{ ok: true }` and saves nothing.
   - It adds a rate limit per IP: a hash of the IP, not the IP itself, counted in the database. A few requests in 10 minutes is the builder's call.
   - With no Turnstile secret configured, it answers `503 not_configured`, and the site offers WhatsApp, as it does today.
-  - For an event request, it checks the event is published and hasn't started.
+  - For an event request, it checks the event is on the website and its bookings are still open: they close 3 hours before it starts (owner, 2026-11-16), so she has time to confirm the last ones and people to get there. After that she adds reservations by hand.
   - It saves the row, answers `{ ok: true, ref }`, and then sends the notifications after the response (Next's `after()`; check `node_modules/next/dist/docs/` first).
 
 ### 3. Notifications (dashboard)
@@ -229,7 +229,7 @@ The builder greps the copy for every other mention of days, times, prices and se
 
 **The marquee.**
 
-- A sticky band on every page of both languages, shown while at least one published event hasn't started yet.
+- A sticky band on every page of both languages, shown while at least one published event still takes bookings (until 3 hours before it starts).
 - It loops through the upcoming events (at most three): title in the page's language, date and time, and "Book" or "Full". It links to the event's page.
 - It pauses on hover and focus, stops moving under reduced motion or the site's own pause (`src/lib/pause.ts`), and is readable by screen readers as a plain list.
 - Each event is hidden in the browser once it has started, so a stale build never advertises the past.

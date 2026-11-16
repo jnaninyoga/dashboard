@@ -1,6 +1,6 @@
 import { after } from "next/server";
 
-import { canTake } from "@/lib/domain/events/rules";
+import { bookingOpen, canTake } from "@/lib/domain/events/rules";
 import { DUPLICATE_WINDOW_MINUTES, findDuplicate, newRequestRef, parseSubmission, RATE_LIMIT } from "@/lib/domain/requests/submission";
 import { withoutVisitorData } from "@/lib/errors/redact";
 import { logServerError } from "@/lib/errors/server";
@@ -66,12 +66,13 @@ export async function POST(request: Request) {
 		});
 		if (!human) return json({ error: "not_verified" }, 403, cors);
 
-		// An outdoor session's booking: only one on the website that hasn't started.
-		// A page built before it filled up can still send one: it's kept, marked.
+		// An outdoor session's booking: only one on the website whose bookings are
+		// still open (they close BOOKING_CLOSES_HOURS before it starts), even from
+		// a page built earlier. One built before it filled up is kept, marked.
 		let event: { sessionId: string; choiceLabel: string; arrivedWhenFull: boolean } | null = null;
 		if (submission.kind === "event") {
 			const found = submission.choiceKey ? await listedSessionBySlug(submission.choiceKey) : null;
-			if (!found || found.startsAt <= new Date()) return json({ error: "event_unavailable" }, 422, cors);
+			if (!found || !bookingOpen(found.startsAt)) return json({ error: "event_unavailable" }, 422, cors);
 			event = {
 				sessionId: found.id,
 				choiceLabel: found.title,

@@ -89,13 +89,26 @@ type Listing = {
 /** On the website: switched on, with its address, its French description and its place. */
 export const isListed = (s: Listing) => s.onWebsite && !!s.slug && !!s.descriptionFr?.trim() && !!s.placeName?.trim();
 
-export type EventPhase = "off" | "upcoming" | "ongoing" | "past" | "cancelled";
+/**
+ * Website bookings close this long before an outdoor session starts: time for
+ * her to see and confirm the last ones, and for people to get there. She can
+ * still add a reservation by hand (WhatsApp, phone) until it starts.
+ */
+export const BOOKING_CLOSES_HOURS = 3;
 
-/** Where an outdoor session stands as an event at `now`: off the website, coming, happening, past, or cancelled. */
+export const bookingClosesAt = (startsAt: Date) => new Date(startsAt.getTime() - BOOKING_CLOSES_HOURS * 3_600_000);
+
+/** Whether the website still takes bookings for a session starting at `startsAt`. */
+export const bookingOpen = (startsAt: Date, now: Date = new Date()) => now < bookingClosesAt(startsAt);
+
+export type EventPhase = "off" | "upcoming" | "closed" | "ongoing" | "past" | "cancelled";
+
+/** Where an outdoor session stands as an event at `now`: off the website, coming, closed to website bookings, happening, past, or cancelled. */
 export function eventPhase(session: Listing & { startsAt: Date; endsAt: Date }, now: Date = new Date()): EventPhase {
 	if (session.status === "cancelled") return "cancelled";
 	if (!isListed(session)) return "off";
-	if (now < session.startsAt) return "upcoming";
+	if (bookingOpen(session.startsAt, now)) return "upcoming";
+	if (now < session.startsAt) return "closed";
 	if (now < session.endsAt) return "ongoing";
 	return "past";
 }
@@ -107,6 +120,8 @@ export type SiteEvent = {
 	description: { fr: string; en: string | null };
 	startsAt: string;
 	endsAt: string;
+	/** From then the site stops taking bookings for it (BOOKING_CLOSES_HOURS before it starts). */
+	bookingClosesAt: string;
 	place: string;
 	mapsUrl: string | null;
 	price: number;
@@ -147,6 +162,7 @@ export function siteEvents(rows: SessionRow[]): SiteEvent[] {
 			description: { fr: s.descriptionFr!.trim(), en: orNull(s.descriptionEn) },
 			startsAt: s.startsAt.toISOString(),
 			endsAt: s.endsAt.toISOString(),
+			bookingClosesAt: bookingClosesAt(s.startsAt).toISOString(),
 			place: s.placeName!.trim(),
 			mapsUrl: s.placeMapsUrl,
 			price: Number(s.price ?? 0),

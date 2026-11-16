@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	BOOKING_CLOSES_HOURS,
+	bookingClosesAt,
+	bookingOpen,
 	canTake,
 	capacityProblem,
 	englishMissing,
@@ -112,6 +115,21 @@ describe("googleTranslateUrl", () => {
 	});
 });
 
+describe("website bookings", () => {
+	const startsAt = new Date("2026-06-20T14:00:00Z");
+
+	it("close three hours before the session starts", () => {
+		expect(BOOKING_CLOSES_HOURS).toBe(3);
+		expect(bookingClosesAt(startsAt).toISOString()).toBe("2026-06-20T11:00:00.000Z");
+	});
+
+	it("are open until that moment, and not from it", () => {
+		expect(bookingOpen(startsAt, new Date("2026-06-20T10:59:59Z"))).toBe(true);
+		expect(bookingOpen(startsAt, new Date("2026-06-20T11:00:00Z"))).toBe(false);
+		expect(bookingOpen(startsAt, new Date("2026-06-20T13:59:00Z"))).toBe(false);
+	});
+});
+
 describe("eventPhase", () => {
 	const session = {
 		status: "scheduled" as const,
@@ -125,6 +143,7 @@ describe("eventPhase", () => {
 
 	it("follows the session through its day", () => {
 		expect(eventPhase(session, new Date("2026-06-19T10:00:00Z"))).toBe("upcoming");
+		expect(eventPhase(session, new Date("2026-06-20T04:00:00Z"))).toBe("closed");
 		expect(eventPhase(session, new Date("2026-06-20T07:00:00Z"))).toBe("ongoing");
 		expect(eventPhase(session, new Date("2026-06-21T10:00:00Z"))).toBe("past");
 	});
@@ -182,6 +201,7 @@ describe("siteEvents", () => {
 			description: { fr: "Texte", en: null },
 			startsAt: "2026-06-20T06:00:00.000Z",
 			endsAt: "2026-06-20T08:00:00.000Z",
+			bookingClosesAt: "2026-06-20T03:00:00.000Z",
 			place: "Palmeraie",
 			mapsUrl: null,
 			price: 250,

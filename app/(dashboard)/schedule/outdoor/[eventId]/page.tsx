@@ -8,12 +8,15 @@ import { EventStatus } from "@/components/events/event-status";
 import { Reservations } from "@/components/events/reservations";
 import { getOutdoorSession } from "@/lib/actions/outdoor";
 import { eventFormValues } from "@/lib/domain/events/form";
-import { eventPhase } from "@/lib/domain/events/rules";
-import { studioDateString,weekOf } from "@/lib/utils/time";
+import { BOOKING_CLOSES_HOURS, bookingClosesAt, eventPhase } from "@/lib/domain/events/rules";
+import { STUDIO_TIME_ZONE, studioDateString, weekOf } from "@/lib/utils/time";
 
 import { ArrowLeft, ExportSquare } from "iconsax-reactjs";
 
 const WEBSITE = (process.env.NEXT_PUBLIC_WEBSITE_URL ?? "https://jnaninyoga.com").replace(/\/$/, "");
+
+// "Mon 16 Nov, 11:00", in Marrakech time (made here, on the server, like every studio time).
+const closingTime = new Intl.DateTimeFormat("en-GB", { timeZone: STUDIO_TIME_ZONE, weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
 
 /**
  * An outdoor session, which is also its event on the website: who's coming,
@@ -27,6 +30,7 @@ export default async function OutdoorSessionPage({ params }: { params: Promise<{
 	const phase = eventPhase(session);
 	const cancelled = session.status === "cancelled";
 	const week = weekOf(studioDateString(session.startsAt));
+	const closes = closingTime.format(bookingClosesAt(session.startsAt));
 
 	return (
 		<>
@@ -43,6 +47,12 @@ export default async function OutdoorSessionPage({ params }: { params: Promise<{
 					</div>
 					<p className="text-sm text-muted-foreground">Outdoor session · on the website as an outdoor event when “Show on the website” is on.</p>
 					{cancelled && session.cancelReason ? <p className="text-sm text-destructive">Cancelled: {session.cancelReason}</p> : null}
+					{phase === "upcoming" ? (
+						<p className="text-sm text-muted-foreground">
+							Website bookings close {closes}, {BOOKING_CLOSES_HOURS} hours before it starts. After that, add reservations by hand.
+						</p>
+					) : null}
+					{phase === "closed" ? <p className="text-sm text-muted-foreground">Website bookings closed {closes}. You can still add reservations by hand.</p> : null}
 				</div>
 				<div className="flex flex-wrap items-center gap-2">
 					{session.publishedAt && session.slug ? (

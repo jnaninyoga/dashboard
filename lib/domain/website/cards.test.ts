@@ -78,6 +78,7 @@ describe("sitePayload with events", () => {
 			description: { fr: "Une heure.", en: null },
 			startsAt: "2026-06-20T06:00:00.000Z",
 			endsAt: "2026-06-20T08:00:00.000Z",
+			bookingClosesAt: "2026-06-20T03:00:00.000Z",
 			place: "Palmeraie",
 			mapsUrl: null,
 			price: 250,
