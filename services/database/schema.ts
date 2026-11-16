@@ -179,6 +179,13 @@ export const products = pgTable(
 		unit: productUnitEnum("unit"),
 		groupMin: integer("group_min"),
 		groupMax: integer("group_max"),
+		// A membership on the website (jnaninyoga.com): shown or not, its key in
+		// the site's links and copy ("start-to-align"), its place in the row, and
+		// whether it wears the Popular badge.
+		siteKey: text("site_key").unique(),
+		onSite: boolean("on_site").default(false).notNull(),
+		sitePosition: integer("site_position").default(0).notNull(),
+		popular: boolean("popular").default(false).notNull(),
 		isArchived: boolean("is_archived").default(false).notNull(),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},
