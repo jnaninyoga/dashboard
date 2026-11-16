@@ -64,6 +64,7 @@ import { FormsDemo } from "./forms-demo";
 import { MenusDemo } from "./menus-demo";
 import { RequestsDemo } from "./requests-demo";
 import { TablesDemo } from "./tables-demo";
+import { WebsiteDemo } from "./website-demo";
 
 export function Playground() {
 	const [sheetOpen, setSheetOpen] = useState(false);
@@ -127,6 +128,7 @@ export function Playground() {
 				</section>
 				<FormsDemo />
 				<MenusDemo />
+				<WebsiteDemo />
 				<RequestsDemo />
 				<TablesDemo />
 

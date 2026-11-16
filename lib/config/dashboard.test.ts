@@ -21,13 +21,18 @@ describe("isCurrent", () => {
 });
 
 describe("navigation", () => {
+	it("gathers what the website shows under Website", () => {
+		const website = dashboardConfig.sections.find((s) => s.label === "Website")!;
+		expect(website.items.map((item) => item.url)).toEqual(["/website/class-times"]);
+	});
+
 	it("puts website bookings with today's work", () => {
 		const today = dashboardConfig.sections.find((s) => s.label === "Today")!;
 		expect(today.items.map((item) => item.url)).toEqual(["/", "/check-in", "/bookings"]);
 	});
 
 	it("is grouped in her words, with no admin group names", () => {
-		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing", "Price list"]);
+		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing", "Price list", "Website"]);
 	});
 
 	it("keeps what she sells in her price list, and only the studio in Settings", () => {

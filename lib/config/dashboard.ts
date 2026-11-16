@@ -2,6 +2,7 @@ import {
 	Buildings,
 	Calendar,
 	Card,
+	Clock,
 	DirectInbox,
 	DiscountShape,
 	DocumentText,
@@ -62,6 +63,11 @@ export const dashboardConfig = {
 				{ title: "Partner rates", url: "/price-list/partner-rates", icon: MenuBoard },
 				{ title: "Discounts", url: "/price-list/discounts", icon: DiscountShape },
 			],
+		},
+		{
+			// What jnaninyoga.com shows: the class times (and its outdoor events).
+			label: "Website",
+			items: [{ title: "Class times", url: "/website/class-times", icon: Clock }],
 		},
 	] satisfies { label: string; items: NavItem[] }[],
 	settings: [
