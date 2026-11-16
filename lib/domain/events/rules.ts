@@ -46,7 +46,8 @@ export function capacityProblem(capacity: number | null, confirmedPeople: number
 export const MAX_PARTY = 10;
 
 type EventInput = {
-	titleFr: string;
+	title: string;
+	onWebsite: boolean;
 	descriptionFr: string;
 	startsAt: Date;
 	endsAt: Date;
@@ -55,12 +56,12 @@ type EventInput = {
 	capacity: number | null;
 };
 
-/** What stops an event from being saved, in her words. */
+/** What stops an outdoor session from being saved, in her words. The website's text is needed only to show it there. */
 export function eventProblems(event: EventInput): string[] {
 	const problems: string[] = [];
-	if (!event.titleFr.trim()) problems.push("Give it a French title");
-	if (!event.descriptionFr.trim()) problems.push("Write the French description");
-	if (!event.placeName.trim()) problems.push("Say where it happens");
+	if (!event.title.trim()) problems.push("Give it a title");
+	if (event.onWebsite && !event.descriptionFr.trim()) problems.push("Write the French description, or turn off Show on the website");
+	if (event.onWebsite && !event.placeName.trim()) problems.push("Say where it happens, or turn off Show on the website");
 	if (!(event.endsAt.getTime() > event.startsAt.getTime())) problems.push("It has to end after it starts");
 	if (!(event.price >= 0)) problems.push("The price can't be negative");
 	if (event.capacity !== null && !(event.capacity >= 1)) problems.push("At least 1 place, or no limit");
@@ -77,17 +78,25 @@ export function googleTranslateUrl(text: string): string {
 	return `https://translate.google.com/?sl=fr&tl=en&op=translate&text=${encodeURIComponent(text)}`;
 }
 
-export type EventPhase = "draft" | "upcoming" | "ongoing" | "past" | "cancelled";
+type Listing = {
+	status: "scheduled" | "cancelled";
+	onWebsite: boolean;
+	slug: string | null;
+	descriptionFr: string | null;
+	placeName: string | null;
+};
 
-/** Where an event stands at `now`. */
-export function eventPhase(
-	event: { status: "draft" | "published" | "cancelled"; startsAt: Date; endsAt: Date },
-	now: Date = new Date(),
-): EventPhase {
-	if (event.status === "draft") return "draft";
-	if (event.status === "cancelled") return "cancelled";
-	if (now < event.startsAt) return "upcoming";
-	if (now < event.endsAt) return "ongoing";
+/** On the website: switched on, with its address, its French description and its place. */
+export const isListed = (s: Listing) => s.onWebsite && !!s.slug && !!s.descriptionFr?.trim() && !!s.placeName?.trim();
+
+export type EventPhase = "off" | "upcoming" | "ongoing" | "past" | "cancelled";
+
+/** Where an outdoor session stands as an event at `now`: off the website, coming, happening, past, or cancelled. */
+export function eventPhase(session: Listing & { startsAt: Date; endsAt: Date }, now: Date = new Date()): EventPhase {
+	if (session.status === "cancelled") return "cancelled";
+	if (!isListed(session)) return "off";
+	if (now < session.startsAt) return "upcoming";
+	if (now < session.endsAt) return "ongoing";
 	return "past";
 }
 
@@ -108,42 +117,42 @@ export type SiteEvent = {
 	photoVersion: number | null;
 };
 
-type EventRow = {
-	slug: string;
-	titleFr: string;
+type SessionRow = Listing & {
+	title: string;
 	titleEn: string | null;
-	descriptionFr: string;
 	descriptionEn: string | null;
 	startsAt: Date;
 	endsAt: Date;
-	placeName: string;
 	placeMapsUrl: string | null;
-	price: string;
+	price: string | null;
 	capacity: number | null;
-	status: "draft" | "published" | "cancelled";
 	publishedAt: Date | null;
 	photoUpdatedAt: Date | null;
 };
 
 const orNull = (text: string | null) => (text?.trim() ? text.trim() : null);
 
-/** The events the website shows: published ones, and cancelled ones that were published (their page stays). Never drafts. */
-export function siteEvents(rows: EventRow[]): SiteEvent[] {
+/**
+ * The outdoor sessions the website shows as events: the ones on it, and the
+ * cancelled ones it showed (their page stays). Never one switched off or not
+ * written yet.
+ */
+export function siteEvents(rows: SessionRow[]): SiteEvent[] {
 	return rows
-		.filter((e) => e.status === "published" || (e.status === "cancelled" && e.publishedAt !== null))
+		.filter((s) => isListed(s) && (s.status === "scheduled" || s.publishedAt !== null))
 		.sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
-		.map((e) => ({
-			slug: e.slug,
-			title: { fr: e.titleFr, en: orNull(e.titleEn) },
-			description: { fr: e.descriptionFr, en: orNull(e.descriptionEn) },
-			startsAt: e.startsAt.toISOString(),
-			endsAt: e.endsAt.toISOString(),
-			place: e.placeName,
-			mapsUrl: e.placeMapsUrl,
-			price: Number(e.price),
-			capacity: e.capacity,
-			status: e.status as "published" | "cancelled",
-			photo: e.photoUpdatedAt !== null,
-			photoVersion: e.photoUpdatedAt ? e.photoUpdatedAt.getTime() : null,
+		.map((s) => ({
+			slug: s.slug!,
+			title: { fr: s.title, en: orNull(s.titleEn) },
+			description: { fr: s.descriptionFr!.trim(), en: orNull(s.descriptionEn) },
+			startsAt: s.startsAt.toISOString(),
+			endsAt: s.endsAt.toISOString(),
+			place: s.placeName!.trim(),
+			mapsUrl: s.placeMapsUrl,
+			price: Number(s.price ?? 0),
+			capacity: s.capacity,
+			status: s.status === "cancelled" ? ("cancelled" as const) : ("published" as const),
+			photo: s.photoUpdatedAt !== null,
+			photoVersion: s.photoUpdatedAt ? s.photoUpdatedAt.getTime() : null,
 		}));
 }

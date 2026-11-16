@@ -109,10 +109,6 @@ export const bookingRequestKindEnum = pgEnum("booking_request_kind", [
 // Where a reservation came from: the website's form, or one she adds by hand.
 export const bookingSourceEnum = pgEnum("booking_source", ["website", "whatsapp", "phone", "in_person"]);
 
-// An outdoor event: written up as a draft, published on the website, or
-// cancelled (kept, so its page and its list stay).
-export const eventStatusEnum = pgEnum("event_status", ["draft", "published", "cancelled"]);
-
 export const bookingRequestStatusEnum = pgEnum("booking_request_status", [
 	"new",
 	"confirmed",
@@ -298,9 +294,26 @@ export const studioSessions = pgTable(
 		cancelledAt: timestamp("cancelled_at"),
 		cancelReason: text("cancel_reason"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
+		// An outdoor session is also an event on the website. Its price (also
+		// on the Google event), and what the site shows: the French title is
+		// `title`; the English one, the descriptions, the place, an optional
+		// limit on places. It shows once `onWebsite` and its French description
+		// and place are written; `slug` is its address there, fixed once shown.
+		price: decimal("price", { precision: 10, scale: 2 }),
+		titleEn: text("title_en"),
+		descriptionFr: text("description_fr"),
+		descriptionEn: text("description_en"),
+		placeName: text("place_name"),
+		placeMapsUrl: text("place_maps_url"),
+		capacity: integer("capacity"),
+		onWebsite: boolean("on_website").default(false).notNull(),
+		slug: text("slug").unique(),
+		publishedAt: timestamp("published_at"),
 	},
 	(t) => [
 		unique("studio_sessions_google_event_id_unique").on(t.googleEventId),
+		check("studio_sessions_capacity_positive", sql`${t.capacity} IS NULL OR ${t.capacity} >= 1`),
+		check("studio_sessions_price_not_negative", sql`${t.price} IS NULL OR ${t.price} >= 0`),
 		// The Schedule and the week strip read sessions by time range.
 		index("studio_sessions_starts_at_idx").on(t.startsAt),
 	],
@@ -339,18 +352,18 @@ export const bookingRequests = pgTable(
 		ipHash: text("ip_hash"),
 		erasedAt: timestamp("erased_at"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
-		// An outdoor event's reservation: which event, for how many people,
-		// where it came from, and when she had the money.
-		eventId: uuid("event_id").references((): AnyPgColumn => events.id, { onDelete: "set null" }),
+		// A reservation for an outdoor session (its event on the website): which
+		// session, for how many people, where it came from, when she had the money.
+		sessionId: uuid("session_id").references((): AnyPgColumn => studioSessions.id, { onDelete: "set null" }),
 		partySize: integer("party_size").default(1).notNull(),
 		source: bookingSourceEnum("source").default("website").notNull(),
 		paidAt: timestamp("paid_at"),
-		// The event was already full when it came in (from a page built earlier).
+		// The session was already full when it came in (from a page built earlier).
 		arrivedWhenFull: boolean("arrived_when_full").default(false).notNull(),
 	},
 	(t) => [
 		check("booking_requests_party_size_positive", sql`${t.partySize} >= 1`),
-		index("booking_requests_event_idx").on(t.eventId),
+		index("booking_requests_session_idx").on(t.sessionId),
 		// The Requests list and the count read new ones, newest first.
 		index("booking_requests_status_created_idx").on(t.status, t.createdAt),
 		index("booking_requests_ip_created_idx").on(t.ipHash, t.createdAt),
@@ -359,51 +372,13 @@ export const bookingRequests = pgTable(
 export type BookingRequest = typeof bookingRequests.$inferSelect;
 export type NewBookingRequest = typeof bookingRequests.$inferInsert;
 
-/**
- * An outdoor event she advertises on the website: a paid extra, whether the
- * client has a card or not. A limit on places is optional. Its slug is its
- * address on the site and never changes once published.
- */
-export const events = pgTable(
-	"events",
-	{
-		id: uuid("id").defaultRandom().primaryKey(),
-		slug: text("slug").notNull().unique(),
-		titleFr: text("title_fr").notNull(),
-		titleEn: text("title_en"),
-		descriptionFr: text("description_fr").notNull(),
-		descriptionEn: text("description_en"),
-		startsAt: timestamp("starts_at").notNull(),
-		endsAt: timestamp("ends_at").notNull(),
-		placeName: text("place_name").notNull(),
-		placeMapsUrl: text("place_maps_url"),
-		price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-		capacity: integer("capacity"),
-		status: eventStatusEnum("status").default("draft").notNull(),
-		publishedAt: timestamp("published_at"),
-		cancelledAt: timestamp("cancelled_at"),
-		cancelReason: text("cancel_reason"),
-		googleEventId: text("google_event_id"),
-		createdAt: timestamp("created_at").defaultNow().notNull(),
-		updatedAt: timestamp("updated_at").defaultNow().notNull(),
-	},
-	(t) => [
-		check("events_end_after_start", sql`${t.endsAt} > ${t.startsAt}`),
-		check("events_price_not_negative", sql`${t.price} >= 0`),
-		check("events_capacity_positive", sql`${t.capacity} IS NULL OR ${t.capacity} >= 1`),
-		index("events_starts_at_idx").on(t.startsAt),
-	],
-);
-export type Event = typeof events.$inferSelect;
-export type NewEvent = typeof events.$inferInsert;
-
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 
-/** An event's photo, resized in her browser (WebP), served by the public API. */
-export const eventPhotos = pgTable("event_photos", {
-	eventId: uuid("event_id")
+/** An outdoor session's photo for the website, resized in her browser, served by the public API. */
+export const sessionPhotos = pgTable("session_photos", {
+	sessionId: uuid("session_id")
 		.primaryKey()
-		.references(() => events.id, { onDelete: "cascade" }),
+		.references(() => studioSessions.id, { onDelete: "cascade" }),
 	mime: text("mime").notNull(),
 	data: bytea("data").notNull(),
 	updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -429,13 +404,13 @@ export const bookingRequestsRelations = relations(bookingRequests, ({ one }) => 
 		fields: [bookingRequests.clientId],
 		references: [clients.id],
 	}),
-	event: one(events, {
-		fields: [bookingRequests.eventId],
-		references: [events.id],
+	session: one(studioSessions, {
+		fields: [bookingRequests.sessionId],
+		references: [studioSessions.id],
 	}),
 }));
 
-export const eventsRelations = relations(events, ({ many }) => ({
+export const studioSessionsRelations = relations(studioSessions, ({ many }) => ({
 	reservations: many(bookingRequests),
 }));
 

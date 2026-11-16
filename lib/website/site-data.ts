@@ -4,7 +4,7 @@
 import { siteEvents } from "@/lib/domain/events/rules";
 import { type SitePayload, sitePayload } from "@/lib/domain/website/cards";
 import { type ClassTimes, DEFAULT_CLASS_TIMES } from "@/lib/domain/website/timetable";
-import { eventsWithPhotoFlag } from "@/lib/events/store";
+import { outdoorSessionsForSite } from "@/lib/events/store";
 import { classTimesSchema } from "@/lib/validators/class-times";
 import { db } from "@/services/database";
 import { appSettings, products } from "@/services/database/schema";
@@ -29,7 +29,7 @@ export async function loadSitePayload(now: Date = new Date()): Promise<SitePaylo
 	const [classTimes, all, eventRows] = await Promise.all([
 		readClassTimes(),
 		db.select().from(products).where(eq(products.kind, "membership")),
-		eventsWithPhotoFlag(),
+		outdoorSessionsForSite(),
 	]);
 	return sitePayload({ classTimes, products: all, events: siteEvents(eventRows), now });
 }

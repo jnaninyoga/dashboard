@@ -1,5 +1,7 @@
 # Outdoor events (slice 3) Implementation Plan
 
+> **Superseded in part (owner, 2026-11-16):** outdoor events are outdoor sessions. The `events` table became website fields on `studio_sessions`, `event_photos` became `session_photos`, `booking_requests.event_id` became `session_id`, and the Events screens moved to the outdoor session's page in Schedule (`/schedule/outdoor/[googleEventId]`). Events are one day, like every session. The rules, places, locking, public API and website side stand.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** Ouarda writes up an outdoor event in the dashboard and publishes it. The website advertises it in a sticky marquee and on its own page, takes bookings for it (with places counted when she sets a limit), and she keeps the list of who's coming and who has paid.

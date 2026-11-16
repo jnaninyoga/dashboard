@@ -23,7 +23,7 @@ describe("isCurrent", () => {
 describe("navigation", () => {
 	it("gathers what the website shows under Website", () => {
 		const website = dashboardConfig.sections.find((s) => s.label === "Website")!;
-		expect(website.items.map((item) => item.url)).toEqual(["/website/class-times", "/website/events"]);
+		expect(website.items.map((item) => item.url)).toEqual(["/website/class-times"]);
 	});
 
 	it("puts website bookings with today's work", () => {

@@ -20,23 +20,24 @@ const places = z
 	});
 
 /**
- * An outdoor event as she writes it: French required, English optional,
- * the start and end as the studio's wall clock (it can last several days),
- * the place, the price, and a limit on places only when she sets one.
+ * An outdoor session as she writes it: its title (French), day, times and
+ * price, the session's own; then what the website shows: whether it does,
+ * the English title, the descriptions, the place, and a limit on places only
+ * when she sets one.
  */
 export const eventSchema = z
 	.object({
-		titleFr: text(120),
-		titleEn: text(120).default(""),
-		descriptionFr: text(4000),
-		descriptionEn: text(4000).default(""),
-		startDate: date,
+		title: text(120),
+		date,
 		startTime: time,
-		endDate: date,
 		endTime: time,
-		placeName: text(160),
-		placeMapsUrl: z.union([z.literal(""), z.url("Paste the Google Maps link, starting with https://")]).default(""),
 		price: numberFromInput(z.number().min(0, "The price can't be negative")),
+		onWebsite: z.boolean().default(true),
+		titleEn: text(120).default(""),
+		descriptionFr: text(4000).default(""),
+		descriptionEn: text(4000).default(""),
+		placeName: text(160).default(""),
+		placeMapsUrl: z.union([z.literal(""), z.url({ protocol: /^https$/, error: "Paste the Google Maps link, starting with https://" })]).default(""),
 		limited: z.boolean().default(false),
 		capacity: places.default(null),
 	})

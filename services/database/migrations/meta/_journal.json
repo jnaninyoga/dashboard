@@ -40,8 +40,8 @@
     {
       "idx": 5,
       "version": "7",
-      "when": 1794828791259,
-      "tag": "0005_outdoor_events",
+      "when": 1794832373543,
+      "tag": "0005_outdoor_sessions",
       "breakpoints": true
     }
   ]

@@ -7,6 +7,7 @@ import { refundsFor, walletAfterRefund } from "@/lib/domain/schedule/cancel";
 import { logServerError } from "@/lib/errors/server";
 import { type CalendarEvent, type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
 import { currentHourStart, fromStudioTime, STUDIO_TIME_ZONE, studioIsoString, weekdayOf } from "@/lib/utils/time";
+import { requestSiteRebuild } from "@/lib/website/rebuild";
 import { db } from "@/services/database";
 import { attendanceLedger, clientWallets, slotTypeEnum, studioSessions } from "@/services/database/schema";
 import {
@@ -18,7 +19,7 @@ import {
 	googleErrorMessage,
 } from "@/services/google";
 
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 
 import { getWorkingHours } from "../settings";
 
@@ -125,6 +126,9 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 					? new Date(newEvent.start.dateTime)
 					: fromStudioTime(data.dateStr, data.startTimeStr),
 				endsAt: newEvent.end?.dateTime ? new Date(newEvent.end.dateTime) : fromStudioTime(data.dateStr, data.endTimeStr),
+				// An outdoor session is also its event on the website: its price, and
+				// shown there as soon as its page has the French description and place.
+				...(data.type === "outdoor" ? { price: data.outdoorPrice != null ? Number(data.outdoorPrice).toFixed(2) : null, onWebsite: true } : {}),
 			});
 		} catch (error) {
 			const ref = logServerError("Failed to record the new session", error);
@@ -241,6 +245,12 @@ export async function cancelEventAction(eventId: string, reason?: string) {
 		revalidatePath("/");
 		revalidatePath("/clients");
 		revalidatePath(`/check-in/${eventId}`);
+		// An outdoor session the website showed: its page there now says cancelled.
+		const [shown] = await db
+			.select({ id: studioSessions.id })
+			.from(studioSessions)
+			.where(and(eq(studioSessions.googleEventId, eventId), isNotNull(studioSessions.publishedAt)));
+		if (shown && !result.alreadyCancelled) await requestSiteRebuild("a cancelled outdoor session");
 		return { success: true as const, ...result };
 	} catch (error) {
 		if (error instanceof CancelRefused) return { error: error.message };

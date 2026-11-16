@@ -6,14 +6,18 @@ import { useRouter } from "next/navigation";
 import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { cancelEventAction, syncEventCalendarAction } from "@/lib/actions/events";
+import { cancelEventAction } from "@/lib/actions/schedule/events";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { notifyWebsite } from "@/lib/feedback/website";
 
-import { Calendar, CloseCircle, Refresh } from "iconsax-reactjs";
+import { CloseCircle, Refresh } from "iconsax-reactjs";
 
-/** Cancels the event with a reason she keeps: the website marks it cancelled, and its list stays so she can tell everyone. */
-export function CancelEvent({ id, title }: { id: string; title: string }) {
+/**
+ * Cancels the outdoor session the way every session is cancelled (its
+ * calendar event goes, its check-ins give credits back), with a reason she
+ * keeps. The website marks its event cancelled; the list stays so she can
+ * tell everyone.
+ */
+export function CancelOutdoor({ googleEventId, title }: { googleEventId: string; title: string }) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [reason, setReason] = useState("");
@@ -21,10 +25,9 @@ export function CancelEvent({ id, title }: { id: string; title: string }) {
 
 	const cancel = () =>
 		startTransition(async () => {
-			const result = await cancelEventAction(id, reason);
-			if (result.error) return void notifyActionError(result, "Couldn't cancel the event");
-			notify.success("Event cancelled", "Message the people on the list.");
-			notifyWebsite(result.website);
+			const result = await cancelEventAction(googleEventId, reason);
+			if (!("success" in result)) return void notifyActionError(result, "Couldn't cancel the session");
+			notify.success("Session cancelled", "Message the people on the list.");
 			setOpen(false);
 			router.refresh();
 		});
@@ -36,18 +39,18 @@ export function CancelEvent({ id, title }: { id: string; title: string }) {
 			trigger={
 				<Button variant="ghost" className="h-11 rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive">
 					<CloseCircle size={18} />
-					Cancel event
+					Cancel session
 				</Button>
 			}
 			busy={pending}
 			dirty={!!reason}
 			icon={<CloseCircle size={26} variant="Bulk" />}
 			title={`Cancel ${title}?`}
-			description="The website shows it as cancelled and stops taking bookings. Your list stays, so you can message everyone."
+			description="It leaves your calendar. The website shows it as cancelled and stops taking bookings. Your list stays, so you can message everyone."
 			footer={
 				<Button variant="destructive" onClick={cancel} disabled={pending || !reason.trim()} className="h-11 rounded-xl">
 					{pending ? <Refresh className="mr-2 size-4 animate-spin" /> : null}
-					Cancel the event
+					Cancel the session
 				</Button>
 			}
 		>
@@ -56,29 +59,5 @@ export function CancelEvent({ id, title }: { id: string; title: string }) {
 				<Textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Rain forecast, moved to next Sunday…" />
 			</label>
 		</FormSheet>
-	);
-}
-
-/** "Not in your calendar yet", with a retry, for a published event Google missed. */
-export function CalendarRetry({ id }: { id: string }) {
-	const router = useRouter();
-	const [pending, startTransition] = useTransition();
-	return (
-		<Button
-			variant="outline"
-			disabled={pending}
-			onClick={() =>
-				startTransition(async () => {
-					const result = await syncEventCalendarAction(id);
-					if (result.error) return void notifyActionError(result, "Couldn't reach Google Calendar");
-					notify.success("In your calendar");
-					router.refresh();
-				})
-			}
-			className="h-11 rounded-full"
-		>
-			{pending ? <Refresh className="mr-2 size-4 animate-spin" /> : <Calendar size={18} className="mr-2" />}
-			Not in your calendar yet: add it
-		</Button>
 	);
 }

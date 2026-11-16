@@ -1,5 +1,5 @@
 {
-  "id": "a695c3f2-e4d9-4b16-a69d-591d6f336cc4",
+  "id": "0ec7397a-72fb-48c4-aadf-18ffe6bbf381",
   "prevId": "7c89a118-71f8-4fb1-beb6-43aee7c3367e",
   "version": "7",
   "dialect": "postgresql",
@@ -1028,8 +1028,8 @@
           "notNull": true,
           "default": "now()"
         },
-        "event_id": {
-          "name": "event_id",
+        "session_id": {
+          "name": "session_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": false
@@ -1064,11 +1064,11 @@
         }
       },
       "indexes": {
-        "booking_requests_event_idx": {
-          "name": "booking_requests_event_idx",
+        "booking_requests_session_idx": {
+          "name": "booking_requests_session_idx",
           "columns": [
             {
-              "expression": "event_id",
+              "expression": "session_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1136,12 +1136,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "booking_requests_event_id_events_id_fk": {
-          "name": "booking_requests_event_id_events_id_fk",
+        "booking_requests_session_id_studio_sessions_id_fk": {
+          "name": "booking_requests_session_id_studio_sessions_id_fk",
           "tableFrom": "booking_requests",
-          "tableTo": "events",
+          "tableTo": "studio_sessions",
           "columnsFrom": [
-            "event_id"
+            "session_id"
           ],
           "columnsTo": [
             "id"
@@ -1580,227 +1580,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.event_photos": {
-      "name": "event_photos",
-      "schema": "",
-      "columns": {
-        "event_id": {
-          "name": "event_id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "mime": {
-          "name": "mime",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "data": {
-          "name": "data",
-          "type": "bytea",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "event_photos_event_id_events_id_fk": {
-          "name": "event_photos_event_id_events_id_fk",
-          "tableFrom": "event_photos",
-          "tableTo": "events",
-          "columnsFrom": [
-            "event_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.events": {
-      "name": "events",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "slug": {
-          "name": "slug",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title_fr": {
-          "name": "title_fr",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "title_en": {
-          "name": "title_en",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "description_fr": {
-          "name": "description_fr",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description_en": {
-          "name": "description_en",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "starts_at": {
-          "name": "starts_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ends_at": {
-          "name": "ends_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "place_name": {
-          "name": "place_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "place_maps_url": {
-          "name": "place_maps_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "price": {
-          "name": "price",
-          "type": "numeric(10, 2)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "capacity": {
-          "name": "capacity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "event_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'draft'"
-        },
-        "published_at": {
-          "name": "published_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cancelled_at": {
-          "name": "cancelled_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "cancel_reason": {
-          "name": "cancel_reason",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "google_event_id": {
-          "name": "google_event_id",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "events_starts_at_idx": {
-          "name": "events_starts_at_idx",
-          "columns": [
-            {
-              "expression": "starts_at",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "events_slug_unique": {
-          "name": "events_slug_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "slug"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "events_end_after_start": {
-          "name": "events_end_after_start",
-          "value": "\"events\".\"ends_at\" > \"events\".\"starts_at\""
-        },
-        "events_price_not_negative": {
-          "name": "events_price_not_negative",
-          "value": "\"events\".\"price\" >= 0"
-        },
-        "events_capacity_positive": {
-          "name": "events_capacity_positive",
-          "value": "\"events\".\"capacity\" IS NULL OR \"events\".\"capacity\" >= 1"
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.health_logs": {
       "name": "health_logs",
       "schema": "",
@@ -2099,6 +1878,58 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.session_photos": {
+      "name": "session_photos",
+      "schema": "",
+      "columns": {
+        "session_id": {
+          "name": "session_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "mime": {
+          "name": "mime",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "session_photos_session_id_studio_sessions_id_fk": {
+          "name": "session_photos_session_id_studio_sessions_id_fk",
+          "tableFrom": "session_photos",
+          "tableTo": "studio_sessions",
+          "columnsFrom": [
+            "session_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.sessions": {
       "name": "sessions",
       "schema": "",
@@ -2267,6 +2098,67 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "price": {
+          "name": "price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "title_en": {
+          "name": "title_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description_fr": {
+          "name": "description_fr",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description_en": {
+          "name": "description_en",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "place_name": {
+          "name": "place_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "place_maps_url": {
+          "name": "place_maps_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "capacity": {
+          "name": "capacity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "on_website": {
+          "name": "on_website",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -2289,6 +2181,13 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
+        "studio_sessions_slug_unique": {
+          "name": "studio_sessions_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        },
         "studio_sessions_google_event_id_unique": {
           "name": "studio_sessions_google_event_id_unique",
           "nullsNotDistinct": false,
@@ -2298,7 +2197,16 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "studio_sessions_capacity_positive": {
+          "name": "studio_sessions_capacity_positive",
+          "value": "\"studio_sessions\".\"capacity\" IS NULL OR \"studio_sessions\".\"capacity\" >= 1"
+        },
+        "studio_sessions_price_not_negative": {
+          "name": "studio_sessions_price_not_negative",
+          "value": "\"studio_sessions\".\"price\" IS NULL OR \"studio_sessions\".\"price\" >= 0"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.users": {
@@ -2512,15 +2420,6 @@
       "values": [
         "percentage",
         "fixed"
-      ]
-    },
-    "public.event_status": {
-      "name": "event_status",
-      "schema": "public",
-      "values": [
-        "draft",
-        "published",
-        "cancelled"
       ]
     },
     "public.gender": {

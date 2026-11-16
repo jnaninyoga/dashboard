@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { canTake } from "@/lib/domain/events/rules";
 import { logServerError } from "@/lib/errors/server";
-import { confirmedPeople, lockEvent } from "@/lib/events/store";
+import { confirmedPeople, lockSession } from "@/lib/events/store";
 import { db } from "@/services/database";
 import { bookingRequests } from "@/services/database/schema";
 
@@ -27,31 +27,32 @@ class Refused extends Error {}
 
 /**
  * Confirms or declines a booking, or puts it back among the new ones.
- * Confirming one for an outdoor event takes its places: the event is locked
+ * Confirming one for an outdoor session takes its places: the session is locked
  * meanwhile, so two confirmations can't both take the last place.
  */
 export async function setRequestStatusAction(id: string, status: RequestStatus): Promise<Result> {
 	await requireUser();
 	if (!STATUSES.includes(status)) return { error: "Pick new, confirmed or declined." };
 	try {
-		const eventId = await db.transaction(async (tx) => {
+		const sessionId = await db.transaction(async (tx) => {
 			const [request] = await tx.select().from(bookingRequests).where(eq(bookingRequests.id, id)).for("update");
 			if (!request) throw new Refused("This request no longer exists.");
-			if (status === "confirmed" && request.status !== "confirmed" && request.eventId) {
-				const event = await lockEvent(tx, request.eventId);
-				if (event) {
-					if (event.status === "cancelled") throw new Refused("This event is cancelled.");
-					const taken = await confirmedPeople(event.id, tx);
-					if (!canTake(event.capacity, taken, request.partySize)) {
-						throw new Refused(`Full: ${taken} of ${event.capacity} places confirmed. Raise the limit to add ${request.partySize === 1 ? "someone" : "this group"}.`);
+			if (status === "confirmed" && request.status !== "confirmed" && request.sessionId) {
+				const session = await lockSession(tx, request.sessionId);
+				if (session) {
+					if (session.status === "cancelled") throw new Refused("This session is cancelled.");
+					const taken = await confirmedPeople(session.id, tx);
+					if (!canTake(session.capacity, taken, request.partySize)) {
+						throw new Refused(`Full: ${taken} of ${session.capacity} places confirmed. Raise the limit to add ${request.partySize === 1 ? "someone" : "this group"}.`);
 					}
 				}
 			}
 			await tx.update(bookingRequests).set({ status, statusChangedAt: new Date() }).where(eq(bookingRequests.id, id));
-			return request.eventId;
+			return request.sessionId;
 		});
 		refresh(id);
-		if (eventId) revalidatePath(`/website/events/${eventId}`);
+		// The outdoor session's page lists who's coming.
+		if (sessionId) revalidatePath("/schedule", "layout");
 		return { success: true };
 	} catch (error) {
 		if (error instanceof Refused) return { error: error.message };

@@ -4,7 +4,7 @@ import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
-import { uploadEventPhotoAction } from "@/lib/actions/events";
+import { uploadOutdoorPhotoAction } from "@/lib/actions/outdoor";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { notifyWebsite } from "@/lib/feedback/website";
 import { encodePhoto } from "@/lib/utils/photo";
@@ -25,8 +25,8 @@ async function resize(file: File) {
 	return encodePhoto((type, quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality)));
 }
 
-/** The event's photo: shown on its page and its social card on the website. */
-export function EventPhoto({ id, src }: { id: string; src: string | null }) {
+/** The session's photo: shown on its event page and its social card on the website. */
+export function EventPhoto({ sessionId, src }: { sessionId: string; src: string | null }) {
 	const input = useRef<HTMLInputElement>(null);
 	const router = useRouter();
 	const [pending, startTransition] = useTransition();
@@ -42,7 +42,7 @@ export function EventPhoto({ id, src }: { id: string; src: string | null }) {
 			}
 			const form = new FormData();
 			form.append("photo", new File([photo.blob], photo.type === "image/webp" ? "photo.webp" : "photo.jpg", { type: photo.type }));
-			const result = await uploadEventPhotoAction(id, form);
+			const result = await uploadOutdoorPhotoAction(sessionId, form);
 			if (result.error) return void notifyActionError(result, "Couldn't save the photo");
 			notify.success("Photo saved");
 			notifyWebsite(result.website);

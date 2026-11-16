@@ -3,34 +3,39 @@ import { describe, expect, it } from "vitest";
 import { eventFormValues } from "./form";
 
 describe("eventFormValues", () => {
-	it("shows a saved event in Marrakech time, across days", () => {
+	it("shows a saved outdoor session in Marrakech time", () => {
 		// June 2026: Marrakech is UTC+1 in every version of the zone data.
 		const values = eventFormValues({
-			titleFr: "Retraite",
+			title: "Lever de soleil",
 			titleEn: null,
-			descriptionFr: "Deux jours.",
+			descriptionFr: "Une heure.",
 			descriptionEn: null,
 			startsAt: new Date("2026-06-20T06:00:00Z"),
-			endsAt: new Date("2026-06-21T16:30:00Z"),
-			placeName: "Atlas",
+			endsAt: new Date("2026-06-20T08:30:00Z"),
+			placeName: null,
 			placeMapsUrl: null,
-			price: "1200.00",
+			price: "250.00",
 			capacity: 8,
+			onWebsite: true,
 		} as never);
 		expect(values).toMatchObject({
-			startDate: "2026-06-20",
+			title: "Lever de soleil",
+			date: "2026-06-20",
 			startTime: "07:00",
-			endDate: "2026-06-21",
-			endTime: "17:30",
-			price: "1200",
+			endTime: "09:30",
+			price: "250",
+			onWebsite: true,
 			limited: true,
 			capacity: "8",
 			titleEn: "",
+			placeName: "",
 		});
 	});
 
-	it("starts a new event on the next Sunday morning", () => {
-		const values = eventFormValues(null, new Date("2026-06-10T10:00:00Z"));
-		expect(values).toMatchObject({ startDate: "2026-06-14", startTime: "08:00", endDate: "2026-06-14", limited: false });
+	it("reads a session without a price as free", () => {
+		expect(eventFormValues({ title: "A", startsAt: new Date(), endsAt: new Date(), price: null, capacity: null, onWebsite: false } as never)).toMatchObject({
+			price: "0",
+			limited: false,
+		});
 	});
 });

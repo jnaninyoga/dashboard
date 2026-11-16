@@ -64,6 +64,8 @@ The owner chose approach 1, with the two apps talking only through the API.
 
 ## What the owner decided
 
+- **Outdoor events are outdoor sessions** (correction, 2026-11-16, after slice 3 was first built as a separate events table). Creating an outdoor session in Schedule creates the event; its website part (text, place, photo, limit, "Show on the website") belongs to the session, edited on the session's page. Nothing is entered twice. Where the sections below say "event", read "outdoor session".
+
 - The dashboard manages the site's class times, cards and prices, outdoor events, and bookings.
 - Outdoor events get a sticky marquee on the site while one is published, plus a dedicated Events page.
 - All bookings are centralized in the dashboard.

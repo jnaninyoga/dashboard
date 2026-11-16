@@ -65,7 +65,8 @@ describe("capacityProblem", () => {
 
 describe("eventProblems", () => {
 	const good = {
-		titleFr: "Lever de soleil",
+		title: "Lever de soleil",
+		onWebsite: true,
 		descriptionFr: "Une heure de pratique.",
 		startsAt: new Date("2026-06-20T06:00:00Z"),
 		endsAt: new Date("2026-06-20T08:00:00Z"),
@@ -74,25 +75,25 @@ describe("eventProblems", () => {
 		capacity: 12,
 	};
 
-	it("accepts a complete event", () => {
+	it("accepts a complete outdoor session", () => {
 		expect(eventProblems(good)).toEqual([]);
 	});
 
 	it("names what's missing or wrong", () => {
-		expect(
-			eventProblems({ ...good, titleFr: " ", descriptionFr: "", placeName: "", endsAt: good.startsAt, price: -1, capacity: 0 }),
-		).toEqual([
-			"Give it a French title",
-			"Write the French description",
-			"Say where it happens",
+		expect(eventProblems({ ...good, title: " ", endsAt: good.startsAt, price: -1, capacity: 0 })).toEqual([
+			"Give it a title",
 			"It has to end after it starts",
 			"The price can't be negative",
 			"At least 1 place, or no limit",
 		]);
 	});
 
-	it("lets an event last several days", () => {
-		expect(eventProblems({ ...good, endsAt: new Date("2026-06-22T16:00:00Z") })).toEqual([]);
+	it("needs the French description and the place only to show on the website", () => {
+		expect(eventProblems({ ...good, descriptionFr: "", placeName: "" })).toEqual([
+			"Write the French description, or turn off Show on the website",
+			"Say where it happens, or turn off Show on the website",
+		]);
+		expect(eventProblems({ ...good, onWebsite: false, descriptionFr: "", placeName: "" })).toEqual([]);
 	});
 });
 
@@ -112,50 +113,65 @@ describe("googleTranslateUrl", () => {
 });
 
 describe("eventPhase", () => {
-	const event = { status: "published" as const, startsAt: new Date("2026-06-20T06:00:00Z"), endsAt: new Date("2026-06-21T18:00:00Z") };
+	const session = {
+		status: "scheduled" as const,
+		onWebsite: true,
+		slug: "a",
+		descriptionFr: "Texte",
+		placeName: "Palmeraie",
+		startsAt: new Date("2026-06-20T06:00:00Z"),
+		endsAt: new Date("2026-06-20T08:00:00Z"),
+	};
 
-	it("follows the event through its days", () => {
-		expect(eventPhase(event, new Date("2026-06-19T10:00:00Z"))).toBe("upcoming");
-		expect(eventPhase(event, new Date("2026-06-20T10:00:00Z"))).toBe("ongoing");
-		expect(eventPhase(event, new Date("2026-06-22T10:00:00Z"))).toBe("past");
+	it("follows the session through its day", () => {
+		expect(eventPhase(session, new Date("2026-06-19T10:00:00Z"))).toBe("upcoming");
+		expect(eventPhase(session, new Date("2026-06-20T07:00:00Z"))).toBe("ongoing");
+		expect(eventPhase(session, new Date("2026-06-21T10:00:00Z"))).toBe("past");
 	});
 
-	it("says cancelled and draft whatever the date", () => {
-		expect(eventPhase({ ...event, status: "cancelled" }, new Date("2026-06-19T10:00:00Z"))).toBe("cancelled");
-		expect(eventPhase({ ...event, status: "draft" }, new Date("2026-06-19T10:00:00Z"))).toBe("draft");
+	it("says off the website when it's switched off or not written yet", () => {
+		expect(eventPhase({ ...session, onWebsite: false }, new Date("2026-06-19T10:00:00Z"))).toBe("off");
+		expect(eventPhase({ ...session, descriptionFr: null }, new Date("2026-06-19T10:00:00Z"))).toBe("off");
+	});
+
+	it("says cancelled whatever the date", () => {
+		expect(eventPhase({ ...session, status: "cancelled" }, new Date("2026-06-19T10:00:00Z"))).toBe("cancelled");
 	});
 });
 
 describe("siteEvents", () => {
 	const base = {
-		slug: "a",
-		titleFr: "A",
-		titleEn: null,
-		descriptionFr: "Texte",
-		descriptionEn: null,
+		slug: "a" as string | null,
+		title: "A",
+		titleEn: null as string | null,
+		descriptionFr: "Texte" as string | null,
+		descriptionEn: null as string | null,
 		startsAt: new Date("2026-06-20T06:00:00Z"),
 		endsAt: new Date("2026-06-20T08:00:00Z"),
-		placeName: "Palmeraie",
-		placeMapsUrl: null,
-		price: "250.00",
-		capacity: 12,
-		status: "published" as const,
-		publishedAt: new Date("2026-06-01T00:00:00Z"),
+		placeName: "Palmeraie" as string | null,
+		placeMapsUrl: null as string | null,
+		price: "250.00" as string | null,
+		capacity: 12 as number | null,
+		status: "scheduled" as "scheduled" | "cancelled",
+		onWebsite: true,
+		publishedAt: new Date("2026-06-01T00:00:00Z") as Date | null,
 		photoUpdatedAt: null as Date | null,
 	};
 
-	it("has no photo version without a photo", () => {
-		expect(siteEvents([base])[0]).toMatchObject({ photo: false, photoVersion: null });
-	});
-
-	it("shows published and cancelled events, never drafts, soonest first", () => {
+	it("shows outdoor sessions on the website, and cancelled ones it showed; soonest first", () => {
 		const list = siteEvents([
 			{ ...base, slug: "later", startsAt: new Date("2026-07-01T06:00:00Z"), endsAt: new Date("2026-07-01T08:00:00Z") },
-			{ ...base, slug: "draft", status: "draft" as const, publishedAt: null },
+			{ ...base, slug: "off", onWebsite: false },
+			{ ...base, slug: "unwritten", descriptionFr: null },
+			{ ...base, slug: "never-shown", status: "cancelled", publishedAt: null },
 			{ ...base, slug: "soon" },
-			{ ...base, slug: "off", status: "cancelled" as const },
+			{ ...base, slug: "called-off", status: "cancelled" },
 		]);
-		expect(list.map((e) => e.slug)).toEqual(["soon", "off", "later"]);
+		expect(list.map((e) => e.slug)).toEqual(["soon", "called-off", "later"]);
+	});
+
+	it("has no photo version without a photo", () => {
+		expect(siteEvents([base])[0]).toMatchObject({ photo: false, photoVersion: null });
 	});
 
 	it("gives the site what it needs, in both languages, with numbers", () => {
@@ -172,8 +188,11 @@ describe("siteEvents", () => {
 			capacity: 12,
 			status: "published",
 			photo: true,
-			// A new photo gets a new address, so caches never keep the old one.
 			photoVersion: Date.parse("2026-06-02T10:00:00Z"),
 		});
+	});
+
+	it("reads a cancelled session as cancelled", () => {
+		expect(siteEvents([{ ...base, status: "cancelled" }])[0].status).toBe("cancelled");
 	});
 });

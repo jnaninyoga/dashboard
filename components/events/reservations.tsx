@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { addReservationAction, setReservationPaidAction } from "@/lib/actions/events";
+import { addReservationAction, setReservationPaidAction } from "@/lib/actions/outdoor";
 import { setRequestStatusAction } from "@/lib/actions/requests/mutations";
 import { type Places } from "@/lib/domain/events/rules";
 import { toE164 } from "@/lib/domain/requests/phone";
@@ -34,7 +34,7 @@ export function placesLine(places: Places, paidPeople: number) {
 }
 
 /** Who's coming: each reservation with its people, where it came from, its status, and a Paid tick once confirmed. */
-export function Reservations({ eventId, reservations, places, cancelled }: { eventId: string; reservations: BookingRequest[]; places: Places; cancelled: boolean }) {
+export function Reservations({ sessionId, reservations, places, cancelled }: { sessionId: string; reservations: BookingRequest[]; places: Places; cancelled: boolean }) {
 	const router = useRouter();
 	const [pending, startTransition] = useTransition();
 	const paidPeople = reservations.filter((r) => r.status === "confirmed" && r.paidAt).reduce((n, r) => n + r.partySize, 0);
@@ -58,7 +58,7 @@ export function Reservations({ eventId, reservations, places, cancelled }: { eve
 						{places.full ? "Full · " : null}
 						{placesLine(places, paidPeople)}
 					</span>
-					{cancelled ? null : <AddReservation eventId={eventId} />}
+					{cancelled ? null : <AddReservation sessionId={sessionId} />}
 				</div>
 			</div>
 			<div className="rounded-3xl border border-secondary/20 bg-card">
@@ -138,7 +138,7 @@ export function Reservations({ eventId, reservations, places, cancelled }: { eve
 }
 
 /** A reservation taken outside the website: by WhatsApp, phone or in person. */
-function AddReservation({ eventId }: { eventId: string }) {
+function AddReservation({ sessionId }: { sessionId: string }) {
 	const router = useRouter();
 	const [open, setOpen] = useState(false);
 	const [pending, startTransition] = useTransition();
@@ -149,7 +149,7 @@ function AddReservation({ eventId }: { eventId: string }) {
 
 	const save = () =>
 		startTransition(async () => {
-			const result = await addReservationAction(eventId, { name, phone, partySize: people, source });
+			const result = await addReservationAction(sessionId, { name, phone, partySize: people, source });
 			if (result.error) return void notifyActionError(result, "Couldn't add the reservation");
 			notify.success("Reservation added");
 			setOpen(false);
