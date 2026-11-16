@@ -126,13 +126,14 @@ export async function createStudioEvent(
 }
 
 /**
- * Moves or renames an event the dashboard created (an outdoor event whose
- * date or title changed). Times are wall-clock in `timeZone`, as at creation.
+ * Moves or renames a session the dashboard created (an outdoor session whose
+ * day, times, title or price changed). Times are wall-clock in `timeZone`,
+ * as at creation.
  */
 export async function updateStudioEvent(
 	accessToken: string,
 	eventId: string,
-	data: { title: string; startTime: string; endTime: string; timeZone: string },
+	data: { title: string; startTime: string; endTime: string; timeZone: string; outdoorPrice?: number | null },
 ): Promise<calendar_v3.Schema$Event> {
 	const google = getGoogleClient(accessToken);
 	try {
@@ -143,6 +144,9 @@ export async function updateStudioEvent(
 				summary: data.title,
 				start: { dateTime: data.startTime, timeZone: data.timeZone },
 				end: { dateTime: data.endTime, timeZone: data.timeZone },
+				...(data.outdoorPrice != null
+					? { extendedProperties: { private: { jnaninEventType: "outdoor", outdoorPrice: data.outdoorPrice.toString() } } }
+					: {}),
 			},
 		});
 		return result.data;
