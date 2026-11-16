@@ -126,6 +126,33 @@ export async function createStudioEvent(
 }
 
 /**
+ * Moves or renames an event the dashboard created (an outdoor event whose
+ * date or title changed). Times are wall-clock in `timeZone`, as at creation.
+ */
+export async function updateStudioEvent(
+	accessToken: string,
+	eventId: string,
+	data: { title: string; startTime: string; endTime: string; timeZone: string },
+): Promise<calendar_v3.Schema$Event> {
+	const google = getGoogleClient(accessToken);
+	try {
+		const result = await google.calendar.events.patch({
+			calendarId: "primary",
+			eventId,
+			requestBody: {
+				summary: data.title,
+				start: { dateTime: data.startTime, timeZone: data.timeZone },
+				end: { dateTime: data.endTime, timeZone: data.timeZone },
+			},
+		});
+		return result.data;
+	} catch (error) {
+		console.error("Error updating Studio Event:", error);
+		throw new Error("Failed to update event in Google Calendar.");
+	}
+}
+
+/**
  * Every event between two instants, in one request: what the Schedule, the
  * week strip and today's agenda read. Recurring events come as their
  * single occurrences, in time order.

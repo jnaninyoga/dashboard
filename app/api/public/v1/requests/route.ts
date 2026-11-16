@@ -1,8 +1,10 @@
 import { after } from "next/server";
 
+import { canTake } from "@/lib/domain/events/rules";
 import { DUPLICATE_WINDOW_MINUTES, findDuplicate, newRequestRef, parseSubmission, RATE_LIMIT } from "@/lib/domain/requests/submission";
 import { withoutVisitorData } from "@/lib/errors/redact";
 import { logServerError } from "@/lib/errors/server";
+import { confirmedPeople, publishedEventBySlug } from "@/lib/events/store";
 import { notifyNewRequest } from "@/lib/notifications";
 import { countRecentFromIp, matchClientId, recentRequests, saveRequest } from "@/lib/requests/store";
 import { clientIp, hashIp } from "@/lib/website/ip";
@@ -64,16 +66,34 @@ export async function POST(request: Request) {
 		});
 		if (!human) return json({ error: "not_verified" }, 403, cors);
 
+		// An event booking: only for a published event that hasn't started. A
+		// page built before it filled up can still send one: it's kept, marked.
+		let event: { eventId: string; choiceLabel: string; arrivedWhenFull: boolean } | null = null;
+		if (submission.kind === "event") {
+			const found = submission.choiceKey ? await publishedEventBySlug(submission.choiceKey) : null;
+			if (!found || found.startsAt <= new Date()) return json({ error: "event_unavailable" }, 422, cors);
+			event = {
+				eventId: found.id,
+				choiceLabel: found.titleFr,
+				arrivedWhenFull: !canTake(found.capacity, await confirmedPeople(found.id), submission.partySize),
+			};
+		}
+
 		// The same booking sent again (a double tap, a retry after a lost answer) is the first one.
 		// Its ref isn't sent back: knowing someone's phone and choice mustn't reveal their booking.
-		const repeat = findDuplicate(await recentRequests(minutesAgo(DUPLICATE_WINDOW_MINUTES)), submission, new Date());
+		const choiceLabel = event?.choiceLabel ?? submission.choiceLabel;
+		const repeat = findDuplicate(await recentRequests(minutesAgo(DUPLICATE_WINDOW_MINUTES)), { ...submission, choiceLabel }, new Date());
 		if (repeat) return json({ ok: true }, 200, cors);
 
 		const saved = await saveRequest({
 			ref: newRequestRef(),
 			kind: submission.kind,
 			choiceKey: submission.choiceKey,
-			choiceLabel: submission.choiceLabel,
+			// The event's own title, not what the visitor's page said.
+			choiceLabel,
+			eventId: event?.eventId ?? null,
+			partySize: submission.partySize,
+			arrivedWhenFull: event?.arrivedWhenFull ?? false,
 			name: submission.name,
 			phone: submission.phone,
 			message: submission.message,

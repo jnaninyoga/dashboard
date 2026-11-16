@@ -1,8 +1,10 @@
 // What the website builds from, read for the public API. A plain server
 // module, not "use server": nothing here is an endpoint of its own.
 
+import { siteEvents } from "@/lib/domain/events/rules";
 import { type SitePayload, sitePayload } from "@/lib/domain/website/cards";
 import { type ClassTimes, DEFAULT_CLASS_TIMES } from "@/lib/domain/website/timetable";
+import { eventsWithPhotoFlag } from "@/lib/events/store";
 import { classTimesSchema } from "@/lib/validators/class-times";
 import { db } from "@/services/database";
 import { appSettings, products } from "@/services/database/schema";
@@ -24,6 +26,10 @@ export async function readClassTimes(): Promise<ClassTimes> {
 }
 
 export async function loadSitePayload(now: Date = new Date()): Promise<SitePayload> {
-	const [classTimes, all] = await Promise.all([readClassTimes(), db.select().from(products).where(eq(products.kind, "membership"))]);
-	return sitePayload({ classTimes, products: all, now });
+	const [classTimes, all, eventRows] = await Promise.all([
+		readClassTimes(),
+		db.select().from(products).where(eq(products.kind, "membership")),
+		eventsWithPhotoFlag(),
+	]);
+	return sitePayload({ classTimes, products: all, events: siteEvents(eventRows), now });
 }

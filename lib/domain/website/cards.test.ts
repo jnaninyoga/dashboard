@@ -69,3 +69,22 @@ describe("sitePayload", () => {
 		expect(payload.classTimes.times).toHaveLength(6);
 	});
 });
+
+describe("sitePayload with events", () => {
+	it("carries the events it's given", () => {
+		const event = {
+			slug: "lever-de-soleil",
+			title: { fr: "Lever de soleil", en: null },
+			description: { fr: "Une heure.", en: null },
+			startsAt: "2026-06-20T06:00:00.000Z",
+			endsAt: "2026-06-20T08:00:00.000Z",
+			place: "Palmeraie",
+			mapsUrl: null,
+			price: 250,
+			capacity: 12,
+			status: "published" as const,
+			photo: false,
+		};
+		expect(sitePayload({ classTimes: DEFAULT_CLASS_TIMES, products: [], events: [event], now: new Date("2026-06-10T10:00:00Z") }).events).toEqual([event]);
+	});
+});

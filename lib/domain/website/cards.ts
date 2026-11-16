@@ -1,5 +1,7 @@
 // The membership cards the website shows, and everything the site builds from.
 
+import { type SiteEvent } from "@/lib/domain/events/rules";
+
 import { type ClassTimes, normalizeClassTimes, timetableWords, type Words } from "./timetable";
 
 /** A card on the website: its key in the site's links and copy, and its numbers. */
@@ -43,17 +45,27 @@ export type SitePayload = {
 	generatedAt: string;
 	classTimes: ClassTimes & { words: { fr: Words; en: Words } };
 	cards: SiteCard[];
-	events: unknown[];
+	events: SiteEvent[];
 };
 
 /** Everything the website builds from: the class times and their words, the cards, and (later) events. */
-export function sitePayload({ classTimes, products, now }: { classTimes: ClassTimes; products: CardProduct[]; now: Date }): SitePayload {
+export function sitePayload({
+	classTimes,
+	products,
+	events = [],
+	now,
+}: {
+	classTimes: ClassTimes;
+	products: CardProduct[];
+	events?: SiteEvent[];
+	now: Date;
+}): SitePayload {
 	const normalized = normalizeClassTimes(classTimes);
 	return {
 		version: 1,
 		generatedAt: now.toISOString(),
 		classTimes: { ...normalized, words: timetableWords(normalized) },
 		cards: siteCards(products),
-		events: [],
+		events,
 	};
 }

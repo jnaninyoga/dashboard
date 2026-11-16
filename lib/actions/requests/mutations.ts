@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
+import { canTake } from "@/lib/domain/events/rules";
 import { logServerError } from "@/lib/errors/server";
+import { confirmedPeople, lockEvent } from "@/lib/events/store";
 import { db } from "@/services/database";
 import { bookingRequests } from "@/services/database/schema";
 
@@ -21,20 +23,38 @@ function refresh(id: string) {
 	revalidatePath("/", "layout");
 }
 
-/** Confirms or declines a request, or puts it back among the new ones. */
+class Refused extends Error {}
+
+/**
+ * Confirms or declines a booking, or puts it back among the new ones.
+ * Confirming one for an outdoor event takes its places: the event is locked
+ * meanwhile, so two confirmations can't both take the last place.
+ */
 export async function setRequestStatusAction(id: string, status: RequestStatus): Promise<Result> {
 	await requireUser();
 	if (!STATUSES.includes(status)) return { error: "Pick new, confirmed or declined." };
 	try {
-		const changed = await db
-			.update(bookingRequests)
-			.set({ status, statusChangedAt: new Date() })
-			.where(eq(bookingRequests.id, id))
-			.returning({ id: bookingRequests.id });
-		if (!changed.length) return { error: "This request no longer exists." };
+		const eventId = await db.transaction(async (tx) => {
+			const [request] = await tx.select().from(bookingRequests).where(eq(bookingRequests.id, id)).for("update");
+			if (!request) throw new Refused("This request no longer exists.");
+			if (status === "confirmed" && request.status !== "confirmed" && request.eventId) {
+				const event = await lockEvent(tx, request.eventId);
+				if (event) {
+					if (event.status === "cancelled") throw new Refused("This event is cancelled.");
+					const taken = await confirmedPeople(event.id, tx);
+					if (!canTake(event.capacity, taken, request.partySize)) {
+						throw new Refused(`Full: ${taken} of ${event.capacity} places confirmed. Raise the limit to add ${request.partySize === 1 ? "someone" : "this group"}.`);
+					}
+				}
+			}
+			await tx.update(bookingRequests).set({ status, statusChangedAt: new Date() }).where(eq(bookingRequests.id, id));
+			return request.eventId;
+		});
 		refresh(id);
+		if (eventId) revalidatePath(`/website/events/${eventId}`);
 		return { success: true };
 	} catch (error) {
+		if (error instanceof Refused) return { error: error.message };
 		return { error: "Couldn't change the request", ref: logServerError("Changing a request's status", error) };
 	}
 }
