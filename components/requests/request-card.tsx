@@ -54,6 +54,9 @@ export function RequestCard({ request }: { request: RequestView }) {
 				>
 					<RequestStatus status={request.status} />
 					<BookingChoiceLine request={request} className="basis-full" />
+					{request.kind === "event" && request.partySize > 1 ? (
+						<span className="basis-full text-sm text-foreground">For {request.partySize} people</span>
+					) : null}
 					{request.message ? (
 						<span className="line-clamp-2 basis-full text-sm text-muted-foreground italic">“{messageExcerpt(request.message)}”</span>
 					) : null}

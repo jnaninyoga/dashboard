@@ -15,6 +15,7 @@ import {
 	Shop,
 	TickCircle,
 	Timer1,
+	Tree,
 } from "iconsax-reactjs";
 
 export type NavItem = {
@@ -67,7 +68,10 @@ export const dashboardConfig = {
 		{
 			// What jnaninyoga.com shows: the class times (and its outdoor events).
 			label: "Website",
-			items: [{ title: "Class times", url: "/website/class-times", icon: Clock }],
+			items: [
+				{ title: "Class times", url: "/website/class-times", icon: Clock },
+				{ title: "Events", url: "/website/events", icon: Tree },
+			],
 		},
 	] satisfies { label: string; items: NavItem[] }[],
 	settings: [

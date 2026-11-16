@@ -22,6 +22,7 @@ import {
 	type Icon,
 	LanguageSquare,
 	MessageText,
+	People,
 	Profile,
 	TickCircle,
 } from "iconsax-reactjs";
@@ -118,6 +119,12 @@ export default async function BookingPage({ params }: { params: Promise<{ id: st
 							</a>
 						)}
 					</Fact>
+					{request.kind === "event" ? (
+						<Fact icon={People} label="People">
+							{request.partySize}
+							{request.arrivedWhenFull ? <span className="ml-2 text-sm text-warning">came in when the event was full</span> : null}
+						</Fact>
+					) : null}
 					<Fact icon={LanguageSquare} label="Language">
 						{LANGS[request.lang]}
 					</Fact>
