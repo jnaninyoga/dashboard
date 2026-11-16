@@ -1,6 +1,6 @@
 # Design: the website runs from the Command Center
 
-Status: draft, 2026-11-16. Waiting for the owner's approval.
+Status: approved by the owner, 2026-11-16. Slice 1 (Bookings) built on branch `feat/website-bookings`.
 
 Two repositories are involved:
 

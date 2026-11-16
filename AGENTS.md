@@ -88,7 +88,7 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 
 `app/api/public/v1/` is the dashboard's only signed-out surface, called by the website (repo `jnaninyoga/jnaninyoga`, a static site on Cloudflare Pages). The spec is [docs/specs/website-from-the-command-center.md](docs/specs/website-from-the-command-center.md).
 
-- `proxy.ts` lets `/api/public/` through; the route guards itself. `POST /requests` checks, in order: the `WEBSITE_ORIGINS` allowlist (CORS), the honeypot and fill time, the form's fields, Turnstile (`TURNSTILE_SECRET`, action `booking`, the website's hostnames), and a rate limit per hashed IP. Bots are told it worked.
+- `proxy.ts` lets `/api/public/` through; the route guards itself. `POST /requests` checks, in order: the `WEBSITE_ORIGINS` allowlist (CORS), the honeypot and fill time, the form's fields, that `TURNSTILE_SECRET` is set, a rate limit per hashed IP, Turnstile (action `booking`, the website's hostnames), then whether it is an identical resend (same phone, name, choice and message within 10 minutes). Bots and resends are told it worked; only then is it saved.
 - Its helpers live in plain modules (`lib/requests/`, `lib/website/`, `lib/notifications/`), never in `"use server"` files: every export of a `"use server"` file is an endpoint anyone can call.
 - Never return or log what a visitor sent: a repeated booking answers without the first one's ref, and failures are logged through `withoutVisitorData` (`lib/errors/redact.ts`).
 - Phone subscriptions only accept the browsers' push services (`isPushServiceEndpoint`), because the server posts to them.
