@@ -3,6 +3,7 @@
 
 import { type BookingRequest } from "@/services/database/schema";
 
+import { messageExcerpt } from "./choice";
 import { phoneKey } from "./phone";
 
 type NoticeRequest = Pick<BookingRequest, "id" | "ref" | "name" | "phone" | "choiceLabel" | "message" | "lang">;
@@ -43,8 +44,6 @@ export function requestEmail(request: NoticeRequest, dashboardUrl: string): { su
 	return { subject: `Website: Réservation de ${request.name}`, text, html };
 }
 
-const EXCERPT = 80;
-
 /** The phone notification: the name, then what they want and the start of their message. Tapping opens the request. */
 export function requestPushPayload(request: Pick<BookingRequest, "id" | "name" | "choiceLabel" | "message">): {
 	title: string;
@@ -52,8 +51,7 @@ export function requestPushPayload(request: Pick<BookingRequest, "id" | "name" |
 	url: string;
 	tag: string;
 } {
-	const message = request.message?.trim();
-	const excerpt = message ? (message.length > EXCERPT ? `${message.slice(0, EXCERPT)}…` : message) : "";
+	const excerpt = messageExcerpt(request.message);
 	return {
 		title: request.name,
 		body: excerpt ? `${request.choiceLabel} · ${excerpt}` : request.choiceLabel,

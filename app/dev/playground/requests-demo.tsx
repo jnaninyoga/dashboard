@@ -4,6 +4,7 @@ import { BottomBar } from "@/components/bottom-bar";
 import { NewRequests } from "@/components/dashboard/new-requests";
 import { EmptyState } from "@/components/empty-state";
 import { QuickActionsProvider } from "@/components/quick-actions";
+import { BookingChoicePanel } from "@/components/requests/booking-choice";
 import { NewRequestsProvider } from "@/components/requests/new-requests-count";
 import { RequestsList } from "@/components/requests/requests-list";
 import { type RequestView } from "@/lib/actions/requests/queries";
@@ -74,6 +75,10 @@ export function RequestsDemo() {
 	return (
 		<section className="grid gap-6 rounded-3xl border bg-card p-6" data-testid="requests-demo">
 			<h2 className="text-xl">Bookings</h2>
+			<div data-testid="booking-panel" className="grid min-w-0 gap-3">
+				<BookingChoicePanel request={requests[0]} />
+				<BookingChoicePanel request={requests[1]} />
+			</div>
 			<div data-testid="home-new-requests" className="min-w-0">
 				<NewRequests requests={requests.slice(0, 2)} count={2} />
 			</div>

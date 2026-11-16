@@ -2,10 +2,12 @@
 
 import { EntityCard, EntityCardFigures, EntityCardHeader, Figure } from "@/components/entity-card";
 import { type RequestView } from "@/lib/actions/requests/queries";
+import { messageExcerpt } from "@/lib/domain/requests/choice";
 import { cn } from "@/lib/utils/ui";
 
 import { DirectInbox, Profile2User } from "iconsax-reactjs";
 
+import { BookingChoiceLine } from "./booking-choice";
 import { requestTitle } from "./labels";
 import { RequestMenu, RequestReplyActions } from "./request-actions";
 import { RequestStatus } from "./request-status";
@@ -51,7 +53,10 @@ export function RequestCard({ request }: { request: RequestView }) {
 					}
 				>
 					<RequestStatus status={request.status} />
-					<span className="line-clamp-2 basis-full text-sm text-muted-foreground">{request.choiceLabel}</span>
+					<BookingChoiceLine request={request} className="basis-full" />
+					{request.message ? (
+						<span className="line-clamp-2 basis-full text-sm text-muted-foreground italic">“{messageExcerpt(request.message)}”</span>
+					) : null}
 				</EntityCardHeader>
 			}
 			figures={

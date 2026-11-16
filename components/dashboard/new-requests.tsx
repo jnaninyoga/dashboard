@@ -1,7 +1,9 @@
 import Link from "next/link";
 
+import { BookingChoiceLine } from "@/components/requests/booking-choice";
 import { replyHref, requestTitle } from "@/components/requests/labels";
 import { type RequestView } from "@/lib/actions/requests/queries";
+import { messageExcerpt } from "@/lib/domain/requests/choice";
 
 import { ArrowRight2, DirectInbox, Whatsapp } from "iconsax-reactjs";
 
@@ -32,8 +34,10 @@ export function NewRequests({ requests, count }: { requests: RequestView[]; coun
 								className="flex min-w-0 flex-1 flex-col rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							>
 								<span className="truncate font-semibold text-foreground">{requestTitle(request)}</span>
+								<BookingChoiceLine request={request} />
 								<span className="truncate text-sm text-muted-foreground">
-									{request.received} · {request.choiceLabel}
+									{request.received}
+									{request.message ? ` · “${messageExcerpt(request.message)}”` : ""}
 								</span>
 							</Link>
 							{href ? (

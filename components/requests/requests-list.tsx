@@ -4,10 +4,12 @@ import Link from "next/link";
 
 import { DataTable } from "@/components/data-table";
 import { type RequestView } from "@/lib/actions/requests/queries";
+import { messageExcerpt } from "@/lib/domain/requests/choice";
 
 import { type ColumnDef } from "@tanstack/react-table";
 import { Whatsapp } from "iconsax-reactjs";
 
+import { BookingChoiceLine } from "./booking-choice";
 import { replyHref, requestTitle } from "./labels";
 import { RequestMenu } from "./request-actions";
 import { RequestCard } from "./request-card";
@@ -33,9 +35,10 @@ const columns: ColumnDef<RequestView>[] = [
 						</Link>
 						<RequestStatus status={request.status} />
 					</div>
-					<span title={request.choiceLabel} className="truncate text-sm text-muted-foreground">
-						{request.choiceLabel}
-					</span>
+					<BookingChoiceLine request={request} />
+					{request.message ? (
+						<span className="truncate text-sm text-muted-foreground italic">“{messageExcerpt(request.message)}”</span>
+					) : null}
 				</div>
 			);
 		},
