@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/require-user";
 import { canTake, capacityProblem, eventProblems, isListed, type Places, places, slugify, uniqueSlug } from "@/lib/domain/events/rules";
 import { logServerError } from "@/lib/errors/server";
 import { confirmedPeople, lockSession } from "@/lib/events/store";
-import { fromStudioTime, STUDIO_TIME_ZONE, toStudioTime } from "@/lib/utils/time";
+import { fromStudioTime, STUDIO_TIME_ZONE } from "@/lib/utils/time";
 import { eventSchema, reservationSchema } from "@/lib/validators/event";
 import { type RebuildOutcome, requestSiteRebuild } from "@/lib/website/rebuild";
 import { db } from "@/services/database";
@@ -60,13 +60,6 @@ export async function getOutdoorSession(googleEventId: string): Promise<{ data?:
 	}
 }
 
-const pad = (n: number) => String(n).padStart(2, "0");
-/** An instant as the studio's wall clock, "YYYY-MM-DDTHH:mm:00", for Google with the studio's zone. */
-const wallClock = (instant: Date) => {
-	const t = toStudioTime(instant);
-	return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}T${pad(t.getHours())}:${pad(t.getMinutes())}:00`;
-};
-
 /**
  * Saves an outdoor session: its title, day, times and price (her calendar
  * follows, or nothing changes), and its website part. Its address on the site
@@ -96,22 +89,28 @@ export async function saveOutdoorAction(sessionId: string, data: unknown): Promi
 			if (problem) throw new Refused(problem);
 
 			// The calendar first: when Google refuses, the transaction rolls back and nothing changes.
-			const calendarChanged =
-				before.title !== v.title ||
-				before.startsAt.getTime() !== startsAt.getTime() ||
-				before.endsAt.getTime() !== endsAt.getTime() ||
-				Number(before.price ?? NaN) !== v.price;
+			// Times go to Google only when she changed them, as she typed them (like a new session):
+			// re-deriving them from the stored instant would move the event on a server whose
+			// time-zone data is out of date.
+			const timesChanged = before.startsAt.getTime() !== startsAt.getTime() || before.endsAt.getTime() !== endsAt.getTime();
+			const calendarChanged = before.title !== v.title || timesChanged || Number(before.price ?? NaN) !== v.price;
+			let times = { startsAt: before.startsAt, endsAt: before.endsAt };
 			if (calendarChanged) {
-				let token: string;
 				try {
-					token = await getValidAccessToken(user.id);
-					await updateStudioEvent(token, before.googleEventId, {
+					const token = await getValidAccessToken(user.id);
+					const updated = await updateStudioEvent(token, before.googleEventId, {
 						title: v.title,
-						startTime: wallClock(startsAt),
-						endTime: wallClock(endsAt),
 						timeZone: STUDIO_TIME_ZONE,
 						outdoorPrice: v.price,
+						...(timesChanged ? { startTime: `${v.date}T${v.startTime}:00`, endTime: `${v.date}T${v.endTime}:00` } : {}),
 					});
+					// Google places the new times with its own, always current, zone data.
+					if (timesChanged) {
+						times = {
+							startsAt: updated.start?.dateTime ? new Date(updated.start.dateTime) : startsAt,
+							endsAt: updated.end?.dateTime ? new Date(updated.end.dateTime) : endsAt,
+						};
+					}
 				} catch (error) {
 					throw new Refused(googleErrorMessage(error, "Google Calendar"));
 				}
@@ -131,8 +130,7 @@ export async function saveOutdoorAction(sessionId: string, data: unknown): Promi
 				.update(studioSessions)
 				.set({
 					title: v.title,
-					startsAt,
-					endsAt,
+					...times,
 					price: v.price.toFixed(2),
 					onWebsite: v.onWebsite,
 					titleEn: v.titleEn || null,

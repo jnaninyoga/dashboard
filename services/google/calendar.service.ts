@@ -133,7 +133,8 @@ export async function createStudioEvent(
 export async function updateStudioEvent(
 	accessToken: string,
 	eventId: string,
-	data: { title: string; startTime: string; endTime: string; timeZone: string; outdoorPrice?: number | null },
+	/** Times only when they changed, as she typed them: never re-derived from a stored instant. */
+	data: { title: string; timeZone: string; startTime?: string; endTime?: string; outdoorPrice?: number | null },
 ): Promise<calendar_v3.Schema$Event> {
 	const google = getGoogleClient(accessToken);
 	try {
@@ -142,8 +143,8 @@ export async function updateStudioEvent(
 			eventId,
 			requestBody: {
 				summary: data.title,
-				start: { dateTime: data.startTime, timeZone: data.timeZone },
-				end: { dateTime: data.endTime, timeZone: data.timeZone },
+				...(data.startTime ? { start: { dateTime: data.startTime, timeZone: data.timeZone } } : {}),
+				...(data.endTime ? { end: { dateTime: data.endTime, timeZone: data.timeZone } } : {}),
 				...(data.outdoorPrice != null
 					? { extendedProperties: { private: { jnaninEventType: "outdoor", outdoorPrice: data.outdoorPrice.toString() } } }
 					: {}),
