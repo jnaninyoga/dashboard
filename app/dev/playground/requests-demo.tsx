@@ -1,6 +1,10 @@
 "use client";
 
+import { BottomBar } from "@/components/bottom-bar";
+import { NewRequests } from "@/components/dashboard/new-requests";
 import { EmptyState } from "@/components/empty-state";
+import { QuickActionsProvider } from "@/components/quick-actions";
+import { NewRequestsProvider } from "@/components/requests/new-requests-count";
 import { RequestsList } from "@/components/requests/requests-list";
 import { type RequestView } from "@/lib/actions/requests/queries";
 
@@ -70,7 +74,16 @@ export function RequestsDemo() {
 	return (
 		<section className="grid gap-6 rounded-3xl border bg-card p-6" data-testid="requests-demo">
 			<h2 className="text-xl">Requests</h2>
+			<div data-testid="home-new-requests" className="min-w-0">
+				<NewRequests requests={requests.slice(0, 2)} count={2} />
+			</div>
 			<RequestsList requests={requests} empty={null} />
+			{/* The phone's bottom bar with 2 new requests on Today. */}
+			<NewRequestsProvider initial={2} refresh={false}>
+				<QuickActionsProvider>
+					<BottomBar />
+				</QuickActionsProvider>
+			</NewRequestsProvider>
 			<RequestsList
 				requests={[]}
 				empty={

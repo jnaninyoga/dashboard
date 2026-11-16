@@ -21,6 +21,11 @@ describe("isCurrent", () => {
 });
 
 describe("navigation", () => {
+	it("puts website bookings with today's work", () => {
+		const today = dashboardConfig.sections.find((s) => s.label === "Today")!;
+		expect(today.items.map((item) => item.url)).toEqual(["/", "/check-in", "/requests"]);
+	});
+
 	it("is grouped in her words, with no admin group names", () => {
 		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing", "Price list"]);
 	});

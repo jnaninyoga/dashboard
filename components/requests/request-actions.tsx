@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { useConfirm } from "@/components/feedback/confirm";
+import { replyHref } from "@/components/requests/labels";
 import { RowActionsTrigger } from "@/components/row-actions-trigger";
 import {
 	DropdownMenu,
@@ -16,9 +17,8 @@ import {
 import { eraseRequestAction, setRequestStatusAction } from "@/lib/actions/requests/mutations";
 import { type RequestView } from "@/lib/actions/requests/queries";
 import { toE164 } from "@/lib/domain/requests/phone";
-import { contactOf, whatsappReply } from "@/lib/domain/requests/reply";
+import { contactOf } from "@/lib/domain/requests/reply";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
-import { whatsappHref } from "@/lib/utils/contact";
 import { cn } from "@/lib/utils/ui";
 
 import { ArrowRotateLeft, Call, CloseCircle, Eraser, TickCircle, UserAdd, Whatsapp } from "iconsax-reactjs";
@@ -30,13 +30,6 @@ const DONE: Record<Status, string> = {
 	confirmed: "Request confirmed",
 	declined: "Request declined",
 };
-
-/** WhatsApp with her first message already written, in the visitor's language. */
-export function replyHref(request: RequestView): string | null {
-	const contact = contactOf(request);
-	if (!contact) return null;
-	return `${whatsappHref(toE164(contact.phone) ?? contact.phone)}?text=${encodeURIComponent(whatsappReply(request))}`;
-}
 
 function useRequestActions(request: RequestView) {
 	const router = useRouter();

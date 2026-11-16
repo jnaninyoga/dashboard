@@ -8,8 +8,8 @@ import { type RequestView } from "@/lib/actions/requests/queries";
 import { type ColumnDef } from "@tanstack/react-table";
 import { Whatsapp } from "iconsax-reactjs";
 
-import { requestTitle } from "./labels";
-import { replyHref, RequestMenu } from "./request-actions";
+import { replyHref, requestTitle } from "./labels";
+import { RequestMenu } from "./request-actions";
 import { RequestCard } from "./request-card";
 import { RequestStatus } from "./request-status";
 

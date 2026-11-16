@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { QuickActionsMenu } from "@/components/quick-actions";
+import { newRequestsLabel, useNewRequests } from "@/components/requests/new-requests-count";
 import { PatternLattice } from "@/components/sidebar-pattern";
 import { bottomBar, isCurrent, type NavItem } from "@/lib/config/dashboard";
 import { cn } from "@/lib/utils/ui";
 
 import { Add } from "iconsax-reactjs";
 
-function BarLink({ item }: { item: NavItem }) {
+function BarLink({ item, badge = 0 }: { item: NavItem; badge?: number }) {
 	const pathname = usePathname();
 	const current = isCurrent(pathname, item.match ?? item.url);
 	return (
@@ -22,7 +23,7 @@ function BarLink({ item }: { item: NavItem }) {
 			{/* The sidebar's language: a blush pill and the filled icon for the current page. */}
 			<span
 				className={cn(
-					"flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200 group-focus-visible:ring-2 group-focus-visible:ring-ring",
+					"relative flex h-8 w-14 items-center justify-center rounded-full transition-colors duration-200 group-focus-visible:ring-2 group-focus-visible:ring-ring",
 					current ? "bg-sidebar-accent text-sidebar-primary" : "text-sidebar-foreground/60 group-active:bg-sidebar-accent/60",
 				)}
 			>
@@ -34,6 +35,14 @@ function BarLink({ item }: { item: NavItem }) {
 						current && "motion-safe:animate-nav-pop",
 					)}
 				/>
+				{badge > 0 ? (
+					<span
+						aria-label={newRequestsLabel(badge)}
+						className="absolute -top-1 right-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] leading-none font-semibold text-primary-foreground tabular-nums ring-2 ring-sidebar"
+					>
+						{badge}
+					</span>
+				) : null}
 			</span>
 			<span
 				className={cn(
@@ -54,6 +63,8 @@ function BarLink({ item }: { item: NavItem }) {
  * pattern), apart from the page. The page leaves room for it (--bottom-bar).
  */
 export function BottomBar() {
+	// New website bookings show on Today: Requests lives in the side menu, and the home page lists them.
+	const newRequests = useNewRequests();
 	return (
 		<nav
 			aria-label="Main"
@@ -62,7 +73,7 @@ export function BottomBar() {
 			<PatternLattice id="lattice-bottom-bar" className="-z-10 text-sidebar-primary opacity-[0.12]" />
 			<div className="mx-auto grid h-16 max-w-md grid-cols-5 items-center px-2">
 				{bottomBar.start.map((item) => (
-					<BarLink key={item.url} item={item} />
+					<BarLink key={item.url} item={item} badge={item.url === "/" ? newRequests : 0} />
 				))}
 				<div className="flex justify-center">
 					<QuickActionsMenu side="top" align="center">

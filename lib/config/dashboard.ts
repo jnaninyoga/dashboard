@@ -2,6 +2,7 @@ import {
 	Buildings,
 	Calendar,
 	Card,
+	DirectInbox,
 	DiscountShape,
 	DocumentText,
 	Home2,
@@ -36,6 +37,8 @@ export const dashboardConfig = {
 			items: [
 				{ title: "Dashboard", url: "/", icon: Home2 },
 				{ title: "Check-in", url: "/check-in", icon: TickCircle },
+				// Bookings from the website, answered between classes.
+				{ title: "Requests", url: "/requests", icon: DirectInbox },
 			],
 		},
 		{
