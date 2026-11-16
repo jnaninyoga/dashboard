@@ -6,6 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { removePushSubscriptionAction, savePushSubscriptionAction } from "@/lib/actions/requests/push";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { urlBase64ToUint8Array } from "@/lib/utils/push";
+import { serviceWorkerEnabled } from "@/lib/utils/service-worker";
 import { cn } from "@/lib/utils/ui";
 
 import { Notification as BellIcon } from "iconsax-reactjs";
@@ -26,7 +27,7 @@ async function registration() {
 }
 
 async function readState(): Promise<State> {
-	if (!PUBLIC_KEY || !("serviceWorker" in navigator)) return "unsupported";
+	if (!PUBLIC_KEY || !serviceWorkerEnabled || !("serviceWorker" in navigator)) return "unsupported";
 	if (needsInstall()) return "install";
 	if (!("PushManager" in window) || !("Notification" in window)) return "unsupported";
 	if (Notification.permission === "denied") return "blocked";
