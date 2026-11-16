@@ -31,11 +31,11 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
 	return (
 		<>
 			<Link
-				href="/requests"
+				href="/bookings"
 				className="-ml-2 flex h-10 w-fit items-center gap-2 rounded-full px-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
 			>
 				<ArrowLeft size={18} />
-				Requests
+				Bookings
 			</Link>
 
 			<header className="flex items-start justify-between gap-4">
@@ -56,14 +56,14 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
 			<RequestReplyActions request={request} className="max-w-md" />
 
 			{request.message ? (
-				<DocumentSection id="request-message" title="Their message">
+				<DocumentSection id="booking-message" title="Their message">
 					<p className="rounded-3xl border border-secondary/20 bg-card p-6 whitespace-pre-line text-foreground">
 						{request.message}
 					</p>
 				</DocumentSection>
 			) : null}
 
-			<DocumentSection id="request-details" title="Details">
+			<DocumentSection id="booking-details" title="Details">
 				<dl className="divide-y divide-border/60 rounded-3xl border border-secondary/20 bg-card px-6 py-2">
 					<Fact label="Phone">{request.erasedAt ? "Erased" : request.phone}</Fact>
 					<Fact label="Language">{LANGS[request.lang]}</Fact>

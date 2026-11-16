@@ -14,7 +14,7 @@ const LANGS = { fr: "Français", en: "Anglais" } as const;
 
 /** The email to contact@: who, what, their message, and the two ways to answer. */
 export function requestEmail(request: NoticeRequest, dashboardUrl: string): { subject: string; text: string; html: string } {
-	const link = `${dashboardUrl.replace(/\/$/, "")}/requests/${request.id}`;
+	const link = `${dashboardUrl.replace(/\/$/, "")}/bookings/${request.id}`;
 	// WhatsApp needs the country code: a national "06…" number wouldn't open.
 	const whatsapp = `https://wa.me/${phoneKey(request.phone) ?? request.phone.replace(/\D/g, "")}`;
 	const lang = LANGS[request.lang];
@@ -57,7 +57,7 @@ export function requestPushPayload(request: Pick<BookingRequest, "id" | "name" |
 	return {
 		title: request.name,
 		body: excerpt ? `${request.choiceLabel} · ${excerpt}` : request.choiceLabel,
-		url: `/requests/${request.id}`,
+		url: `/bookings/${request.id}`,
 		tag: request.id,
 	};
 }

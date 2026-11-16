@@ -37,7 +37,7 @@ This is the command center for one person: Ouarda, who runs the JnaninYoga studi
 
 | Path | What |
 | --- | --- |
-| `app/(dashboard)/` | Signed-in pages: home, requests, schedule, check-in, clients, b2b, price-list, settings |
+| `app/(dashboard)/` | Signed-in pages: home, bookings, schedule, check-in, clients, b2b, price-list, settings |
 | `app/api/public/v1/` | The only signed-out API: what the website (jnaninyoga.com) calls (see Public API) |
 | `app/dev/playground/` | Dev-only page rendering the primitives and real forms without sign-in |
 | `lib/domain/` | Business rules as pure, unit-tested functions (billing, clients, price-list, schedule) |
@@ -65,7 +65,7 @@ Each rule lives in `lib/domain/`, and the matching action enforces it on the ser
 - Mistakes are undone with reversal rows (with a reason), never deletes.
 - Refunds only go through a credit note (AV-YYYY-NNNN, numbered at issue). Credited quantities do not return to the quote's "left to invoice". An issued credit note can't be archived.
 
-**Requests.** Every booking sent from the website lands in Requests. It is saved before anyone is notified (phone notification, email to contact@, the count on Requests and Today), so a failed notification never loses one. A request is never deleted; when someone asks, "Erase personal details" blanks their name, phone and message and keeps the row in her counts. A phone matches a client however either was written (`phoneKey`). Times shown for a request are made on the server: a browser's time-zone data can still put Marrakech on UTC+1.
+**Bookings from the website.** Every booking sent from the website lands in Bookings (`/bookings`; the table is `booking_requests`, and the code calls each one a request). It is saved before anyone is notified (phone notification, email to contact@, the count on Bookings and Today), so a failed notification never loses one. A request is never deleted; when someone asks, "Erase personal details" blanks their name, phone and message and keeps the row in her counts. A phone matches a client however either was written (`phoneKey`). Times shown for a request are made on the server: a browser's time-zone data can still put Marrakech on UTC+1.
 
 **Money.** Currency is MAD (the ISO code, not "DH"). Show prices only through `<Money>` (`components/money.tsx`) or `formatMoney`. Parse typed amounts with `parseAmountInput`: Ouarda types French decimals, and `500,50` once became `50050`. PDFs stay in French.
 

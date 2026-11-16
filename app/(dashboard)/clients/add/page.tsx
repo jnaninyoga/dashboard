@@ -5,15 +5,15 @@ import { toE164 } from "@/lib/domain/requests/phone";
 import { ReferralSource } from "@/lib/types/global";
 
 /**
- * A new client. From a website booking (`?fromRequest=<id>`), the name and
+ * A new client. From a website booking (`?fromBooking=<id>`), the name and
  * phone they sent are already filled in, and the client is marked as having
  * found the studio through the website.
  */
-export default async function AddClientPage({ searchParams }: { searchParams: Promise<{ fromRequest?: string }> }) {
-	const { fromRequest } = await searchParams;
+export default async function AddClientPage({ searchParams }: { searchParams: Promise<{ fromBooking?: string }> }) {
+	const { fromBooking } = await searchParams;
 	const [discounts, request] = await Promise.all([
 		getDiscounts(),
-		fromRequest ? getRequest(fromRequest).then((result) => result.data ?? null) : Promise.resolve(null),
+		fromBooking ? getRequest(fromBooking).then((result) => result.data ?? null) : Promise.resolve(null),
 	]);
 	const initialData =
 		request && !request.erasedAt

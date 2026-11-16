@@ -120,7 +120,7 @@ The site shows the product's `name`, `credits`, `duration_months` and `price` as
 - `client_id` (nullable): matched on the phone number when the request arrives, or set when she adds the person as a client.
 - `erased_at` (nullable): when someone asks for their data to be deleted, "Erase personal details" blanks the name, phone and message and keeps the row, so counts and history still add up. *(My call, from the review.)*
 - `created_at`.
-- Requests are never deleted from the dashboard; personal details can be erased (above).
+- Bookings are never deleted from the dashboard; personal details can be erased (above).
 
 **Phone notifications.** A new table, `push_subscriptions`:
 
@@ -153,21 +153,21 @@ The routes live under `app/api/public/v1/`. Add `path.startsWith("/api/public/")
 Each channel runs on its own. A failure goes through `logServerError` and never affects the saved request.
 
 - **Phone.** Web Push through the installed dashboard app. Store VAPID keys in env and add the `web-push` package.
-  - A "Notifications on this phone" switch, in Settings and on the Requests page when it's off, asks the browser for permission and saves the subscription.
+  - A "Notifications on this phone" switch, in Settings and on the Bookings page when it's off, asks the browser for permission and saves the subscription.
   - On an iPhone this only works when the dashboard is installed on the home screen (iOS 16.4 or later), so the switch says so when it can't work.
   - `app/sw.ts` gets `push` and `notificationclick` handlers. The notification shows the name and what they want, and tapping it opens that request.
   - A subscription that answers 404 or 410 is deleted.
 - **Email** to `contact@jnaninyoga.com`. My call is to send through her own mailbox's SMTP (Mailhostbox, from `contact@` to `contact@`), with `nodemailer` and credentials in Vercel env. It needs no new service and no DNS change, and Mailhostbox is already in the domain's SPF. If Vercel can't reach it, the fallback is Resend's free tier, which needs DNS records on the domain.
   - The email is in French, like today's template in `contact.ts`: name, phone, what they want, the message, a WhatsApp button, a link to the request in the dashboard, and the ref.
-- **The count** is the number of `new` requests. It shows on the Requests item in the sidebar, as a badge on "Today" in the phone's bottom bar, and as a "New requests" block at the top of the home page while any are waiting.
+- **The count** is the number of `new` requests. It shows on the Bookings item in the sidebar, as a badge on "Today" in the phone's bottom bar, and as a "New bookings" block at the top of the home page while any are waiting.
 
 ### 4. Dashboard screens
 
 These follow AGENTS.md: `FormSheet`, `DataTable`/`EntityCard`, `EmptyState`, sections on the page background, the ⋮ menu top-right, errors with a ref, no `alert`/`confirm`, and mobile first.
 
-**Navigation.** Requests goes into the **Today** section, after Check-in. A new **Website** section holds Class times and Events. Cards stay under Price list → Memberships. The bottom bar doesn't change, apart from the badge on Today.
+**Navigation.** Bookings goes into the **Today** section, after Check-in. A new **Website** section holds Class times and Events. Cards stay under Price list → Memberships. The bottom bar doesn't change, apart from the badge on Today.
 
-**Requests** (`/requests`, and `/requests/[id]`):
+**Bookings** (`/bookings`, and `/bookings/[id]`; named by the owner on 2026-11-16, it was "Requests" in earlier drafts):
 
 - New requests come first, newest first. Each card shows the name, what they want, when it arrived, the start of the message, and the client's name and current card when the phone matched.
 - Actions: **WhatsApp** opens a reply already written in the visitor's language (`fr` or `en`), plus **Call**, **Confirm**, **Decline**, and **Add as client**, which opens the existing add-client form with the name and phone filled in.
@@ -256,7 +256,7 @@ The builder greps the copy for every other mention of days, times, prices and se
 
 Each slice is one PR per repo. The dashboard PR is merged and its migration applied to production by the owner before the site PR deploys.
 
-1. **Bookings.** `booking_requests` and `push_subscriptions`, `POST /requests`, the three notifications, the Requests screens, and the site's form posting to the dashboard. This has the most value first, because the form sends nothing today.
+1. **Bookings.** `booking_requests` and `push_subscriptions`, `POST /requests`, the three notifications, the Bookings screens, and the site's form posting to the dashboard. This has the most value first, because the form sends nothing today.
 2. **Class times and cards.** The `products` columns and `class_times`, `GET /site`, the rebuild helper and daily cron, and the site reading its data at build time with every derived sentence.
 3. **Outdoor events.** `events`, photo storage, the Events screens and reservation list, the calendar link, `/events/places`, the Events pages, the marquee, and events in the booking form.
 

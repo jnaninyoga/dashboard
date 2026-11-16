@@ -63,7 +63,7 @@ function BarLink({ item, badge = 0 }: { item: NavItem; badge?: number }) {
  * pattern), apart from the page. The page leaves room for it (--bottom-bar).
  */
 export function BottomBar() {
-	// New website bookings show on Today: Requests lives in the side menu, and the home page lists them.
+	// New website bookings show on Today: Bookings live in the side menu, and the home page lists them.
 	const newRequests = useNewRequests();
 	return (
 		<nav

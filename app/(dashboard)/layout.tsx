@@ -38,7 +38,7 @@ export default async function DashboardLayout({
 		googleUnreachable = true;
 	}
 
-	// Website bookings waiting for her answer: a badge on Requests and on Today.
+	// Website bookings waiting for her answer: a badge on Bookings and on Today.
 	const newRequests = await getNewRequestCount();
 
 	// The sidebar opens as she left it, without a flash on load.

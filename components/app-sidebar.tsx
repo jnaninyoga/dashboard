@@ -144,7 +144,7 @@ export function AppSidebar({
 										key={item.url}
 										item={item}
 										onNavigate={closeOnMobile}
-										badge={item.url === "/requests" ? newRequests : 0}
+										badge={item.url === "/bookings" ? newRequests : 0}
 									/>
 								))}
 							</SidebarMenu>

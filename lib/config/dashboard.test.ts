@@ -23,7 +23,7 @@ describe("isCurrent", () => {
 describe("navigation", () => {
 	it("puts website bookings with today's work", () => {
 		const today = dashboardConfig.sections.find((s) => s.label === "Today")!;
-		expect(today.items.map((item) => item.url)).toEqual(["/", "/check-in", "/requests"]);
+		expect(today.items.map((item) => item.url)).toEqual(["/", "/check-in", "/bookings"]);
 	});
 
 	it("is grouped in her words, with no admin group names", () => {

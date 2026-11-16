@@ -26,9 +26,9 @@ import { ArrowRotateLeft, Call, CloseCircle, Eraser, TickCircle, UserAdd, Whatsa
 type Status = RequestView["status"];
 
 const DONE: Record<Status, string> = {
-	new: "Back among the new requests",
-	confirmed: "Request confirmed",
-	declined: "Request declined",
+	new: "Back among the new bookings",
+	confirmed: "Booking confirmed",
+	declined: "Booking declined",
 };
 
 function useRequestActions(request: RequestView) {
@@ -39,7 +39,7 @@ function useRequestActions(request: RequestView) {
 	const setStatus = (status: Status) =>
 		startTransition(async () => {
 			const result = await setRequestStatusAction(request.id, status);
-			if (result.error) return void notifyActionError(result, "Couldn't change the request");
+			if (result.error) return void notifyActionError(result, "Couldn't change the booking");
 			notify.success(DONE[status]);
 			router.refresh();
 		});
@@ -47,7 +47,7 @@ function useRequestActions(request: RequestView) {
 	const erase = async () => {
 		const ok = await confirm({
 			title: `Erase ${request.name || "these"} details?`,
-			description: "Their name, phone and message are removed for good. The request stays in your counts.",
+			description: "Their name, phone and message are removed for good. The booking stays in your counts.",
 			confirmLabel: "Erase",
 			destructive: true,
 		});
@@ -117,7 +117,7 @@ export function RequestReplyActions({ request, className }: { request: RequestVi
 export function RequestMenu({ request }: { request: RequestView }) {
 	const { pending, setStatus, erase } = useRequestActions(request);
 	const contact = contactOf(request);
-	const label = request.name || "this request";
+	const label = request.name || "this booking";
 
 	return (
 		<DropdownMenu>
@@ -153,7 +153,7 @@ export function RequestMenu({ request }: { request: RequestView }) {
 				) : null}
 				{contact && !request.client ? (
 					<DropdownMenuItem asChild>
-						<Link href={`/clients/add?fromRequest=${request.id}`}>
+						<Link href={`/clients/add?fromBooking=${request.id}`}>
 							<UserAdd size={18} />
 							Add as client
 						</Link>

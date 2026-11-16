@@ -23,10 +23,10 @@ describe("requestEmail", () => {
 
 	it("links to the request and to WhatsApp with the country code", () => {
 		const { html, text } = requestEmail(request, "https://dash.jnaninyoga.com");
-		expect(html).toContain("https://dash.jnaninyoga.com/requests/abc");
+		expect(html).toContain("https://dash.jnaninyoga.com/bookings/abc");
 		expect(html).toContain("https://wa.me/212661286464");
 		expect(text).toContain("WEB-1A2B3C4D");
-		expect(text).toContain("https://dash.jnaninyoga.com/requests/abc");
+		expect(text).toContain("https://dash.jnaninyoga.com/bookings/abc");
 	});
 
 	it("leaves the message out when there is none", () => {
@@ -40,7 +40,7 @@ describe("requestPushPayload", () => {
 		expect(requestPushPayload({ ...request, message: "x".repeat(100) })).toEqual({
 			title: "<b>Salma</b>",
 			body: `Start To Align (1 500 Dh) · ${"x".repeat(80)}…`,
-			url: "/requests/abc",
+			url: "/bookings/abc",
 			tag: "abc",
 		});
 	});

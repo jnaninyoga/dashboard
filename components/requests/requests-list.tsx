@@ -26,7 +26,7 @@ const columns: ColumnDef<RequestView>[] = [
 				<div className="flex min-w-0 flex-col gap-1">
 					<div className="flex min-w-0 items-center gap-3">
 						<Link
-							href={`/requests/${request.id}`}
+							href={`/bookings/${request.id}`}
 							className="truncate rounded-sm font-medium text-foreground transition-colors outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"
 						>
 							{requestTitle(request)}
@@ -92,14 +92,14 @@ const columns: ColumnDef<RequestView>[] = [
 	},
 ];
 
-/** Requests as a table on a computer and as cards on a phone. */
+/** Bookings as a table on a computer and as cards on a phone. */
 export function RequestsList({ requests, empty }: { requests: RequestView[]; empty: React.ReactNode }) {
 	return (
 		<DataTable
 			data={requests}
 			columns={columns}
-			noun={{ one: "request", many: "requests" }}
-			getRowHref={(request) => `/requests/${request.id}`}
+			noun={{ one: "booking", many: "bookings" }}
+			getRowHref={(request) => `/bookings/${request.id}`}
 			initialSorting={[{ id: "received", desc: true }]}
 			empty={empty}
 			renderCard={(request) => <RequestCard request={request} />}

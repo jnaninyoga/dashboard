@@ -38,7 +38,7 @@ export const dashboardConfig = {
 				{ title: "Dashboard", url: "/", icon: Home2 },
 				{ title: "Check-in", url: "/check-in", icon: TickCircle },
 				// Bookings from the website, answered between classes.
-				{ title: "Requests", url: "/requests", icon: DirectInbox },
+				{ title: "Bookings", url: "/bookings", icon: DirectInbox },
 			],
 		},
 		{

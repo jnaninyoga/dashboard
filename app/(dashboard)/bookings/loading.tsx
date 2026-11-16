@@ -1,10 +1,10 @@
 import { LoadingScreen, SkeletonEntityCards, SkeletonPageHeader } from "@/components/skeletons";
 
-// The requests page (app/(dashboard)/requests/page.tsx): the heading and its
+// The bookings page (app/(dashboard)/bookings/page.tsx): the heading and its
 // sentence, then the new requests as cards.
 export default function Loading() {
 	return (
-		<LoadingScreen label="Loading requests">
+		<LoadingScreen label="Loading bookings">
 			<SkeletonPageHeader title="w-36 md:w-44" description={["w-72 h-4"]} />
 			<SkeletonEntityCards
 				count={3}

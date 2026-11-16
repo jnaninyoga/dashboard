@@ -10,7 +10,7 @@ import { DirectInbox, TickCircle } from "iconsax-reactjs";
  * Bookings from jnaninyoga.com: the ones waiting for her answer first, then
  * the ones she handled.
  */
-export default async function RequestsPage() {
+export default async function BookingsPage() {
 	const { data, error } = await getRequests();
 	if (error) throw new Error(error);
 	const requests = data ?? [];
@@ -20,9 +20,9 @@ export default async function RequestsPage() {
 	return (
 		<>
 			<header className="space-y-1">
-				<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">Requests</h1>
+				<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">Bookings</h1>
 				<p className="text-md text-muted-foreground">
-					Bookings from jnaninyoga.com. Reply on WhatsApp, then confirm or decline.
+					Sent from jnaninyoga.com. Reply on WhatsApp, then confirm or decline.
 				</p>
 			</header>
 
@@ -30,7 +30,7 @@ export default async function RequestsPage() {
 			<NotificationsSwitch compact className="max-w-xl" />
 
 			<DocumentSection
-				id="new-requests"
+				id="new-bookings"
 				title="New"
 				aside={<span className="text-sm text-muted-foreground tabular-nums">{fresh.length ? `${fresh.length} waiting` : null}</span>}
 			>
@@ -39,7 +39,7 @@ export default async function RequestsPage() {
 					empty={
 						<EmptyState
 							icon={<DirectInbox size={40} variant="Bulk" />}
-							title="No new requests"
+							title="No new bookings"
 							description="Bookings from jnaninyoga.com land here."
 						/>
 					}
@@ -47,7 +47,7 @@ export default async function RequestsPage() {
 			</DocumentSection>
 
 			{handled.length ? (
-				<DocumentSection id="handled-requests" title="Handled">
+				<DocumentSection id="handled-bookings" title="Handled">
 					<RequestsList
 						requests={handled}
 						empty={<EmptyState icon={<TickCircle size={40} variant="Bulk" />} title="Nothing handled yet" />}

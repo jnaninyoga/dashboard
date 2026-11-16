@@ -37,7 +37,7 @@ async function readState(): Promise<State> {
 /**
  * "Notify me on this phone when a booking arrives." Each phone or browser is
  * turned on by itself. With `compact`, nothing shows once it's on (the
- * Requests page only nudges until she has turned it on; Settings always
+ * Bookings page only nudges until she has turned it on; Settings always
  * shows it).
  */
 export function NotificationsSwitch({ compact = false, className }: { compact?: boolean; className?: string }) {
@@ -119,12 +119,12 @@ export function NotificationsSwitch({ compact = false, className }: { compact?: 
 					{state === "on"
 						? "On. Each booking from the website shows here, even when the dashboard is closed."
 						: state === "off"
-							? "Each phone or computer is turned on by itself. Email and the count in Requests work either way."
+							? "Each phone or computer is turned on by itself. Email and the count on Bookings work either way."
 							: state === "install"
 								? "Add the dashboard to your Home Screen first (Share, then Add to Home Screen), open it from there, and turn this on."
 								: state === "blocked"
 									? "Notifications are blocked for the dashboard. Allow them in this browser's site settings, then come back."
-									: "This browser can't show notifications. Email and the count in Requests still tell you about new bookings."}
+									: "This browser can't show notifications. Email and the count on Bookings still tell you about new bookings."}
 				</p>
 			</div>
 		</div>

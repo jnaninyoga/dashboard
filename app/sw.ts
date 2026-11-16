@@ -35,7 +35,7 @@ self.addEventListener("push", (event) => {
       tag: data.tag,
       icon: "/logo.png",
       badge: "/logo.png",
-      data: { url: data.url || "/requests" },
+      data: { url: data.url || "/bookings" },
     }),
   );
 });
@@ -43,7 +43,7 @@ self.addEventListener("push", (event) => {
 // Tapping it opens that request, in the dashboard window she already has when there is one.
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const url = new URL((event.notification.data as { url?: string } | null)?.url || "/requests", self.location.origin).href;
+  const url = new URL((event.notification.data as { url?: string } | null)?.url || "/bookings", self.location.origin).href;
   event.waitUntil(
     (async () => {
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });

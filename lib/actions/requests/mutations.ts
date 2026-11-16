@@ -15,8 +15,8 @@ const STATUSES = ["new", "confirmed", "declined"] as const;
 type RequestStatus = (typeof STATUSES)[number];
 
 function refresh(id: string) {
-	revalidatePath("/requests");
-	revalidatePath(`/requests/${id}`);
+	revalidatePath("/bookings");
+	revalidatePath(`/bookings/${id}`);
 	// The count in the sidebar, the bottom bar and on the home page.
 	revalidatePath("/", "layout");
 }

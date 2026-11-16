@@ -73,7 +73,7 @@ const requests = [
 export function RequestsDemo() {
 	return (
 		<section className="grid gap-6 rounded-3xl border bg-card p-6" data-testid="requests-demo">
-			<h2 className="text-xl">Requests</h2>
+			<h2 className="text-xl">Bookings</h2>
 			<div data-testid="home-new-requests" className="min-w-0">
 				<NewRequests requests={requests.slice(0, 2)} count={2} />
 			</div>
@@ -89,7 +89,7 @@ export function RequestsDemo() {
 				empty={
 					<EmptyState
 						icon={<DirectInbox size={40} variant="Bulk" />}
-						title="No new requests"
+						title="No new bookings"
 						description="Bookings from jnaninyoga.com land here."
 					/>
 				}

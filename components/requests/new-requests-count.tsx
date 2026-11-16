@@ -56,7 +56,7 @@ export function useNewRequests(): number {
 	return useContext(NewRequestsContext);
 }
 
-/** "3 new requests", for a badge's screen-reader label. */
+/** "3 new bookings", for a badge's screen-reader label. */
 export function newRequestsLabel(count: number): string {
-	return `${count} new ${count === 1 ? "request" : "requests"}`;
+	return `${count} new ${count === 1 ? "booking" : "bookings"}`;
 }

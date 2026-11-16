@@ -12,13 +12,13 @@ import { ArrowRight2, DirectInbox, Whatsapp } from "iconsax-reactjs";
 export function NewRequests({ requests, count }: { requests: RequestView[]; count: number }) {
 	if (!count) return null;
 	return (
-		<section aria-labelledby="new-requests" className="flex min-w-0 flex-col gap-4 rounded-3xl border border-primary/25 bg-card p-5 sm:p-6">
+		<section aria-labelledby="new-bookings" className="flex min-w-0 flex-col gap-4 rounded-3xl border border-primary/25 bg-card p-5 sm:p-6">
 			<div className="flex items-start justify-between gap-3">
 				<div className="flex flex-col gap-1">
-					<h2 id="new-requests" className="font-heading text-xl font-semibold text-foreground">
-						{count === 1 ? "1 new request" : `${count} new requests`}
+					<h2 id="new-bookings" className="font-heading text-xl font-semibold text-foreground">
+						{count === 1 ? "1 new booking" : `${count} new bookings`}
 					</h2>
-					<p className="text-sm text-muted-foreground">Bookings from jnaninyoga.com, waiting for your answer.</p>
+					<p className="text-sm text-muted-foreground">From jnaninyoga.com, waiting for your answer.</p>
 				</div>
 				<DirectInbox size={28} variant="Bulk" className="shrink-0 text-primary" aria-hidden />
 			</div>
@@ -28,7 +28,7 @@ export function NewRequests({ requests, count }: { requests: RequestView[]; coun
 					return (
 						<li key={request.id} className="flex items-center gap-3 px-2 py-3">
 							<Link
-								href={`/requests/${request.id}`}
+								href={`/bookings/${request.id}`}
 								className="flex min-w-0 flex-1 flex-col rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
 							>
 								<span className="truncate font-semibold text-foreground">{requestTitle(request)}</span>
@@ -52,10 +52,10 @@ export function NewRequests({ requests, count }: { requests: RequestView[]; coun
 				})}
 			</ul>
 			<Link
-				href="/requests"
+				href="/bookings"
 				className="flex h-11 w-fit items-center gap-1.5 rounded-full px-1 text-sm font-semibold text-primary hover:text-primary/80"
 			>
-				Open requests
+				Open bookings
 				<ArrowRight2 size={16} />
 			</Link>
 		</section>

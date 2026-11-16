@@ -37,7 +37,7 @@ export function RequestCard({ request }: { request: RequestView }) {
 			menu={<RequestMenu request={request} />}
 			header={
 				<EntityCardHeader
-					href={`/requests/${request.id}`}
+					href={`/bookings/${request.id}`}
 					title={requestTitle(request)}
 					media={
 						<div
