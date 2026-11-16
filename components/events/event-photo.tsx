@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { uploadEventPhotoAction } from "@/lib/actions/events";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { notifyWebsite } from "@/lib/feedback/website";
+import { encodePhoto } from "@/lib/utils/photo";
 
 import { Gallery, Refresh } from "iconsax-reactjs";
 
 const LONG_SIDE = 1600;
 
-/** The photo from her phone, made web-sized in the browser (longest side 1600px, WebP) before it's sent. */
-async function resize(file: File): Promise<Blob> {
+/** The photo from her phone, made web-sized in the browser (longest side 1600px; WebP, or JPEG on an iPhone) before it's sent. */
+async function resize(file: File) {
 	const bitmap = await createImageBitmap(file);
 	const scale = Math.min(1, LONG_SIDE / Math.max(bitmap.width, bitmap.height));
 	const canvas = document.createElement("canvas");
@@ -21,7 +22,7 @@ async function resize(file: File): Promise<Blob> {
 	canvas.height = Math.round(bitmap.height * scale);
 	canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 	bitmap.close();
-	return new Promise((resolve, reject) => canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("No image"))), "image/webp", 0.82));
+	return encodePhoto((type, quality) => new Promise((resolve) => canvas.toBlob(resolve, type, quality)));
 }
 
 /** The event's photo: shown on its page and its social card on the website. */
@@ -33,14 +34,14 @@ export function EventPhoto({ id, src }: { id: string; src: string | null }) {
 	const choose = (file: File | undefined) => {
 		if (!file) return;
 		startTransition(async () => {
-			let blob: Blob;
+			let photo: Awaited<ReturnType<typeof resize>>;
 			try {
-				blob = await resize(file);
+				photo = await resize(file);
 			} catch {
 				return void notify.error("This photo can't be read", { description: "Try a JPEG or PNG." });
 			}
 			const form = new FormData();
-			form.append("photo", new File([blob], "photo.webp", { type: "image/webp" }));
+			form.append("photo", new File([photo.blob], photo.type === "image/webp" ? "photo.webp" : "photo.jpg", { type: photo.type }));
 			const result = await uploadEventPhotoAction(id, form);
 			if (result.error) return void notifyActionError(result, "Couldn't save the photo");
 			notify.success("Photo saved");
