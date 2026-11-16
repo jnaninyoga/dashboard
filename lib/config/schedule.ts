@@ -1,4 +1,4 @@
-import { type WorkingHoursConfig } from "@/lib/types";
+import { type Period, type WorkingHoursConfig } from "@/lib/domain/schedule/hours";
 
 export const DAYS = [
 	{ key: "1", label: "Monday" },
@@ -10,14 +10,25 @@ export const DAYS = [
 	{ key: "0", label: "Sunday" },
 ];
 
-// Her week until she saves her own. Monday and Thursday run to 21:00, the end
-// of the website's last class (DEFAULT_CLASS_TIMES), so the two agree.
+/** The six periods the website showed before it came from the dashboard, with a rest after each and a long one at lunch. */
+const CLASS_DAY: Period[] = [
+	{ start: "08:30", end: "10:00" },
+	{ start: "10:30", end: "12:00" },
+	{ start: "12:30", end: "14:00" },
+	{ start: "15:30", end: "17:00" },
+	{ start: "17:30", end: "19:00" },
+	{ start: "19:30", end: "21:00" },
+];
+const closed = { isOpen: false, periods: [] };
+
+// Her week until she saves her own: what jnaninyoga.com said, Monday and
+// Thursday with six periods, the other days by appointment.
 export const DEFAULT_HOURS: WorkingHoursConfig = {
-	"1": { isOpen: true, start: "08:00", end: "21:00" },
-	"2": { isOpen: true, start: "08:00", end: "20:00" },
-	"3": { isOpen: true, start: "08:00", end: "20:00" },
-	"4": { isOpen: true, start: "08:00", end: "21:00" },
-	"5": { isOpen: true, start: "08:00", end: "20:00" },
-	"6": { isOpen: true, start: "08:00", end: "14:00" },
-	"0": { isOpen: false, start: "08:00", end: "20:00" },
+	"1": { isOpen: true, periods: CLASS_DAY },
+	"2": closed,
+	"3": closed,
+	"4": { isOpen: true, periods: CLASS_DAY },
+	"5": closed,
+	"6": closed,
+	"0": closed,
 };

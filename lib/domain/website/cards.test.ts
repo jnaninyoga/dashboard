@@ -1,7 +1,8 @@
+import { DEFAULT_HOURS } from "@/lib/config/schedule";
+
 import { describe, expect, it } from "vitest";
 
 import { isSiteKey, siteCards, sitePayload } from "./cards";
-import { DEFAULT_CLASS_TIMES } from "./timetable";
 
 const product = (over: Partial<Parameters<typeof siteCards>[0][number]> = {}) => ({
 	kind: "membership" as const,
@@ -58,15 +59,15 @@ describe("isSiteKey", () => {
 
 describe("sitePayload", () => {
 	it("is what the website builds from, with no events yet", () => {
-		const payload = sitePayload({ classTimes: DEFAULT_CLASS_TIMES, products: [product()], now: new Date("2026-06-10T10:00:00Z") });
+		const payload = sitePayload({ hours: DEFAULT_HOURS, products: [product()], now: new Date("2026-06-10T10:00:00Z") });
 		expect(payload).toMatchObject({
 			version: 1,
 			generatedAt: "2026-06-10T10:00:00.000Z",
-			classTimes: { days: [1, 4], words: { en: { headline: "Mondays and Thursdays, six sessions." } } },
+			hours: { groups: [{ days: [1, 4] }], words: { en: { headline: "Mondays and Thursdays, six sessions." } } },
 			cards: [{ key: "start-to-align", price: 1500 }],
 			events: [],
 		});
-		expect(payload.classTimes.times).toHaveLength(6);
+		expect(payload.hours.groups[0].periods).toHaveLength(6);
 	});
 });
 
@@ -87,6 +88,6 @@ describe("sitePayload with events", () => {
 			photo: false,
 			photoVersion: null,
 		};
-		expect(sitePayload({ classTimes: DEFAULT_CLASS_TIMES, products: [], events: [event], now: new Date("2026-06-10T10:00:00Z") }).events).toEqual([event]);
+		expect(sitePayload({ hours: DEFAULT_HOURS, products: [], events: [event], now: new Date("2026-06-10T10:00:00Z") }).events).toEqual([event]);
 	});
 });

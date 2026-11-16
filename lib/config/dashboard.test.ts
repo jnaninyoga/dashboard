@@ -21,9 +21,9 @@ describe("isCurrent", () => {
 });
 
 describe("navigation", () => {
-	it("gathers what the website shows under Website", () => {
-		const website = dashboardConfig.sections.find((s) => s.label === "Website")!;
-		expect(website.items.map((item) => item.url)).toEqual(["/website/class-times"]);
+	it("has no separate Website group: Studio hours feed the website", () => {
+		expect(dashboardConfig.sections.map((s) => s.label)).not.toContain("Website");
+		expect(dashboardConfig.settings.map((item) => item.url)).toContain("/settings/schedule");
 	});
 
 	it("puts website bookings with today's work", () => {
@@ -32,7 +32,7 @@ describe("navigation", () => {
 	});
 
 	it("is grouped in her words, with no admin group names", () => {
-		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing", "Price list", "Website"]);
+		expect(dashboardConfig.sections.map((s) => s.label)).toEqual(["Today", "Studio", "Billing", "Price list"]);
 	});
 
 	it("keeps what she sells in her price list, and only the studio in Settings", () => {

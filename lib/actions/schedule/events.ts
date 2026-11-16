@@ -3,8 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
-import { DEFAULT_HOURS } from "@/lib/config/schedule";
 import { refundsFor, walletAfterRefund } from "@/lib/domain/schedule/cancel";
+import { sessionProblem } from "@/lib/domain/schedule/hours";
 import { logServerError } from "@/lib/errors/server";
 import { type CalendarEvent, type ScheduleEventInput } from "@/lib/types";
 import { currentHourStart, fromStudioTime, STUDIO_TIME_ZONE, studioIsoString, weekdayOf } from "@/lib/utils/time";
@@ -57,22 +57,10 @@ export async function scheduleNewEventAction(data: ScheduleEventInput) {
 	// B2B and outdoor sessions are held off-site and are not bound to studio hours.
 	const isStudioEvent = data.type === "group" || data.type === "private";
 	if (isStudioEvent) {
-		let workingHours = await getWorkingHours();
-		if (!workingHours) {
-			workingHours = DEFAULT_HOURS;
-		}
-
-		const dayConfig = workingHours[weekday.toString()];
-		if (!dayConfig || !dayConfig.isOpen) {
-			return { error: "Studio is closed on this day." };
-		}
-
-		// Simple string comparison works for HH:mm formats (e.g. "08:00" >= "07:00")
-		if (data.startTimeStr < dayConfig.start || data.endTimeStr > dayConfig.end) {
-			return {
-				error: `Requested time is outside open hours. The studio is open from ${dayConfig.start} to ${dayConfig.end} on this day.`,
-			};
-		}
+		// Inside one of the day's periods: never on a closed day, never across a rest.
+		const workingHours = await getWorkingHours();
+		const problem = sessionProblem(workingHours[weekday.toString()], data.startTimeStr, data.endTimeStr);
+		if (problem) return { error: problem };
 	}
 
 	// Get Token

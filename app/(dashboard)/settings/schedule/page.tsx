@@ -1,20 +1,20 @@
 import { ScheduleForm } from "@/components/schedule/settings/form";
 import { getWorkingHours } from "@/lib/actions/settings";
-import { getClassTimes } from "@/lib/actions/website";
 
 export default async function StudioHoursPage() {
-	const [workingHours, classTimes] = await Promise.all([getWorkingHours(), getClassTimes()]);
+	const hours = await getWorkingHours();
 
 	return (
 		<>
 			<header className="space-y-1">
 				<h1 className="font-heading text-3xl font-medium tracking-tight text-foreground md:text-4xl">Studio hours</h1>
 				<p className="text-md text-muted-foreground">
-					When the studio is open. A class or private session outside these hours can&apos;t be scheduled (partner and outdoor sessions can).
+					When you work, with your rests. Group and private sessions are scheduled inside these hours (partner and outdoor sessions can be any time), and
+					jnaninyoga.com shows them.
 				</p>
 			</header>
 
-			<ScheduleForm initialData={workingHours} classTimes={classTimes} />
+			<ScheduleForm initial={hours} />
 		</>
 	);
 }

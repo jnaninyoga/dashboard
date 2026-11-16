@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
-import { hoursProblems } from "@/lib/domain/website/timetable";
+import { readWorkingHours, type WorkingHoursConfig } from "@/lib/domain/schedule/hours";
 import { logServerError } from "@/lib/errors/server";
 import { discountSchema } from "@/lib/validators/discount";
 import { workingHoursSchema } from "@/lib/validators/working-hours";
-import { readClassTimes } from "@/lib/website/site-data";
+import { type RebuildOutcome, requestSiteRebuild } from "@/lib/website/rebuild";
+import { readStudioHours, STUDIO_HOURS_KEY } from "@/lib/website/studio-hours";
 import { db } from "@/services/database";
 import { appSettings, clients, discounts } from "@/services/database/schema";
 
@@ -25,43 +26,35 @@ export async function getAppSettings() {
     }, {} as Record<string, string>);
 }
 
-import { type WorkingHoursConfig } from "@/lib/types";
-
-export async function getWorkingHours(): Promise<WorkingHoursConfig | null> {
+/** Studio hours: what she saved, or the website's week until she saves her own. */
+export async function getWorkingHours(): Promise<WorkingHoursConfig> {
 	await requireUser();
-    const setting = await db.query.appSettings.findFirst({
-        where: eq(appSettings.key, "working_hours")
-    });
-    
-    if (!setting || !setting.value) return null;
-    try {
-        return JSON.parse(setting.value) as WorkingHoursConfig;
-    } catch {
-        return null;
-    }
+	return readStudioHours();
 }
 
-export async function setWorkingHours(config: unknown): Promise<{ success?: boolean; error?: string; ref?: string }> {
+/**
+ * Saves Studio hours: from now on sessions are scheduled inside them, and the
+ * website rebuilds to show them. A failed rebuild never fails the save.
+ */
+export async function setWorkingHours(config: unknown): Promise<{ success?: boolean; error?: string; ref?: string; website?: RebuildOutcome }> {
 	await requireUser();
 	const parsed = workingHoursSchema.safeParse(config);
 	if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the hours" };
 	try {
-		// The website's class times have to stay inside her hours, from this side too.
-		const [conflict] = Object.values(hoursProblems(await readClassTimes(), parsed.data));
-		if (conflict) return { error: conflict.message };
-		const value = JSON.stringify(parsed.data);
+		const week = readWorkingHours(parsed.data);
+		if (!week) return { error: "Check the hours" };
+		const value = JSON.stringify(week);
 		await db
 			.insert(appSettings)
-			.values({ key: "working_hours", value })
+			.values({ key: STUDIO_HOURS_KEY, value })
 			.onConflictDoUpdate({ target: appSettings.key, set: { value } });
-		revalidatePath("/settings/schedule");
-		revalidatePath("/website/class-times");
-		revalidatePath("/schedule");
-		revalidatePath("/");
-		return { success: true };
 	} catch (error) {
 		return { error: "Couldn't save the hours", ref: logServerError("Saving studio hours", error) };
 	}
+	revalidatePath("/settings/schedule");
+	revalidatePath("/schedule");
+	revalidatePath("/");
+	return { success: true, website: await requestSiteRebuild("studio hours") };
 }
 
 // --- Discounts ---

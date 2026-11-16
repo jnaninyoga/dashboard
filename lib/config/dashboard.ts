@@ -2,7 +2,6 @@ import {
 	Buildings,
 	Calendar,
 	Card,
-	Clock,
 	DirectInbox,
 	DiscountShape,
 	DocumentText,
@@ -63,12 +62,6 @@ export const dashboardConfig = {
 				{ title: "Partner rates", url: "/price-list/partner-rates", icon: MenuBoard },
 				{ title: "Discounts", url: "/price-list/discounts", icon: DiscountShape },
 			],
-		},
-		{
-			// What jnaninyoga.com shows that isn't a session: the weekly class times.
-			label: "Website",
-			// Outdoor events are outdoor sessions: they live in Schedule.
-			items: [{ title: "Class times", url: "/website/class-times", icon: Clock }],
 		},
 	] satisfies { label: string; items: NavItem[] }[],
 	settings: [

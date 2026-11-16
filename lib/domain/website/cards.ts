@@ -1,8 +1,9 @@
 // The membership cards the website shows, and everything the site builds from.
 
 import { type SiteEvent } from "@/lib/domain/events/rules";
+import { type WorkingHoursConfig } from "@/lib/domain/schedule/hours";
 
-import { type ClassTimes, normalizeClassTimes, timetableWords, type Words } from "./timetable";
+import { type SiteHours, siteHours } from "./timetable";
 
 /** A card on the website: its key in the site's links and copy, and its numbers. */
 export type SiteCard = { key: string; name: string; credits: number; months: number | null; price: number; popular: boolean };
@@ -43,28 +44,28 @@ export function siteCards(products: CardProduct[]): SiteCard[] {
 export type SitePayload = {
 	version: 1;
 	generatedAt: string;
-	classTimes: ClassTimes & { words: { fr: Words; en: Words } };
+	/** Studio hours: the open days grouped by the same periods, with the words the site says them in. */
+	hours: SiteHours;
 	cards: SiteCard[];
 	events: SiteEvent[];
 };
 
-/** Everything the website builds from: the class times and their words, the cards, and (later) events. */
+/** Everything the website builds from: Studio hours and their words, the cards, and the outdoor events. */
 export function sitePayload({
-	classTimes,
+	hours,
 	products,
 	events = [],
 	now,
 }: {
-	classTimes: ClassTimes;
+	hours: WorkingHoursConfig;
 	products: CardProduct[];
 	events?: SiteEvent[];
 	now: Date;
 }): SitePayload {
-	const normalized = normalizeClassTimes(classTimes);
 	return {
 		version: 1,
 		generatedAt: now.toISOString(),
-		classTimes: { ...normalized, words: timetableWords(normalized) },
+		hours: siteHours(hours),
 		cards: siteCards(products),
 		events,
 	};

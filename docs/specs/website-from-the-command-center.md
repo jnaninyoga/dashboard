@@ -2,6 +2,8 @@
 
 Status: approved by the owner, 2026-11-16. Slice 1 (Bookings) built on branch `feat/website-bookings`.
 
+> **Superseded in part (owner, 2026-11-16): Studio hours are the website's times.** There is no separate class-times setting or Website → Class times page. Studio hours (Settings → Studio hours) hold, per day, closed or the periods she works with the rests between them. The dashboard schedules group and private sessions inside one period, and `GET /site` sends `hours: { groups: [{ days, periods, words }], words: { headline } }`: every open day, grouped by the same periods. The site lists every open day (several groups each under their days), draws today's periods on its arc, and offers every period in the booking form. She publishes with "Save and update the website". Sections below that describe `class_times` and its page are history.
+
 Two repositories are involved:
 
 - **The dashboard** (this repo, "Ouarda's Digital Command Center"): Next.js 16 on Vercel at `dash.jnaninyoga.com`, Postgres on Supabase, sign-in with Better Auth.
