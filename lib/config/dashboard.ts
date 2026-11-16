@@ -7,6 +7,7 @@ import {
 	Home2,
 	type Icon,
 	MenuBoard,
+	Notification,
 	People,
 	ReceiptText,
 	Shop,
@@ -63,6 +64,7 @@ export const dashboardConfig = {
 	settings: [
 		{ title: "Studio profile", url: "/settings/company", icon: Shop },
 		{ title: "Studio hours", url: "/settings/schedule", icon: Timer1 },
+		{ title: "Notifications", url: "/settings/notifications", icon: Notification },
 	] satisfies NavItem[],
 };
 

@@ -28,7 +28,8 @@ describe("navigation", () => {
 	it("keeps what she sells in her price list, and only the studio in Settings", () => {
 		const priceList = dashboardConfig.sections.find((s) => s.label === "Price list")!;
 		expect(priceList.items.map((item) => item.title)).toEqual(["Memberships", "Partner rates", "Discounts"]);
-		expect(dashboardConfig.settings.map((item) => item.title)).toEqual(["Studio profile", "Studio hours"]);
+		expect(dashboardConfig.settings.map((item) => item.title)).toEqual(["Studio profile", "Studio hours", "Notifications"]);
+		expect(dashboardConfig.settings.map((item) => item.url)).toContain("/settings/notifications");
 	});
 });
 
