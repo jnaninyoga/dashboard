@@ -3,9 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
+import { DEFAULT_HOURS } from "@/lib/config/schedule";
 import { refundsFor, walletAfterRefund } from "@/lib/domain/schedule/cancel";
 import { logServerError } from "@/lib/errors/server";
-import { type CalendarEvent, type ScheduleEventInput, type WorkingHoursConfig } from "@/lib/types";
+import { type CalendarEvent, type ScheduleEventInput } from "@/lib/types";
 import { currentHourStart, fromStudioTime, STUDIO_TIME_ZONE, studioIsoString, weekdayOf } from "@/lib/utils/time";
 import { requestSiteRebuild } from "@/lib/website/rebuild";
 import { db } from "@/services/database";
@@ -22,16 +23,6 @@ import {
 import { and, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 
 import { getWorkingHours } from "../settings";
-
-const DEFAULT_HOURS: WorkingHoursConfig = {
-	"1": { isOpen: true, start: "08:00", end: "20:00" },
-	"2": { isOpen: true, start: "08:00", end: "20:00" },
-	"3": { isOpen: true, start: "08:00", end: "20:00" },
-	"4": { isOpen: true, start: "08:00", end: "20:00" },
-	"5": { isOpen: true, start: "08:00", end: "20:00" },
-	"6": { isOpen: true, start: "08:00", end: "14:00" },
-	"0": { isOpen: false, start: "08:00", end: "20:00" },
-};
 
 // Node bundles its own time-zone data; builds older than 2026e still put
 // Morocco on UTC+1, which would check the wrong hour against the calendar.

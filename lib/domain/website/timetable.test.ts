@@ -2,7 +2,7 @@ import { DEFAULT_HOURS } from "@/lib/config/schedule";
 
 import { describe, expect, it } from "vitest";
 
-import { classTimesProblems, DEFAULT_CLASS_TIMES, normalizeClassTimes, timetableWords } from "./timetable";
+import { classTimesProblems, DEFAULT_CLASS_TIMES, hoursProblems, normalizeClassTimes, timetableWords } from "./timetable";
 
 const times = (n: number) =>
 	Array.from({ length: n }, (_, i) => ({ start: `${String(8 + i).padStart(2, "0")}:00`, end: `${String(8 + i).padStart(2, "0")}:45` }));
@@ -75,13 +75,18 @@ describe("normalizeClassTimes", () => {
 
 describe("classTimesProblems", () => {
 	const open = { ...DEFAULT_HOURS, "1": { isOpen: true, start: "08:00", end: "21:00" }, "4": { isOpen: true, start: "08:00", end: "21:00" } };
+	const shut8pm = { ...DEFAULT_HOURS, "1": { isOpen: true, start: "08:00", end: "20:00" }, "4": { isOpen: true, start: "08:00", end: "20:00" } };
 
 	it("accepts today's timetable when the studio is open until 21:00", () => {
 		expect(classTimesProblems(DEFAULT_CLASS_TIMES, open)).toEqual([]);
 	});
 
+	it("agrees with the default Studio hours, so a studio that never saved either is consistent", () => {
+		expect(classTimesProblems(DEFAULT_CLASS_TIMES, DEFAULT_HOURS)).toEqual([]);
+	});
+
 	it("refuses a class after closing, naming the day", () => {
-		expect(classTimesProblems(DEFAULT_CLASS_TIMES, DEFAULT_HOURS)).toEqual([
+		expect(classTimesProblems(DEFAULT_CLASS_TIMES, shut8pm)).toEqual([
 			"Monday closes at 20:00: 19:30–21:00 doesn't fit. Change Studio hours first.",
 		]);
 	});
@@ -97,5 +102,33 @@ describe("classTimesProblems", () => {
 		expect(
 			classTimesProblems({ days: [1], times: [{ start: "08:30", end: "10:00" }, { start: "09:30", end: "11:00" }] }, open),
 		).toEqual(["8:30–10:00 overlaps 9:30–11:00."]);
+	});
+});
+
+describe("hoursProblems", () => {
+	const hours = { ...DEFAULT_HOURS, "1": { isOpen: true, start: "08:00", end: "21:00" }, "4": { isOpen: true, start: "08:00", end: "21:00" } };
+
+	it("lets her change any hours that keep the website's classes inside them", () => {
+		expect(hoursProblems(DEFAULT_CLASS_TIMES, hours)).toEqual({});
+		expect(hoursProblems(DEFAULT_CLASS_TIMES, { ...hours, "6": { isOpen: false, start: "08:00", end: "14:00" } })).toEqual({});
+	});
+
+	it("names the day whose hours would leave a website class outside, by its key", () => {
+		expect(hoursProblems(DEFAULT_CLASS_TIMES, { ...hours, "1": { isOpen: true, start: "08:00", end: "20:00" } })).toEqual({
+			"1": { field: "end", message: "The website has a class until 21:00 on Mondays. Stay open until then, or change Class times first." },
+		});
+		expect(hoursProblems(DEFAULT_CLASS_TIMES, { ...hours, "4": { isOpen: true, start: "09:00", end: "21:00" } })).toEqual({
+			"4": { field: "start", message: "The website has a class from 8:30 on Thursdays. Open by then, or change Class times first." },
+		});
+	});
+
+	it("refuses closing a day the website has classes on", () => {
+		expect(hoursProblems(DEFAULT_CLASS_TIMES, { ...hours, "1": { isOpen: false, start: "08:00", end: "21:00" } })).toEqual({
+			"1": { field: "isOpen", message: "The website has classes on Mondays. Keep it open, or change Class times first." },
+		});
+	});
+
+	it("has nothing to say without classes on the website", () => {
+		expect(hoursProblems({ days: [], times: [] }, { ...hours, "1": { isOpen: false, start: "08:00", end: "21:00" } })).toEqual({});
 	});
 });

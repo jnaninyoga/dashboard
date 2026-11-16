@@ -1,8 +1,9 @@
 import { ScheduleForm } from "@/components/schedule/settings/form";
 import { getWorkingHours } from "@/lib/actions/settings";
+import { getClassTimes } from "@/lib/actions/website";
 
 export default async function StudioHoursPage() {
-	const workingHours = await getWorkingHours();
+	const [workingHours, classTimes] = await Promise.all([getWorkingHours(), getClassTimes()]);
 
 	return (
 		<>
@@ -13,7 +14,7 @@ export default async function StudioHoursPage() {
 				</p>
 			</header>
 
-			<ScheduleForm initialData={workingHours} />
+			<ScheduleForm initialData={workingHours} classTimes={classTimes} />
 		</>
 	);
 }

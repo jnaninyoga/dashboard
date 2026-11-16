@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/lib/auth/require-user";
+import { hoursProblems } from "@/lib/domain/website/timetable";
 import { logServerError } from "@/lib/errors/server";
 import { discountSchema } from "@/lib/validators/discount";
 import { workingHoursSchema } from "@/lib/validators/working-hours";
+import { readClassTimes } from "@/lib/website/site-data";
 import { db } from "@/services/database";
 import { appSettings, clients, discounts } from "@/services/database/schema";
 
@@ -44,12 +46,16 @@ export async function setWorkingHours(config: unknown): Promise<{ success?: bool
 	const parsed = workingHoursSchema.safeParse(config);
 	if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the hours" };
 	try {
+		// The website's class times have to stay inside her hours, from this side too.
+		const [conflict] = Object.values(hoursProblems(await readClassTimes(), parsed.data));
+		if (conflict) return { error: conflict.message };
 		const value = JSON.stringify(parsed.data);
 		await db
 			.insert(appSettings)
 			.values({ key: "working_hours", value })
 			.onConflictDoUpdate({ target: appSettings.key, set: { value } });
 		revalidatePath("/settings/schedule");
+		revalidatePath("/website/class-times");
 		revalidatePath("/schedule");
 		revalidatePath("/");
 		return { success: true };

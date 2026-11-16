@@ -125,3 +125,30 @@ export function classTimesProblems(ct: ClassTimes, hours: WorkingHoursConfig): s
 	}
 	return problems;
 }
+
+/** Why a day's hours can't be saved, and which of its fields is at fault. */
+export type HoursProblem = { field: "isOpen" | "start" | "end"; message: string };
+
+/**
+ * The other side of the same rule: Studio hours that would leave one of the
+ * website's classes outside them, by day key ("1" for Monday). Empty when
+ * every class still fits. Saving hours is refused while it isn't, just as
+ * saving class times outside the hours is.
+ */
+export function hoursProblems(ct: ClassTimes, hours: WorkingHoursConfig): Record<string, HoursProblem> {
+	const { days, times } = normalizeClassTimes(ct);
+	const real = times.filter((t) => minutes(t.end) > minutes(t.start));
+	if (!real.length) return {};
+	const first = real.reduce((a, t) => (minutes(t.start) < minutes(a) ? t.start : a), real[0].start);
+	const last = real.reduce((a, t) => (minutes(t.end) > minutes(a) ? t.end : a), real[0].end);
+
+	const problems: Record<string, HoursProblem> = {};
+	for (const day of days) {
+		const open = hours[String(day)];
+		const on = `${EN_DAYS[day]}s`;
+		if (!open?.isOpen) problems[day] = { field: "isOpen", message: `The website has classes on ${on}. Keep it open, or change Class times first.` };
+		else if (minutes(open.start) > minutes(first)) problems[day] = { field: "start", message: `The website has a class from ${showTime(first)} on ${on}. Open by then, or change Class times first.` };
+		else if (minutes(open.end) < minutes(last)) problems[day] = { field: "end", message: `The website has a class until ${showTime(last)} on ${on}. Stay open until then, or change Class times first.` };
+	}
+	return problems;
+}

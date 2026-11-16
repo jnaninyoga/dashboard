@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 import { SaveStatus, useAutosave } from "@/components/b2b/documents/use-autosave";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { setWorkingHours } from "@/lib/actions/settings";
 import { DAYS, DEFAULT_HOURS } from "@/lib/config/schedule";
+import { type ClassTimes, hoursProblems } from "@/lib/domain/website/timetable";
 import { type WorkingHoursConfig } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
 import { workingHoursSchema } from "@/lib/validators/working-hours";
@@ -18,22 +20,43 @@ const minutes = (time: string) => {
 const hoursOf = (day: WorkingHoursConfig[string]) => (day.isOpen ? Math.max(0, minutes(day.end) - minutes(day.start)) / 60 : 0);
 const hoursLabel = (h: number) => `${h.toLocaleString("fr-FR", { maximumFractionDigits: 1 })} h`;
 
+/** What stops a day from saving; when it's the website's classes, the way to change them. */
+function DayProblem({ id, message, website }: { id: string; message: string; website: boolean }) {
+	return (
+		<p id={id} className="text-sm text-destructive">
+			{message}
+			{website ? (
+				<>
+					{" "}
+					<Link href="/website/class-times" className="font-medium underline underline-offset-2">
+						Go to Class times
+					</Link>
+				</>
+			) : null}
+		</p>
+	);
+}
+
 /**
  * The studio's week: each day open or closed, from when to when, drawn on
  * one time axis so the week reads at a glance. It saves itself; a day that
  * ends before it starts says so and waits. Sessions she schedules outside
  * these hours are refused.
  */
-export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig | null }) {
+export function ScheduleForm({ initialData, classTimes }: { initialData: WorkingHoursConfig | null; classTimes: ClassTimes }) {
 	const [week, setWeek] = useState<WorkingHoursConfig>(() => ({ ...DEFAULT_HOURS, ...initialData }));
 
 	const check = workingHoursSchema.safeParse(week);
 	const problems = new Map<string, string>();
 	if (!check.success) for (const issue of check.error.issues) problems.set(String(issue.path[0]), issue.message);
+	// A day that would leave one of the website's classes outside its hours waits too.
+	const website = hoursProblems(classTimes, week);
+	const [firstConflict] = DAYS.filter((d) => website[d.key]);
 
 	const { state, changed } = useAutosave(
 		async () => {
 			if (!check.success) return { ok: false, invalid: true, message: check.error.issues[0].message.toLowerCase() };
+			if (firstConflict) return { ok: false, invalid: true, message: `a website class would fall outside ${firstConflict.label}'s hours` };
 			const result = await setWorkingHours(week);
 			return result.success ? { ok: true } : { ok: false, invalid: !result.ref, message: result.error ?? "Couldn't save the hours" };
 		},
@@ -91,12 +114,22 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 				<ul className="divide-y divide-border">
 					{DAYS.map(({ key, label }) => {
 						const day = week[key];
-						const problem = problems.get(key);
+						// The day's own mistake first (closes before it opens), then the website's classes.
+						const own = problems.get(key);
+						const conflict = own ? undefined : website[key];
+						const problemId = `hours-${key}-problem`;
+						const faulty = (field: "isOpen" | "start" | "end") => (field === "end" && !!own) || conflict?.field === field;
 						const valid = day.isOpen && day.end > day.start;
 						return (
 							<li key={key} className="grid gap-3 px-4 py-3.5 md:grid-cols-[9rem_1fr_18rem] md:items-center md:gap-4">
 								<label className="flex cursor-pointer items-center gap-3">
-									<Switch checked={day.isOpen} onCheckedChange={(isOpen) => update(key, { isOpen })} aria-label={`${label} open`} />
+									<Switch
+										checked={day.isOpen}
+										onCheckedChange={(isOpen) => update(key, { isOpen })}
+										aria-label={`${label} open`}
+										aria-invalid={faulty("isOpen") || undefined}
+										aria-describedby={faulty("isOpen") ? problemId : undefined}
+									/>
 									<span className={cn("font-medium", !day.isOpen && "text-muted-foreground")}>{label}</span>
 									<span className="ml-auto text-sm text-muted-foreground tabular-nums md:hidden">
 										{day.isOpen ? (valid ? hoursLabel(hoursOf(day)) : "") : "Closed"}
@@ -122,6 +155,8 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 											<Input
 												type="time"
 												aria-label={`${label} opens`}
+												aria-invalid={faulty("start") || undefined}
+												aria-describedby={faulty("start") ? problemId : undefined}
 												value={day.start}
 												onChange={(event) => update(key, { start: event.target.value })}
 												className="h-10 tabular-nums"
@@ -132,14 +167,18 @@ export function ScheduleForm({ initialData }: { initialData: WorkingHoursConfig 
 											<Input
 												type="time"
 												aria-label={`${label} closes`}
-												aria-invalid={!!problem}
+												aria-invalid={faulty("end") || undefined}
+												aria-describedby={faulty("end") ? problemId : undefined}
 												value={day.end}
 												onChange={(event) => update(key, { end: event.target.value })}
 												className="h-10 tabular-nums"
 											/>
 										</div>
-										{problem ? <p className="text-sm text-destructive">{problem}</p> : null}
+										{own ? <DayProblem id={problemId} message={own} website={false} /> : null}
+										{conflict ? <DayProblem id={problemId} message={conflict.message} website /> : null}
 									</div>
+								) : conflict ? (
+									<DayProblem id={problemId} message={conflict.message} website />
 								) : (
 									<p className="text-sm text-muted-foreground max-md:hidden">Closed</p>
 								)}
