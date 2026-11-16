@@ -20,5 +20,13 @@ export default async function AddClientPage({ searchParams }: { searchParams: Pr
 			? { fullName: request.name, phone: toE164(request.phone) ?? request.phone, referralSource: ReferralSource.WEBSITE }
 			: undefined;
 
-	return <ClientForm mode="create" discounts={discounts} initialData={initialData} />;
+	return (
+		<ClientForm
+			mode="create"
+			discounts={discounts}
+			initialData={initialData}
+			// Its own draft: an old half-filled form mustn't show another person here.
+			draftSource={initialData ? `booking-${fromBooking}` : undefined}
+		/>
+	);
 }

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { createClientAction, updateClientAction } from "@/lib/actions/clients/mutations";
 import { HEALTH_TEMPLATE, type HealthSection } from "@/lib/config/health";
+import { clientDraftKey } from "@/lib/domain/clients/draft";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { 
     type Discount, 
@@ -51,12 +52,13 @@ interface ClientFormProps {
 	};
 	mode: "create" | "edit";
     discounts: Discount[];
+	/** Where a new client comes from ("booking-<id>"): its draft is kept apart. */
+	draftSource?: string;
 }
 
 type Draft = { values: Partial<ClientFormValues>; step: number };
 
 const noop = () => () => {};
-const draftKey = (mode: ClientFormProps["mode"], id?: string) => `client-form-progress-${mode}-${id || "new"}`;
 
 function forgetDraft(key: string) {
 	try {
@@ -84,7 +86,7 @@ function readDraft(key: string): Draft | null {
  */
 export function ClientForm(props: ClientFormProps) {
 	const inBrowser = useSyncExternalStore(noop, () => true, () => false);
-	const key = draftKey(props.mode, props.initialData?.id);
+	const key = clientDraftKey(props.mode, props.initialData?.id, props.draftSource);
 	const draft = useMemo(
 		() => (inBrowser && props.mode === "create" ? readDraft(key) : null),
 		[inBrowser, props.mode, key],
@@ -96,13 +98,14 @@ function ClientFormBody({
 	initialData,
 	mode,
 	discounts,
+	draftSource,
 	draft,
 	draftReady,
 }: ClientFormProps & { draft: Draft | null; draftReady: boolean }) {
 	const router = useRouter();
 	const confirm = useConfirm();
 	const keepsDraft = mode === "create";
-	const STORAGE_KEY = draftKey(mode, initialData?.id);
+	const STORAGE_KEY = clientDraftKey(mode, initialData?.id, draftSource);
 	const doneHref = (id?: string) => (id ? `/clients/${id}` : "/clients");
 
     const [state, formAction, isPending] = useActionState(async (_: unknown, formData: FormData) => {
