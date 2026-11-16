@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { setWorkingHours } from "@/lib/actions/settings";
 import { DAYS, DEFAULT_HOURS } from "@/lib/config/schedule";
+import { inOrder, lengthOf } from "@/lib/domain/website/day-chain";
 import { type ClassTimes, hoursProblems } from "@/lib/domain/website/timetable";
 import { type WorkingHoursConfig } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
@@ -51,6 +52,8 @@ export function ScheduleForm({ initialData, classTimes }: { initialData: Working
 	if (!check.success) for (const issue of check.error.issues) problems.set(String(issue.path[0]), issue.message);
 	// A day that would leave one of the website's classes outside its hours waits too.
 	const website = hoursProblems(classTimes, week);
+	const classes = inOrder(classTimes.times).filter((t) => lengthOf(t) > 0);
+	const classDays = new Set(classes.length ? classTimes.days.map(String) : []);
 	const [firstConflict] = DAYS.filter((d) => website[d.key]);
 
 	const { state, changed } = useAutosave(
@@ -91,17 +94,33 @@ export function ScheduleForm({ initialData, classTimes }: { initialData: Working
 					<SaveStatus state={state} />
 				</div>
 			</div>
+			{classes.length && classDays.size ? (
+				<p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+					<span className="inline-flex items-center gap-1.5">
+						<span aria-hidden className="h-2 w-5 rounded-full bg-primary/25" />
+						Open
+					</span>
+					<span className="inline-flex items-center gap-1.5">
+						<span aria-hidden className="h-2 w-5 rounded-full bg-primary" />
+						Classes on the website
+					</span>
+				</p>
+			) : null}
 
 			<div className="rounded-2xl border bg-card">
 				{/* The time axis, above the bars (wide screens only: on a phone each day reads its times). */}
 				<div className="hidden px-4 pt-3 md:grid md:grid-cols-[9rem_1fr_18rem] md:gap-4">
 					<span />
-					<div className="relative h-4 text-xs text-muted-foreground tabular-nums">
+					<div className="@container relative h-4 text-xs text-muted-foreground tabular-nums">
 						{ticks.map((hour, i) => (
 							<span
 								key={hour}
-								// The ends sit inside the axis; the hours between are centred on their mark.
-								className={cn("absolute", i === 0 ? "" : i === ticks.length - 1 ? "-translate-x-full" : "-translate-x-1/2")}
+								// The ends sit inside the axis; the hours between are centred on their mark,
+								// and only shown when the axis is wide enough for them not to touch.
+								className={cn(
+									"absolute",
+									i === 0 ? "" : i === ticks.length - 1 ? "-translate-x-full" : "hidden -translate-x-1/2 @[14rem]:block",
+								)}
 								style={{ left: `${(((hour - from) * 60) / span) * 100}%` }}
 							>
 								{String(hour).padStart(2, "0")}:00
@@ -143,10 +162,20 @@ export function ScheduleForm({ initialData, classTimes }: { initialData: Working
 								>
 									{valid ? (
 										<span
-											className="absolute inset-y-0 rounded-full bg-primary transition-[left,width] duration-300"
+											className="absolute inset-y-0 rounded-full bg-primary/25 transition-[left,width] duration-300"
 											style={{ left: at(day.start), width: `calc(${at(day.end)} - ${at(day.start)})` }}
 										/>
 									) : null}
+									{/* On class days, the website's classes inside the open hours, the rests between them. */}
+									{valid && classDays.has(key)
+										? classes.map((t) => (
+												<span
+													key={t.start}
+													className="absolute inset-y-0 rounded-full bg-primary"
+													style={{ left: at(t.start), width: `calc(${at(t.end)} - ${at(t.start)} - 2px)` }}
+												/>
+											))
+										: null}
 								</div>
 
 								{day.isOpen ? (

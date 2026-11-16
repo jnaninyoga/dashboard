@@ -1,17 +1,18 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { Fragment, useMemo, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { saveClassTimesAction } from "@/lib/actions/website";
+import { addClass, inOrder, lengthOf, restsOf, setLength, setRest, setStart, showLength, toMinutes } from "@/lib/domain/website/day-chain";
 import { type ClassTimes, classTimesProblems, normalizeClassTimes, showTime, timetableWords } from "@/lib/domain/website/timetable";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 import { notifyWebsite } from "@/lib/feedback/website";
 import { type WorkingHoursConfig } from "@/lib/types";
 import { cn } from "@/lib/utils/ui";
 
-import { Add, CloseCircle, Global, Refresh, Warning2 } from "iconsax-reactjs";
+import { Add, CloseCircle, Global, Minus, Refresh, Warning2 } from "iconsax-reactjs";
 
 /** The studio's week, Monday first. */
 const WEEK = [
@@ -24,11 +25,78 @@ const WEEK = [
 	{ day: 0, short: "Sun", label: "Sunday" },
 ];
 
-const addMinutes = (time: string, add: number) => {
-	const [h, m] = time.split(":").map(Number);
-	const total = Math.min(h * 60 + m + add, 23 * 60);
-	return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
-};
+/** Lengths and rests move by a quarter of an hour. */
+const STEP = 15;
+
+/** − value +, big enough for a thumb; the value (and what it means, under it) is read out when it changes. */
+function Stepper({
+	label,
+	value,
+	note,
+	quiet,
+	onLess,
+	onMore,
+	lessDisabled,
+}: {
+	label: string;
+	value: string;
+	note?: string;
+	/** A rest: dashed and see-through, as the gaps are on the strip. */
+	quiet?: boolean;
+	onLess: () => void;
+	onMore: () => void;
+	lessDisabled?: boolean;
+}) {
+	return (
+		<div role="group" aria-label={label} className={cn("inline-flex h-11 shrink-0 items-center rounded-full border", quiet ? "border-dashed" : "bg-background")}>
+			<Button type="button" variant="ghost" size="icon" aria-label={`${label}: ${STEP} min less`} onClick={onLess} disabled={lessDisabled} className="size-11 rounded-full">
+				<Minus size={18} />
+			</Button>
+			<span aria-live="polite" className="grid min-w-12 justify-items-center text-sm leading-tight font-semibold tabular-nums">
+				{value}
+				{note ? <span className="text-[0.6875rem] font-normal text-muted-foreground">{note}</span> : null}
+			</span>
+			<Button type="button" variant="ghost" size="icon" aria-label={`${label}: ${STEP} min more`} onClick={onMore} className="size-11 rounded-full">
+				<Add size={18} />
+			</Button>
+		</div>
+	);
+}
+
+/** The day at a glance: the classes as blocks, the rests as the gaps between them, the long breaks named. */
+function DayStrip({ times }: { times: { start: string; end: string }[] }) {
+	const real = times.filter((t) => lengthOf(t) > 0);
+	if (!real.length) return null;
+	const from = Math.floor(toMinutes(real[0].start) / 60) * 60;
+	const to = Math.ceil(Math.max(...real.map((t) => toMinutes(t.end))) / 60) * 60;
+	const span = Math.max(60, to - from);
+	const at = (minutes: number) => `${((minutes - from) / span) * 100}%`;
+	const rests = restsOf(real);
+	return (
+		<div aria-hidden className="grid gap-1.5 px-1 pt-1 pb-2">
+			<div className="relative h-3 rounded-full bg-muted/70">
+				{real.map((t, i) => (
+					<span
+						key={i}
+						className="absolute inset-y-0 rounded-full bg-primary transition-[left,width] duration-300"
+						style={{ left: at(toMinutes(t.start)), width: `calc(${at(toMinutes(t.end))} - ${at(toMinutes(t.start))} - 2px)` }}
+					/>
+				))}
+			</div>
+			<div className="relative h-4 text-xs text-muted-foreground tabular-nums">
+				<span className="absolute left-0">{showTime(real[0].start)}</span>
+				{rests.map((rest, i) =>
+					rest >= 60 ? (
+						<span key={i} className="absolute -translate-x-1/2 whitespace-nowrap" style={{ left: at((toMinutes(real[i].end) + toMinutes(real[i + 1].start)) / 2) }}>
+							{showLength(rest)} break
+						</span>
+					) : null,
+				)}
+				<span className="absolute right-0">{showTime(real.at(-1)!.end)}</span>
+			</div>
+		</div>
+	);
+}
 
 /**
  * The website's class times: the days, then the times (the same each day),
@@ -37,7 +105,8 @@ const addMinutes = (time: string, add: number) => {
  */
 export function ClassTimesForm({ initial, hours }: { initial: ClassTimes; hours: WorkingHoursConfig }) {
 	const [saved, setSaved] = useState(() => JSON.stringify(normalizeClassTimes(initial)));
-	const [draft, setDraft] = useState<ClassTimes>(initial);
+	// The times stay in order, so each one's rest is the gap to the next.
+	const [draft, setDraft] = useState<ClassTimes>(() => ({ ...initial, times: inOrder(initial.times) }));
 	const [pending, startTransition] = useTransition();
 
 	const current = normalizeClassTimes(draft);
@@ -47,15 +116,10 @@ export function ClassTimesForm({ initial, hours }: { initial: ClassTimes; hours:
 
 	const toggleDay = (day: number) =>
 		setDraft((d) => ({ ...d, days: d.days.includes(day) ? d.days.filter((x) => x !== day) : [...d.days, day] }));
-	const setTime = (index: number, patch: Partial<ClassTimes["times"][number]>) =>
-		setDraft((d) => ({ ...d, times: d.times.map((t, i) => (i === index ? { ...t, ...patch } : t)) }));
-	const removeTime = (index: number) => setDraft((d) => ({ ...d, times: d.times.filter((_, i) => i !== index) }));
-	const addTime = () =>
-		setDraft((d) => {
-			const last = normalizeClassTimes(d).times.at(-1);
-			const start = last ? addMinutes(last.end, 30) : "09:00";
-			return { ...d, times: [...d.times, { start, end: addMinutes(start, 90) }] };
-		});
+	const change = (edit: (times: ClassTimes["times"]) => ClassTimes["times"]) => setDraft((d) => ({ ...d, times: inOrder(edit(d.times)) }));
+	const removeTime = (index: number) => change((times) => times.filter((_, i) => i !== index));
+	const rests = restsOf(draft.times);
+	const nextRest = Math.max(0, rests.at(-1) ?? 30);
 
 	const save = () =>
 		startTransition(async () => {
@@ -105,47 +169,72 @@ export function ClassTimesForm({ initial, hours }: { initial: ClassTimes; hours:
 							{current.times.length} {current.times.length === 1 ? "class" : "classes"}
 						</span>
 					</div>
-					<div className="min-w-0 rounded-3xl border border-secondary/20 bg-card p-2 sm:p-3">
+					<div className="@container min-w-0 rounded-3xl border border-secondary/20 bg-card p-3 sm:p-4">
+						<DayStrip times={draft.times} />
 						{draft.times.length ? (
-							<ul className="divide-y divide-border/60">
-								{draft.times.map((time, index) => (
-									<li key={index} className="flex min-w-0 items-center gap-2 px-2 py-2.5">
-										<Input
-											type="time"
-											aria-label={`Class ${index + 1} starts`}
-											value={time.start}
-											onChange={(e) => setTime(index, { start: e.target.value })}
-											className="h-11 w-0 max-w-36 min-w-0 flex-1 px-2.5 tabular-nums"
-										/>
-										<span aria-hidden className="text-muted-foreground">
-											–
-										</span>
-										<Input
-											type="time"
-											aria-label={`Class ${index + 1} ends`}
-											value={time.end}
-											onChange={(e) => setTime(index, { end: e.target.value })}
-											className="h-11 w-0 max-w-36 min-w-0 flex-1 px-2.5 tabular-nums"
-										/>
-										<Button
-											type="button"
-											variant="ghost"
-											size="icon"
-											aria-label={`Remove the ${showTime(time.start)} class`}
-											onClick={() => removeTime(index)}
-											className="ml-auto size-11 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
-										>
-											<CloseCircle size={20} />
-										</Button>
-									</li>
-								))}
-							</ul>
+							<ol className="grid">
+								{draft.times.map((time, index) => {
+									const rest = rests[index];
+									return (
+										<Fragment key={index}>
+											<li className="grid grid-cols-[1fr_auto] items-center gap-1.5 py-1.5 @xs:flex">
+												<Input
+													type="time"
+													aria-label={`Class ${index + 1} starts`}
+													value={time.start}
+													onChange={(e) => change((times) => setStart(times, index, e.target.value))}
+													className="h-11 w-full px-2.5 tabular-nums @xs:w-32"
+												/>
+												<div className="row-start-2 @xs:row-start-auto">
+													<Stepper
+													label={`Class ${index + 1} length`}
+													value={showLength(Math.max(0, lengthOf(time)))}
+													note={`to ${showTime(time.end)}`}
+													onLess={() => change((times) => setLength(times, index, lengthOf(time) - STEP))}
+													onMore={() => change((times) => setLength(times, index, lengthOf(time) + STEP))}
+													lessDisabled={lengthOf(time) <= STEP}
+													/>
+												</div>
+												<Button
+													type="button"
+													variant="ghost"
+													size="icon"
+													aria-label={`Remove the ${showTime(time.start)} class`}
+													onClick={() => removeTime(index)}
+													className="col-start-2 row-start-1 ml-auto size-11 shrink-0 rounded-full text-muted-foreground hover:text-destructive"
+												>
+													<CloseCircle size={20} />
+												</Button>
+											</li>
+											{rest === undefined ? null : (
+												<li className="flex items-center gap-1.5 py-1">
+													{/* Under the start time: the thread from one class to the next. */}
+													<span aria-hidden className="flex w-6 justify-center @xs:w-32">
+														<span className="h-9 border-l-2 border-dashed border-border" />
+													</span>
+													<Stepper
+														quiet
+														label={`Rest after class ${index + 1}`}
+														value={rest < 0 ? "—" : showLength(rest)}
+														onLess={() => change((times) => setRest(times, index, rest - STEP))}
+														onMore={() => change((times) => setRest(times, index, Math.max(0, rest) + STEP))}
+														lessDisabled={rest <= 0}
+													/>
+													<span className={cn("text-sm", rest < 0 ? "font-medium text-destructive" : "text-muted-foreground")}>
+														{rest < 0 ? "overlaps" : rest === 0 ? "no rest" : rest >= 60 ? "break" : "rest"}
+													</span>
+												</li>
+											)}
+										</Fragment>
+									);
+								})}
+							</ol>
 						) : (
 							<p className="px-3 py-6 text-center text-sm text-muted-foreground">No classes: the website says “by appointment”.</p>
 						)}
-						<Button type="button" variant="ghost" onClick={addTime} className="mt-1 h-11 w-full rounded-2xl text-primary">
+						<Button type="button" variant="ghost" onClick={() => change(addClass)} className="mt-1 h-11 w-full rounded-2xl text-primary">
 							<Add size={20} />
-							Add a time
+							{draft.times.length ? `Add a class after a ${showLength(nextRest)} rest` : "Add a class"}
 						</Button>
 					</div>
 				</section>
