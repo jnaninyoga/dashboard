@@ -27,6 +27,8 @@ const nextConfig: NextConfig = {
   },
   serverExternalPackages: ["esbuild"],
   experimental: {
+    // Upgrade reminders in dev and build only flag security advisories.
+    agentUpgrade: "security",
     serverActions: {
       bodySizeLimit: "5mb",
     },
