@@ -6,10 +6,36 @@ import { useRouter } from "next/navigation";
 import { FormSheet } from "@/components/form-sheet";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { restoreOutdoorEventAction } from "@/lib/actions/outdoor";
 import { cancelEventAction } from "@/lib/actions/schedule/events";
 import { notify, notifyActionError } from "@/lib/feedback/notify";
 
-import { CloseCircle, Refresh } from "iconsax-reactjs";
+import { CalendarAdd, CloseCircle, Refresh } from "iconsax-reactjs";
+
+/**
+ * Puts a session deleted in Google Calendar itself back in it, as it was.
+ * Its calendar id changes, so its page moves with it.
+ */
+export function RestoreToCalendar({ sessionId }: { sessionId: string }) {
+	const router = useRouter();
+	const [pending, startTransition] = useTransition();
+
+	const restore = () =>
+		startTransition(async () => {
+			const result = await restoreOutdoorEventAction(sessionId);
+			if (!result.success) return void notifyActionError(result, "Couldn't put the session back");
+			notify.success("Back in your calendar");
+			router.replace(`/schedule/outdoor/${result.googleEventId}`);
+			router.refresh();
+		});
+
+	return (
+		<Button onClick={restore} disabled={pending} className="h-11 shrink-0 rounded-full">
+			{pending ? <Refresh className="size-4 animate-spin" /> : <CalendarAdd size={18} />}
+			Put it back in my calendar
+		</Button>
+	);
+}
 
 /**
  * Cancels the outdoor session the way every session is cancelled (its

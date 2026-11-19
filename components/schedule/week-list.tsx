@@ -18,26 +18,43 @@ const timeRange = (session: FeedSession) =>
 const row =
 	"group focus-visible:ring-ring flex min-h-16 items-center gap-3 rounded-2xl border px-4 py-3 transition-colors outline-none focus-visible:ring-2";
 
-/** A session that has ended (or an all-day event): when, what, who came; opens its history. */
+/**
+ * A session that has ended (or an all-day event): when, what, who came; opens
+ * its history. An outdoor session deleted in Google Calendar itself says so
+ * and opens its page, where she puts it back or cancels it.
+ */
 export function SessionRow({ session, ended }: { session: FeedSession; ended: boolean }) {
 	return (
-		<Link href={`/check-in/${session.id}`} className={cn(row, "border-border/60 bg-card/70 hover:bg-card")}>
+		<Link
+			href={session.notInCalendar ? `/schedule/outdoor/${session.id}` : `/check-in/${session.id}`}
+			className={cn(
+				row,
+				session.notInCalendar ? "border-dashed border-warning/50 bg-card/70 hover:bg-card" : "border-border/60 bg-card/70 hover:bg-card",
+			)}
+		>
 			<span className="w-23 shrink-0 self-start pt-0.5 text-sm text-muted-foreground tabular-nums">
 				{timeRange(session)}
 			</span>
 			<span className="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span className="truncate font-medium text-foreground">{session.title}</span>
-				<span className="text-sm text-muted-foreground">
-					{session.external ? "Calendar event" : typeLabel(session.type)}
-					{session.checkIns ? (
-						<>
-							{" · "}
-							<span className="font-semibold text-foreground tabular-nums">{session.checkIns}</span> came
-						</>
-					) : ended ? (
-						" · No one came"
-					) : null}
-				</span>
+				{session.notInCalendar ? (
+					<span className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm text-muted-foreground">
+						<span className="rounded-full bg-warning/10 px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-warning">Not in calendar</span>
+						{session.onWebsite && !ended ? <span>Still on the website</span> : null}
+					</span>
+				) : (
+					<span className="text-sm text-muted-foreground">
+						{session.external ? "Calendar event" : typeLabel(session.type)}
+						{session.checkIns ? (
+							<>
+								{" · "}
+								<span className="font-semibold text-foreground tabular-nums">{session.checkIns}</span> came
+							</>
+						) : ended ? (
+							" · No one came"
+						) : null}
+					</span>
+				)}
 			</span>
 			<ArrowRight2 size={16} className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
 		</Link>

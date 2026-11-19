@@ -5,6 +5,7 @@ import { CancelOutdoor } from "@/components/events/event-actions";
 import { EventForm } from "@/components/events/event-form";
 import { EventPhoto } from "@/components/events/event-photo";
 import { EventStatus } from "@/components/events/event-status";
+import { NotInCalendarNotice } from "@/components/events/not-in-calendar";
 import { Reservations } from "@/components/events/reservations";
 import { getOutdoorSession } from "@/lib/actions/outdoor";
 import { eventFormValues } from "@/lib/domain/events/form";
@@ -31,6 +32,8 @@ export default async function OutdoorSessionPage({ params }: { params: Promise<{
 	const cancelled = session.status === "cancelled";
 	const week = weekOf(studioDateString(session.startsAt));
 	const closes = closingTime.format(bookingClosesAt(session.startsAt));
+	// Deleted in Google Calendar itself, and not over: she puts it back or cancels it.
+	const notInCalendar = session.calendar === "missing" && !cancelled && session.endsAt > new Date();
 
 	return (
 		<>
@@ -69,6 +72,8 @@ export default async function OutdoorSessionPage({ params }: { params: Promise<{
 					{cancelled ? null : <CancelOutdoor googleEventId={session.googleEventId} title={session.title} />}
 				</div>
 			</header>
+
+			{notInCalendar ? <NotInCalendarNotice sessionId={session.id} phase={phase} /> : null}
 
 			<Reservations sessionId={session.id} reservations={session.reservations} places={session.places} cancelled={cancelled} />
 

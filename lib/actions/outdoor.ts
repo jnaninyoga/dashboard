@@ -5,20 +5,30 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth/require-user";
 import { canTake, capacityProblem, eventProblems, isListed, type Places, places, slugify, uniqueSlug } from "@/lib/domain/events/rules";
 import { logServerError } from "@/lib/errors/server";
+import { checkOutdoorSession } from "@/lib/events/calendar-sync";
 import { confirmedPeople, lockSession } from "@/lib/events/store";
 import { fromStudioTime, STUDIO_TIME_ZONE } from "@/lib/utils/time";
 import { eventSchema, reservationSchema } from "@/lib/validators/event";
 import { type RebuildOutcome, requestSiteRebuild } from "@/lib/website/rebuild";
 import { db } from "@/services/database";
-import { type BookingRequest, bookingRequests, sessionPhotos, type StudioSession, studioSessions } from "@/services/database/schema";
-import { getValidAccessToken, googleErrorMessage, updateStudioEvent } from "@/services/google";
+import { attendanceLedger, type BookingRequest, bookingRequests, sessionPhotos, type StudioSession, studioSessions } from "@/services/database/schema";
+import { cancelStudioEvent, createStudioEvent, getEventById, getValidAccessToken, googleErrorMessage, updateStudioEvent } from "@/services/google";
 
 import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 
 type Result = { success?: true; error?: string; ref?: string; website?: RebuildOutcome };
 
-/** An outdoor session with what its page shows: its places, its photo, and who's coming. */
-export type OutdoorSession = StudioSession & { places: Places; hasPhoto: boolean; photoVersion: number | null; reservations: BookingRequest[] };
+/**
+ * An outdoor session with what its page shows: its places, its photo, who's
+ * coming, and whether her Google Calendar still has it.
+ */
+export type OutdoorSession = StudioSession & {
+	places: Places;
+	hasPhoto: boolean;
+	photoVersion: number | null;
+	reservations: BookingRequest[];
+	calendar: "ok" | "missing" | "unknown";
+};
 
 class Refused extends Error {}
 
@@ -31,24 +41,27 @@ function refresh(googleEventId: string) {
 /**
  * An outdoor session by its Google Calendar id, as the Schedule knows it.
  * Null when it isn't an outdoor session the dashboard created (one made in
- * Google Calendar itself has no record to hold its website part).
+ * Google Calendar itself has no record to hold its website part). Moved or
+ * renamed in her calendar, it follows on the way.
  */
 export async function getOutdoorSession(googleEventId: string): Promise<{ data?: OutdoorSession | null; error?: string; ref?: string }> {
-	await requireUser();
+	const user = await requireUser();
 	try {
-		const [session] = await db
+		const [row] = await db
 			.select()
 			.from(studioSessions)
 			.where(and(eq(studioSessions.googleEventId, googleEventId), eq(studioSessions.type, "outdoor")));
-		if (!session) return { data: null };
-		const [reservations, people, [photo]] = await Promise.all([
-			db.select().from(bookingRequests).where(eq(bookingRequests.sessionId, session.id)).orderBy(desc(bookingRequests.createdAt)),
-			confirmedPeople(session.id),
-			db.select({ updatedAt: sessionPhotos.updatedAt }).from(sessionPhotos).where(eq(sessionPhotos.sessionId, session.id)),
+		if (!row) return { data: null };
+		const [{ row: session, calendar }, reservations, people, [photo]] = await Promise.all([
+			checkOutdoorSession(user.id, row),
+			db.select().from(bookingRequests).where(eq(bookingRequests.sessionId, row.id)).orderBy(desc(bookingRequests.createdAt)),
+			confirmedPeople(row.id),
+			db.select({ updatedAt: sessionPhotos.updatedAt }).from(sessionPhotos).where(eq(sessionPhotos.sessionId, row.id)),
 		]);
 		return {
 			data: {
 				...session,
+				calendar,
 				places: places(session.capacity, people),
 				hasPhoto: !!photo,
 				photoVersion: photo ? photo.updatedAt.getTime() : null,
@@ -154,6 +167,68 @@ export async function saveOutdoorAction(sessionId: string, data: unknown): Promi
 	refresh(saved.googleEventId);
 	const website = isListed(saved) || wasListed ? await requestSiteRebuild("an outdoor session") : undefined;
 	return { success: true, website };
+}
+
+/**
+ * Puts an outdoor session deleted in Google Calendar itself back in her
+ * calendar, as it was: same title, times and price. Its bookings, photo and
+ * website part stay with it; only its calendar id changes, so its page moves.
+ */
+export async function restoreOutdoorEventAction(sessionId: string): Promise<Result & { googleEventId?: string }> {
+	const user = await requireUser();
+	let token: string;
+	try {
+		token = await getValidAccessToken(user.id);
+	} catch (error) {
+		return { error: googleErrorMessage(error, "Google Calendar") };
+	}
+
+	let created: string | null = null;
+	try {
+		const googleEventId = await db.transaction(async (tx) => {
+			const row = await lockSession(tx, sessionId);
+			if (!row || row.type !== "outdoor") throw new Refused("This outdoor session no longer exists.");
+			if (row.status === "cancelled") throw new Refused("This session is cancelled.");
+			let current;
+			try {
+				current = await getEventById(token, row.googleEventId);
+			} catch (error) {
+				throw new Refused(googleErrorMessage(error, "Google Calendar"));
+			}
+			// Already back (put back on another tab, or restored from Google's bin).
+			if (current && current.status !== "cancelled") return row.googleEventId;
+
+			let event;
+			try {
+				event = await createStudioEvent(token, {
+					title: row.title,
+					// The stored instants, offset included: Google places them exactly, whatever
+					// time-zone data this server has, and shows them in the studio's zone.
+					startTime: row.startsAt.toISOString(),
+					endTime: row.endsAt.toISOString(),
+					timeZone: STUDIO_TIME_ZONE,
+					type: "outdoor",
+					outdoorPrice: row.price != null ? Number(row.price) : null,
+				});
+			} catch (error) {
+				throw new Refused(googleErrorMessage(error, "Google Calendar"));
+			}
+			created = event.id!;
+			await tx.update(studioSessions).set({ googleEventId: created }).where(eq(studioSessions.id, row.id));
+			await tx.update(attendanceLedger).set({ googleEventId: created }).where(eq(attendanceLedger.googleEventId, row.googleEventId));
+			return created;
+		});
+		revalidatePath("/schedule");
+		revalidatePath("/");
+		return { success: true, googleEventId };
+	} catch (error) {
+		// Our records didn't follow: take the new event back out, so it isn't there twice.
+		if (created) {
+			await cancelStudioEvent(token, created).catch((undo) => logServerError("Couldn't remove an unrecorded restored session from Google Calendar", undo));
+		}
+		if (error instanceof Refused) return { error: error.message };
+		return { error: "Couldn't put the session back in your calendar", ref: logServerError("Restoring an outdoor session to Google Calendar", error) };
+	}
 }
 
 const PHOTO_TYPES = ["image/webp", "image/jpeg", "image/png"];

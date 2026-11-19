@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth/require-user";
 import { type FeedSession, mergeFeed } from "@/lib/domain/schedule/feed";
+import { syncOutdoorSessions } from "@/lib/events/calendar-sync";
 import { addDays, studioDaysRange } from "@/lib/utils/time";
 import { db } from "@/services/database";
 import { attendanceLedger, studioSessions } from "@/services/database/schema";
@@ -11,6 +12,8 @@ import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
  * The sessions of a run of studio days ("YYYY-MM-DD", inclusive), for the
  * Schedule and the week on Home: one Google Calendar request for the whole
  * range, plus her cancelled sessions and the check-in counts from our records.
+ * Outdoor sessions she moved or deleted in Google Calendar itself are set
+ * straight on the way (the website reads our record of them).
  */
 export async function getSessionFeed(first: string, last: string): Promise<GoogleResult<FeedSession[]>> {
 	const user = await requireUser();
@@ -19,6 +22,7 @@ export async function getSessionFeed(first: string, last: string): Promise<Googl
 	const google = await withGoogle(user.id, "Google Calendar", (token) => getEventsBetween(token, start, end));
 	if (google.error !== undefined) return { error: google.error };
 
+	const missing = await syncOutdoorSessions(user.id, google.data, start, end);
 	const cancelled = await db
 		.select({
 			googleEventId: studioSessions.googleEventId,
@@ -37,7 +41,11 @@ export async function getSessionFeed(first: string, last: string): Promise<Googl
 			),
 		);
 
-	const ids = [...google.data.flatMap((event) => (event.id ? [event.id] : [])), ...cancelled.map((s) => s.googleEventId)];
+	const ids = [
+		...google.data.flatMap((event) => (event.id ? [event.id] : [])),
+		...cancelled.map((s) => s.googleEventId),
+		...missing.map((s) => s.googleEventId),
+	];
 	const counts = ids.length
 		? await db
 				.select({
@@ -58,6 +66,7 @@ export async function getSessionFeed(first: string, last: string): Promise<Googl
 			days,
 			events: google.data,
 			cancelled,
+			missing,
 			checkIns: new Map(counts.flatMap((c) => (c.id ? [[c.id, { live: c.live, cancelled: c.cancelled }] as const] : []))),
 		}),
 	};
