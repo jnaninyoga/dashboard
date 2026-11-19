@@ -121,6 +121,58 @@ describe("mergeFeed", () => {
 		expect(feed).toHaveLength(1);
 		expect(feed[0].status).toBe("cancelled");
 	});
+
+	it("shows an outdoor session her calendar no longer has, flagged, from our record", () => {
+		const feed = mergeFeed({
+			days: week,
+			events: [event("e", "2026-06-20T10:00:00+01:00", "2026-06-20T11:00:00+01:00", "group")],
+			cancelled: [],
+			missing: [
+				{
+					googleEventId: "gone",
+					title: "Lever de soleil",
+					type: "outdoor",
+					startsAt: new Date("2026-06-20T06:00:00Z"),
+					endsAt: new Date("2026-06-20T08:00:00Z"),
+					onWebsite: true,
+				},
+			],
+			checkIns: new Map(),
+		});
+		expect(feed.map((s) => s.id)).toEqual(["gone", "e"]);
+		expect(feed[0]).toMatchObject({
+			status: "scheduled",
+			notInCalendar: true,
+			onWebsite: true,
+			day: "2026-06-20",
+			startTime: "07:00",
+			endTime: "09:00",
+			event: null,
+		});
+		expect(feed[1]).toMatchObject({ notInCalendar: false });
+	});
+
+	it("never flags a session Google still lists, or one she cancelled", () => {
+		const missing = (id: string) => ({
+			googleEventId: id,
+			title: "x",
+			type: "outdoor" as const,
+			startsAt: new Date("2026-06-19T09:00:00Z"),
+			endsAt: new Date("2026-06-19T10:00:00Z"),
+			onWebsite: true,
+		});
+		const feed = mergeFeed({
+			days: week,
+			events: [event("live", "2026-06-19T10:00:00+01:00", "2026-06-19T11:00:00+01:00", "outdoor")],
+			cancelled: [{ ...missing("off"), cancelReason: null }],
+			missing: [missing("live"), missing("off")],
+			checkIns: new Map(),
+		});
+		expect(feed.map((s) => [s.id, s.status, s.notInCalendar])).toEqual([
+			["live", "scheduled", false],
+			["off", "cancelled", false],
+		]);
+	});
 });
 
 describe("summarize", () => {

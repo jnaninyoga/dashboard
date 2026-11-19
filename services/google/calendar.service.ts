@@ -50,7 +50,10 @@ export type JnaninEventType = "group" | "private" | "outdoor" | "b2b";
 
 interface CreateEventData {
 	title: string;
-	/** Wall-clock "YYYY-MM-DDTHH:mm:ss" in `timeZone`; Google works out the offset. */
+	/**
+	 * Wall-clock "YYYY-MM-DDTHH:mm:ss" in `timeZone` (Google works out the offset),
+	 * or an instant with its offset ("…Z") to put a session back exactly where it was.
+	 */
 	startTime: string;
 	endTime: string;
 	timeZone: string;
